@@ -1,0 +1,18 @@
+<IfModule mod_rewrite.c>
+    Options +FollowSymLinks
+    RewriteEngine On
+
+    # Ensure the request is not already for the public directory
+    RewriteCond %{REQUEST_URI} !^/public/
+
+    # Skip if the requested file or directory exists
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME} !-f
+
+    # Redirect all other requests to /public/ directory
+    RewriteRule ^(.*)$ /public/$1 [L]
+
+    # Default rule to redirect root requests to public/index.php
+    RewriteRule ^(/)?$ public/index.php [L]
+</IfModule>
+

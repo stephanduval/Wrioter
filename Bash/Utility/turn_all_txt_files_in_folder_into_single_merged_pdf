@@ -1,0 +1,30 @@
+#!/bin/bash
+
+# Get the directory of the current script
+BASE_DIR="$(dirname "$(realpath "$0")")"
+
+# Define the temporary directory to store intermediate PDFs
+TEMP_DIR="$BASE_DIR/temp_pdfs"
+
+# Create the temporary directory if it doesn't exist
+mkdir -p "$TEMP_DIR"
+
+# Define the output file
+OUTPUT_PDF="$BASE_DIR/merged_output.pdf"
+
+# Convert each text file to a PDF and store in the temporary directory
+for txt_file in "$BASE_DIR"/*.txt; do
+    if [[ -f "$txt_file" ]]; then
+        base_name=$(basename "$txt_file" .txt)
+        pandoc "$txt_file" -o "$TEMP_DIR/${base_name}.pdf" --pdf-engine=xelatex -V mainfont="Noto Sans"
+    fi
+done
+
+# Merge all PDFs in the temporary directory into a single PDF
+pdftk "$TEMP_DIR"/*.pdf cat output "$OUTPUT_PDF"
+
+# Clean up temporary directory
+rm -r "$TEMP_DIR"
+
+echo "All .txt files in $BASE_DIR have been merged into $OUTPUT_PDF"
+

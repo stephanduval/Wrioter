@@ -1,0 +1,6 @@
+sudo /opt/lampp/lampp startmysql;
+sudo /opt/lampp/bin/mysql -u root -p;
+
+
+USE SneatTest;
+SHOW TABLES;

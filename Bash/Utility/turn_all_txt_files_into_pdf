@@ -1,0 +1,21 @@
+#!/bin/bash
+
+# Get the directory of the current script
+BASE_DIR="$(dirname "$(realpath "$0")")"
+
+# Define the output file
+OUTPUT_PDF="$BASE_DIR/merged_output.pdf"
+
+# Convert each text file to a PDF and store in the same directory
+for txt_file in "$BASE_DIR"/*.txt; do
+    if [[ -f "$txt_file" ]]; then
+        base_name=$(basename "$txt_file" .txt)
+        pandoc "$txt_file" -o "$BASE_DIR/${base_name}.pdf" --pdf-engine=xelatex
+    fi
+done
+
+# Merge all PDFs in the directory into a single PDF
+pdftk "$BASE_DIR"/*.pdf cat output "$OUTPUT_PDF"
+
+echo "All .txt files in $BASE_DIR have been merged into $OUTPUT_PDF"
+
