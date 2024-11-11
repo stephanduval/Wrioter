@@ -40,16 +40,16 @@ const rememberMe = ref(false)
 
 const login = async () => {
   try {
-    console.log('credentials', credentials.value)
-
     const res = await fetch('/api/auth/login', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
+      credentials: 'include',
       body: JSON.stringify({
         email: credentials.value.email,
         password: credentials.value.password,
+        remember_me: rememberMe.value,
       }),
     })
 
@@ -63,19 +63,8 @@ const login = async () => {
 
     const { accessToken, userData, abilityRules } = await res.json()
 
-    // Set cookies BEFORE navigation
-    const userDataCookie = useCookie('userData')
-    const abilityCookie = useCookie('userAbilityRules')
-    const tokenCookie = useCookie('accessToken')
-
-    userDataCookie.value = userData
-    abilityCookie.value = abilityRules
-    tokenCookie.value = accessToken
-
+    // Update ability
     ability.update(abilityRules)
-
-    // Force a small delay to ensure cookies are set
-    await nextTick()
 
     // Then navigate based on role
     const userRole = userData.role?.toLowerCase()

@@ -2,14 +2,11 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Passport\HasApiTokens;
-use App\Models\Role;
-
-
 
 class User extends Authenticatable
 {
@@ -17,8 +14,6 @@ class User extends Authenticatable
 
     /**
      * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
      */
     protected $fillable = [
         'name',
@@ -28,40 +23,52 @@ class User extends Authenticatable
 
     /**
      * The attributes that should be hidden for serialization.
-     *
-     * @var array<int, string>
      */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-     /**
+    /**
      * The attributes that should be cast.
-     *
-     * @var array<string, string>
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
 
-
-    public function roles()
+    /**
+     * The roles that belong to the user.
+     */
+    public function roles(): BelongsToMany
     {
-        return $this->belongsToMany(Role::class, 'role_user');
+        return $this->belongsToMany(Role::class, 'role_user')
+                    ->withTimestamps();
     }
 
-    
-    public function subjects()
+    /**
+     * The subjects that belong to the user.
+     */
+    public function subjects(): BelongsToMany
     {
-        return $this->belongsToMany(Subject::class, 'subject_user'); // Assuming 'subject_user' as the pivot table
+        return $this->belongsToMany(Subject::class, 'subject_user')
+                    ->withTimestamps();
     }
 
+    /**
+     * Get all permissions for the user through their roles.
+     */
     public function getPermissionsAttribute()
     {
         return $this->roles->flatMap(function ($role) {
-            return $role->permissions;
+            return $role->permissions->map(function ($permission) {
+                return [
+                    'id' => $permission->id,
+                    'action' => $permission->action,
+                    'subject' => $permission->subject,
+                    'action_id' => $permission->pivot->action_id
+                ];
+            });
         })->unique('id');
     }
 }

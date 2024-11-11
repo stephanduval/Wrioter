@@ -110,12 +110,22 @@ class AuthController extends Controller
             'abilityRules'  => $userPermissions->toArray(),
         ];
 
-        return response()->json([
+        $response = response()->json([
             'accessToken' => $token,
             'userData' => $userData,
             'abilityRules' => $userPermissions,
             'expires_at' => Carbon::parse($tokenResult->token->expires_at)->toDateTimeString(),
         ]);
+
+        // Set cookies with the response
+        return $response
+            ->cookie('accessToken', $token, 60 * 24 * 7) // 7 days
+            ->cookie('userData', json_encode($userData), 60 * 24 * 7)
+            ->cookie('userAbilityRules', json_encode($userPermissions), 60 * 24 * 7)
+            ->withHeaders([
+                'Access-Control-Allow-Credentials' => 'true',
+                'Access-Control-Allow-Origin' => config('app.url'),
+            ]);
     } catch (\Exception $e) {
         \Log::error("Login error: " . $e->getMessage());
         return response()->json(['message' => 'An error occurred. Please try again.'], 500);
