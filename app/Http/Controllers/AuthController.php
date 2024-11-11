@@ -85,35 +85,45 @@ class AuthController extends Controller
             $tokenResult->token->save();
         }
 
-        // Fetch user permissions and roles
-        $userPermissions = $user->permissions->map(function ($permission) {
-            return [
-                'action' => $permission->action,
-                'subject' => $permission->subject,
-            ];
-        });
+        // Get user's roles with permissions and actions
+        $roles = $user->roles()->with(['permissions' => function($query) {
+            $query->select('permissions.*', 'permission_role.action_id')
+                  ->join('actions', 'actions.id', '=', 'permission_role.action_id');
+        }])->get();
 
-         // If the user has no permissions, return an error
-         if ($userPermissions->isEmpty()) {
+        // Format permissions with actions
+        $abilityRules = [];
+        foreach ($roles as $role) {
+            foreach ($role->permissions as $permission) {
+                $abilityRules[] = [
+                    'action' => $permission->action,
+                    'subject' => $permission->subject,
+                    'action_id' => $permission->pivot->action_id
+                ];
+            }
+        }
+
+        // If the user has no permissions, return an error
+        if (empty($abilityRules)) {
             return response()->json(['message' => 'User does not have sufficient permissions.'], 403);
         }
 
-        $userRole = $user->roles->first()->name ?? 'client';
+        $userRole = $roles->first()->name ?? 'client';
 
         // Prepare the response data
         $userData = [
-            'id'            => $user->id,
-            'fullName'      => $user->name,
-            'username'      => $user->username ?? $user->email,
-            'email'         => $user->email,
-            'role'          => strtolower($userRole),
-            'abilityRules'  => $userPermissions->toArray(),
+            'id' => $user->id,
+            'fullName' => $user->name,
+            'username' => $user->username ?? $user->email,
+            'email' => $user->email,
+            'role' => strtolower($userRole),
+            'abilityRules' => $abilityRules,
         ];
 
         return response()->json([
             'accessToken' => $token,
             'userData' => $userData,
-            'abilityRules' => $userPermissions,
+            'abilityRules' => $abilityRules,
             'expires_at' => Carbon::parse($tokenResult->token->expires_at)->toDateTimeString(),
         ]);
     } catch (\Exception $e) {
