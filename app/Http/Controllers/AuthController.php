@@ -71,7 +71,10 @@ class AuthController extends Controller
 
         $credentials = $request->only('email', 'password');
         
+        \Log::info('Login credentials:', $credentials);
+        \Log::info('Auth attempt result:', ['success' => Auth::attempt($credentials)]);
         if (!Auth::attempt($credentials)) {
+            \Log::warning('Failed login attempt for email: ' . $credentials['email']);
             return response()->json(['message' => 'Unauthorized'], 401);
         }
 
