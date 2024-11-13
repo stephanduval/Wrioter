@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use App\Models\User;
+use App\Models\Role;
 use Validator;
 
 class AuthController extends Controller
@@ -20,35 +21,60 @@ class AuthController extends Controller
   * @return [string] message
   */
   public function register(Request $request)
-  {
-      $request->validate([
-          'name' => 'required|string',
-          'email' => 'required|string|email|unique:users',
-          'password' => 'required|string',
-          'c_password' => 'required|same:password',
-      ]);
-  
-      $user = new User([
-          'name' => $request->name,
-          'email' => $request->email,
-          'password' => bcrypt($request->password)
-      ]);
-  
-      if ($user->save()) {
-          // Assign 'user' role to the new user
-          $userRole = \App\Models\Role::where('name', 'user')->first();
-          
-          if ($userRole) {
-              $user->roles()->attach($userRole->id);
-          }
-  
-          return response()->json([
-              'message' => 'Successfully created user with user role!'
-          ], 201);
-      } else {
-          return response()->json(['error' => 'Provide proper details'], 400);
-      }
-  }
+{
+    try {
+        \Log::info('Incoming registration request:', $request->all());
+
+        // Validate input
+        $request->validate([
+            'name' => 'required|string',
+            'email' => 'required|string|email|unique:users',
+            'password' => 'required|string',
+            'c_password' => 'required|same:password',
+        ]);
+
+        \Log::info('Validation successful.');
+
+        // Create the user
+        $user = new User([
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => bcrypt($request->password)
+        ]);
+
+        if ($user->save()) {
+            \Log::info('User saved successfully.', ['user_id' => $user->id]);
+
+            // Assign the 'User' role
+            $defaultRole = Role::where('name', 'User')->first();
+            if ($defaultRole) {
+                \Log::info('Default role found.', ['role_id' => $defaultRole->id]);
+
+                $user->roles()->attach($defaultRole->id);
+
+                \Log::info('Role assigned to user.', [
+                    'user_id' => $user->id,
+                    'role_id' => $defaultRole->id
+                ]);
+            } else {
+                \Log::warning('Default role not found.');
+            }
+
+            return response()->json([
+                'message' => 'Successfully created user with user role!'
+            ], 201);
+        } else {
+            \Log::error('Failed to save user.', $user->toArray());
+            return response()->json(['error' => 'Unable to save user.'], 500);
+        }
+    } catch (\Exception $e) {
+        \Log::error('Registration error:', [
+            'message' => $e->getMessage(),
+            'trace' => $e->getTraceAsString(),
+        ]);
+        return response()->json(['message' => 'An error occurred. Please try again.'], 500);
+    }
+}
 
     /**
   * Login user and create token

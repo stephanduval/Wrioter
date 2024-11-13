@@ -16,11 +16,10 @@ class Role extends Model
      * The permissions that belong to the role.
      */
     public function permissions(): BelongsToMany
-    {
-        return $this->belongsToMany(Permission::class, 'permission_role')
-                    ->withPivot('action_id')
-                    ->withTimestamps();
-    }
+{
+    return $this->belongsToMany(Permission::class, 'role_permissions')
+                ->withTimestamps();
+}
 
     /**
      * The users that belong to the role.

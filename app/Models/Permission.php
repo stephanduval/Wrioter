@@ -16,17 +16,13 @@ class Permission extends Model
      * The roles that belong to the permission.
      */
     public function roles(): BelongsToMany
-    {
-        return $this->belongsToMany(Role::class, 'permission_role')
-                    ->withPivot(['id', 'action_id'])
-                    ->withTimestamps();
-    }
+{
+    return $this->belongsToMany(Role::class, 'role_permissions')
+                ->withTimestamps();
+}
 
     /**
      * The actions associated with this permission through permission_role.
      */
-    public function actions(): BelongsToMany
-    {
-        return $this->belongsToMany(Action::class, 'permission_role', 'permission_id', 'action_id');
-    }
+    
 }

@@ -45,25 +45,26 @@ class RolePermissionActionSubjectSeeder extends Seeder
         }
 
         // Define role-permission relationships
-        $rolePermissions = [
-            // Admin gets all permissions
-            ['role_id' => 1, 'permission_id' => 1], // create
-            ['role_id' => 1, 'permission_id' => 2], // read
-            ['role_id' => 1, 'permission_id' => 3], // update
-            ['role_id' => 1, 'permission_id' => 4], // delete
-            ['role_id' => 1, 'permission_id' => 5], // manage all
-            
-            // User gets read only
-            ['role_id' => 2, 'permission_id' => 2],
-            
-            // Client gets read only
-            ['role_id' => 3, 'permission_id' => 2],
-            
-            // Manager gets read, update, and manage
-            ['role_id' => 4, 'permission_id' => 2],
-            ['role_id' => 4, 'permission_id' => 3],
-            ['role_id' => 4, 'permission_id' => 5],
-        ];
+        // Define role-permission relationships
+$rolePermissions = [
+    ['role_id' => 1, 'permission_id' => 1], // Admin can create
+    ['role_id' => 1, 'permission_id' => 2], // Admin can read
+    ['role_id' => 1, 'permission_id' => 3], // Admin can update
+    ['role_id' => 1, 'permission_id' => 4], // Admin can delete
+    ['role_id' => 1, 'permission_id' => 5], // Admin can manage all
+
+    // User gets read-only access
+    ['role_id' => 2, 'permission_id' => 2],
+
+    // Client gets read-only access
+    ['role_id' => 3, 'permission_id' => 2],
+
+    // Manager can read, update, and manage
+    ['role_id' => 4, 'permission_id' => 2],
+    ['role_id' => 4, 'permission_id' => 3],
+    ['role_id' => 4, 'permission_id' => 5],
+];
+
 
         // Insert role-permission relationships
         foreach ($rolePermissions as $rp) {
