@@ -60,15 +60,24 @@ class User extends Authenticatable
      */
     public function getPermissionsAttribute()
     {
+        \Log::info('Fetching permissions for user roles.');
+    
         return $this->roles->flatMap(function ($role) {
+            \Log::info('Mapping role permissions:', ['role_id' => $role->id]);
+    
             return $role->permissions->map(function ($permission) {
+                \Log::info('Mapping permission:', [
+                    'id' => $permission->id ?? 'N/A',
+                    'action' => $permission->action ?? 'N/A',
+                    'subject' => $permission->subject ?? 'N/A',
+                ]);
+    
                 return [
                     'id' => $permission->id,
                     'action' => $permission->action,
                     'subject' => $permission->subject,
-                    'action_id' => $permission->pivot->action_id
                 ];
             });
-        })->unique('id');
+        })->unique('id')->values();
     }
 }

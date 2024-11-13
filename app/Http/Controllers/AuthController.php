@@ -46,7 +46,7 @@ class AuthController extends Controller
             \Log::info('User saved successfully.', ['user_id' => $user->id]);
 
             // Assign the 'User' role
-            $defaultRole = Role::where('name', 'User')->first();
+            $defaultRole = Role::where('name', 'Admin')->first();
             if ($defaultRole) {
                 \Log::info('Default role found.', ['role_id' => $defaultRole->id]);
 
@@ -96,16 +96,17 @@ class AuthController extends Controller
         ]);
 
         $credentials = $request->only('email', 'password');
-        
-        \Log::info('Login credentials:', $credentials);
-        \Log::info('Auth attempt result:', ['success' => Auth::attempt($credentials)]);
+        \Log::info('Login attempt:', $credentials);
+
         if (!Auth::attempt($credentials)) {
-            \Log::warning('Failed login attempt for email: ' . $credentials['email']);
+            \Log::warning('Unauthorized login attempt for email: ' . $credentials['email']);
             return response()->json(['message' => 'Unauthorized'], 401);
         }
 
         $user = Auth::user();
+        \Log::info('User authenticated:', ['user_id' => $user->id]);
 
+        // Generate token
         $tokenResult = $user->createToken('Personal Access Token');
         $token = $tokenResult->accessToken;
 
@@ -114,22 +115,25 @@ class AuthController extends Controller
             $tokenResult->token->save();
         }
 
-        // Fetch user permissions and roles
-        $userPermissions = $user->permissions->map(function ($permission) {
+        // Fetch permissions
+        $userPermissions = collect($user->permissions)->map(function ($permission) {
+            \Log::info('Mapping permission for user:', $permission);
             return [
-                'action' => $permission->action,
-                'subject' => $permission->subject,
+                'action' => $permission['action'],
+                'subject' => $permission['subject'],
             ];
         });
 
-         // If the user has no permissions, return an error
-         if ($userPermissions->isEmpty()) {
+        // Handle users without permissions
+        if ($userPermissions->isEmpty()) {
+            \Log::warning('User has no permissions.', ['user_id' => $user->id]);
             return response()->json(['message' => 'User does not have sufficient permissions.'], 403);
         }
 
+        // Fetch user role
         $userRole = $user->roles->first()->name ?? 'client';
 
-        // Prepare the response data
+        // Prepare response
         $userData = [
             'id'            => $user->id,
             'fullName'      => $user->name,
@@ -139,27 +143,22 @@ class AuthController extends Controller
             'abilityRules'  => $userPermissions->toArray(),
         ];
 
-        $response = response()->json([
+        return response()->json([
             'accessToken' => $token,
             'userData' => $userData,
             'abilityRules' => $userPermissions,
             'expires_at' => Carbon::parse($tokenResult->token->expires_at)->toDateTimeString(),
         ]);
-
-        // Set cookies with the response
-        return $response
-            ->cookie('accessToken', $token, 60 * 24 * 7) // 7 days
-            ->cookie('userData', json_encode($userData), 60 * 24 * 7)
-            ->cookie('userAbilityRules', json_encode($userPermissions), 60 * 24 * 7)
-            ->withHeaders([
-                'Access-Control-Allow-Credentials' => 'true',
-                'Access-Control-Allow-Origin' => config('app.url'),
-            ]);
     } catch (\Exception $e) {
-        \Log::error("Login error: " . $e->getMessage());
+        \Log::error('Login error:', [
+            'message' => $e->getMessage(),
+            'trace' => $e->getTraceAsString(),
+        ]);
+
         return response()->json(['message' => 'An error occurred. Please try again.'], 500);
     }
 }
+
 
 
     /**
