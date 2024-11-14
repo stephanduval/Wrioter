@@ -36,6 +36,15 @@ const credentials = ref({
   password: 'password',
 })
 
+const isAuthenticated = () => {
+  const accessToken = document.cookie.split('; ').find(row => row.startsWith('accessToken='))
+
+  return !!accessToken
+}
+
+if (isAuthenticated())
+  router.replace({ name: 'dashboards-crm' }) // Redirect to home if already logged in
+
 const rememberMe = ref(false)
 
 const login = async () => {
@@ -45,7 +54,7 @@ const login = async () => {
       headers: {
         'Content-Type': 'application/json',
       },
-      credentials: 'include',
+      credentials: 'include', // Ensure credentials are included
       body: JSON.stringify({
         email: credentials.value.email,
         password: credentials.value.password,
@@ -63,24 +72,30 @@ const login = async () => {
 
     const { accessToken, userData, abilityRules } = await res.json()
 
+    console.log('User Data:', userData) // Add this line to check the user data
     // Update ability
     ability.update(abilityRules)
 
-    // Then navigate based on role
-    const userRole = userData.role?.toLowerCase()
+    // Set cookies
+    document.cookie = `accessToken=${accessToken}; path=/; max-age=604800; SameSite=Strict` // 7 days
+    document.cookie = `userData=${JSON.stringify(userData)}; path=/; max-age=604800; SameSite=Strict`
+    document.cookie = `userAbilityRules=${JSON.stringify(abilityRules)}; path=/; max-age=604800; SameSite=Strict`
+
+    // Redirect user
+    const userRole = userData.role?.toLowerCase() || 'user'
 
     const targetRoute = userRole === 'admin'
-      ? { name: 'dashboards-crm' as const }
+      ? { name: 'dashboards-crm' }
       : userRole === 'client'
-        ? { name: 'dashboards-crm' as const }
+        ? { name: 'dashboards-crm' }
         : userRole === 'user'
-          ? { name: 'dashboards-crm' as const }
-          : { name: 'dashboards-analytics' as const }
+          ? { name: 'dashboards-crm' }
+          : { name: 'dashboards-analytics' }
 
     router.replace(targetRoute)
   }
   catch (err) {
-    console.error('login error ', err)
+    console.error('login error', err)
     errors.value.general = 'An error occurred. Please try again.'
   }
 }
