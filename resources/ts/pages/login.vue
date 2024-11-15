@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import type { RouteLocationRaw } from 'vue-router'
+import { useRouter } from 'vue-router'
 import { VForm } from 'vuetify/components/VForm'
 import AuthProvider from '@/views/pages/authentication/AuthProvider.vue'
 import authV2LoginIllustration from '@images/pages/auth-v2-login-illustration.png'
@@ -76,13 +78,20 @@ const login = async () => {
     // Update ability
     ability.update(abilityRules)
 
-    // Set cookies
-    document.cookie = `accessToken=${accessToken}; path=/; max-age=604800; SameSite=Strict` // 7 days
-    document.cookie = `userData=${JSON.stringify(userData)}; path=/; max-age=604800; SameSite=Strict`
-    document.cookie = `userAbilityRules=${JSON.stringify(abilityRules)}; path=/; max-age=604800; SameSite=Strict`
+    // Set cookies BEFORE navigation
+    const userDataCookie = useCookie('userData')
+    const abilityCookie = useCookie('userAbilityRules')
+    const tokenCookie = useCookie('accessToken')
+
+    // Ensure the values are strings or serialized properly
+    userDataCookie.value = JSON.stringify(userData)
+    abilityCookie.value = JSON.stringify(abilityRules)
+    tokenCookie.value = accessToken.toString()
+
+    console.log('Document.cookie from login.vue', document.cookie)
 
     // Redirect user
-    const userRole = userData.role?.toLowerCase() || 'user'
+    const userRole = userData.role?.toLowerCase() || 'User'
 
     const targetRoute = userRole === 'admin'
       ? { name: 'dashboards-crm' }
@@ -92,7 +101,7 @@ const login = async () => {
           ? { name: 'dashboards-crm' }
           : { name: 'dashboards-analytics' }
 
-    router.replace(targetRoute)
+    router.replace(targetRoute as RouteLocationRaw)
   }
   catch (err) {
     console.error('login error', err)

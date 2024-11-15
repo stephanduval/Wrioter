@@ -32,8 +32,11 @@ const headers = [
 ]
 
 // 👉 Fetching users
-const { data: usersData, execute: fetchUsers } = await useApi<any>(createUrl('/apps/users', {
-  query: {
+const { data: usersData, execute: fetchUsers } = await useApi<any>('/api/users', {
+  headers: {
+    Authorization: `Bearer ${localStorage.getItem('token')}`,
+  },
+  params: {
     q: searchQuery,
     status: selectedStatus,
     plan: selectedPlan,
@@ -43,10 +46,21 @@ const { data: usersData, execute: fetchUsers } = await useApi<any>(createUrl('/a
     sortBy,
     orderBy,
   },
-}))
+})
 
-const users = computed((): UserProperties[] => usersData.value.users)
-const totalUsers = computed(() => usersData.value.totalUsers)
+// Add watch effects to refetch when filters change
+watch([searchQuery, selectedStatus, selectedPlan, selectedRole, itemsPerPage, page], () => {
+  fetchUsers()
+})
+
+// Make sure usersData is properly initialized
+const users = computed(() => usersData.value?.users || [])
+const totalUsers = computed(() => usersData.value?.totalUsers || 0)
+
+// Call fetchUsers initially
+onMounted(() => {
+  fetchUsers()
+})
 
 // 👉 search filters
 const roles = [
