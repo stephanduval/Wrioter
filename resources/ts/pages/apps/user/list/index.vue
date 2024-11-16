@@ -34,10 +34,14 @@ const headers = [
 console.log('users Page loaded')
 
 // 👉 Fetching users
-const { data: usersData, execute: fetchUsers } = await useApi<any>('/api/users', {
+const { data: usersData, execute: fetchUsers } = await useApi<any>('/users', {
   headers: {
-    Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
+    'Content-Type': 'application/json',
+
+    'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
   },
+  credentials: 'include',
+
   params: {
     q: searchQuery,
     status: selectedStatus,

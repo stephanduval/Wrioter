@@ -36,9 +36,7 @@ class UserController extends Controller
             ];
         });
 
-        return response()->json([
-            'users' => $transformedUsers,
-            'totalUsers' => $users->total(),
-        ]);
+        return response()->json($users);
+
     }
 }
