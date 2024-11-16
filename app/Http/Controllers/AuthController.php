@@ -149,9 +149,10 @@ class AuthController extends Controller
 
             // Set cookies with the response
             return $response
-                ->cookie('accessToken', $token, 60 * 24 * 7, null, null, false, true) // 7 days
-                ->cookie('userData', json_encode($userData), 60 * 24 * 7, null, null, false, false);  //set to httpOnly: false for frontend vueRouter access
-                // ->cookie('userAbilityRules', json_encode($userPermissions), 60 * 24 * 7, null, null, false, true);
+                ->cookie('accessToken', $token, 60 * 24 * 7, null, null, false, true); // 7 days
+                // ->cookie('userData', json_encode($userData), 60 * 24 * 7, null, null, false, true);  //set to httpOnly: false for frontend vueRouter access
+                // ->cookie('userAbilityRules', json_encode($userPermissions), 60 * 24 * 7, null, null, false, true)
+
         } catch (\Exception $e) {
             \Log::error('Login error:', [
                 'message' => $e->getMessage(),

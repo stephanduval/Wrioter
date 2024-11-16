@@ -31,10 +31,12 @@ const headers = [
   { title: 'Actions', key: 'actions', sortable: false },
 ]
 
+console.log('users Page loaded')
+
 // 👉 Fetching users
 const { data: usersData, execute: fetchUsers } = await useApi<any>('/api/users', {
   headers: {
-    Authorization: `Bearer ${localStorage.getItem('token')}`,
+    Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
   },
   params: {
     q: searchQuery,
@@ -47,6 +49,8 @@ const { data: usersData, execute: fetchUsers } = await useApi<any>('/api/users',
     orderBy,
   },
 })
+
+console.log('data from FetchUsers', usersData)
 
 // Add watch effects to refetch when filters change
 watch([searchQuery, selectedStatus, selectedPlan, selectedRole, itemsPerPage, page], () => {

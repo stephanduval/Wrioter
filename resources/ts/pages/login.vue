@@ -83,6 +83,11 @@ const login = async () => {
     const abilityCookie = useCookie('userAbilityRules')
     const tokenCookie = useCookie('accessToken')
 
+    // Set localStorage BEFORE navigation
+    localStorage.setItem('userData', JSON.stringify(userData))
+    localStorage.setItem('abilityRules', JSON.stringify(abilityRules))
+    localStorage.setItem('accessToken', accessToken.toString())
+
     // Ensure the values are strings or serialized properly
     userDataCookie.value = JSON.stringify(userData)
     abilityCookie.value = JSON.stringify(abilityRules)

@@ -19,8 +19,11 @@ export const setupGuards = (router: _RouterTyped<RouteNamedMap & { [key: string]
      * Feel free to update this logic to suit your needs
      */
 
-    const userData = useCookie('userData').value
-    const accessToken = useCookie('accessToken').value
+    // const userData = useCookie('userData').value
+    // const accessToken = useCookie('accessToken').value
+
+    const userData = localStorage.getItem('userData')
+    const accessToken = localStorage.getItem('accessToken')
 
     console.log('userData:', userData)
     console.log('accessToken:', accessToken)

@@ -91,6 +91,7 @@ declare module 'vue-router/auto-routes' {
     'forms-switch': RouteRecordInfo<'forms-switch', '/forms/switch', Record<never, never>, Record<never, never>>,
     'forms-textarea': RouteRecordInfo<'forms-textarea', '/forms/textarea', Record<never, never>, Record<never, never>>,
     'forms-textfield': RouteRecordInfo<'forms-textfield', '/forms/textfield', Record<never, never>, Record<never, never>>,
+    'front-pages': RouteRecordInfo<'front-pages', '/front-pages', Record<never, never>, Record<never, never>>,
     'front-pages-checkout': RouteRecordInfo<'front-pages-checkout', '/front-pages/checkout', Record<never, never>, Record<never, never>>,
     'front-pages-help-center': RouteRecordInfo<'front-pages-help-center', '/front-pages/help-center', Record<never, never>, Record<never, never>>,
     'front-pages-help-center-article-title': RouteRecordInfo<'front-pages-help-center-article-title', '/front-pages/help-center/article/:title', { title: ParamValue<true> }, { title: ParamValue<false> }>,
