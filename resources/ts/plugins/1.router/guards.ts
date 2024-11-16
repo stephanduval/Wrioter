@@ -5,8 +5,6 @@ export const setupGuards = (router: _RouterTyped<RouteNamedMap & { [key: string]
   // 👉 router.beforeEach
   // Docs: https://router.vuejs.org/guide/advanced/navigation-guards.html#global-before-guards
   router.beforeEach(to => {
-    console.log('Navigating to:', to.path)
-
     /*
      * If it's a public route, continue navigation. This kind of pages are allowed to visited by login & non-login users. Basically, without any restrictions.
      * Examples of public routes are, 404, under maintenance, etc.
@@ -18,39 +16,7 @@ export const setupGuards = (router: _RouterTyped<RouteNamedMap & { [key: string]
      * Check if user is logged in by checking if token & user data exists in local storage
      * Feel free to update this logic to suit your needs
      */
-
-    // const userData = useCookie('userData').value
-    // const accessToken = useCookie('accessToken').value
-
-    const userData = localStorage.getItem('userData')
-    const accessToken = localStorage.getItem('accessToken')
-
-    console.log('userData:', userData)
-    console.log('accessToken:', accessToken)
-    console.log('Document.cookie from guards.ts', document.cookie)
-
-    function logAllCookies() {
-      const allCookies = document.cookie.split('; ').reduce((acc: Record<string, string>, cookie) => {
-        const [name, value] = cookie.split('=')
-
-        acc[name] = value
-
-        return acc
-      }, {} as Record<string, string>)
-
-      console.log('All cookies:', allCookies)
-    }
-    logAllCookies()
-
-    // console.log('Document.cookie', document.cookie)
-
-    const isLoggedIn = !!(userData && accessToken)
-
-    console.log('Is logged in:', isLoggedIn)
-
-    // const isLoggedIn = !!(useCookie('userData').value && useCookie('accessToken').value)
-
-    console.log('Is logged in:', isLoggedIn)
+    const isLoggedIn = !!(useCookie('userData').value && useCookie('accessToken').value)
 
     /*
       If user is logged in and is trying to access login like page, redirect to home
