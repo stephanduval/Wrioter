@@ -8,8 +8,13 @@ const ability = useAbility()
 const userData = useCookie<any>('userData')
 
 const logout = async () => {
-  // Remove "accessToken" from cookie
+  console.log('Logging out...')
+
+  // Clear cookies and local storage
   useCookie('accessToken').value = null
+  useCookie('userData').value = null
+  useCookie('userAbilityRules').value = null
+  localStorage.removeItem('accessToken') // Clear token from local storage
 
   // Remove "userData" from cookie
   userData.value = null
@@ -31,6 +36,7 @@ const logout = async () => {
 
   // Reset ability to initial ability
   ability.update([])
+  window.location.reload() // Reload to reset state
 }
 
 const userProfileList = [
