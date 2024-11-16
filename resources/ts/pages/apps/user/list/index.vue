@@ -34,38 +34,35 @@ const headers = [
 console.log('users Page loaded')
 
 // 👉 Fetching users
-const { data: usersData, execute: fetchUsers } = await useApi<any>('/users', {
+const { data: usersData, execute: fetchUsers } = useApi('/users', {
+  method: 'GET',
   headers: {
     'Content-Type': 'application/json',
-
     'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
   },
   credentials: 'include',
-
   params: {
-    q: searchQuery,
-    status: selectedStatus,
-    plan: selectedPlan,
-    role: selectedRole,
-    itemsPerPage,
-    page,
-    sortBy,
-    orderBy,
+    q: searchQuery.value,
+    status: selectedStatus.value,
+    plan: selectedPlan.value,
+    role: selectedRole.value,
+    itemsPerPage: itemsPerPage.value,
+    page: page.value,
+    sortBy: sortBy.value,
+    orderBy: orderBy.value,
   },
 })
 
-console.log('data from FetchUsers', usersData)
+watch(
+  [searchQuery, selectedRole, selectedPlan, selectedStatus, itemsPerPage, page, sortBy, orderBy],
+  () => {
+    fetchUsers()
+  },
+)
 
-// Add watch effects to refetch when filters change
-watch([searchQuery, selectedStatus, selectedPlan, selectedRole, itemsPerPage, page], () => {
-  fetchUsers()
-})
+const users = computed(() => usersData.value?.data || [])
+const totalUsers = computed(() => usersData.value?.total || 0)
 
-// Make sure usersData is properly initialized
-const users = computed(() => usersData.value?.users || [])
-const totalUsers = computed(() => usersData.value?.totalUsers || 0)
-
-// Call fetchUsers initially
 onMounted(() => {
   fetchUsers()
 })
