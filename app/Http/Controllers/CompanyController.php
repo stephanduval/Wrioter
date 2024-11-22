@@ -10,10 +10,13 @@ class CompanyController extends Controller
     public function index(Request $request)
     {
         \Log::info('CompanyController index method accessed');
+        
+        // Fetch and sort companies by 'company_name' in ascending order
         $companies = Company::query()
             ->when($request->get('q'), function ($query, $search) {
                 $query->where('company_name', 'like', "%{$search}%");
             })
+            ->orderBy('company_name', 'asc') // Sort companies alphabetically
             ->get();
 
         // Transform companies data

@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\CompanyController;
+use App\Http\Controllers\RolesController;
 
 
 /*
@@ -34,3 +35,5 @@ Route::middleware('auth:api')->group(function () {
 
 
 Route::middleware('auth:api')->get('/companies', [CompanyController::class, 'index']);
+
+Route::middleware('auth:api')->get('/roles', [RolesController::class, 'index']);
