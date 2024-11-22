@@ -1,33 +1,76 @@
 <script setup lang="ts">
+import { computed, nextTick, onMounted, ref } from 'vue'
 import { PerfectScrollbar } from 'vue3-perfect-scrollbar'
+import { VSelect } from 'vuetify/components'
 
 import type { VForm } from 'vuetify/components/VForm'
 
-import type { UserProperties } from '@db/apps/users/types'
-
 interface Emit {
   (e: 'update:isDrawerOpen', value: boolean): void
-  (e: 'userData', value: UserProperties): void
+  (e: 'userData', value: any): void
 }
 
 interface Props {
   isDrawerOpen: boolean
 }
 
+interface Company {
+  id: number
+  name: string
+}
+
 const props = defineProps<Props>()
 const emit = defineEmits<Emit>()
 
 const isFormValid = ref(false)
-const refForm = ref<VForm>()
+const refForm = ref<VForm | null>(null)
 
-// const fullName = ref('')
 const userName = ref('')
 const email = ref('')
-const company = ref('')
-const phoneNumber = ref('')
-const role = ref()
+const company = ref<string | null>(null) // Selected company name
+const role = ref<string | null>(null)
 
-// 👉 drawer close
+const companies = ref<Company[]>([]) // Array to store companies
+
+// Computed property for company names
+const companyNames = computed(() => companies.value.map(company => company.name))
+
+// Validators
+const requiredValidator = (value: string | number | null) => !!value || 'This field is required.'
+
+const emailValidator = (value: string | null) =>
+  /^[^\s@]+@[^\s.@]*\.[^\s@]+$/.test(value || '') || 'Enter a valid email.'
+
+// Fetch companies on component mount
+onMounted(async () => {
+  try {
+    const response = await fetch('/api/companies', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+      },
+    })
+
+    if (!response.ok)
+      throw new Error('Failed to fetch companies.')
+
+    const responseData = await response.json()
+
+    companies.value = responseData.map((comp: { id: number; companyName: string }) => ({
+      id: comp.id,
+      name: comp.companyName,
+    }))
+
+    console.log('Mapped companies:', companies.value)
+  }
+  catch (error) {
+    console.error('Error fetching companies:', error)
+    alert('Unable to load companies. Please try again later.')
+  }
+})
+
+// Drawer close handler
 const closeNavigationDrawer = () => {
   emit('update:isDrawerOpen', false)
 
@@ -37,16 +80,14 @@ const closeNavigationDrawer = () => {
   })
 }
 
+// Form submission
 const onSubmit = () => {
   refForm.value?.validate().then(({ valid }) => {
     if (valid) {
       emit('userData', {
         id: 0,
-
-        // fullName: fullName.value,
-        company: company.value,
+        company: company.value, // Only send the company name
         role: role.value,
-        contact: phoneNumber.value,
         email: email.value,
         avatar: '',
         billing: 'Auto Debit',
@@ -75,7 +116,7 @@ const handleDrawerModelValueUpdate = (val: boolean) => {
     :model-value="props.isDrawerOpen"
     @update:model-value="handleDrawerModelValueUpdate"
   >
-    <!-- 👉 Title -->
+    <!-- Drawer Title -->
     <AppDrawerHeaderSection
       title="Add New User"
       @cancel="closeNavigationDrawer"
@@ -86,26 +127,13 @@ const handleDrawerModelValueUpdate = (val: boolean) => {
     <PerfectScrollbar :options="{ wheelPropagation: false }">
       <VCard flat>
         <VCardText>
-          <!-- 👉 Form -->
           <VForm
             ref="refForm"
             v-model="isFormValid"
             @submit.prevent="onSubmit"
           >
             <VRow>
-              <!-- 👉 Full name -->
-              <!--
-                <VCol cols="12">
-                <AppTextField
-                v-model="fullName"
-                :rules="[requiredValidator]"
-                label="Full Name"
-                placeholder="John Doe"
-                />
-                </VCol>
-              -->
-
-              <!-- 👉 Username -->
+              <!-- Username -->
               <VCol cols="12">
                 <AppTextField
                   v-model="userName"
@@ -115,7 +143,7 @@ const handleDrawerModelValueUpdate = (val: boolean) => {
                 />
               </VCol>
 
-              <!-- 👉 Email -->
+              <!-- Email -->
               <VCol cols="12">
                 <AppTextField
                   v-model="email"
@@ -125,30 +153,20 @@ const handleDrawerModelValueUpdate = (val: boolean) => {
                 />
               </VCol>
 
-              <!-- 👉 Company -->
+              <!-- Company -->
               <VCol cols="12">
-                <AppTextField
+                <VSelect
                   v-model="company"
                   :rules="[requiredValidator]"
-                  label="Company"
-                  placeholder="Themeselection"
+                  label="Select Company"
+                  placeholder="Select Company"
+                  :items="companyNames"
                 />
               </VCol>
 
-              <!-- 👉 Phone Number -->
+              <!-- Role -->
               <VCol cols="12">
-                <AppTextField
-                  v-model="phoneNumber"
-                  type="number"
-                  :rules="[requiredValidator]"
-                  label="Phone Number"
-                  placeholder="+1-541-754-3010"
-                />
-              </VCol>
-
-              <!-- 👉 Role -->
-              <VCol cols="12">
-                <AppSelect
+                <VSelect
                   v-model="role"
                   label="Select Role"
                   placeholder="Select Role"
@@ -157,7 +175,7 @@ const handleDrawerModelValueUpdate = (val: boolean) => {
                 />
               </VCol>
 
-              <!-- 👉 Submit and Cancel -->
+              <!-- Submit and Cancel -->
               <VCol cols="12">
                 <VBtn
                   type="submit"

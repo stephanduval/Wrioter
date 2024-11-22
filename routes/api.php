@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\CompanyController;
 
 
 /*
@@ -30,3 +31,6 @@ Route::group(['prefix' => 'auth'], function () {
 Route::middleware('auth:api')->group(function () {
     Route::get('/users', [UserController::class, 'index']);
 });
+
+
+Route::middleware('auth:api')->get('/companies', [CompanyController::class, 'index']);
