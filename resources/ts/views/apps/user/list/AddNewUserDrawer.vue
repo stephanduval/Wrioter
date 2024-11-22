@@ -19,15 +19,13 @@ const emit = defineEmits<Emit>()
 
 const isFormValid = ref(false)
 const refForm = ref<VForm>()
-const fullName = ref('')
+
+// const fullName = ref('')
 const userName = ref('')
 const email = ref('')
 const company = ref('')
-const country = ref()
-const contact = ref('')
+const phoneNumber = ref('')
 const role = ref()
-const plan = ref()
-const status = ref()
 
 // 👉 drawer close
 const closeNavigationDrawer = () => {
@@ -44,14 +42,12 @@ const onSubmit = () => {
     if (valid) {
       emit('userData', {
         id: 0,
-        fullName: fullName.value,
+
+        // fullName: fullName.value,
         company: company.value,
         role: role.value,
-        country: country.value,
-        contact: contact.value,
+        contact: phoneNumber.value,
         email: email.value,
-        currentPlan: plan.value,
-        status: status.value,
         avatar: '',
         billing: 'Auto Debit',
       })
@@ -98,14 +94,16 @@ const handleDrawerModelValueUpdate = (val: boolean) => {
           >
             <VRow>
               <!-- 👉 Full name -->
-              <VCol cols="12">
+              <!--
+                <VCol cols="12">
                 <AppTextField
-                  v-model="fullName"
-                  :rules="[requiredValidator]"
-                  label="Full Name"
-                  placeholder="John Doe"
+                v-model="fullName"
+                :rules="[requiredValidator]"
+                label="Full Name"
+                placeholder="John Doe"
                 />
-              </VCol>
+                </VCol>
+              -->
 
               <!-- 👉 Username -->
               <VCol cols="12">
@@ -127,7 +125,7 @@ const handleDrawerModelValueUpdate = (val: boolean) => {
                 />
               </VCol>
 
-              <!-- 👉 company -->
+              <!-- 👉 Company -->
               <VCol cols="12">
                 <AppTextField
                   v-model="company"
@@ -137,24 +135,13 @@ const handleDrawerModelValueUpdate = (val: boolean) => {
                 />
               </VCol>
 
-              <!-- 👉 Country -->
-              <VCol cols="12">
-                <AppSelect
-                  v-model="country"
-                  label="Select Country"
-                  placeholder="Select Country"
-                  :rules="[requiredValidator]"
-                  :items="['USA', 'UK', 'India', 'Australia']"
-                />
-              </VCol>
-
-              <!-- 👉 Contact -->
+              <!-- 👉 Phone Number -->
               <VCol cols="12">
                 <AppTextField
-                  v-model="contact"
+                  v-model="phoneNumber"
                   type="number"
                   :rules="[requiredValidator]"
-                  label="Contact"
+                  label="Phone Number"
                   placeholder="+1-541-754-3010"
                 />
               </VCol>
@@ -167,28 +154,6 @@ const handleDrawerModelValueUpdate = (val: boolean) => {
                   placeholder="Select Role"
                   :rules="[requiredValidator]"
                   :items="['Admin', 'Author', 'Editor', 'Maintainer', 'Subscriber']"
-                />
-              </VCol>
-
-              <!-- 👉 Plan -->
-              <VCol cols="12">
-                <AppSelect
-                  v-model="plan"
-                  label="Select Plan"
-                  placeholder="Select Plan"
-                  :rules="[requiredValidator]"
-                  :items="['Basic', 'Company', 'Enterprise', 'Team']"
-                />
-              </VCol>
-
-              <!-- 👉 Status -->
-              <VCol cols="12">
-                <AppSelect
-                  v-model="status"
-                  label="Select Status"
-                  placeholder="Select Status"
-                  :rules="[requiredValidator]"
-                  :items="[{ title: 'Active', value: 'active' }, { title: 'Inactive', value: 'inactive' }, { title: 'Pending', value: 'pending' }]"
                 />
               </VCol>
 
