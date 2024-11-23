@@ -109,22 +109,45 @@ const closeNavigationDrawer = () => {
 }
 
 // Form submission
-const onSubmit = () => {
-  refForm.value?.validate().then(({ valid }) => {
+const onSubmit = async () => {
+  console.log({
+    name: userName.value,
+    email: email.value,
+    password: 'TemporaryPassword123!',
+    company_id: companies.value.find(c => c.name === company.value)?.id,
+    role_id: roles.value.find(r => r.name === role.value)?.id,
+  })
+
+  refForm.value?.validate().then(async ({ valid }) => {
     if (valid) {
-      emit('userData', {
-        id: 0,
-        company: company.value, // Only send the company name
-        role: role.value, // Only send the role name
-        email: email.value,
-        avatar: '',
-        billing: 'Auto Debit',
-      })
-      emit('update:isDrawerOpen', false)
-      nextTick(() => {
-        refForm.value?.reset()
-        refForm.value?.resetValidation()
-      })
+      try {
+        const response = await fetch('/api/users', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+          },
+          body: JSON.stringify({
+            name: userName.value,
+            email: email.value,
+            password: 'TemporaryPassword123!', // Generate or input a secure temp password
+            company_id: companies.value.find(c => c.name === company.value)?.id,
+            role_id: roles.value.find(r => r.name === role.value)?.id,
+          }),
+        })
+
+        if (!response.ok)
+          throw new Error('Failed to create user')
+
+        const result = await response.json()
+
+        alert('User created successfully!')
+        closeNavigationDrawer()
+      }
+      catch (error) {
+        console.error('Error:', error)
+        alert('Failed to create user. Please try again.')
+      }
     }
   })
 }

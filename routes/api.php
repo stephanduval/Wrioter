@@ -6,6 +6,8 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\RolesController;
+use App\Http\Controllers\UserRoleController;
+use App\Http\Controllers\UserCompanyController;
 
 
 /*
@@ -37,3 +39,5 @@ Route::middleware('auth:api')->group(function () {
 Route::middleware('auth:api')->get('/companies', [CompanyController::class, 'index']);
 
 Route::middleware('auth:api')->get('/roles', [RolesController::class, 'index']);
+
+Route::post('/users', [UserController::class, 'addUser'])->name('users.store');
