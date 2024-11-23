@@ -19,6 +19,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'password_reset_required',
     ];
 
     /**
@@ -34,16 +35,37 @@ class User extends Authenticatable
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
-        'password' => 'hashed',
+        'password_reset_required' => 'boolean',
     ];
 
     /**
-     * The roles that belong to the user.
+     * Define a many-to-many relationship with Role.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
      */
     public function roles(): BelongsToMany
     {
-        return $this->belongsToMany(Role::class, 'user_roles')
-                    ->withTimestamps();
+        return $this->belongsToMany(
+            Role::class,    // The related model
+            'user_roles',   // The pivot table name
+            'user_id',      // The foreign key on the pivot table for the User model
+            'role_id'       // The foreign key on the pivot table for the Role model
+        );
+    }
+
+    /**
+     * Define a many-to-many relationship with Company.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
+    public function companies(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Company::class, // The related model
+            'user_company', // The pivot table name
+            'user_id',      // The foreign key on the pivot table for the User model
+            'company_id'    // The foreign key on the pivot table for the Company model
+        );
     }
 
     /**
@@ -57,21 +79,23 @@ class User extends Authenticatable
 
     /**
      * Get all permissions for the user through their roles.
+     *
+     * @return \Illuminate\Support\Collection
      */
     public function getPermissionsAttribute()
     {
         \Log::info('Fetching permissions for user roles.');
-    
+
         return $this->roles->flatMap(function ($role) {
             \Log::info('Mapping role permissions:', ['role_id' => $role->id]);
-    
+
             return $role->permissions->map(function ($permission) {
                 \Log::info('Mapping permission:', [
                     'id' => $permission->id ?? 'N/A',
                     'action' => $permission->action ?? 'N/A',
                     'subject' => $permission->subject ?? 'N/A',
                 ]);
-    
+
                 return [
                     'id' => $permission->id,
                     'action' => $permission->action,
