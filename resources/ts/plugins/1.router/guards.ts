@@ -35,7 +35,7 @@ export const setupGuards = (router: _RouterTyped<RouteNamedMap & { [key: string]
       return isLoggedIn
         ? { name: 'not-authorized' }
         : {
-            name: 'login',
+            name: 'dashboards-crm',
             query: {
               ...to.query,
               to: to.fullPath !== '/' ? to.path : undefined,

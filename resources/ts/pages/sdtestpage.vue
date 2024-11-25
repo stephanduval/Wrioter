@@ -2,7 +2,7 @@
 definePage({
   meta: {
     action: 'read',
-    subject: 'AclDemo',
+    subject: 'Admin',
   },
 })
 
@@ -16,9 +16,9 @@ const user = {
 
 <template>
   <p v-if="$can(user.action, user.subject)">
-    We have earned 50k more compared to previous week
+    >Welcome to the Admin Reports page.
   </p>
   <p v-else>
-    You don't have enough permission to view the finance data
+    You don't have enough permission to view this page
   </p>
 </template>

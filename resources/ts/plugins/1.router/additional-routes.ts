@@ -21,11 +21,13 @@ export const redirects: RouteRecordRaw[] = [
       if (userRole === 'admin')
         return { name: 'dashboards-crm' }
       if (userRole === 'client')
-        return { name: 'access-control' }
+        return { name: 'dashboards-crm' }
       if (userRole === 'user')
-        return { name: 'access-control' }
+        return { name: 'dashboards-crm' }
+      if (userRole === 'manager')
+        return { name: 'dashboards-crm' }
 
-      return { name: 'login', query: to.query }
+      return { name: 'dashboards-crm', query: to.query }
     },
   },
   {
