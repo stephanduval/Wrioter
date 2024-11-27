@@ -2,15 +2,13 @@
 definePage({
   meta: {
     action: 'read',
-    subject: 'Admin',
+    subject: 'admin',
   },
 })
 
 const user = {
   action: 'read' as const,
-
-  // `subject` property type is `Subjects` ("src/plugins/casl/AppAbility.ts")
-  subject: 'Admin' as const,
+  subject: 'admin' as const,
 }
 </script>
 

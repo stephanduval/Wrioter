@@ -85,83 +85,91 @@ class AuthController extends Controller
      * @return [string] expires_at
      */
     public function login(Request $request)
-    {
+{
+    try {
+        $request->validate([
+            'email' => 'required|string|email',
+            'password' => 'required|string',
+            'remember_me' => 'boolean'
+        ]);
+
+        $credentials = $request->only('email', 'password');
+        \Log::info('Login attempt:', $credentials);
+
+        if (!Auth::attempt($credentials)) {
+            \Log::warning('Unauthorized login attempt for email: ' . $credentials['email']);
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        $user = Auth::user();
+        \Log::info('User authenticated:', ['user_id' => $user->id]);
+
+        // Generate token with error handling
         try {
-            $request->validate([
-                'email' => 'required|string|email',
-                'password' => 'required|string',
-                'remember_me' => 'boolean'
-            ]);
-
-            $credentials = $request->only('email', 'password');
-            \Log::info('Login attempt:', $credentials);
-
-            if (!Auth::attempt($credentials)) {
-                \Log::warning('Unauthorized login attempt for email: ' . $credentials['email']);
-                return response()->json(['message' => 'Unauthorized'], 401);
-            }
-
-            $user = Auth::user();
-            \Log::info('User authenticated:', ['user_id' => $user->id]);
-
-            // Generate token
             $tokenResult = $user->createToken('Personal Access Token');
             $token = $tokenResult->accessToken;
-
-            if ($request->remember_me) {
-                $tokenResult->token->expires_at = Carbon::now()->addWeeks(1);
-                $tokenResult->token->save();
-            }
-
-            // Fetch permissions
-            $userPermissions = collect($user->permissions)->map(function ($permission) {
-                return [
-                    'action' => $permission['action'],
-                    'subject' => $permission['subject'],
-                ];
-            });
-
-            // Handle users without permissions
-            if ($userPermissions->isEmpty()) {
-                \Log::warning('User has no permissions.', ['user_id' => $user->id]);
-                return response()->json(['message' => 'User does not have sufficient permissions.'], 403);
-            }
-
-            // Fetch user role
-            $userRole = $user->roles->first()->name ?? 'client';
-
-            // Prepare response
-            $userData = [
-                'id'            => $user->id,
-                'fullName'      => $user->name,
-                'username'      => $user->username ?? $user->email,
-                'email'         => $user->email,
-                'role'          => strtolower($userRole),
-                'abilityRules'  => $userPermissions->toArray(),
-            ];
-
-            $response = response()->json([
-                'accessToken' => $token,
-                'userData' => $userData,
-                'abilityRules' => $userPermissions,
-                'expires_at' => Carbon::parse($tokenResult->token->expires_at)->toDateTimeString(),
-            ]);
-
-            // Set cookies with the response
-            return $response
-                ->cookie('accessToken', $token, 60 * 24 * 7, null, null, false, true); // 7 days
-                // ->cookie('userData', json_encode($userData), 60 * 24 * 7, null, null, false, true);  //set to httpOnly: false for frontend vueRouter access
-                // ->cookie('userAbilityRules', json_encode($userPermissions), 60 * 24 * 7, null, null, false, true)
-
         } catch (\Exception $e) {
-            \Log::error('Login error:', [
-                'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
+            \Log::error('Token creation failed:', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
             ]);
 
-            return response()->json(['message' => 'An error occurred. Please try again.'], 500);
+            return response()->json([
+                'message' => 'Unable to generate token. Please contact support.'
+            ], 500);
         }
+
+        if ($request->remember_me) {
+            $tokenResult->token->expires_at = Carbon::now()->addWeeks(1);
+            $tokenResult->token->save();
+        }
+
+        // Fetch permissions
+        $userPermissions = $user->permissions ?? collect();
+
+        if ($userPermissions->isEmpty()) {
+            \Log::warning('User has no permissions.', ['user_id' => $user->id]);
+            return response()->json(['message' => 'User does not have sufficient permissions.'], 403);
+        }
+
+        // Fetch user role
+        $userRole = $user->roles->first()->name ?? null;
+
+        if (!$userRole) {
+            \Log::error('User has no role assigned.', ['user_id' => $user->id]);
+            return response()->json(['message' => 'User does not have a valid role.'], 403);
+        }
+
+        // Prepare response
+        $userData = [
+            'id'            => $user->id,
+            'fullName'      => $user->name,
+            'username'      => $user->username ?? $user->email,
+            'email'         => $user->email,
+            'role'          => strtolower($userRole),
+            'abilityRules'  => $userPermissions->toArray(),
+        ];
+
+        $response = response()->json([
+            'accessToken' => $token,
+            'userData' => $userData,
+            'abilityRules' => $userPermissions,
+            'expires_at' => Carbon::parse($tokenResult->token->expires_at)->toDateTimeString(),
+        ]);
+
+        // Set cookies with the response
+        return $response
+            ->cookie('accessToken', $token, 60 * 24 * 7, null, null, false, true); // 7 days
+    } catch (\Exception $e) {
+        \Log::error('Login error:', [
+            'message' => $e->getMessage(),
+            'trace' => $e->getTraceAsString(),
+        ]);
+
+        return response()->json(['message' => 'An error occurred. Please try again.'], 500);
     }
+}
+
 
     /**
      * Get the authenticated User

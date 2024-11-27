@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { RouteLocationRaw } from 'vue-router'
 import { useRouter } from 'vue-router'
 import { VForm } from 'vuetify/components/VForm'
 import AuthProvider from '@/views/pages/authentication/AuthProvider.vue'
@@ -97,19 +98,17 @@ const login = async () => {
     // Redirect user
     const userRole = userData.role?.toLowerCase() || 'User'
 
-    // needs a message if the casl does not allow the user to go there.
+    const targetRoute = userRole === 'admin'
+      ? { name: 'sdtestpage' }
+      : userRole === 'client'
+        ? { name: 'sdtestpage' }
+        : userRole === 'user'
+          ? { name: 'dashboards-crm' }
+          : userRole === 'manager'
+            ? { name: 'sdtestpage' }
+            : { name: 'dashboards-analytics' }
 
-    // const targetRoute = userRole === 'admin'
-    //   ? { name: 'sdtestpage' }
-    //   : userRole === 'client'
-    //     ? { name: 'sdtestpage' }
-    //     : userRole === 'user'
-    //       ? { name: 'dashboards-crm' }
-    //       : userRole === 'manager'
-    //         ? { name: 'sdtestpage' }
-    //         : { name: 'dashboards-analytics' }
-
-    // router.replace(targetRoute as RouteLocationRaw)
+    router.replace(targetRoute as RouteLocationRaw)
   }
   catch (err) {
     console.error('login error', err)
