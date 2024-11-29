@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref } from 'vue'
 import { PerfectScrollbar } from 'vue3-perfect-scrollbar'
-import { VSelect } from 'vuetify/components'
+import { VSelect } from 'vuetify/components/VSelect'
 
 import type { VForm } from 'vuetify/components/VForm'
 
@@ -39,8 +39,8 @@ const companies = ref<Company[]>([]) // Array to store companies
 const roles = ref<Role[]>([]) // Array to store roles
 
 // Computed properties
-const companyNames = computed(() => companies.value.map(company => company.name))
-const roleNames = computed(() => roles.value.map(role => role.name))
+const companyNames = computed(() => companies.value.map(c => c.name))
+const roleNames = computed(() => roles.value.map(r => r.name))
 
 // Validators
 const requiredValidator = (value: string | number | null) => !!value || 'This field is required.'
@@ -84,17 +84,14 @@ onMounted(async () => {
 
     const rolesData = await rolesResponse.json()
 
-    roles.value = rolesData.map((role: { id: number; name: string }) => ({
-      id: role.id,
-      name: role.name,
+    roles.value = rolesData.map((r: { id: number; name: string }) => ({
+      id: r.id,
+      name: r.name,
     }))
-
-    console.log('Mapped companies:', companies.value)
-    console.log('Mapped roles:', roles.value)
   }
   catch (error) {
     console.error('Error fetching data:', error)
-    alert('Unable to load data. Please try again later.')
+    emit('userData', { error: 'Unable to load data. Please try again later.' })
   }
 })
 
@@ -113,7 +110,7 @@ const onSubmit = async () => {
   console.log({
     name: userName.value,
     email: email.value,
-    password: 'TemporaryPassword123!',
+    password: 'password123',
     company_id: companies.value.find(c => c.name === company.value)?.id,
     role_id: roles.value.find(r => r.name === role.value)?.id,
   })
@@ -130,7 +127,7 @@ const onSubmit = async () => {
           body: JSON.stringify({
             name: userName.value,
             email: email.value,
-            password: 'TemporaryPassword123!', // Generate or input a secure temp password
+            password: 'password123', // Generate or input a secure temp password
             company_id: companies.value.find(c => c.name === company.value)?.id,
             role_id: roles.value.find(r => r.name === role.value)?.id,
           }),
@@ -141,12 +138,12 @@ const onSubmit = async () => {
 
         const result = await response.json()
 
-        alert('User created successfully!')
+        emit('userData', { success: 'User created successfully!' })
         closeNavigationDrawer()
       }
       catch (error) {
         console.error('Error:', error)
-        alert('Failed to create user. Please try again.')
+        emit('userData', { error: 'Failed to create user. Please try again.' })
       }
     }
   })

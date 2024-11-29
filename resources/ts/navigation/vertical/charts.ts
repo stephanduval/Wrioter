@@ -3,9 +3,11 @@ export default [
   {
     title: 'Charts',
     icon: { icon: 'bx-chart' },
+    action: 'read',
+    subject: 'user',
     children: [
-      { title: 'Apex Chart', to: 'charts-apex-chart' },
-      { title: 'Chartjs', to: 'charts-chartjs' },
+      { title: 'Apex Chart', to: 'charts-apex-chart', action: 'read', subject: 'apex-chart' },
+      { title: 'Chartjs', to: 'charts-chartjs', action: 'read', subject: 'chartjs' },
     ],
   },
 ]

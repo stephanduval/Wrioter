@@ -63,8 +63,15 @@ watch(
 const users = computed(() => usersData.value?.data || [])
 const totalUsers = computed(() => usersData.value?.total || 0)
 
-onMounted(() => {
-  fetchUsers()
+onMounted(async () => {
+  try {
+    console.log('Fetching users...')
+    await fetchUsers()
+    console.log('Users fetched:', usersData.value)
+  }
+  catch (error) {
+    console.error('Error fetching users:', error)
+  }
 })
 
 // 👉 search filters

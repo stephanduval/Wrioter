@@ -74,9 +74,14 @@ const login = async () => {
 
     const { accessToken, userData, abilityRules } = await res.json()
 
+    console.log('Ability Rules received:', abilityRules)
+
     console.log('User Data:', userData) // Add this line to check the user data
     // Update ability
-    ability.update(abilityRules)
+    ability.update(abilityRules.map(rule => ({
+      action: rule.action.toLowerCase(),
+      subject: rule.subject.toLowerCase(),
+    })))
 
     // Set cookies BEFORE navigation
     const userDataCookie = useCookie('userData')

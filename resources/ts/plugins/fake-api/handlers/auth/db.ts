@@ -50,7 +50,7 @@ export const db: DB = {
       abilityRules: [
         {
           action: 'read',
-          subject: 'AclDemo',
+          subject: 'admin',
         },
       ],
     },

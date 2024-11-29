@@ -5,7 +5,7 @@ export default [
     icon: { icon: 'bx-command' },
     to: 'access-control',
     action: 'read',
-    subject: 'AclDemo',
+    subject: 'user',
   },
   {
     title: 'Nav Levels',

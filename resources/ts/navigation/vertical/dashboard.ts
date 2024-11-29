@@ -2,26 +2,38 @@ export default [
   {
     title: 'Dashboards',
     icon: { icon: 'bx-home-smile' },
+    action: 'read',
+    subject: 'dashboards',
     children: [
       {
         title: 'Analytics',
         to: 'dashboards-analytics',
+        action: 'read',
+        subject: 'analytics',
       },
       {
         title: 'CRM',
         to: 'dashboards-crm',
+        action: 'read',
+        subject: 'admin',
       },
       {
         title: 'Ecommerce',
         to: 'dashboards-ecommerce',
+        action: 'read',
+        subject: 'admin',
       },
       {
         title: 'Academy',
         to: 'dashboards-academy',
+        action: 'read',
+        subject: 'admin',
       },
       {
         title: 'Logistics',
         to: 'dashboards-logistics',
+        action: 'read',
+        subject: 'admin',
       },
     ],
     badgeContent: '5',
@@ -30,31 +42,43 @@ export default [
   {
     title: 'Front Pages',
     icon: { icon: 'bx-file' },
+    action: 'read',
+    subject: 'front-pages',
     children: [
       {
         title: 'Landing',
         to: 'front-pages-landing-page',
         target: '_blank',
+        action: 'read',
+        subject: 'landing',
       },
       {
         title: 'Pricing',
         to: 'front-pages-pricing',
         target: '_blank',
+        action: 'read',
+        subject: 'admin',
       },
       {
         title: 'Payment',
         to: 'front-pages-payment',
         target: '_blank',
+        action: 'read',
+        subject: 'admin',
       },
       {
         title: 'Checkout',
         to: 'front-pages-checkout',
         target: '_blank',
+        action: 'read',
+        subject: 'admin',
       },
       {
         title: 'Help Center',
         to: 'front-pages-help-center',
         target: '_blank',
+        action: 'read',
+        subject: 'admin',
       },
     ],
   },

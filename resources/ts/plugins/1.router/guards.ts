@@ -18,7 +18,6 @@ export const setupGuards = (router: _RouterTyped<RouteNamedMap & { [key: string]
     const isLoggedIn = !!(userDataCookie.value && accessTokenCookie.value)
     const userRole = userDataCookie.value?.role?.toLowerCase()
 
-    console.log('Is user logged in?', isLoggedIn)
     console.log('User role:', userRole)
 
     // If logged in but accessing unauthenticated-only routes, redirect to dashboard
@@ -43,11 +42,14 @@ export const setupGuards = (router: _RouterTyped<RouteNamedMap & { [key: string]
     // }
 
     // Handle role-based permissions
-    // if (!canNavigate(to)) {
-    //   console.log('User does not have permission to navigate to this route')
+    if (to.meta.action && to.meta.subject) {
+      const ability = useAbility()
+      if (!ability.can(to.meta.action, to.meta.subject)) {
+        console.log('User does not have permission to navigate to this route')
 
-    //   return { name: 'not-authorized' }
-    // }
+        return { name: 'not-authorized' }
+      }
+    }
 
     // console.log('User is authorized to navigate')
   })
