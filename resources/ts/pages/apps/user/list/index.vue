@@ -15,45 +15,7 @@ const sortBy = ref()
 const orderBy = ref()
 const selectedRows = ref([])
 
-// Headers
-const headers = [
-  { title: 'User', key: 'user' },
-  { title: 'Role', key: 'role' },
-  { title: 'Plan', key: 'plan' },
-  { title: 'Billing', key: 'billing' },
-  { title: 'Status', key: 'status' },
-  { title: 'Actions', key: 'actions', sortable: false },
-]
-
-const apiParams = computed(() => ({
-  q: searchQuery.value || undefined,
-  status: selectedStatus.value || undefined,
-  plan: selectedPlan.value || undefined,
-  role: selectedRole.value || undefined,
-  itemsPerPage: itemsPerPage.value || 10,
-  page: page.value || 1,
-  sortBy: sortBy.value || undefined,
-  orderBy: orderBy.value || undefined,
-}))
-
-console.log('users Page loaded')
-
-// 👉 Fetching users API Hook
-const { data: usersData, execute: fetchUsers } = useApi('/users', {
-  method: 'GET',
-  headers: {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-  },
-  credentials: 'include',
-  params: apiParams.value,
-})
-
-// 👉 Computed Properties
-const users = computed(() => usersData.value?.data || [])
-const totalUsers = computed(() => usersData.value?.total || 0)
-
-// 👉 Update Options Function
+// Update data table options
 const updateOptions = (options: any) => {
   console.log('Options received:', options)
 
@@ -73,15 +35,79 @@ const updateOptions = (options: any) => {
     sortBy: sortBy.value,
     orderBy: orderBy.value,
   })
+
+  // Trigger API fetch
+  fetchUsers()
 }
 
-// 👉 Watch for Reactive Changes
-watch(apiParams, () => {
-  console.log('Triggering fetchUsers with updated parameters:', apiParams.value)
-  fetchUsers()
-}, { immediate: true, deep: true }) // Re-run immediately and deeply watch changes
+// Headers
+const headers = [
+  { title: 'User', key: 'user' },
+  { title: 'Role', key: 'role' },
+  { title: 'Plan', key: 'plan' },
+  { title: 'Billing', key: 'billing' },
+  { title: 'Status', key: 'status' },
+  { title: 'Actions', key: 'actions', sortable: false },
+]
 
-// 👉 Fetch Data on Mounted
+console.log('users Page loaded')
+
+// 👉 Fetching users
+const { data: usersData, execute: fetchUsers } = useApi(() => {
+  const params = new URLSearchParams({
+    page: String(page.value),
+    itemsPerPage: String(itemsPerPage.value),
+  }).toString()
+
+  const token = localStorage.getItem('accessToken')
+
+  console.log('Access Token:', token)
+  console.log('API URL:', `/users?${params}`)
+
+  return `/users?${params}`
+}, {
+  method: 'GET',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+  },
+  credentials: 'include',
+})
+
+// Add this to store pagination metadata
+const paginationMeta = ref({
+  currentPage: 1,
+  lastPage: 1,
+  total: 0,
+  perPage: 10,
+  from: 0,
+  to: 0,
+})
+
+// Watch for changes in usersData to update pagination
+watch(usersData, data => {
+  if (data) {
+    paginationMeta.value = {
+      currentPage: data.current_page,
+      lastPage: data.last_page,
+      total: data.total,
+      perPage: data.per_page,
+      from: data.from,
+      to: data.to,
+    }
+  }
+}, { immediate: true })
+
+watch(
+  [searchQuery, selectedRole, selectedPlan, selectedStatus, itemsPerPage, page, sortBy, orderBy],
+  () => {
+    fetchUsers()
+  },
+)
+
+const users = computed(() => usersData.value?.data || [])
+const totalUsers = computed(() => usersData.value?.total || 0)
+
 onMounted(async () => {
   try {
     console.log('Fetching users...')
@@ -179,6 +205,51 @@ const widgetData = ref([
   { title: 'Active Users', value: '19,860', change: -14, desc: 'Last Week Analytics', icon: 'bx-user-check', iconColor: 'success' },
   { title: 'Pending Users', value: '237', change: 42, desc: 'Last Week Analytics', icon: 'bx-user-voice', iconColor: 'warning' },
 ])
+
+// Add this near your other useApi calls
+const { data: testData, execute: testApiCall } = useApi('/users?page=2&itemsPerPage=10', {
+  method: 'GET',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+  },
+  credentials: 'include',
+})
+
+// Add this to log the results
+watch(testData, newData => {
+  console.log('Test API Response:', newData)
+}, { immediate: true })
+
+// Call it on mount
+onMounted(async () => {
+  console.log('Making test API call...')
+  await testApiCall()
+
+  // Your existing code...
+  fetchUsers()
+})
+
+// Update the options handler
+const handleOptionsUpdate = (options: any) => {
+  console.log('Options received:', options)
+
+  const newOptions = {
+    page: options.page || 1,
+    itemsPerPage: options.itemsPerPage || 10,
+    sortBy: options.sortBy?.[0],
+    orderBy: options.sortBy?.[0]?.order,
+  }
+
+  console.log('Updated options:', newOptions)
+
+  // Only fetch if page or itemsPerPage changed
+  if (page.value !== newOptions.page || itemsPerPage.value !== newOptions.itemsPerPage) {
+    page.value = newOptions.page
+    itemsPerPage.value = newOptions.itemsPerPage
+    fetchUsers()
+  }
+}
 </script>
 
 <template>

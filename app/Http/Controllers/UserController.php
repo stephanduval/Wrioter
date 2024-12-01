@@ -12,6 +12,8 @@ class UserController extends Controller
 {
     public function index(Request $request)
 {
+   
+
     $validated = $request->validate([
         'page' => 'integer|min:1',
         'itemsPerPage' => 'integer|min:1|max:100', // Limit items per page to prevent abuse
@@ -30,6 +32,7 @@ class UserController extends Controller
               ->orWhere('email', 'like', "%{$search}%");
     })
     ->paginate($itemsPerPage, ['*'], 'page', $page);
+    
 
 // Transform users data only if there are results
 $transformedUsers = $users->getCollection()->map(function ($user) {
