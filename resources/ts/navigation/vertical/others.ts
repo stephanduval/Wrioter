@@ -5,15 +5,19 @@ export default [
     icon: { icon: 'bx-command' },
     to: 'access-control',
     action: 'read',
-    subject: 'user',
+    subject: 'access-control',
   },
   {
     title: 'Nav Levels',
     icon: { icon: 'bx-menu' },
+    action: 'read',
+    subject: 'nav-levels',
     children: [
       {
         title: 'Level 2.1',
         to: null,
+        action: 'read',
+        subject: 'level-2.1',
       },
       {
         title: 'Level 2.2',
@@ -41,11 +45,15 @@ export default [
     href: 'https://themeselection.com/support/',
     icon: { icon: 'bx-phone' },
     target: '_blank',
+    action: 'read',
+    subject: 'support',
   },
   {
     title: 'Documentation',
     href: 'https://demos.themeselection.com/sneat-vuetify-vuejs-admin-template/documentation/guide/laravel-integration/folder-structure.html',
     icon: { icon: 'bx-file' },
     target: '_blank',
+    action: 'read',
+    subject: 'documentation',
   },
 ]

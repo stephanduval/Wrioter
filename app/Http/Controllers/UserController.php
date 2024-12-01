@@ -11,38 +11,50 @@ use Illuminate\Support\Facades\Hash;
 class UserController extends Controller
 {
     public function index(Request $request)
-    {
-        $users = User::query()
-            ->when($request->get('q'), function ($query, $search) {
-                $query->where('name', 'like', "%{$search}%")
-                      ->orWhere('email', 'like', "%{$search}%");
-            })
-            ->paginate($request->get('itemsPerPage', 10));
+{
+    $validated = $request->validate([
+        'page' => 'integer|min:1',
+        'itemsPerPage' => 'integer|min:1|max:100', // Limit items per page to prevent abuse
+        'q' => 'nullable|string',
+    ]);
+    $page = $request->get('page', 1); // Default to page 1 if not provided
+    $itemsPerPage = $request->get('itemsPerPage', 10); // Default to 10 items per page
+    \Log::info('Pagination Request:', [
+        'page' => $page,
+        'itemsPerPage' => $itemsPerPage,
+    ]);
+    $users = User::query()
+    ->when($request->get('q'), function ($query, $search) {
+        $query->where('name', 'like', "%{$search}%")
+              ->orWhere('email', 'like', "%{$search}%");
+    })
+    ->paginate($itemsPerPage, ['*'], 'page', $page);
 
-        // Transform users data
-        $transformedUsers = $users->getCollection()->map(function ($user) {
-            return [
-                'id' => $user->id,
-                'fullName' => $user->name,
-                'email' => $user->email,
-                'role' => 'user', // Default role placeholder
-                'status' => 'active',
-                'currentPlan' => 'basic',
-                'avatar' => null,
-                'billing' => 'auto',
-                'user' => [
-                    'fullName' => $user->name,
-                    'email' => $user->email,
-                ]
-            ];
-        });
+// Transform users data only if there are results
+$transformedUsers = $users->getCollection()->map(function ($user) {
+    return [
+        'id' => $user->id,
+        'fullName' => $user->name,
+        'email' => $user->email,
+        'role' => 'user',
+        'status' => 'active',
+        'currentPlan' => 'basic',
+        'avatar' => null,
+        'billing' => 'auto',
+        'user' => [
+            'fullName' => $user->name,
+            'email' => $user->email,
+        ],
+    ];
+});
 
-        // Replace the collection with the transformed data
-        $paginatedResponse = $users->toArray();
-        $paginatedResponse['data'] = $transformedUsers;
+$paginatedResponse = $users->toArray();
+$paginatedResponse['data'] = $transformedUsers->toArray(); // Ensure transformation
 
-        return response()->json($paginatedResponse);
-    }
+    return response()->json($paginatedResponse);
+}
+
+
 
     public function addUser(Request $request)
     {
