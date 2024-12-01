@@ -19,9 +19,10 @@ class UserController extends Controller
     ]);
     $page = $request->get('page', 1); // Default to page 1 if not provided
     $itemsPerPage = $request->get('itemsPerPage', 10); // Default to 10 items per page
-    \Log::info('Pagination Request:', [
+    \Log::info('Pagination Request Parameters:', [
         'page' => $page,
         'itemsPerPage' => $itemsPerPage,
+        'q' => $request->get('q'),
     ]);
     $users = User::query()
     ->when($request->get('q'), function ($query, $search) {

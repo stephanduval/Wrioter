@@ -15,12 +15,6 @@ const sortBy = ref()
 const orderBy = ref()
 const selectedRows = ref([])
 
-// Update data table options
-const updateOptions = (options: any) => {
-  sortBy.value = options.sortBy[0]?.key
-  orderBy.value = options.sortBy[0]?.order
-}
-
 // Headers
 const headers = [
   { title: 'User', key: 'user' },
@@ -31,9 +25,20 @@ const headers = [
   { title: 'Actions', key: 'actions', sortable: false },
 ]
 
+const apiParams = computed(() => ({
+  q: searchQuery.value || undefined,
+  status: selectedStatus.value || undefined,
+  plan: selectedPlan.value || undefined,
+  role: selectedRole.value || undefined,
+  itemsPerPage: itemsPerPage.value || 10,
+  page: page.value || 1,
+  sortBy: sortBy.value || undefined,
+  orderBy: orderBy.value || undefined,
+}))
+
 console.log('users Page loaded')
 
-// 👉 Fetching users
+// 👉 Fetching users API Hook
 const { data: usersData, execute: fetchUsers } = useApi('/users', {
   method: 'GET',
   headers: {
@@ -41,28 +46,42 @@ const { data: usersData, execute: fetchUsers } = useApi('/users', {
     'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
   },
   credentials: 'include',
-  params: {
-    q: searchQuery.value,
-    status: selectedStatus.value,
-    plan: selectedPlan.value,
-    role: selectedRole.value,
-    itemsPerPage: itemsPerPage.value,
-    page: page.value,
-    sortBy: sortBy.value,
-    orderBy: orderBy.value,
-  },
+  params: apiParams.value,
 })
 
-watch(
-  [searchQuery, selectedRole, selectedPlan, selectedStatus, itemsPerPage, page, sortBy, orderBy],
-  () => {
-    fetchUsers()
-  },
-)
-
+// 👉 Computed Properties
 const users = computed(() => usersData.value?.data || [])
 const totalUsers = computed(() => usersData.value?.total || 0)
 
+// 👉 Update Options Function
+const updateOptions = (options: any) => {
+  console.log('Options received:', options)
+
+  // Update sorting
+  if (options.sortBy?.length) {
+    sortBy.value = options.sortBy[0]?.key
+    orderBy.value = options.sortBy[0]?.order
+  }
+
+  // Update pagination
+  page.value = options.page || 1
+  itemsPerPage.value = options.itemsPerPage || 10
+
+  console.log('Updated options:', {
+    page: page.value,
+    itemsPerPage: itemsPerPage.value,
+    sortBy: sortBy.value,
+    orderBy: orderBy.value,
+  })
+}
+
+// 👉 Watch for Reactive Changes
+watch(apiParams, () => {
+  console.log('Triggering fetchUsers with updated parameters:', apiParams.value)
+  fetchUsers()
+}, { immediate: true, deep: true }) // Re-run immediately and deeply watch changes
+
+// 👉 Fetch Data on Mounted
 onMounted(async () => {
   try {
     console.log('Fetching users...')
