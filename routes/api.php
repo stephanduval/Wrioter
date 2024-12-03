@@ -8,6 +8,7 @@ use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\RolesController;
 use App\Http\Controllers\UserRoleController;
 use App\Http\Controllers\UserCompanyController;
+use App\Http\Controllers\EmailController;
 
 
 /*
@@ -33,6 +34,7 @@ Route::group(['prefix' => 'auth'], function () {
 
 Route::middleware('auth:api')->group(function () {
     Route::get('/users', [UserController::class, 'index']);
+    Route::get('/email', [EmailController::class, 'index']);
 });
 
 
