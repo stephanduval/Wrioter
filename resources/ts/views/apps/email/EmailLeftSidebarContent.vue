@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed, ref, watch } from 'vue'
 import { PerfectScrollbar } from 'vue3-perfect-scrollbar'
 
 defineOptions({
@@ -7,51 +8,39 @@ defineOptions({
 
 const props = defineProps<Props>()
 
-defineEmits<{
-  (e: 'toggleComposeDialogVisibility'): void
-}>()
+defineEmits<{ (e: 'toggleComposeDialogVisibility'): void }>()
+
+interface EmailsMeta {
+  inbox: number
+  draft: number
+  spam: number
+  star: number
+}
 
 interface Props {
-  emailsMeta: {
-    inbox: number
-    draft: number
-    spam: number
-    star: number
-  }
+  emailsMeta?: EmailsMeta
 }
 
-interface Folder {
-  title: string
-  prependIcon: string
-  to: any
-  badge?: {
-    content: string | number
-    color: string
-  }
-}
-
-interface Label {
-  title: string
-  color: string
-  to: any
-}
-
+// Reactive email counts with defaults
 const inboxEmails = ref(0)
 const draftEmails = ref(0)
 const spamEmails = ref(0)
 const starredEmails = ref(0)
 
-watch(() => props.emailsMeta, emailsMeta => {
-  if (!emailsMeta)
-    return
+// Watch props and update counts
+watch(
+  () => props.emailsMeta,
+  emailsMeta => {
+    inboxEmails.value = emailsMeta?.inbox ?? 0
+    draftEmails.value = emailsMeta?.draft ?? 0
+    spamEmails.value = emailsMeta?.spam ?? 0
+    starredEmails.value = emailsMeta?.star ?? 0
+  },
+  { immediate: true, deep: true },
+)
 
-  inboxEmails.value = emailsMeta.inbox
-  draftEmails.value = emailsMeta.draft
-  spamEmails.value = emailsMeta.spam
-  starredEmails.value = emailsMeta.star
-}, { immediate: true, deep: true })
-
-const folders: ComputedRef<Folder[]> = computed(() => [
+// Folders list
+const folders = computed(() => [
   {
     title: 'Inbox',
     prependIcon: 'bx-envelope',
@@ -59,89 +48,36 @@ const folders: ComputedRef<Folder[]> = computed(() => [
     badge: { content: inboxEmails.value, color: 'primary' },
   },
   {
-    title: 'Sent',
-    prependIcon: 'bx-send',
-    to: {
-      name: 'apps-email-filter',
-      params: { filter: 'sent' },
-    },
-  },
-  {
     title: 'Draft',
     prependIcon: 'bx-edit',
-    to: {
-      name: 'apps-email-filter',
-      params: { filter: 'draft' },
-    },
+    to: { name: 'apps-email-filter', params: { filter: 'draft' } },
     badge: { content: draftEmails.value, color: 'warning' },
   },
   {
     title: 'Starred',
     prependIcon: 'bx-star',
-    to: {
-      name: 'apps-email-filter',
-      params: { filter: 'starred' },
-    },
+    to: { name: 'apps-email-filter', params: { filter: 'starred' } },
     badge: { content: starredEmails.value, color: 'success' },
   },
   {
     title: 'Spam',
     prependIcon: 'bx-error-alt',
-    to: {
-      name: 'apps-email-filter',
-      params: { filter: 'spam' },
-    },
+    to: { name: 'apps-email-filter', params: { filter: 'spam' } },
     badge: { content: spamEmails.value, color: 'error' },
-  },
-  {
-    title: 'Trash',
-    prependIcon: 'bx-trash',
-    to: {
-      name: 'apps-email-filter',
-      params: { filter: 'trashed' },
-    },
   },
 ])
 
-const labels: Label[] = [
-  {
-    title: 'Personal',
-    color: 'success',
-    to: {
-      name: 'apps-email-label',
-      params: { label: 'personal' },
-    },
-  },
-  {
-    title: 'Company',
-    color: 'primary',
-    to: {
-      name: 'apps-email-label',
-      params: { label: 'company' },
-    },
-  },
-  {
-    title: 'Important',
-    color: 'warning',
-    to: {
-      name: 'apps-email-label',
-      params: { label: 'important' },
-    },
-  },
-  {
-    title: 'Private',
-    color: 'error',
-    to: {
-      name: 'apps-email-label',
-      params: { label: 'private' },
-    },
-  },
-]
+// Labels list
+const labels = ref([
+  { title: 'Personal', color: 'success', to: { name: 'apps-email-label', params: { label: 'personal' } } },
+  { title: 'Company', color: 'primary', to: { name: 'apps-email-label', params: { label: 'company' } } },
+  { title: 'Important', color: 'warning', to: { name: 'apps-email-label', params: { label: 'important' } } },
+  { title: 'Private', color: 'error', to: { name: 'apps-email-label', params: { label: 'private' } } },
+])
 </script>
 
 <template>
   <div class="d-flex flex-column h-100">
-    <!-- 👉 Compose -->
     <div class="pa-6">
       <VBtn
         block
@@ -151,84 +87,65 @@ const labels: Label[] = [
       </VBtn>
     </div>
 
-    <!-- 👉 Folders -->
     <PerfectScrollbar
-      :options="{ wheelPropagation: false }"
       class="h-100"
+      :options="{ wheelPropagation: false }"
     >
-      <!-- Filters -->
       <ul class="email-filters py-4">
-        <RouterLink
+        <li
           v-for="folder in folders"
           :key="folder.title"
-          v-slot="{ isActive, href, navigate }"
-          class="d-flex align-center cursor-pointer align-center"
-          :to="folder.to"
-          custom
         >
-          <li
-            v-bind="$attrs"
-            :href="href"
-            :class="isActive && 'email-filter-active text-primary'"
-            class="d-flex align-center cursor-pointer"
-            @click="navigate"
+          <RouterLink
+            v-slot="{ isActive, navigate }"
+            :to="folder.to"
+            custom
           >
-            <VIcon
-              :icon="folder.prependIcon"
-              class="me-2"
-              size="20"
-            />
-            <div class="text-base">
-              {{ folder.title }}
-            </div>
-
-            <VSpacer />
-
-            <VChip
-              v-if="folder.badge?.content"
-              :color="folder.badge.color"
-              label
-              size="small"
-              class="rounded-xl px-3"
+            <div
+              :class="{ 'email-filter-active': isActive }"
+              @click="navigate"
             >
-              {{ folder.badge?.content }}
-            </VChip>
-          </li>
-        </RouterLink>
+              <VIcon :icon="folder.prependIcon" />
+              {{ folder.title }}
+              <VChip
+                v-if="folder.badge.content"
+                :color="folder.badge.color"
+              >
+                {{ folder.badge.content }}
+              </VChip>
+            </div>
+          </RouterLink>
+        </li>
       </ul>
 
-      <ul class="email-labels py-4">
-        <!-- 👉 Labels -->
-        <div class="text-caption text-disabled mb-4 px-6">
+      <div v-if="labels.length">
+        <div class="text-caption text-disabled">
           LABELS
         </div>
-        <RouterLink
-          v-for="label in labels"
-          :key="label.title"
-          v-slot="{ isActive, href, navigate }"
-          class="d-flex align-center"
-          :to="label.to"
-          custom
-        >
+        <ul class="email-labels">
           <li
-            v-bind="$attrs"
-            :href="href"
-            :class="isActive && 'email-label-active text-primary'"
-            class="cursor-pointer d-flex align-center"
-            @click="navigate"
+            v-for="label in labels"
+            :key="label.title"
           >
-            <VIcon
-              icon="bx-bxs-circle"
-              :color="label.color"
-              class="me-2"
-              size="10"
-            />
-            <div class="text-body-1 text-high-emphasis">
-              {{ label.title }}
-            </div>
+            <RouterLink
+              v-slot="{ isActive, navigate }"
+              :to="label.to"
+              custom
+            >
+              <div
+                :class="{ 'email-label-active': isActive }"
+                @click="navigate"
+              >
+                <VIcon
+                  icon="bx-bxs-circle"
+                  :color="label.color"
+                />
+                {{ label.title }}
+              </div>
+            </RouterLink>
           </li>
-        </RouterLink>
-      </ul>
+        </ul>
+      </div>
     </PerfectScrollbar>
   </div>
 </template>

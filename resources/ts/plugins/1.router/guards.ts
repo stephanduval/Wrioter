@@ -1,69 +1,61 @@
 import type { RouteNamedMap, _RouterTyped } from 'unplugin-vue-router'
 
 export const setupGuards = (router: _RouterTyped<RouteNamedMap & { [key: string]: any }>) => {
-  router.beforeEach(async to => {
+  router.beforeEach((to, from, next) => {
+    console.log('Navigating from:', from.fullPath)
     console.log('Navigating to:', to.fullPath)
 
-    // Public routes are accessible to everyone
+    // Retrieve access token and role from localStorage
+    const accessToken = localStorage.getItem('accessToken')
+    const userRole = localStorage.getItem('userRole')?.toLowerCase()
+
+    const isLoggedIn = !!accessToken
+
+    console.log('Access Token:', accessToken)
+    console.log('User Role:', userRole)
+    console.log('Is Logged In:', isLoggedIn)
+
+    // 1. Allow access to public routes without checking login
     if (to.meta.public) {
       console.log('Public route, proceeding...')
 
-      return
+      return next()
     }
 
-    // Check cookies for login state
-    const userDataCookie = useCookie<{ role?: string }>('userData')
-    const accessTokenCookie = useCookie('accessToken')
+    // 2. Redirect unauthenticated users to login page
+    if (!isLoggedIn) {
+      if (to.name !== 'login') {
+        console.log('User not logged in, redirecting to login')
 
-    const isLoggedIn = !!(userDataCookie.value && accessTokenCookie.value)
-    const userRole = userDataCookie.value?.role?.toLowerCase()
-
-    console.log('User role:', userRole)
-
-    // If logged in but accessing unauthenticated-only routes, redirect to dashboard
-    if (to.meta.unauthenticatedOnly) {
-      if (isLoggedIn) {
-        console.log('Redirecting logged-in user from unauthenticated-only route')
-
-        return { name: 'dashboards-crm' }
+        return next({ name: 'login', query: { redirect: to.fullPath } })
       }
 
-      return undefined
+      return next()
     }
 
-    // If not logged in and trying to access protected routes, redirect to login
-    // if (!isLoggedIn) {
-    //   console.log('User not logged in, redirecting to login')
+    // 3. Prevent logged-in users from accessing unauthenticated-only routes
+    if (to.meta.unauthenticatedOnly) {
+      console.log('Redirecting logged-in user from unauthenticated-only route')
 
-    //   return {
-    //     name: 'login',
-    //     query: { redirect: to.fullPath },
-    //   }
-    // }
+      return next({ name: 'dashboards-crm' })
+    }
 
-    // Handle role-based permissions
+    // 4. Check role-based access permissions
     if (to.meta.action && to.meta.subject) {
       const ability = useAbility()
       if (!ability.can(to.meta.action, to.meta.subject)) {
         console.log('User does not have permission to navigate to this route')
 
-        return { name: 'not-authorized' }
+        return next({ name: 'not-authorized' })
       }
     }
 
-    // console.log('User is authorized to navigate')
+    // If all checks pass, proceed to the requested route
+    console.log('User authorized to navigate')
+    next()
   })
 
-  // Ensure redirects after login are handled properly
   router.afterEach(to => {
-    const userDataCookie = useCookie<{ role?: string }>('userData')
-    const accessTokenCookie = useCookie('accessToken')
-    const isLoggedIn = !!(userDataCookie.value && accessTokenCookie.value)
-
-    if (to.name === 'login' && isLoggedIn) {
-      console.log('Redirecting logged-in user to dashboard from login page')
-
-      return { name: 'dashboards-crm' }
-    }
+    console.log('Navigation complete to:', to.fullPath)
   })
 }

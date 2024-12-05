@@ -48,8 +48,8 @@ const { data: emailData, execute: fetchEmails } = await useApi<any>(createUrl('/
   },
 }))
 
-const emails = computed<Email[]>(() => emailData.value.emails)
-const emailsMeta = computed(() => emailData.value.emailsMeta)
+const emails = computed<Email[]>(() => emailData.value?.emails || [])
+const emailsMeta = computed(() => emailData.value?.emailsMeta || {})
 
 const toggleSelectedEmail = (emailId: Email['id']) => {
   const emailIndex = selectedEmails.value.indexOf(emailId)
@@ -168,9 +168,11 @@ const changeOpenedEmail = (dir: 'previous' | 'next') => {
     e => e.id === openedEmail.value?.id,
   )
 
-  const newEmailIndex = dir === 'previous' ? openedEmailIndex - 1 : openedEmailIndex + 1
+  const newEmailIndex
+    = dir === 'previous' ? openedEmailIndex - 1 : openedEmailIndex + 1
 
-  openedEmail.value = emails.value[newEmailIndex]
+  if (newEmailIndex >= 0 && newEmailIndex < emails.value.length)
+    openedEmail.value = emails.value[newEmailIndex]
 }
 
 const openEmail = async (email: Email) => {
@@ -187,7 +189,7 @@ watch(
 )
 </script>
 
-<template>
+<template v-if="emails && emails.length">
   <VLayout
     style="min-block-size: 100%;"
     class="email-app-layout"
@@ -383,6 +385,8 @@ watch(
         <VDivider />
         <!-- 👉 Emails list -->
         <PerfectScrollbar
+          v-if="emails && emails.length"
+
           tag="ul"
           :options="{ wheelPropagation: false }"
           class="email-list"
@@ -412,8 +416,8 @@ watch(
             </IconBtn>
             <VAvatar size="32">
               <VImg
-                :src="email.from.avatar"
-                :alt="email.from.name"
+                :src="email.from?.avatar"
+                :alt="email.from?.name"
               />
             </VAvatar>
             <h6 class="text-h6">
