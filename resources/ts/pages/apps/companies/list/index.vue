@@ -55,12 +55,9 @@ const { data: companiesData, execute: fetchCompanies } = useApi(() => {
     itemsPerPage: String(itemsPerPage.value),
   }).toString()
 
-  const token = localStorage.getItem('accessToken')
+  console.log('Fetching from:', `/paginatedCompanies?${params}`)
 
-  console.log('Access Token:', token)
-  console.log('API URL:', `/companies?${params}`)
-
-  return `/companies?${params}`
+  return `/paginatedCompanies?${params}`
 }, {
   method: 'GET',
   headers: {
@@ -68,6 +65,9 @@ const { data: companiesData, execute: fetchCompanies } = useApi(() => {
     'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
   },
   credentials: 'include',
+  onResponse: ({ response }) => {
+    console.log('API Response:', response._data)
+  },
 })
 
 // Add this to store pagination metadata
@@ -200,7 +200,7 @@ const handleOptionsUpdate = (options: any) => {
   if (page.value !== newOptions.page || itemsPerPage.value !== newOptions.itemsPerPage) {
     page.value = newOptions.page
     itemsPerPage.value = newOptions.itemsPerPage
-    fetchUsers()
+    fetchCompanies()
   }
 }
 </script>
