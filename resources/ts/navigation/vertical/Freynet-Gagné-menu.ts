@@ -15,7 +15,7 @@ export default [
     title: 'Company Management',
     icon: { icon: 'bx-briefcase' },
     children: [
-      { title: 'Dashboard', to: 'apps-academy-dashboard' },
+      { title: 'Company List', to: 'apps-companies-list' },
       { title: 'My Course', to: 'apps-academy-my-course' },
       { title: 'Course Details', to: 'apps-academy-course-details' },
     ],

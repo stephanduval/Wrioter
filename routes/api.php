@@ -2,14 +2,15 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\AuthController;
-use App\Http\Controllers\UserController;
-use App\Http\Controllers\CompanyController;
-use App\Http\Controllers\RolesController;
-use App\Http\Controllers\UserRoleController;
-use App\Http\Controllers\UserCompanyController;
-use App\Http\Controllers\EmailController;
-
+use App\Http\Controllers\{
+    AuthController,
+    UserController,
+    CompanyController,
+    RolesController,
+    UserRoleController,
+    UserCompanyController,
+    EmailController
+};
 
 /*
 |--------------------------------------------------------------------------
@@ -22,24 +23,22 @@ use App\Http\Controllers\EmailController;
 |
 */
 
-Route::group(['prefix' => 'auth'], function () {
+// Authentication Routes
+Route::prefix('auth')->group(function () {
     Route::post('login', [AuthController::class, 'login']);
     Route::post('register', [AuthController::class, 'register']);
 
-    Route::group(['middleware' => 'auth:api'], function() {
-      Route::post('logout', [AuthController::class, 'logout'])->middleware('auth:api');
-      Route::get('user', [AuthController::class, 'user']);
+    Route::middleware('auth:api')->group(function () {
+        Route::post('logout', [AuthController::class, 'logout']);
+        Route::get('user', [AuthController::class, 'user']);
     });
 });
 
+// Protected Routes
 Route::middleware('auth:api')->group(function () {
     Route::get('/users', [UserController::class, 'index']);
+    Route::post('/users', [UserController::class, 'addUser'])->name('users.store');
     Route::get('/email', [EmailController::class, 'index']);
+    Route::get('/companies', [CompanyController::class, 'index']);
+    Route::get('/roles', [RolesController::class, 'index']);
 });
-
-
-Route::middleware('auth:api')->get('/companies', [CompanyController::class, 'index']);
-
-Route::middleware('auth:api')->get('/roles', [RolesController::class, 'index']);
-
-Route::post('/users', [UserController::class, 'addUser'])->name('users.store');

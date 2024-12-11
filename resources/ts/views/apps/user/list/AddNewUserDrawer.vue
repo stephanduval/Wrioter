@@ -100,6 +100,7 @@ const closeNavigationDrawer = () => {
   emit('update:isDrawerOpen', false)
 
   nextTick(() => {
+    a
     refForm.value?.reset()
     refForm.value?.resetValidation()
   })
