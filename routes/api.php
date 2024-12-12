@@ -38,7 +38,7 @@ Route::middleware('auth:api')->group(function () {
 });
 
 
-Route::middleware('auth:api')->get('/companies', [CompanyController::class, 'index']);
+Route::middleware('auth:api')->get('/companies', [CompanyController::class, 'allCompanies']);
 Route::middleware('auth:api')->get('/paginatedCompanies', [CompanyController::class, 'paginatedIndex']);
 
 
