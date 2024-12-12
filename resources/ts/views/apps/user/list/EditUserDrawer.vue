@@ -61,8 +61,9 @@ const fetchUserDetails = async () => {
 
     const user = await response.json()
 
-    userName.value = user.name
-    email.value = user.email
+    // Map API response to form fields
+    userName.value = user.name || ''
+    email.value = user.email || ''
     company.value = companies.value.find(c => c.id === user.company_id)?.name || null
     role.value = roles.value.find(r => r.id === user.role_id)?.name || null
   }
@@ -170,9 +171,16 @@ const submitForm = async () => {
 
 // On Mounted
 onMounted(async () => {
-  await fetchDropdownData()
+  await fetchDropdownData() // Fetch companies and roles first
   if (props.userId)
-    await fetchUserDetails()
+    await fetchUserDetails() // Then fetch user details
+})
+
+watch(() => props.userId, async newUserId => {
+  if (newUserId) {
+    await fetchDropdownData() // Ensure dropdowns are loaded
+    await fetchUserDetails() // Fetch user details
+  }
 })
 </script>
 
@@ -208,7 +216,7 @@ onMounted(async () => {
                 <AppTextField
                   v-model="userName"
                   label="Username"
-                  placeholder="Enter username"
+                  :placeholder="userName || 'Enter username'"
                 />
               </VCol>
 
@@ -218,7 +226,7 @@ onMounted(async () => {
                   v-model="email"
                   :rules="[emailValidator]"
                   label="Email"
-                  placeholder="Enter email"
+                  :placeholder="email || 'Enter email'"
                 />
               </VCol>
 
@@ -227,7 +235,7 @@ onMounted(async () => {
                 <VSelect
                   v-model="company"
                   label="Select Company"
-                  placeholder="Select Company"
+                  :placeholder="company || 'Select Company'"
                   :items="companyNames"
                 />
               </VCol>
@@ -237,7 +245,7 @@ onMounted(async () => {
                 <VSelect
                   v-model="role"
                   label="Select Role"
-                  placeholder="Select Role"
+                  :placeholder="role || 'Select Role'"
                   :items="roleNames"
                 />
               </VCol>

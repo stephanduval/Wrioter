@@ -44,7 +44,7 @@ const updateOptions = (options: any) => {
 const headers = [
   { title: 'User', key: 'user' },
   { title: 'Role', key: 'role' },
-  { title: 'Plan', key: 'plan' },
+  { title: 'Company', key: 'company' },
   { title: 'Billing', key: 'billing' },
   { title: 'Status', key: 'status' },
   { title: 'Actions', key: 'actions', sortable: false },
@@ -253,12 +253,12 @@ const handleOptionsUpdate = (options: any) => {
     itemsPerPage.value = newOptions.itemsPerPage
     fetchUsers()
   }
+}
 
-  // Open Edit Drawer
-  const openEditUserDrawer = (userId: number) => {
-    selectedUserId.value = userId
-    isEditUserDrawerVisible.value = true
-  }
+// Open Edit Drawer
+const openEditUserDrawer = (userId: number) => {
+  selectedUserId.value = userId
+  isEditUserDrawerVisible.value = true
 }
 </script>
 
@@ -457,7 +457,7 @@ const handleOptionsUpdate = (options: any) => {
           </div>
         </template>
 
-        <!-- 👉 Role -->
+        <!-- Role -->
         <template #item.role="{ item }">
           <div class="d-flex align-center gap-x-2">
             <VIcon
@@ -472,10 +472,10 @@ const handleOptionsUpdate = (options: any) => {
           </div>
         </template>
 
-        <!-- Plan -->
-        <template #item.plan="{ item }">
+        <!-- Company -->
+        <template #item.company="{ item }">
           <div class="text-body-1 text-high-emphasis text-capitalize">
-            {{ item.currentPlan }}
+            {{ item.company || 'N/A' }}
           </div>
         </template>
 
@@ -507,7 +507,7 @@ const handleOptionsUpdate = (options: any) => {
           </VBtn>
         </template>
 
-        <!-- pagination -->
+        <!-- Pagination -->
         <template #bottom>
           <TablePagination
             v-model:page="page"
@@ -516,6 +516,7 @@ const handleOptionsUpdate = (options: any) => {
           />
         </template>
       </VDataTableServer>
+
       <!-- SECTION -->
     </VCard>
     <!-- 👉 Add New User -->

@@ -124,4 +124,57 @@ $paginatedResponse['data'] = $transformedUsers->toArray(); // Ensure transformat
         return response()->json(['error' => 'Failed to delete user.'], 500);
     }
 }
+public function showUser($id)
+{
+    try {
+        $user = User::with(['companies', 'roles'])->findOrFail($id);
+
+        return response()->json([
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'company_id' => $user->companies->first()?->id, // Assuming one company per user
+            'role_id' => $user->roles->first()?->id, // Assuming one role per user
+        ]);
+    } catch (\Exception $e) {
+        \Log::error('Error fetching user details: ', ['message' => $e->getMessage()]);
+
+        return response()->json(['error' => 'User not found.'], 404);
+    }
+}
+public function updateUser(Request $request, $id)
+{
+    try {
+        $validated = $request->validate([
+            'name' => 'sometimes|required|string|max:255',
+            'email' => 'sometimes|required|string|email|unique:users,email,' . $id,
+            'company_id' => 'sometimes|required|exists:companies,id',
+            'role_id' => 'sometimes|required|exists:roles,id',
+        ]);
+
+        $user = User::findOrFail($id);
+
+        // Update user fields
+        $user->update([
+            'name' => $validated['name'] ?? $user->name,
+            'email' => $validated['email'] ?? $user->email,
+        ]);
+
+        // Update company relationship
+        if (isset($validated['company_id'])) {
+            $user->companies()->sync([$validated['company_id']]);
+        }
+
+        // Update role relationship
+        if (isset($validated['role_id'])) {
+            $user->roles()->sync([$validated['role_id']]);
+        }
+
+        return response()->json(['message' => 'User updated successfully.', 'user' => $user]);
+    } catch (\Exception $e) {
+        \Log::error('Error updating user: ', ['message' => $e->getMessage()]);
+
+        return response()->json(['error' => 'Failed to update user.', 'details' => $e->getMessage()], 500);
+    }
+}
 }

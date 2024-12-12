@@ -44,6 +44,9 @@ Route::middleware('auth:api')->get('/paginatedCompanies', [CompanyController::cl
 Route::middleware('auth:api')->delete('/users/{id}', [UserController::class, 'deleteUser']);
 
 Route::middleware('auth:api')->get('/roles', [RolesController::class, 'index']);
+Route::get('/users/{id}', [UserController::class, 'showUser']);
+Route::put('/users/{id}', [UserController::class, 'updateUser']);
+
 
 Route::post('/users', [UserController::class, 'addUser'])->name('users.store');
 Route::fallback(function () {
