@@ -1,44 +1,38 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { PerfectScrollbar } from 'vue3-perfect-scrollbar'
+import { VForm } from 'vuetify/components/VForm'
 import { VSelect } from 'vuetify/components/VSelect'
 
-import type { VForm } from 'vuetify/components/VForm'
+// Props and Emit Types
+interface Props {
+  isDrawerOpen: boolean
+  userId: number | null
+}
 
 interface Emit {
   (e: 'update:isDrawerOpen', value: boolean): void
-  (e: 'userData', value: any): void
+  (e: 'userUpdated', value: any): void
 }
 
-interface Props {
-  isDrawerOpen: boolean
-}
-
-interface Company {
-  id: number
-  name: string
-}
-
-interface Role {
-  id: number
-  name: string
-}
-
+// Props and Emit
 const props = defineProps<Props>()
 const emit = defineEmits<Emit>()
 
+// Form Fields
 const isFormValid = ref(false)
 const refForm = ref<VForm | null>(null)
 
 const userName = ref('')
 const email = ref('')
-const company = ref<string | null>(null) // Selected company name
-const role = ref<string | null>(null) // Selected role name
+const company = ref<string | null>(null)
+const role = ref<string | null>(null)
 
-const companies = ref<Company[]>([]) // Array to store companies
-const roles = ref<Role[]>([]) // Array to store roles
+// Companies and Roles
+const companies = ref<{ id: number; name: string }[]>([])
+const roles = ref<{ id: number; name: string }[]>([])
 
-// Computed properties
+// Computed Properties
 const companyNames = computed(() => companies.value.map(c => c.name))
 const roleNames = computed(() => roles.value.map(r => r.name))
 
@@ -48,11 +42,13 @@ const requiredValidator = (value: string | number | null) => !!value || 'This fi
 const emailValidator = (value: string | null) =>
   /^[^\s@]+@[^\s.@]*\.[^\s@]+$/.test(value || '') || 'Enter a valid email.'
 
-// Fetch companies on component mount
-onMounted(async () => {
+// Fetch User Details
+const fetchUserDetails = async () => {
+  if (!props.userId)
+    return
+
   try {
-    // Fetch companies
-    const companiesResponse = await fetch('/api/companies/all', {
+    const response = await fetch(`/api/users/${props.userId}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -60,98 +56,124 @@ onMounted(async () => {
       },
     })
 
+    if (!response.ok)
+      throw new Error('Failed to fetch user details.')
+
+    const user = await response.json()
+
+    userName.value = user.name
+    email.value = user.email
+    company.value = companies.value.find(c => c.id === user.company_id)?.name || null
+    role.value = roles.value.find(r => r.id === user.role_id)?.name || null
+  }
+  catch (error) {
+    console.error('Error fetching user details:', error)
+  }
+}
+
+// Fetch Companies and Roles
+const fetchDropdownData = async () => {
+  try {
+    const [companiesResponse, rolesResponse] = await Promise.all([
+      fetch('/api/companies/all', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+        },
+      }),
+      fetch('/api/roles', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+        },
+      }),
+    ])
+
     if (!companiesResponse.ok)
       throw new Error('Failed to fetch companies.')
+    if (!rolesResponse.ok)
+      throw new Error('Failed to fetch roles.')
 
-    const companiesData = await companiesResponse.json()
+    const [companiesData, rolesData] = await Promise.all([
+      companiesResponse.json(),
+      rolesResponse.json(),
+    ])
 
     companies.value = companiesData.map((comp: { id: number; companyName: string }) => ({
       id: comp.id,
       name: comp.companyName,
     }))
-
-    // Fetch roles
-    const rolesResponse = await fetch('/api/roles', {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-      },
-    })
-
-    if (!rolesResponse.ok)
-      throw new Error('Failed to fetch roles.')
-
-    const rolesData = await rolesResponse.json()
-
     roles.value = rolesData.map((r: { id: number; name: string }) => ({
       id: r.id,
       name: r.name,
     }))
   }
   catch (error) {
-    console.error('Error fetching data:', error)
-    emit('userData', { error: 'Unable to load data. Please try again later.' })
+    console.error('Error fetching dropdown data:', error)
   }
+}
+
+// Watchers
+watch(() => props.userId, async newUserId => {
+  if (newUserId)
+    await fetchUserDetails()
 })
 
-// Drawer close handler
-const closeNavigationDrawer = () => {
+// Close Drawer Handler
+const closeDrawer = () => {
   emit('update:isDrawerOpen', false)
-
   nextTick(() => {
     refForm.value?.reset()
     refForm.value?.resetValidation()
   })
 }
 
-// Form submission
-const onSubmit = async () => {
-  console.log({
-    name: userName.value,
-    email: email.value,
-    password: 'password123',
-    company_id: companies.value.find(c => c.name === company.value)?.id,
-    role_id: roles.value.find(r => r.name === role.value)?.id,
-  })
+// Submit Handler
+const submitForm = async () => {
+  if (!props.userId)
+    return
 
   refForm.value?.validate().then(async ({ valid }) => {
     if (valid) {
       try {
-        const response = await fetch('/api/users', {
-          method: 'POST',
+        const response = await fetch(`/api/users/${props.userId}`, {
+          method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
           },
           body: JSON.stringify({
-            name: userName.value,
-            email: email.value,
-            password: 'password123', // Generate or input a secure temp password
+            name: userName.value || undefined,
+            email: email.value || undefined,
             company_id: companies.value.find(c => c.name === company.value)?.id,
             role_id: roles.value.find(r => r.name === role.value)?.id,
           }),
         })
 
         if (!response.ok)
-          throw new Error('Failed to create user')
+          throw new Error('Failed to update user.')
 
-        const result = await response.json()
+        const updatedUser = await response.json()
 
-        emit('userData', { success: 'User created successfully!' })
-        closeNavigationDrawer()
+        emit('userUpdated', { success: 'User updated successfully!', user: updatedUser })
+        closeDrawer()
       }
       catch (error) {
-        console.error('Error:', error)
-        emit('userData', { error: 'Failed to create user. Please try again.' })
+        console.error('Error updating user:', error)
+        emit('userUpdated', { error: 'Failed to update user. Please try again.' })
       }
     }
   })
 }
 
-const handleDrawerModelValueUpdate = (val: boolean) => {
-  emit('update:isDrawerOpen', val)
-}
+// On Mounted
+onMounted(async () => {
+  await fetchDropdownData()
+  if (props.userId)
+    await fetchUserDetails()
+})
 </script>
 
 <template>
@@ -162,12 +184,12 @@ const handleDrawerModelValueUpdate = (val: boolean) => {
     border="none"
     class="scrollable-content"
     :model-value="props.isDrawerOpen"
-    @update:model-value="handleDrawerModelValueUpdate"
+    @update:model-value="closeDrawer"
   >
-    <!-- Drawer Title -->
+    <!-- Drawer Header -->
     <AppDrawerHeaderSection
-      title="Add New User"
-      @cancel="closeNavigationDrawer"
+      title="Edit User"
+      @cancel="closeDrawer"
     />
 
     <VDivider />
@@ -178,16 +200,15 @@ const handleDrawerModelValueUpdate = (val: boolean) => {
           <VForm
             ref="refForm"
             v-model="isFormValid"
-            @submit.prevent="onSubmit"
+            @submit.prevent="submitForm"
           >
             <VRow>
               <!-- Username -->
               <VCol cols="12">
                 <AppTextField
                   v-model="userName"
-                  :rules="[requiredValidator]"
                   label="Username"
-                  placeholder="Johndoe"
+                  placeholder="Enter username"
                 />
               </VCol>
 
@@ -195,9 +216,9 @@ const handleDrawerModelValueUpdate = (val: boolean) => {
               <VCol cols="12">
                 <AppTextField
                   v-model="email"
-                  :rules="[requiredValidator, emailValidator]"
+                  :rules="[emailValidator]"
                   label="Email"
-                  placeholder="johndoe@email.com"
+                  placeholder="Enter email"
                 />
               </VCol>
 
@@ -205,7 +226,6 @@ const handleDrawerModelValueUpdate = (val: boolean) => {
               <VCol cols="12">
                 <VSelect
                   v-model="company"
-                  :rules="[requiredValidator]"
                   label="Select Company"
                   placeholder="Select Company"
                   :items="companyNames"
@@ -216,26 +236,25 @@ const handleDrawerModelValueUpdate = (val: boolean) => {
               <VCol cols="12">
                 <VSelect
                   v-model="role"
-                  :rules="[requiredValidator]"
                   label="Select Role"
                   placeholder="Select Role"
                   :items="roleNames"
                 />
               </VCol>
 
-              <!-- Submit and Cancel -->
+              <!-- Actions -->
               <VCol cols="12">
                 <VBtn
                   type="submit"
                   class="me-4"
                 >
-                  Submit
+                  Save
                 </VBtn>
                 <VBtn
                   type="reset"
                   variant="tonal"
                   color="error"
-                  @click="closeNavigationDrawer"
+                  @click="closeDrawer"
                 >
                   Cancel
                 </VBtn>

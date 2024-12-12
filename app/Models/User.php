@@ -104,4 +104,14 @@ class User extends Authenticatable
             });
         })->unique('id')->values();
     }
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::deleting(function ($user) {
+            // Detach all related companies and roles
+            $user->companies()->detach();
+            $user->roles()->detach();
+        });
+    }
 }

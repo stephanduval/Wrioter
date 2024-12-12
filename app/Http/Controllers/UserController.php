@@ -109,4 +109,19 @@ $paginatedResponse['data'] = $transformedUsers->toArray(); // Ensure transformat
             return response()->json(['error' => 'Failed to create user.', 'details' => $e->getMessage()], 500);
         }
     }
+    public function deleteUser($id)
+{
+    try {
+        $user = User::findOrFail($id);
+
+        \DB::transaction(function () use ($user) {
+            $user->delete();
+        });
+
+        return response()->json(['message' => 'User deleted successfully.'], 200);
+    } catch (\Exception $e) {
+        \Log::error('Error deleting user: ', ['message' => $e->getMessage()]);
+        return response()->json(['error' => 'Failed to delete user.'], 500);
+    }
+}
 }

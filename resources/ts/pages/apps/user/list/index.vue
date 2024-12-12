@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import AddNewUserDrawer from '@/views/apps/user/list/AddNewUserDrawer.vue'
+import EditUserDrawer from '@/views/apps/user/list/EditUserDrawer.vue'
+
 import type { UserProperties } from '@db/apps/users/types'
 
 // 👉 Store
@@ -15,6 +17,11 @@ const sortBy = ref()
 const orderBy = ref()
 const selectedRows = ref([])
 
+// Drawers visibility state
+const isAddNewUserDrawerVisible = ref(false)
+const isEditUserDrawerVisible = ref(false)
+const selectedUserId = ref<number | null>(null)
+
 // Update data table options
 const updateOptions = (options: any) => {
   console.log('Options received:', options)
@@ -29,13 +36,6 @@ const updateOptions = (options: any) => {
   page.value = options.page || 1
   itemsPerPage.value = options.itemsPerPage || 10
 
-  console.log('Updated options:', {
-    page: page.value,
-    itemsPerPage: itemsPerPage.value,
-    sortBy: sortBy.value,
-    orderBy: orderBy.value,
-  })
-
   // Trigger API fetch
   fetchUsers()
 }
@@ -49,8 +49,6 @@ const headers = [
   { title: 'Status', key: 'status' },
   { title: 'Actions', key: 'actions', sortable: false },
 ]
-
-console.log('users Page loaded')
 
 // 👉 Fetching users
 const { data: usersData, execute: fetchUsers } = useApi(() => {
@@ -170,8 +168,6 @@ const resolveUserStatusVariant = (stat: string) => {
   return 'primary'
 }
 
-const isAddNewUserDrawerVisible = ref(false)
-
 // 👉 Add new user
 const addNewUser = async (userData: UserProperties) => {
   await $api('/apps/users', {
@@ -185,18 +181,26 @@ const addNewUser = async (userData: UserProperties) => {
 
 // 👉 Delete user
 const deleteUser = async (id: number) => {
-  await $api(`/apps/users/${id}`, {
-    method: 'DELETE',
-  })
+  try {
+    const response = await fetch(`/api/users/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+      },
+    })
 
-  // Delete from selectedRows
-  const index = selectedRows.value.findIndex(row => row === id)
-  if (index !== -1)
-    selectedRows.value.splice(index, 1)
+    if (!response.ok)
+      throw new Error('Failed to delete user')
 
-  // refetch User
-  // TODO: Make this async
-  fetchUsers()
+    console.log('User deleted successfully.')
+
+    // Refetch users to update the table
+    fetchUsers()
+  }
+  catch (error) {
+    console.error('Error deleting user:', error)
+  }
 }
 
 const widgetData = ref([
@@ -248,6 +252,12 @@ const handleOptionsUpdate = (options: any) => {
     page.value = newOptions.page
     itemsPerPage.value = newOptions.itemsPerPage
     fetchUsers()
+  }
+
+  // Open Edit Drawer
+  const openEditUserDrawer = (userId: number) => {
+    selectedUserId.value = userId
+    isEditUserDrawerVisible.value = true
   }
 }
 </script>
@@ -487,34 +497,13 @@ const handleOptionsUpdate = (options: any) => {
             <VIcon icon="bx-trash" />
           </IconBtn>
 
-          <IconBtn>
-            <VIcon icon="bx-show" />
-          </IconBtn>
-
           <VBtn
             icon
             variant="text"
             color="medium-emphasis"
+            @click="openEditUserDrawer(item.id)"
           >
-            <VIcon icon="bx-dots-vertical-rounded" />
-            <VMenu activator="parent">
-              <VList>
-                <VListItem :to="{ name: 'apps-user-view-id', params: { id: item.id } }">
-                  <template #prepend>
-                    <VIcon icon="bx-show" />
-                  </template>
-
-                  <VListItemTitle>View</VListItemTitle>
-                </VListItem>
-
-                <VListItem link>
-                  <template #prepend>
-                    <VIcon icon="bx-pencil" />
-                  </template>
-                  <VListItemTitle>Edit</VListItemTitle>
-                </VListItem>
-              </VList>
-            </VMenu>
+            <VIcon icon="bx-pencil" />
           </VBtn>
         </template>
 
@@ -533,6 +522,13 @@ const handleOptionsUpdate = (options: any) => {
     <AddNewUserDrawer
       v-model:isDrawerOpen="isAddNewUserDrawerVisible"
       @user-data="addNewUser"
+    />
+
+    <!-- 👉 Edit User -->
+    <EditUserDrawer
+      v-model:isDrawerOpen="isEditUserDrawerVisible"
+      :user-id="selectedUserId"
+      @user-updated="fetchUsers"
     />
   </section>
 </template>

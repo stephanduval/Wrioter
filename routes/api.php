@@ -38,10 +38,14 @@ Route::middleware('auth:api')->group(function () {
 });
 
 
-Route::middleware('auth:api')->get('/companies', [CompanyController::class, 'allCompanies']);
+Route::middleware('auth:api')->get('/companies/all', [CompanyController::class, 'allCompanies']);
 Route::middleware('auth:api')->get('/paginatedCompanies', [CompanyController::class, 'paginatedIndex']);
 
+Route::middleware('auth:api')->delete('/users/{id}', [UserController::class, 'deleteUser']);
 
 Route::middleware('auth:api')->get('/roles', [RolesController::class, 'index']);
 
 Route::post('/users', [UserController::class, 'addUser'])->name('users.store');
+Route::fallback(function () {
+    return view('welcome'); // This could be causing the HTML response.
+});

@@ -32,19 +32,31 @@ class CompanyController extends Controller
         return response()->json($transformedCompanies, 200, ['Content-Type' => 'application/json']);
     }
     public function allCompanies(Request $request)
-    {
-        \Log::info('CompanyController allCompanies method accessed'); // Add this for debugging
+{
+    \Log::info('CompanyController allCompanies method accessed'); // Debugging Log
+
+    \Log::info('CompanyController index method accessed');
         
-        $companies = Companies::query()  // Make sure you're using the new model name
+        // Fetch and sort companies by 'company_name' in ascending order
+        $companies = Company::query()
             ->when($request->get('q'), function ($query, $search) {
                 $query->where('company_name', 'like', "%{$search}%");
             })
-            ->orderBy('company_name', 'asc')
+            ->orderBy('company_name', 'asc') // Sort companies alphabetically
             ->get();
 
-        return response()->json($companies);
-    }
+        // Transform companies data
+        $transformedCompanies = $companies->map(function ($company) {
+            return [
+                'id' => $company->id,
+                'companyName' => $company->company_name,
+                'createdAt' => $company->created_at,
+                'updatedAt' => $company->updated_at,
+            ];
+        });
 
+        return response()->json($transformedCompanies, 200, ['Content-Type' => 'application/json']);
+}
     public function paginatedIndex(Request $request)
 {
     $validated = $request->validate([
