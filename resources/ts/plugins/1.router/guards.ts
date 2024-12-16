@@ -15,12 +15,11 @@ export const setupGuards = (router: _RouterTyped<RouteNamedMap & { [key: string]
     console.log('User Role:', userRole)
     console.log('Is Logged In:', isLoggedIn)
 
-    // 1. Allow access to public routes without checking login
-    if (to.meta.public) {
-      console.log('Public route, proceeding...')
-
-      return next()
-    }
+   // 1. Allow access to public routes (e.g., register, login) without checking login
+   if (to.meta.public || to.name === 'register' || to.name === 'login') {
+    console.log('Public or unauthenticated route, proceeding...')
+    return next()
+  }
 
     // 2. Redirect unauthenticated users to login page
     if (!isLoggedIn) {
