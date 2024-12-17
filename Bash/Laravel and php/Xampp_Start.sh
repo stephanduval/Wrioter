@@ -1,5 +1,1 @@
-sudo /opt/lampp/manager-linux-x64.run && exit
-
-
-
-
+sudo /opt/lampp/manager-linux-x64.run

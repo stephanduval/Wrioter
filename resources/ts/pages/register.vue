@@ -9,6 +9,8 @@ import { themeConfig } from '@themeConfig'
 
 import authV2RegisterIllustration from '@images/pages/auth-v2-register-illustration.png'
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
+
 definePage({
   meta: {
     layout: 'blank',
@@ -31,7 +33,7 @@ const router = useRouter()
 const register = async () => {
   errors.value = {}
   try {
-    const response = await fetch('http://127.0.0.1:8000/api/auth/register', {
+    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/register`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -213,5 +215,5 @@ const register = async () => {
 </template>
 
 <style lang="scss">
-@use "@core-scss/template/pages/page-auth.scss";
+@use "@core-scss/template/pages/page-auth";
 </style>
