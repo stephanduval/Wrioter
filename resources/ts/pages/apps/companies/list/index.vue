@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import AddNewCompanyDrawer from '@/views/apps/companies/list/AddNewCompanyDrawer.vue';
+import EditCompanyDrawer from '@/views/apps/companies/list/EditCompanyDrawer.vue';
 import { computed, onMounted, ref, watch } from 'vue';
 
 // 👉 Store
@@ -15,6 +16,9 @@ const sortBy = ref();
 const orderBy = ref();
 const selectedRows = ref([]);
 
+const isEditCompanyDrawerVisible = ref(false);
+const selectedCompanyId = ref<number | null>(null);
+
 // Drawers visibility state
 const isAddNewCompanyDrawerVisible = ref(false);
 
@@ -24,6 +28,12 @@ const headers = [
   { title: 'Status', key: 'status' },
   { title: 'Actions', key: 'actions', sortable: false, align: 'end' },
 ];
+
+// 👉 Open edit drawer
+const openEditCompanyDrawer = (companyId: number) => {
+  selectedCompanyId.value = companyId;
+  isEditCompanyDrawerVisible.value = true;
+};
 
 // 👉 Fetching companies
 const { data: companiesData, execute: fetchCompanies } = useApi(() => {
@@ -52,6 +62,8 @@ const handleCompanyData = (data: any) => {
   if (data.success) {
     console.log('Company added:', data.data)
     // Refetch companies or update the list
+    fetchCompanies();
+
   } else if (data.error) {
     console.error(data.error)
   }
@@ -72,14 +84,35 @@ watch(
   }
 );
 
-// 👉 Handle table actions
+// 👉 Delete Company
 const deleteCompany = async (id: number) => {
-  await $api(`/companies/${id}`, {
-    method: 'DELETE',
-  });
+  try {
+    const response = await fetch(`/api/companies/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+      },
+    })
 
-  fetchCompanies();
-};
+    if (!response.ok) throw new Error('Failed to delete company.')
+
+    console.log(`Company ${id} deleted successfully.`)
+
+    // Refetch companies after deletion
+    fetchCompanies()
+  } catch (error) {
+    console.error('Error deleting company:', error)
+  }
+}
+// 👉 Handle table actions
+// const deleteCompany = async (id: number) => {
+//   await $api(`/companies/${id}`, {
+//     method: 'DELETE',
+//   });
+
+//   fetchCompanies();
+// };
 
 // 👉 Update options
 const updateOptions = (options: any) => {
@@ -177,6 +210,13 @@ const updateOptions = (options: any) => {
     <!-- 👉 Add New Company Drawer -->
     <AddNewCompanyDrawer v-model:isDrawerOpen="isAddNewCompanyDrawerVisible" />
 
+    <!-- 👉 Edit Company Drawer -->
+    <EditCompanyDrawer
+      v-model:isDrawerOpen="isEditCompanyDrawerVisible"
+      :company-id="selectedCompanyId"
+      @company-updated="handleCompanyUpdated"
+    />
+
     <!-- 👉 Data Table -->
     <VCard class="mb-6">
       <VDataTableServer
@@ -198,6 +238,9 @@ const updateOptions = (options: any) => {
 
         <!-- Actions -->
         <template #item.actions="{ item }">
+          <VBtn icon variant="text" color="medium-emphasis" @click="openEditCompanyDrawer(item.id)">
+          <VIcon icon="bx-pencil" />
+        </VBtn>
           <IconBtn @click="deleteCompany(item.id)">
             <VIcon icon="bx-trash" />
           </IconBtn>
