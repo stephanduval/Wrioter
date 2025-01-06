@@ -1,0 +1,34 @@
+ssh -i /home/rogers/Code/Sneat-Test/Freynet-Gagne-Portal-AWS-Lightsail.pem bitnami@2600:1f14:392c:3500:7bde:54d4:c7ef:fc61
+
+
+default     
+sUA6dB=!/hu/
+public static IP: 44.244.84.149
+private static IP: 172.26.13.167
+
+log into DB:  escape password:
+bitnami@ip-172-26-13-167:~$ sudo mysql -u root -p sUA6dB=!/hu/
+
+CREATE DATABASE FreynetGagnePortal;
+CREATE USER 'FreynetGagnePortalAdmin'@'localhost' IDENTIFIED BY 'sUA6dB=!/hu/';
+GRANT ALL PRIVILEGES ON my_database.* TO 'FreynetGagnePortalAdmin'@'localhost';
+FLUSH PRIVILEGES;
+
+password: with the escape special char sUA6dB=\!/hu/
+
+FreynetGagne SSH key for GITHUB (On AWS server)
+passphrase: translate
+SHA256:9RYNQjSUFAL4vUOUNFI3AXKSYd9nCKqSNpVLtCDLicg stephan.duval@gmail.com
+The key's randomart image is:
++---[RSA 4096]----+
+|. . ..B*OB%+.    |
+|=o.o.+.Bo*.= o   |
+|+E  =..o. + + .  |
+|   + o. o. + .   |
+|  = o  .S.  o    |
+| . o    o  .     |
+|         .       |
+|                 |
+|                 |
++----[SHA256]-----+
+pem file password: translate

@@ -1,66 +1,40 @@
 <script setup lang="ts">
-import AddNewCompanyDrawer from '@/views/apps/companies/list/AddNewCompanyDrawer.vue'
+import AddNewCompanyDrawer from '@/views/apps/companies/list/AddNewCompanyDrawer.vue';
+import { computed, onMounted, ref, watch } from 'vue';
 
 // 👉 Store
-const searchQuery = ref('')
-const selectedRole = ref()
-const selectedPlan = ref()
-const selectedStatus = ref()
+const searchQuery = ref('');
+const selectedRole = ref();
+const selectedPlan = ref();
+const selectedStatus = ref();
 
 // Data table options
-const itemsPerPage = ref(10)
-const page = ref(1)
-const sortBy = ref()
-const orderBy = ref()
-const selectedRows = ref([])
+const itemsPerPage = ref(10);
+const page = ref(1);
+const sortBy = ref();
+const orderBy = ref();
+const selectedRows = ref([]);
 
-// Update data table options
-const updateOptions = (options: any) => {
-  console.log('Options received:', options)
-
-  // Update sorting
-  if (options.sortBy?.length) {
-    sortBy.value = options.sortBy[0]?.key
-    orderBy.value = options.sortBy[0]?.order
-  }
-
-  // Update pagination
-  page.value = options.page || 1
-  itemsPerPage.value = options.itemsPerPage || 10
-
-  console.log('Updated options:', {
-    page: page.value,
-    itemsPerPage: itemsPerPage.value,
-    sortBy: sortBy.value,
-    orderBy: orderBy.value,
-  })
-
-  // Trigger API fetch
-  fetchCompanies()
-}
+// Drawers visibility state
+const isAddNewCompanyDrawerVisible = ref(false);
 
 // Headers
 const headers = [
   { title: 'Company Name', key: 'companyName' },
   { title: 'Status', key: 'status' },
   { title: 'Actions', key: 'actions', sortable: false, align: 'end' },
-]
-
-console.log('users Page loaded')
+];
 
 // 👉 Fetching companies
 const { data: companiesData, execute: fetchCompanies } = useApi(() => {
   const params = new URLSearchParams({
     page: String(page.value),
     itemsPerPage: String(itemsPerPage.value),
-  }).toString()
+  }).toString();
 
-  const token = localStorage.getItem('accessToken')
+  const token = localStorage.getItem('accessToken');
 
-  console.log('Access Token:', token)
-  console.log('API URL:', `/paginatedCompanies?${params}`)
-
-  return `/paginatedCompanies?${params}`
+  return `/paginatedCompanies?${params}`;
 }, {
   method: 'GET',
   headers: {
@@ -68,146 +42,92 @@ const { data: companiesData, execute: fetchCompanies } = useApi(() => {
     'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
   },
   credentials: 'include',
-})
+});
 
-// Add this to store pagination metadata
-const paginationMeta = ref({
-  currentPage: 1,
-  lastPage: 1,
-  total: 0,
-  perPage: 10,
-  from: 0,
-  to: 0,
-})
+const companies = computed(() => companiesData.value?.data || []);
+const totalCompanies = computed(() => companiesData.value?.total || 0);
 
-// Watch for changes in companiesData to update pagination
-watch(companiesData, data => {
-  if (data) {
-    paginationMeta.value = {
-      currentPage: data.current_page,
-      lastPage: data.last_page,
-      total: data.total,
-      perPage: data.per_page,
-      from: data.from,
-      to: data.to,
-    }
+onMounted(async () => {
+  try {
+    await fetchCompanies();
+  } catch (error) {
+    console.error('Error fetching companies:', error);
   }
-}, { immediate: true })
+});
 
 watch(
   [searchQuery, selectedRole, selectedPlan, selectedStatus, itemsPerPage, page, sortBy, orderBy],
   () => {
-    fetchCompanies()
-  },
-)
-
-const companies = computed(() => companiesData.value?.data || [])
-const totalCompanies = computed(() => companiesData.value?.total || 0)
-
-onMounted(async () => {
-  try {
-    console.log('Fetching companies...')
-    await fetchCompanies()
-    console.log('Companies fetched:', companiesData.value)
+    fetchCompanies();
   }
-  catch (error) {
-    console.error('Error fetching companies:', error)
-  }
-})
+);
 
-const resolveUserStatusVariant = (status: string) => {
-  if (!status)
-    return 'secondary'
-
-  switch (status.toLowerCase()) {
-    case 'pending':
-      return 'warning'
-  case 'active':
-      return 'success'
-  case 'inactive':
-      return 'secondary'
-  default:
-      return 'secondary'
-  }
-}
-
-const isAddNewCompanyDrawerVisible = ref(false)
-
-// 👉 Add new user
-const addNewUser = async (userData: any) => {
-  await $api('/apps/users', {
-    method: 'POST',
-    body: userData,
-  })
-
-  // Refetch User
-  fetchUsers()
-}
-
-// 👉 Delete user
+// 👉 Handle table actions
 const deleteCompany = async (id: number) => {
   await $api(`/companies/${id}`, {
     method: 'DELETE',
-  })
+  });
 
-  // Remove from selectedRows
-  const index = selectedRows.value.findIndex(row => row === id)
-  if (index !== -1)
-    selectedRows.value.splice(index, 1)
+  fetchCompanies();
+};
 
-  // Refetch companies
-  fetchCompanies()
-}
-
-// Add this near your other useApi calls
-const { data: testData, execute: testApiCall } = useApi('/users?page=2&itemsPerPage=10', {
-  method: 'GET',
-  headers: {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-  },
-  credentials: 'include',
-})
-
-// Add this to log the results
-watch(testData, newData => {
-  console.log('Test API Response:', newData)
-}, { immediate: true })
-
-// Call it on mount
-onMounted(async () => {
-  console.log('Making test API call...')
-  await testApiCall()
-
-  // Your existing code...
-  fetchCompanies()
-})
-
-// Update the options handler
-const handleOptionsUpdate = (options: any) => {
-  console.log('Options received:', options)
-
-  const newOptions = {
-    page: options.page || 1,
-    itemsPerPage: options.itemsPerPage || 10,
-    sortBy: options.sortBy?.[0],
-    orderBy: options.sortBy?.[0]?.order,
+// 👉 Update options
+const updateOptions = (options: any) => {
+  if (options.sortBy?.length) {
+    sortBy.value = options.sortBy[0]?.key;
+    orderBy.value = options.sortBy[0]?.order;
   }
 
-  console.log('Updated options:', newOptions)
+  page.value = options.page || 1;
+  itemsPerPage.value = options.itemsPerPage || 10;
 
-  // Only fetch if page or itemsPerPage changed
-  if (page.value !== newOptions.page || itemsPerPage.value !== newOptions.itemsPerPage) {
-    page.value = newOptions.page
-    itemsPerPage.value = newOptions.itemsPerPage
-    fetchCompanies()
-  }
-}
+  fetchCompanies();
+};
 </script>
 
 <template>
   <section>
+    <!-- 👉 Filters and Actions -->
     <VCard class="mb-6">
+      <VCardItem class="pb-4">
+        <VCardTitle>Filters</VCardTitle>
+      </VCardItem>
+
+      <VCardText>
+        <VRow>
+          <!-- 👉 Select Role -->
+          <VCol cols="12" sm="4">
+            <AppSelect
+              v-model="selectedRole"
+              placeholder="Select Role"
+              :items="roles"
+              clearable
+              clear-icon="bx-x"
+            />
+          </VCol>
+          <!-- 👉 Select Plan -->
+          <VCol cols="12" sm="4">
+            <AppSelect
+              v-model="selectedPlan"
+              placeholder="Select Plan"
+              :items="plans"
+              clearable
+              clear-icon="bx-x"
+            />
+          </VCol>
+          <!-- 👉 Select Status -->
+          <VCol cols="12" sm="4">
+            <AppSelect
+              v-model="selectedStatus"
+              placeholder="Select Status"
+              :items="status"
+              clearable
+              clear-icon="bx-x"
+            />
+          </VCol>
+        </VRow>
+      </VCardText>
+
       <VDivider />
 
       <VCardText class="d-flex flex-wrap gap-4">
@@ -230,24 +150,10 @@ const handleOptionsUpdate = (options: any) => {
         <div class="app-user-search-filter d-flex align-center flex-wrap gap-4">
           <!-- 👉 Search  -->
           <div style="inline-size: 15.625rem;">
-            <AppTextField
-              v-model="searchQuery"
-              placeholder="Search User"
-            />
+            <AppTextField v-model="searchQuery" placeholder="Search Company" />
           </div>
 
-          <!--
-            👉 Export button
-            <VBtn
-            variant="tonal"
-            color="secondary"
-            prepend-icon="bx-export"
-            >
-            Export
-            </VBtn>
-          -->
-
-          <!-- 👉 Add user button -->
+          <!-- 👉 Add New Company Button -->
           <VBtn
             prepend-icon="bx-plus"
             @click="isAddNewCompanyDrawerVisible = true"
@@ -256,9 +162,13 @@ const handleOptionsUpdate = (options: any) => {
           </VBtn>
         </div>
       </VCardText>
-      <VDivider />
+    </VCard>
 
-      <!-- SECTION datatable -->
+    <!-- 👉 Add New Company Drawer -->
+    <AddNewCompanyDrawer v-model:isDrawerOpen="isAddNewCompanyDrawerVisible" />
+
+    <!-- 👉 Data Table -->
+    <VCard class="mb-6">
       <VDataTableServer
         v-model:items-per-page="itemsPerPage"
         v-model:model-value="selectedRows"
@@ -271,23 +181,9 @@ const handleOptionsUpdate = (options: any) => {
         show-select
         @update:options="updateOptions"
       >
-        <!-- Company -->
+        <!-- Company Name -->
         <template #item.companyName="{ item }">
-          <h6 class="text-base">
-            {{ item.companyName }}
-          </h6>
-        </template>
-
-        <!-- Status -->
-        <template #item.status="{ item }">
-          <VChip
-            :color="resolveUserStatusVariant(item.status)"
-            size="small"
-            label
-            class="text-capitalize"
-          >
-            {{ item.status }}
-          </VChip>
+          <h6 class="text-base">{{ item.companyName }}</h6>
         </template>
 
         <!-- Actions -->
@@ -295,53 +191,124 @@ const handleOptionsUpdate = (options: any) => {
           <IconBtn @click="deleteCompany(item.id)">
             <VIcon icon="bx-trash" />
           </IconBtn>
-
-          <IconBtn>
-            <VIcon icon="bx-show" />
-          </IconBtn>
-
-          <VBtn
-            icon
-            variant="text"
-            color="medium-emphasis"
-          >
-            <VIcon icon="bx-dots-vertical-rounded" />
-            <VMenu activator="parent">
-              <VList>
-                <VListItem :to="{ name: 'apps-user-view-id', params: { id: item.id } }">
-                  <template #prepend>
-                    <VIcon icon="bx-show" />
-                  </template>
-
-                  <VListItemTitle>View</VListItemTitle>
-                </VListItem>
-
-                <VListItem link>
-                  <template #prepend>
-                    <VIcon icon="bx-pencil" />
-                  </template>
-                  <VListItemTitle>Edit</VListItemTitle>
-                </VListItem>
-              </VList>
-            </VMenu>
-          </VBtn>
-        </template>
-
-        <!-- pagination -->
-        <template #bottom>
-          <TablePagination
-            v-model:page="page"
-            :items-per-page="itemsPerPage"
-            :total-items="totalCompanies"
-          />
         </template>
       </VDataTableServer>
-      <!-- SECTION -->
     </VCard>
-    <!-- 👉 Add New User -->
-    <AddNewCompanyDrawer
-      v-model:isDrawerOpen="isAddNewCompanyDrawerVisible"
-      @user-data="addNewUser"
-    />
   </section>
 </template>
+
+
+<!-- <script setup lang="ts">
+import { computed, onMounted, ref } from 'vue';
+
+// 👉 Store
+const searchQuery = ref('');
+const selectedRole = ref();
+const selectedPlan = ref();
+const selectedStatus = ref();
+
+// Data table options
+const itemsPerPage = ref(10);
+const page = ref(1);
+const sortBy = ref();
+const orderBy = ref();
+const selectedRows = ref([]);
+
+// Drawer visibility
+const isAddNewCompanyDrawerVisible = ref(false); // Controls the drawer visibility
+
+// Fetching companies logic remains the same
+const { data: companiesData, execute: fetchCompanies } = useApi(() => {
+  const params = new URLSearchParams({
+    page: String(page.value),
+    itemsPerPage: String(itemsPerPage.value),
+  }).toString();
+
+  const token = localStorage.getItem('accessToken');
+
+  return `/paginatedCompanies?${params}`;
+}, {
+  method: 'GET',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+  },
+  credentials: 'include',
+});
+
+const companies = computed(() => companiesData.value?.data || []);
+const totalCompanies = computed(() => companiesData.value?.total || 0);
+
+onMounted(async () => {
+  try {
+    await fetchCompanies();
+  } catch (error) {
+    console.error('Error fetching companies:', error);
+  }
+});
+
+// Handle table actions
+const deleteCompany = async (id: number) => {
+  await $api(`/companies/${id}`, {
+    method: 'DELETE',
+  });
+
+  fetchCompanies();
+};
+</script>
+<template>
+  <section>
+  -->
+    <!-- Add New Company Button -->
+   <!-- <VBtn
+    prepend-icon="bx-plus"
+    @click="isAddNewCompanyDrawerVisible = true"
+  >
+    Add New Company
+  </VBtn>
+
+  <VCard class="mb-6">
+    <VDivider />
+-->
+    <!-- Data Table -->
+    <!--
+    <VDataTableServer
+      v-model:items-per-page="itemsPerPage"
+      v-model:model-value="selectedRows"
+      v-model:page="page"
+      :items="companies"
+      item-value="id"
+      :items-length="totalCompanies"
+      :headers="[
+        { title: 'Company Name', key: 'companyName' },
+        { title: 'Status', key: 'status' },
+        { title: 'Actions', key: 'actions', sortable: false, align: 'end' },
+      ]"
+      class="text-no-wrap"
+      show-select
+    >
+      <template #item.companyName="{ item }">
+        <h6 class="text-base">{{ item.companyName }}</h6>
+      </template>
+
+      <template #item.actions="{ item }">
+        <VBtn
+          icon
+          variant="text"
+          color="medium-emphasis"
+          @click="deleteCompany(item.id)"
+        >
+          <VIcon icon="bx-trash" />
+        </VBtn>
+      </template>
+    </VDataTableServer>
+  </VCard>
+-->
+  <!-- Add New Company Drawer -->
+   <!--
+  <AddNewCompanyDrawer
+    v-model:isDrawerOpen="isAddNewCompanyDrawerVisible"
+  />
+</section>
+</template>
+-->

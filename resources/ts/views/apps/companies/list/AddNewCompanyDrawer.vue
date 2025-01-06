@@ -1,4 +1,67 @@
 <script setup lang="ts">
+import { defineEmits, defineProps } from 'vue';
+
+// Define props
+const props = defineProps({
+  isDrawerOpen: {
+    type: Boolean,
+    required: true,
+  },
+});
+
+// Define emits
+const emit = defineEmits(['update:isDrawerOpen']);
+
+// Close Drawer
+const closeDrawer = () => {
+  emit('update:isDrawerOpen', false);
+};
+</script>
+
+<template>
+  <VNavigationDrawer
+    v-model="props.isDrawerOpen"
+    temporary
+    :width="400"
+    location="end"
+    border="none"
+  >
+    <AppDrawerHeaderSection
+      title="Add New Company"
+      @cancel="closeDrawer"
+    />
+
+    <VDivider />
+
+    <VCardText>
+      <VRow>
+        <!-- Company Name Input -->
+        <VCol cols="12">
+          <AppTextField
+            label="Company Name"
+            placeholder="Enter company name"
+          />
+        </VCol>
+
+        <!-- Submit and Cancel Buttons -->
+        <VCol cols="12">
+          <VBtn class="me-4" @click="closeDrawer">
+            Submit
+          </VBtn>
+          <VBtn variant="tonal" color="error" @click="closeDrawer">
+            Cancel
+          </VBtn>
+        </VCol>
+      </VRow>
+    </VCardText>
+  </VNavigationDrawer>
+</template>
+
+
+
+<!-- Old working Script
+
+<script setup lang="ts">
 import { computed, nextTick, onMounted, ref } from 'vue'
 
 import type { VForm } from 'vuetify/components/VForm'
@@ -154,3 +217,4 @@ const handleDrawerModelValueUpdate = (val: boolean) => {
   emit('update:isDrawerOpen', val)
 }
 </script>
+ -->
