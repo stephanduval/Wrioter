@@ -86,4 +86,29 @@ class CompanyController extends Controller
 
     return response()->json($paginatedResponse);
 }
+public function addCompany(Request $request)
+{
+    \Log::info('Add Company Request: ', $request->all());
+
+    $validated = $request->validate([
+        'company_name' => 'required|string|max:255|unique:companies,company_name',
+    ]);
+
+    try {
+        $company = Company::create([
+            'company_name' => $validated['company_name'],
+        ]);
+
+        \Log::info('Company created: ', ['id' => $company->id]);
+
+        return response()->json(['message' => 'Company created successfully.', 'company' => $company], 201);
+    } catch (\Exception $e) {
+        \Log::error('Error adding company: ', [
+            'message' => $e->getMessage(),
+            'trace' => $e->getTraceAsString(),
+        ]);
+
+        return response()->json(['error' => 'Failed to create company.', 'details' => $e->getMessage()], 500);
+    }
+}
 }

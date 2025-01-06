@@ -45,6 +45,8 @@ Route::middleware('auth:api')->get('/email', [EmailController::class, 'index']);
 Route::middleware('auth:api')->group(function () {
     Route::get('/companies/all', [CompanyController::class, 'allCompanies']);
     Route::get('/paginatedCompanies', [CompanyController::class, 'paginatedIndex']);
+    Route::post('/companies', [CompanyController::class, 'addCompany']);
+
 });
 
 // Role Management Routes

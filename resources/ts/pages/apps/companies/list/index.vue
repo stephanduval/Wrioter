@@ -47,6 +47,16 @@ const { data: companiesData, execute: fetchCompanies } = useApi(() => {
 const companies = computed(() => companiesData.value?.data || []);
 const totalCompanies = computed(() => companiesData.value?.total || 0);
 
+// Handle Add Company Result
+const handleCompanyData = (data: any) => {
+  if (data.success) {
+    console.log('Company added:', data.data)
+    // Refetch companies or update the list
+  } else if (data.error) {
+    console.error(data.error)
+  }
+}
+
 onMounted(async () => {
   try {
     await fetchCompanies();
