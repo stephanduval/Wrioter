@@ -58,3 +58,16 @@ Route::middleware('auth:api')->get('/roles', [RolesController::class, 'index']);
 Route::fallback(function () {
     return response()->json(['message' => 'Resource not found.'], 404);
 });
+
+Route::get('/diagnostic', function (Request $request) {
+    \Log::info('Diagnostic route hit', ['url' => $request->fullUrl()]);
+    return response()->json([
+        'status' => 'success',
+        'environment' => app()->environment(),
+        'app_url' => config('app.url'),
+        'api_url' => $request->fullUrl(),
+        'db_connection' => config('database.default'),
+        'db_host' => config('database.connections.mysql.host'),
+        'db_name' => config('database.connections.mysql.database'),
+    ]);
+});

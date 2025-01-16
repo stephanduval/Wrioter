@@ -94,7 +94,7 @@ export default defineConfig({
     },
   },
   build: {
-    outDir: 'public/build',
+    outDir: 'public',
     chunkSizeWarningLimit: 5000,
   },
   optimizeDeps: {
