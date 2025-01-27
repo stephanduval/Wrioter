@@ -45,6 +45,10 @@ Route::middleware('auth:api')->get('/email', [EmailController::class, 'index']);
 Route::middleware('auth:api')->group(function () {
     Route::get('/companies/all', [CompanyController::class, 'allCompanies']);
     Route::get('/paginatedCompanies', [CompanyController::class, 'paginatedIndex']);
+    Route::post('/companies', [CompanyController::class, 'addCompany']);
+    Route::delete('/companies/{id}', [CompanyController::class, 'deleteCompany']);
+    Route::get('/companies/{id}', [CompanyController::class, 'showCompany']);
+    Route::put('/companies/{id}', [CompanyController::class, 'updateCompany']);
 });
 
 // Role Management Routes
@@ -53,4 +57,17 @@ Route::middleware('auth:api')->get('/roles', [RolesController::class, 'index']);
 // Fallback Route
 Route::fallback(function () {
     return response()->json(['message' => 'Resource not found.'], 404);
+});
+
+Route::get('/diagnostic', function (Request $request) {
+    \Log::info('Diagnostic route hit', ['url' => $request->fullUrl()]);
+    return response()->json([
+        'status' => 'success',
+        'environment' => app()->environment(),
+        'app_url' => config('app.url'),
+        'api_url' => $request->fullUrl(),
+        'db_connection' => config('database.default'),
+        'db_host' => config('database.connections.mysql.host'),
+        'db_name' => config('database.connections.mysql.database'),
+    ]);
 });

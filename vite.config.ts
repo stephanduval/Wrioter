@@ -13,6 +13,7 @@ import svgLoader from 'vite-svg-loader'
 
 // https://vitejs.dev/config/
 export default defineConfig({
+
   plugins: [// Docs: https://github.com/posva/unplugin-vue-router
   // ℹ️ This plugin should be placed before vue plugin
     VueRouter({
@@ -77,7 +78,7 @@ export default defineConfig({
     }),
     svgLoader(),
   ],
-  define: { 'process.env': {} },
+  define: { 'process.env': {VITE_API_URL: process.env.VITE_API_URL,} },
   resolve: {
     alias: {
       '@core-scss': fileURLToPath(new URL('./resources/styles/@core', import.meta.url)),
@@ -93,6 +94,7 @@ export default defineConfig({
     },
   },
   build: {
+    outDir: 'public',
     chunkSizeWarningLimit: 5000,
   },
   optimizeDeps: {

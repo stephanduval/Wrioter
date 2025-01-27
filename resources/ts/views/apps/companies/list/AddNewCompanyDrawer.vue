@@ -1,156 +1,95 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref } from 'vue'
+import { defineEmits, defineProps, ref } from 'vue'
 
-import type { VForm } from 'vuetify/components/VForm'
+// Props and Emits
+const props = defineProps({
+  isDrawerOpen: {
+    type: Boolean,
+    required: true,
+  },
+})
+const emit = defineEmits(['update:isDrawerOpen', 'companyData'])
 
-interface Emit {
-  (e: 'update:isDrawerOpen', value: boolean): void
-  (e: 'userData', value: any): void
-}
-
-interface Props {
-  isDrawerOpen: boolean
-}
-
-interface Company {
-  id: number
-  name: string
-}
-
-interface Role {
-  id: number
-  name: string
-}
-
-const props = defineProps<Props>()
-const emit = defineEmits<Emit>()
-
+// Form Fields
+const companyName = ref('')
 const isFormValid = ref(false)
-const refForm = ref<VForm | null>(null)
-
-const userName = ref('')
-const email = ref('')
-const company = ref<string | null>(null) // Selected company name
-const role = ref<string | null>(null) // Selected role name
-
-const companies = ref<Company[]>([]) // Array to store companies
-const roles = ref<Role[]>([]) // Array to store roles
-
-// Computed properties
-const companyNames = computed(() => companies.value.map(c => c.name))
-const roleNames = computed(() => roles.value.map(r => r.name))
 
 // Validators
-const requiredValidator = (value: string | number | null) => !!value || 'This field is required.'
+const requiredValidator = (value: string | null) => !!value || 'This field is required.'
 
-const emailValidator = (value: string | null) =>
-  /^[^\s@]+@[^\s.@]*\.[^\s@]+$/.test(value || '') || 'Enter a valid email.'
-
-// Fetch companies and roles on component mount
-onMounted(async () => {
-  try {
-    const token = localStorage.getItem('accessToken')
-
-    const headers = {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
-    }
-
-    // Fetch companies
-    console.log('Fetching companies...')
-
-    const companiesResponse = await fetch('/api/companies', { method: 'GET', headers })
-
-    if (!companiesResponse.ok) {
-      console.error('Failed to fetch companies:', companiesResponse.statusText)
-      throw new Error('Failed to fetch companies.')
-    }
-
-    const companiesData = await companiesResponse.json()
-
-    companies.value = companiesData.map((comp: { id: number; companyName: string }) => ({
-      id: comp.id,
-      name: comp.companyName,
-    }))
-    console.log('Companies fetched:', companies.value)
-
-    // Fetch roles
-    console.log('Fetching roles...')
-
-    const rolesResponse = await fetch('/api/roles', { method: 'GET', headers })
-
-    if (!rolesResponse.ok) {
-      console.error('Failed to fetch roles:', rolesResponse.statusText)
-      throw new Error('Failed to fetch roles.')
-    }
-
-    const rolesData = await rolesResponse.json()
-
-    roles.value = rolesData.map((r: { id: number; name: string }) => ({
-      id: r.id,
-      name: r.name,
-    }))
-    console.log('Roles fetched:', roles.value)
-  }
-  catch (error) {
-    console.error('Error fetching data:', error)
-    emit('userData', { error: 'Unable to load data. Please try again later.' })
-  }
-})
-
-// Drawer close handler
-const closeNavigationDrawer = () => {
+// Close Drawer
+const closeDrawer = () => {
   emit('update:isDrawerOpen', false)
-  nextTick(() => {
-    refForm.value?.reset()
-    refForm.value?.resetValidation()
-  })
+  companyName.value = '' // Reset field
 }
 
-// Form submission
+// Form Submission
 const onSubmit = async () => {
-  const formData = {
-    name: userName.value,
-    email: email.value,
-    password: 'password123', // Generate or input a secure temp password
-    company_id: companies.value.find(c => c.name === company.value)?.id,
-    role_id: roles.value.find(r => r.name === role.value)?.id,
+  if (!companyName.value.trim()) {
+    console.error('Company name is required')
+    return
   }
 
-  console.log('Submitting form data:', formData)
+  try {
+    const response = await fetch('/api/companies', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+      },
+      body: JSON.stringify({
+        company_name: companyName.value.trim(),
+      }),
+    })
 
-  refForm.value?.validate().then(async ({ valid }) => {
-    if (valid) {
-      try {
-        const response = await fetch('/api/users', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-          },
-          body: JSON.stringify(formData),
-        })
+    if (!response.ok) throw new Error('Failed to create company.')
 
-        if (!response.ok) {
-          console.error('Failed to create user:', response.statusText)
-          throw new Error('Failed to create user.')
-        }
+    const result = await response.json()
 
-        const result = await response.json()
-
-        console.log('User created successfully:', result)
-        emit('userData', { success: 'User created successfully!' })
-        closeNavigationDrawer()
-      }
-      catch (error) {
-        console.error('Error:', error)
-        emit('userData', { error: 'Failed to create user. Please try again.' })
-      }
-    }
-  })
-}
-
-const handleDrawerModelValueUpdate = (val: boolean) => {
-  emit('update:isDrawerOpen', val)
+    emit('companyData', { success: 'Company created successfully!', data: result })
+    closeDrawer()
+  } catch (error) {
+    console.error('Error adding company:', error)
+    emit('companyData', { error: 'Failed to create company. Please try again.' })
+  }
 }
 </script>
+
+<template>
+  <VNavigationDrawer
+    v-model="props.isDrawerOpen"
+    temporary
+    :width="400"
+    location="end"
+    border="none"
+  >
+    <AppDrawerHeaderSection
+      title="Add New Company"
+      @cancel="closeDrawer"
+    />
+
+    <VDivider />
+
+    <VCardText>
+      <VForm v-model="isFormValid" @submit.prevent="onSubmit">
+        <VRow>
+          <!-- Company Name -->
+          <VCol cols="12">
+            <AppTextField
+              v-model="companyName"
+              :rules="[requiredValidator]"
+              label="Company Name"
+              placeholder="Enter company name"
+            />
+          </VCol>
+
+          <!-- Submit and Cancel -->
+          <VCol cols="12">
+            <VBtn type="submit" class="me-4">Submit</VBtn>
+            <VBtn variant="tonal" color="error" @click="closeDrawer">Cancel</VBtn>
+          </VCol>
+        </VRow>
+      </VForm>
+    </VCardText>
+  </VNavigationDrawer>
+</template>
