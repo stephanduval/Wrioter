@@ -201,14 +201,7 @@ class AuthController extends Controller
 
 protected function unauthenticated($request, array $guards)
 {
-    \Log::error('Unauthorized request', [
-        'headers' => $request->headers->all(),
-        'token' => $request->header('Authorization'),
-    ]);
-
-    throw new AuthenticationException(
-        'Unauthenticated.', $guards, $this->redirectTo($request)
-    );
+    return response()->json(['message' => 'Unauthenticated.'], 401);
 }
 
 
