@@ -62,4 +62,3 @@ Route::fallback(function () {
 Route::get('/diagnostic', function (Request $request) {
     return response()->json(['message' => 'API is up', 'user' => $request->user()]);
 });
-
