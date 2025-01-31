@@ -60,14 +60,6 @@ Route::fallback(function () {
 });
 
 Route::get('/diagnostic', function (Request $request) {
-    \Log::info('Diagnostic route hit', ['url' => $request->fullUrl()]);
-    return response()->json([
-        'status' => 'success',
-        'environment' => app()->environment(),
-        'app_url' => config('app.url'),
-        'api_url' => $request->fullUrl(),
-        'db_connection' => config('database.default'),
-        'db_host' => config('database.connections.mysql.host'),
-        'db_name' => config('database.connections.mysql.database'),
-    ]);
+    return response()->json(['message' => 'API is up', 'user' => $request->user()]);
 });
+

@@ -43,7 +43,8 @@ return [
         'api' => [
             'driver' => 'passport',
         'provider' => 'users',
-        'hash' => false,
+        // Hashing the api breaks authentication
+        // 'hash' => false,
         ],
     ],
 

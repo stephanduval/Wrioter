@@ -58,6 +58,8 @@ const { data: usersData, execute: fetchUsers } = useApi(() => {
   }).toString()
 
   const token = localStorage.getItem('accessToken')
+  console.log('Access Token before API call:', token) // Debugging line
+
 
   console.log('Access Token:', token)
   console.log('API URL:', `/users?${params}`)
