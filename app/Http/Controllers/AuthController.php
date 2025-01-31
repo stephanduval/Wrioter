@@ -199,5 +199,17 @@ class AuthController extends Controller
     return response()->json(['message' => 'Unable to log out.'], 401);
 }
 
+protected function unauthenticated($request, array $guards)
+{
+    \Log::error('Unauthorized request', [
+        'headers' => $request->headers->all(),
+        'token' => $request->header('Authorization'),
+    ]);
+
+    throw new AuthenticationException(
+        'Unauthenticated.', $guards, $this->redirectTo($request)
+    );
+}
+
 
 }

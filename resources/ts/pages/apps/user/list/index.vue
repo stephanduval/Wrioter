@@ -50,7 +50,14 @@ const headers = [
   { title: 'Actions', key: 'actions', sortable: false },
 ]
 
+
+//   GPT FETCH USERCODE START
+
+
+// GPT CODE END
+
 // 👉 Fetching users
+
 const { data: usersData, execute: fetchUsers } = useApi(() => {
   const params = new URLSearchParams({
     page: String(page.value),
