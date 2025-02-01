@@ -13,17 +13,16 @@ import svgLoader from 'vite-svg-loader'
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  base: '/', // Ensure correct base path for history mode
 
-  plugins: [// Docs: https://github.com/posva/unplugin-vue-router
-  // ℹ️ This plugin should be placed before vue plugin
+  plugins: [
+    // Vue Router plugin should be placed before Vue plugin
     VueRouter({
       getRouteName: routeNode => {
-      // Convert pascal case to kebab case
         return getPascalCaseRouteName(routeNode)
           .replace(/([a-z\d])([A-Z])/g, '$1-$2')
           .toLowerCase()
       },
-
       routesFolder: 'resources/ts/pages',
     }),
     vue({
@@ -31,7 +30,6 @@ export default defineConfig({
         compilerOptions: {
           isCustomElement: tag => tag === 'swiper-container' || tag === 'swiper-slide',
         },
-
         transformAssetUrls: {
           base: null,
           includeAbsolute: false,
@@ -41,28 +39,27 @@ export default defineConfig({
     laravel({
       input: ['resources/ts/main.ts'],
       refresh: true,
-      buildDirectory: 'public',
+      buildDirectory: 'public/build', // Ensure Laravel serves the correct build
     }),
-    vueJsx(), // Docs: https://github.com/vuetifyjs/vuetify-loader/tree/master/packages/vite-plugin
+    vueJsx(),
     vuetify({
       styles: {
         configFile: 'resources/styles/variables/_vuetify.scss',
       },
-    }), // Docs: https://github.com/johncampionjr/vite-plugin-vue-layouts#vite-plugin-vue-layouts
+    }),
     Layouts({
       layoutsDirs: './resources/ts/layouts/',
-    }), // Docs: https://github.com/antfu/unplugin-vue-components#unplugin-vue-components
+    }),
     Components({
       dirs: ['resources/ts/@core/components', 'resources/ts/views/demos', 'resources/ts/components'],
       dts: true,
       resolvers: [
         componentName => {
-        // Auto import `VueApexCharts`
           if (componentName === 'VueApexCharts')
             return { name: 'default', from: 'vue3-apexcharts', as: 'VueApexCharts' }
         },
       ],
-    }), // Docs: https://github.com/antfu/unplugin-auto-import#unplugin-auto-import
+    }),
     AutoImport({
       imports: ['vue', VueRouterAutoImports, '@vueuse/core', '@vueuse/math', 'vue-i18n', 'pinia'],
       dirs: [
@@ -73,13 +70,13 @@ export default defineConfig({
         './resources/ts/plugins/*/composables/*',
       ],
       vueTemplate: true,
-
-      // ℹ️ Disabled to avoid confusion & accidental usage
       ignore: ['useCookies', 'useStorage'],
     }),
     svgLoader(),
   ],
-  define: { 'process.env': {VITE_API_URL: process.env.VITE_API_URL,} },
+
+  define: { 'process.env': { VITE_API_URL: process.env.VITE_API_URL } },
+
   resolve: {
     alias: {
       '@core-scss': fileURLToPath(new URL('./resources/styles/@core', import.meta.url)),
@@ -94,17 +91,18 @@ export default defineConfig({
       '@api-utils': fileURLToPath(new URL('./resources/ts/plugins/fake-api/utils/', import.meta.url)),
     },
   },
+
   build: {
-    outDir: 'public',
+    outDir: 'public/build',
     chunkSizeWarningLimit: 5000,
+    emptyOutDir: false, // Prevents deleting non-build files
     rollupOptions: {
-      input: 'resources/ts/main.ts', // Ensure correct entry file
+      input: 'resources/ts/main.ts',
     },
   },
+
   optimizeDeps: {
     exclude: ['vuetify'],
-    entries: [
-      './resources/ts/**/*.vue',
-    ],
+    entries: ['./resources/ts/**/*.vue'],
   },
-})
+});
