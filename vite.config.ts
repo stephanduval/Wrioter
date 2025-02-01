@@ -97,6 +97,9 @@ export default defineConfig({
   build: {
     outDir: 'public',
     chunkSizeWarningLimit: 5000,
+    rollupOptions: {
+      input: 'resources/ts/main.ts', // Ensure correct entry file
+    },
   },
   optimizeDeps: {
     exclude: ['vuetify'],
