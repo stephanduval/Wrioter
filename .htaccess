@@ -15,4 +15,3 @@
     # Default rule to redirect root requests to public/index.php
     RewriteRule ^(/)?$ public/index.php [L]
 </IfModule>
-
