@@ -1,29 +1,57 @@
 #!/bin/bash
 
-# Step 1: Concatenate all files into a single text file
-find app bootstrap config database routes .env vite.config.ts \
-    ~/Code/Sneat-Test/resources/ts/pages/apps/user \
-    ~/Code/Sneat-Test/resources/ts/views/apps/user \
-    ~/Code/Sneat-Test/resources/ts/pages/apps/companies \
-    ~/Code/Sneat-Test/resources/ts/views/apps/companies \
-    ~/Code/Sneat-Test/resources/js \
-    -type f -exec cat {} + > all_contents.txt
+# Output file
+output_file="all_contents.txt"
 
-# Step 2: Convert the text file to a PDF (optional)
-pandoc all_contents.txt -o all_contents.pdf
+# Clear the output file if it already exists
+> "$output_file"
 
-# Step 3: Compare the sizes of the text file and the PDF
-txt_size=$(du -h all_contents.txt | awk '{print $1}')
-pdf_size=$(du -h all_contents.pdf | awk '{print $1}')
+# Function to append file contents with a label
+append_file() {
+    local file="$1"
+    echo "===== File: $file =====" >> "$output_file"
+    cat "$file" >> "$output_file"
+    echo -e "\n\n" >> "$output_file"  # Add spacing between files
+}
 
-echo "Text file size: $txt_size"
-echo "PDF file size: $pdf_size"
+# Step 1: Include ProjectDirectory.txt in the root directory
+#if [[ -f "ProjectDirectory.txt" ]]; then
+#    append_file "ProjectDirectory.txt"
+#else
+#    echo "Warning: ProjectDirectory.txt not found in the root directory."
+#fi
 
-# Step 4: Decide which file to keep based on size
-if [[ $(echo "$txt_size < $pdf_size" | bc) -eq 1 ]]; then
-    echo "Text file is smaller. Keeping all_contents.txt"
-    rm all_contents.pdf
-else
-    echo "PDF file is smaller. Keeping all_contents.pdf"
-    rm all_contents.txt
-fi
+# Step 2: Include all files in the specified directories
+directories=(
+    "app"
+    "bootstrap"
+    "config"
+    "database"
+    "routes"
+    ".env"
+    "vite.config.ts"
+    "$HOME/Code/Sneat-Test/resources/ts/pages/apps/user"
+    "$HOME/Code/Sneat-Test/resources/ts/views/apps/user"
+    "$HOME/Code/Sneat-Test/resources/ts/pages/apps/companies"
+    "$HOME/Code/Sneat-Test/resources/ts/views/apps/companies"
+    "$HOME/Code/Sneat-Test/resources/js"
+)
+
+# Step 3: Loop through directories and append file contents
+for dir in "${directories[@]}"; do
+    if [[ -e "$dir" ]]; then
+        if [[ -f "$dir" ]]; then
+            # If it's a file, append it directly
+            append_file "$dir"
+        else
+            # If it's a directory, find all files and append them
+            find "$dir" -type f | while read -r file; do
+                append_file "$file"
+            done
+        fi
+    else
+        echo "Warning: $dir does not exist."
+    fi
+done
+
+echo "All contents have been written to $output_file."

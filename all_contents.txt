@@ -749,6 +749,11 @@ class AuthController extends Controller
     return response()->json(['message' => 'Unable to log out.'], 401);
 }
 
+protected function unauthenticated($request, array $guards)
+{
+    return response()->json(['message' => 'Unauthenticated.'], 401);
+}
+
 
 }
 
@@ -1006,6 +1011,14 @@ return [
 
 
 
+===== File: bootstrap/cache/events.php =====
+<?php return array (
+  'Illuminate\\Foundation\\Support\\Providers\\EventServiceProvider' => 
+  array (
+  ),
+);
+
+
 ===== File: bootstrap/cache/services.php =====
 <?php return array (
   'providers' => 
@@ -1015,31 +1028,32 @@ return [
     2 => 'Illuminate\\Bus\\BusServiceProvider',
     3 => 'Illuminate\\Cache\\CacheServiceProvider',
     4 => 'Illuminate\\Foundation\\Providers\\ConsoleSupportServiceProvider',
-    5 => 'Illuminate\\Cookie\\CookieServiceProvider',
-    6 => 'Illuminate\\Database\\DatabaseServiceProvider',
-    7 => 'Illuminate\\Encryption\\EncryptionServiceProvider',
-    8 => 'Illuminate\\Filesystem\\FilesystemServiceProvider',
-    9 => 'Illuminate\\Foundation\\Providers\\FoundationServiceProvider',
-    10 => 'Illuminate\\Hashing\\HashServiceProvider',
-    11 => 'Illuminate\\Mail\\MailServiceProvider',
-    12 => 'Illuminate\\Notifications\\NotificationServiceProvider',
-    13 => 'Illuminate\\Pagination\\PaginationServiceProvider',
-    14 => 'Illuminate\\Auth\\Passwords\\PasswordResetServiceProvider',
-    15 => 'Illuminate\\Pipeline\\PipelineServiceProvider',
-    16 => 'Illuminate\\Queue\\QueueServiceProvider',
-    17 => 'Illuminate\\Redis\\RedisServiceProvider',
-    18 => 'Illuminate\\Session\\SessionServiceProvider',
-    19 => 'Illuminate\\Translation\\TranslationServiceProvider',
-    20 => 'Illuminate\\Validation\\ValidationServiceProvider',
-    21 => 'Illuminate\\View\\ViewServiceProvider',
-    22 => 'Laravel\\Passport\\PassportServiceProvider',
-    23 => 'Laravel\\Sail\\SailServiceProvider',
-    24 => 'Laravel\\Sanctum\\SanctumServiceProvider',
-    25 => 'Laravel\\Tinker\\TinkerServiceProvider',
-    26 => 'Carbon\\Laravel\\ServiceProvider',
-    27 => 'NunoMaduro\\Collision\\Adapters\\Laravel\\CollisionServiceProvider',
-    28 => 'Termwind\\Laravel\\TermwindServiceProvider',
-    29 => 'App\\Providers\\AppServiceProvider',
+    5 => 'Illuminate\\Concurrency\\ConcurrencyServiceProvider',
+    6 => 'Illuminate\\Cookie\\CookieServiceProvider',
+    7 => 'Illuminate\\Database\\DatabaseServiceProvider',
+    8 => 'Illuminate\\Encryption\\EncryptionServiceProvider',
+    9 => 'Illuminate\\Filesystem\\FilesystemServiceProvider',
+    10 => 'Illuminate\\Foundation\\Providers\\FoundationServiceProvider',
+    11 => 'Illuminate\\Hashing\\HashServiceProvider',
+    12 => 'Illuminate\\Mail\\MailServiceProvider',
+    13 => 'Illuminate\\Notifications\\NotificationServiceProvider',
+    14 => 'Illuminate\\Pagination\\PaginationServiceProvider',
+    15 => 'Illuminate\\Auth\\Passwords\\PasswordResetServiceProvider',
+    16 => 'Illuminate\\Pipeline\\PipelineServiceProvider',
+    17 => 'Illuminate\\Queue\\QueueServiceProvider',
+    18 => 'Illuminate\\Redis\\RedisServiceProvider',
+    19 => 'Illuminate\\Session\\SessionServiceProvider',
+    20 => 'Illuminate\\Translation\\TranslationServiceProvider',
+    21 => 'Illuminate\\Validation\\ValidationServiceProvider',
+    22 => 'Illuminate\\View\\ViewServiceProvider',
+    23 => 'Laravel\\Passport\\PassportServiceProvider',
+    24 => 'Laravel\\Sail\\SailServiceProvider',
+    25 => 'Laravel\\Sanctum\\SanctumServiceProvider',
+    26 => 'Laravel\\Tinker\\TinkerServiceProvider',
+    27 => 'Carbon\\Laravel\\ServiceProvider',
+    28 => 'NunoMaduro\\Collision\\Adapters\\Laravel\\CollisionServiceProvider',
+    29 => 'Termwind\\Laravel\\TermwindServiceProvider',
+    30 => 'App\\Providers\\AppServiceProvider',
   ),
   'eager' => 
   array (
@@ -1096,6 +1110,7 @@ return [
     'Illuminate\\Foundation\\Console\\EventCacheCommand' => 'Illuminate\\Foundation\\Providers\\ConsoleSupportServiceProvider',
     'Illuminate\\Foundation\\Console\\EventClearCommand' => 'Illuminate\\Foundation\\Providers\\ConsoleSupportServiceProvider',
     'Illuminate\\Foundation\\Console\\EventListCommand' => 'Illuminate\\Foundation\\Providers\\ConsoleSupportServiceProvider',
+    'Illuminate\\Concurrency\\Console\\InvokeSerializedClosureCommand' => 'Illuminate\\Foundation\\Providers\\ConsoleSupportServiceProvider',
     'Illuminate\\Foundation\\Console\\KeyGenerateCommand' => 'Illuminate\\Foundation\\Providers\\ConsoleSupportServiceProvider',
     'Illuminate\\Foundation\\Console\\OptimizeCommand' => 'Illuminate\\Foundation\\Providers\\ConsoleSupportServiceProvider',
     'Illuminate\\Foundation\\Console\\OptimizeClearCommand' => 'Illuminate\\Foundation\\Providers\\ConsoleSupportServiceProvider',
@@ -1150,6 +1165,7 @@ return [
     'Illuminate\\Database\\Console\\Factories\\FactoryMakeCommand' => 'Illuminate\\Foundation\\Providers\\ConsoleSupportServiceProvider',
     'Illuminate\\Foundation\\Console\\InterfaceMakeCommand' => 'Illuminate\\Foundation\\Providers\\ConsoleSupportServiceProvider',
     'Illuminate\\Foundation\\Console\\JobMakeCommand' => 'Illuminate\\Foundation\\Providers\\ConsoleSupportServiceProvider',
+    'Illuminate\\Foundation\\Console\\JobMiddlewareMakeCommand' => 'Illuminate\\Foundation\\Providers\\ConsoleSupportServiceProvider',
     'Illuminate\\Foundation\\Console\\LangPublishCommand' => 'Illuminate\\Foundation\\Providers\\ConsoleSupportServiceProvider',
     'Illuminate\\Foundation\\Console\\ListenerMakeCommand' => 'Illuminate\\Foundation\\Providers\\ConsoleSupportServiceProvider',
     'Illuminate\\Foundation\\Console\\MailMakeCommand' => 'Illuminate\\Foundation\\Providers\\ConsoleSupportServiceProvider',
@@ -1187,6 +1203,7 @@ return [
     'Illuminate\\Database\\Console\\Migrations\\StatusCommand' => 'Illuminate\\Foundation\\Providers\\ConsoleSupportServiceProvider',
     'Illuminate\\Database\\Console\\Migrations\\MigrateMakeCommand' => 'Illuminate\\Foundation\\Providers\\ConsoleSupportServiceProvider',
     'composer' => 'Illuminate\\Foundation\\Providers\\ConsoleSupportServiceProvider',
+    'Illuminate\\Concurrency\\ConcurrencyManager' => 'Illuminate\\Concurrency\\ConcurrencyServiceProvider',
     'hash' => 'Illuminate\\Hashing\\HashServiceProvider',
     'hash.driver' => 'Illuminate\\Hashing\\HashServiceProvider',
     'mail.manager' => 'Illuminate\\Mail\\MailServiceProvider',
@@ -1226,6 +1243,9 @@ return [
     'Illuminate\\Foundation\\Providers\\ConsoleSupportServiceProvider' => 
     array (
     ),
+    'Illuminate\\Concurrency\\ConcurrencyServiceProvider' => 
+    array (
+    ),
     'Illuminate\\Hashing\\HashServiceProvider' => 
     array (
     ),
@@ -1258,2155 +1278,6 @@ return [
     ),
   ),
 );
-
-
-===== File: bootstrap/cache/routes-v7.php =====
-<?php
-
-app('router')->setCompiledRoutes(
-    array (
-  'compiled' => 
-  array (
-    0 => false,
-    1 => 
-    array (
-      '/oauth/token' => 
-      array (
-        0 => 
-        array (
-          0 => 
-          array (
-            '_route' => 'passport.token',
-          ),
-          1 => NULL,
-          2 => 
-          array (
-            'POST' => 0,
-          ),
-          3 => NULL,
-          4 => false,
-          5 => false,
-          6 => NULL,
-        ),
-      ),
-      '/oauth/authorize' => 
-      array (
-        0 => 
-        array (
-          0 => 
-          array (
-            '_route' => 'passport.authorizations.authorize',
-          ),
-          1 => NULL,
-          2 => 
-          array (
-            'GET' => 0,
-            'HEAD' => 1,
-          ),
-          3 => NULL,
-          4 => false,
-          5 => false,
-          6 => NULL,
-        ),
-        1 => 
-        array (
-          0 => 
-          array (
-            '_route' => 'passport.authorizations.approve',
-          ),
-          1 => NULL,
-          2 => 
-          array (
-            'POST' => 0,
-          ),
-          3 => NULL,
-          4 => false,
-          5 => false,
-          6 => NULL,
-        ),
-        2 => 
-        array (
-          0 => 
-          array (
-            '_route' => 'passport.authorizations.deny',
-          ),
-          1 => NULL,
-          2 => 
-          array (
-            'DELETE' => 0,
-          ),
-          3 => NULL,
-          4 => false,
-          5 => false,
-          6 => NULL,
-        ),
-      ),
-      '/oauth/token/refresh' => 
-      array (
-        0 => 
-        array (
-          0 => 
-          array (
-            '_route' => 'passport.token.refresh',
-          ),
-          1 => NULL,
-          2 => 
-          array (
-            'POST' => 0,
-          ),
-          3 => NULL,
-          4 => false,
-          5 => false,
-          6 => NULL,
-        ),
-      ),
-      '/oauth/tokens' => 
-      array (
-        0 => 
-        array (
-          0 => 
-          array (
-            '_route' => 'passport.tokens.index',
-          ),
-          1 => NULL,
-          2 => 
-          array (
-            'GET' => 0,
-            'HEAD' => 1,
-          ),
-          3 => NULL,
-          4 => false,
-          5 => false,
-          6 => NULL,
-        ),
-      ),
-      '/oauth/clients' => 
-      array (
-        0 => 
-        array (
-          0 => 
-          array (
-            '_route' => 'passport.clients.index',
-          ),
-          1 => NULL,
-          2 => 
-          array (
-            'GET' => 0,
-            'HEAD' => 1,
-          ),
-          3 => NULL,
-          4 => false,
-          5 => false,
-          6 => NULL,
-        ),
-        1 => 
-        array (
-          0 => 
-          array (
-            '_route' => 'passport.clients.store',
-          ),
-          1 => NULL,
-          2 => 
-          array (
-            'POST' => 0,
-          ),
-          3 => NULL,
-          4 => false,
-          5 => false,
-          6 => NULL,
-        ),
-      ),
-      '/oauth/scopes' => 
-      array (
-        0 => 
-        array (
-          0 => 
-          array (
-            '_route' => 'passport.scopes.index',
-          ),
-          1 => NULL,
-          2 => 
-          array (
-            'GET' => 0,
-            'HEAD' => 1,
-          ),
-          3 => NULL,
-          4 => false,
-          5 => false,
-          6 => NULL,
-        ),
-      ),
-      '/oauth/personal-access-tokens' => 
-      array (
-        0 => 
-        array (
-          0 => 
-          array (
-            '_route' => 'passport.personal.tokens.index',
-          ),
-          1 => NULL,
-          2 => 
-          array (
-            'GET' => 0,
-            'HEAD' => 1,
-          ),
-          3 => NULL,
-          4 => false,
-          5 => false,
-          6 => NULL,
-        ),
-        1 => 
-        array (
-          0 => 
-          array (
-            '_route' => 'passport.personal.tokens.store',
-          ),
-          1 => NULL,
-          2 => 
-          array (
-            'POST' => 0,
-          ),
-          3 => NULL,
-          4 => false,
-          5 => false,
-          6 => NULL,
-        ),
-      ),
-      '/sanctum/csrf-cookie' => 
-      array (
-        0 => 
-        array (
-          0 => 
-          array (
-            '_route' => 'sanctum.csrf-cookie',
-          ),
-          1 => NULL,
-          2 => 
-          array (
-            'GET' => 0,
-            'HEAD' => 1,
-          ),
-          3 => NULL,
-          4 => false,
-          5 => false,
-          6 => NULL,
-        ),
-      ),
-      '/api/auth/login' => 
-      array (
-        0 => 
-        array (
-          0 => 
-          array (
-            '_route' => 'generated::gX24DfUpIF4Oxdwx',
-          ),
-          1 => NULL,
-          2 => 
-          array (
-            'POST' => 0,
-          ),
-          3 => NULL,
-          4 => false,
-          5 => false,
-          6 => NULL,
-        ),
-      ),
-      '/api/auth/register' => 
-      array (
-        0 => 
-        array (
-          0 => 
-          array (
-            '_route' => 'generated::G0GRL90guAyk4ud7',
-          ),
-          1 => NULL,
-          2 => 
-          array (
-            'POST' => 0,
-          ),
-          3 => NULL,
-          4 => false,
-          5 => false,
-          6 => NULL,
-        ),
-      ),
-      '/api/auth/logout' => 
-      array (
-        0 => 
-        array (
-          0 => 
-          array (
-            '_route' => 'generated::cHD4f08U6Ck0zcNN',
-          ),
-          1 => NULL,
-          2 => 
-          array (
-            'POST' => 0,
-          ),
-          3 => NULL,
-          4 => false,
-          5 => false,
-          6 => NULL,
-        ),
-      ),
-      '/api/auth/user' => 
-      array (
-        0 => 
-        array (
-          0 => 
-          array (
-            '_route' => 'generated::wpja7F21g3eeVJID',
-          ),
-          1 => NULL,
-          2 => 
-          array (
-            'GET' => 0,
-            'HEAD' => 1,
-          ),
-          3 => NULL,
-          4 => false,
-          5 => false,
-          6 => NULL,
-        ),
-      ),
-      '/api/users' => 
-      array (
-        0 => 
-        array (
-          0 => 
-          array (
-            '_route' => 'generated::j6XsxGmASd5dLaHg',
-          ),
-          1 => NULL,
-          2 => 
-          array (
-            'GET' => 0,
-            'HEAD' => 1,
-          ),
-          3 => NULL,
-          4 => false,
-          5 => false,
-          6 => NULL,
-        ),
-        1 => 
-        array (
-          0 => 
-          array (
-            '_route' => 'users.store',
-          ),
-          1 => NULL,
-          2 => 
-          array (
-            'POST' => 0,
-          ),
-          3 => NULL,
-          4 => false,
-          5 => false,
-          6 => NULL,
-        ),
-      ),
-      '/api/email' => 
-      array (
-        0 => 
-        array (
-          0 => 
-          array (
-            '_route' => 'generated::aNfNj2JKKpKEoeO3',
-          ),
-          1 => NULL,
-          2 => 
-          array (
-            'GET' => 0,
-            'HEAD' => 1,
-          ),
-          3 => NULL,
-          4 => false,
-          5 => false,
-          6 => NULL,
-        ),
-      ),
-      '/api/companies/all' => 
-      array (
-        0 => 
-        array (
-          0 => 
-          array (
-            '_route' => 'generated::Ft4jhnrYNHgnr2Ae',
-          ),
-          1 => NULL,
-          2 => 
-          array (
-            'GET' => 0,
-            'HEAD' => 1,
-          ),
-          3 => NULL,
-          4 => false,
-          5 => false,
-          6 => NULL,
-        ),
-      ),
-      '/api/paginatedCompanies' => 
-      array (
-        0 => 
-        array (
-          0 => 
-          array (
-            '_route' => 'generated::KxD6CMNnOaVS4Inw',
-          ),
-          1 => NULL,
-          2 => 
-          array (
-            'GET' => 0,
-            'HEAD' => 1,
-          ),
-          3 => NULL,
-          4 => false,
-          5 => false,
-          6 => NULL,
-        ),
-      ),
-      '/api/companies' => 
-      array (
-        0 => 
-        array (
-          0 => 
-          array (
-            '_route' => 'generated::k6CsGlObmatbZbqi',
-          ),
-          1 => NULL,
-          2 => 
-          array (
-            'POST' => 0,
-          ),
-          3 => NULL,
-          4 => false,
-          5 => false,
-          6 => NULL,
-        ),
-      ),
-      '/api/roles' => 
-      array (
-        0 => 
-        array (
-          0 => 
-          array (
-            '_route' => 'generated::M8LBWtyJ9QGiMM1l',
-          ),
-          1 => NULL,
-          2 => 
-          array (
-            'GET' => 0,
-            'HEAD' => 1,
-          ),
-          3 => NULL,
-          4 => false,
-          5 => false,
-          6 => NULL,
-        ),
-      ),
-      '/api/diagnostic' => 
-      array (
-        0 => 
-        array (
-          0 => 
-          array (
-            '_route' => 'generated::nELDa5VNm4r2ATAG',
-          ),
-          1 => NULL,
-          2 => 
-          array (
-            'GET' => 0,
-            'HEAD' => 1,
-          ),
-          3 => NULL,
-          4 => false,
-          5 => false,
-          6 => NULL,
-        ),
-      ),
-      '/up' => 
-      array (
-        0 => 
-        array (
-          0 => 
-          array (
-            '_route' => 'generated::ij0OHDLGdVJVz7nR',
-          ),
-          1 => NULL,
-          2 => 
-          array (
-            'GET' => 0,
-            'HEAD' => 1,
-          ),
-          3 => NULL,
-          4 => false,
-          5 => false,
-          6 => NULL,
-        ),
-      ),
-    ),
-    2 => 
-    array (
-      0 => '{^(?|/oauth/(?|tokens/([^/]++)(*:32)|clients/([^/]++)(?|(*:58))|personal\\-access\\-tokens/([^/]++)(*:99))|/api/(?|users/([^/]++)(?|(*:132))|companies/([^/]++)(?|(*:162)))|/(.*)?(*:178)|/api/(.*)(*:195))/?$}sDu',
-    ),
-    3 => 
-    array (
-      32 => 
-      array (
-        0 => 
-        array (
-          0 => 
-          array (
-            '_route' => 'passport.tokens.destroy',
-          ),
-          1 => 
-          array (
-            0 => 'token_id',
-          ),
-          2 => 
-          array (
-            'DELETE' => 0,
-          ),
-          3 => NULL,
-          4 => false,
-          5 => true,
-          6 => NULL,
-        ),
-      ),
-      58 => 
-      array (
-        0 => 
-        array (
-          0 => 
-          array (
-            '_route' => 'passport.clients.update',
-          ),
-          1 => 
-          array (
-            0 => 'client_id',
-          ),
-          2 => 
-          array (
-            'PUT' => 0,
-          ),
-          3 => NULL,
-          4 => false,
-          5 => true,
-          6 => NULL,
-        ),
-        1 => 
-        array (
-          0 => 
-          array (
-            '_route' => 'passport.clients.destroy',
-          ),
-          1 => 
-          array (
-            0 => 'client_id',
-          ),
-          2 => 
-          array (
-            'DELETE' => 0,
-          ),
-          3 => NULL,
-          4 => false,
-          5 => true,
-          6 => NULL,
-        ),
-      ),
-      99 => 
-      array (
-        0 => 
-        array (
-          0 => 
-          array (
-            '_route' => 'passport.personal.tokens.destroy',
-          ),
-          1 => 
-          array (
-            0 => 'token_id',
-          ),
-          2 => 
-          array (
-            'DELETE' => 0,
-          ),
-          3 => NULL,
-          4 => false,
-          5 => true,
-          6 => NULL,
-        ),
-      ),
-      132 => 
-      array (
-        0 => 
-        array (
-          0 => 
-          array (
-            '_route' => 'generated::IW55tj6tT97y4kh4',
-          ),
-          1 => 
-          array (
-            0 => 'id',
-          ),
-          2 => 
-          array (
-            'GET' => 0,
-            'HEAD' => 1,
-          ),
-          3 => NULL,
-          4 => false,
-          5 => true,
-          6 => NULL,
-        ),
-        1 => 
-        array (
-          0 => 
-          array (
-            '_route' => 'generated::aMAlbOX5KIfubUj5',
-          ),
-          1 => 
-          array (
-            0 => 'id',
-          ),
-          2 => 
-          array (
-            'PUT' => 0,
-          ),
-          3 => NULL,
-          4 => false,
-          5 => true,
-          6 => NULL,
-        ),
-        2 => 
-        array (
-          0 => 
-          array (
-            '_route' => 'generated::c0ez22nbrY302XI0',
-          ),
-          1 => 
-          array (
-            0 => 'id',
-          ),
-          2 => 
-          array (
-            'DELETE' => 0,
-          ),
-          3 => NULL,
-          4 => false,
-          5 => true,
-          6 => NULL,
-        ),
-      ),
-      162 => 
-      array (
-        0 => 
-        array (
-          0 => 
-          array (
-            '_route' => 'generated::RScKzkkQaISpM57R',
-          ),
-          1 => 
-          array (
-            0 => 'id',
-          ),
-          2 => 
-          array (
-            'DELETE' => 0,
-          ),
-          3 => NULL,
-          4 => false,
-          5 => true,
-          6 => NULL,
-        ),
-        1 => 
-        array (
-          0 => 
-          array (
-            '_route' => 'generated::ijUywvVbfGFlTliN',
-          ),
-          1 => 
-          array (
-            0 => 'id',
-          ),
-          2 => 
-          array (
-            'GET' => 0,
-            'HEAD' => 1,
-          ),
-          3 => NULL,
-          4 => false,
-          5 => true,
-          6 => NULL,
-        ),
-        2 => 
-        array (
-          0 => 
-          array (
-            '_route' => 'generated::YUSoLPm5NYBmVRmt',
-          ),
-          1 => 
-          array (
-            0 => 'id',
-          ),
-          2 => 
-          array (
-            'PUT' => 0,
-          ),
-          3 => NULL,
-          4 => false,
-          5 => true,
-          6 => NULL,
-        ),
-      ),
-      178 => 
-      array (
-        0 => 
-        array (
-          0 => 
-          array (
-            '_route' => 'generated::KO91U78e2HX6TcCX',
-            'any' => NULL,
-          ),
-          1 => 
-          array (
-            0 => 'any',
-          ),
-          2 => 
-          array (
-            'GET' => 0,
-            'HEAD' => 1,
-          ),
-          3 => NULL,
-          4 => false,
-          5 => true,
-          6 => NULL,
-        ),
-      ),
-      195 => 
-      array (
-        0 => 
-        array (
-          0 => 
-          array (
-            '_route' => 'generated::2TZfrtqT4mQ6hUld',
-          ),
-          1 => 
-          array (
-            0 => 'fallbackPlaceholder',
-          ),
-          2 => 
-          array (
-            'GET' => 0,
-            'HEAD' => 1,
-          ),
-          3 => NULL,
-          4 => false,
-          5 => true,
-          6 => NULL,
-        ),
-        1 => 
-        array (
-          0 => NULL,
-          1 => NULL,
-          2 => NULL,
-          3 => NULL,
-          4 => false,
-          5 => false,
-          6 => 0,
-        ),
-      ),
-    ),
-    4 => NULL,
-  ),
-  'attributes' => 
-  array (
-    'passport.token' => 
-    array (
-      'methods' => 
-      array (
-        0 => 'POST',
-      ),
-      'uri' => 'oauth/token',
-      'action' => 
-      array (
-        'uses' => 'Laravel\\Passport\\Http\\Controllers\\AccessTokenController@issueToken',
-        'as' => 'passport.token',
-        'middleware' => 'throttle',
-        'controller' => 'Laravel\\Passport\\Http\\Controllers\\AccessTokenController@issueToken',
-        'namespace' => 'Laravel\\Passport\\Http\\Controllers',
-        'prefix' => 'oauth',
-        'where' => 
-        array (
-        ),
-      ),
-      'fallback' => false,
-      'defaults' => 
-      array (
-      ),
-      'wheres' => 
-      array (
-      ),
-      'bindingFields' => 
-      array (
-      ),
-      'lockSeconds' => NULL,
-      'waitSeconds' => NULL,
-      'withTrashed' => false,
-    ),
-    'passport.authorizations.authorize' => 
-    array (
-      'methods' => 
-      array (
-        0 => 'GET',
-        1 => 'HEAD',
-      ),
-      'uri' => 'oauth/authorize',
-      'action' => 
-      array (
-        'uses' => 'Laravel\\Passport\\Http\\Controllers\\AuthorizationController@authorize',
-        'as' => 'passport.authorizations.authorize',
-        'middleware' => 'web',
-        'controller' => 'Laravel\\Passport\\Http\\Controllers\\AuthorizationController@authorize',
-        'namespace' => 'Laravel\\Passport\\Http\\Controllers',
-        'prefix' => 'oauth',
-        'where' => 
-        array (
-        ),
-      ),
-      'fallback' => false,
-      'defaults' => 
-      array (
-      ),
-      'wheres' => 
-      array (
-      ),
-      'bindingFields' => 
-      array (
-      ),
-      'lockSeconds' => NULL,
-      'waitSeconds' => NULL,
-      'withTrashed' => false,
-    ),
-    'passport.token.refresh' => 
-    array (
-      'methods' => 
-      array (
-        0 => 'POST',
-      ),
-      'uri' => 'oauth/token/refresh',
-      'action' => 
-      array (
-        'middleware' => 
-        array (
-          0 => 'web',
-          1 => 'auth:web',
-        ),
-        'uses' => 'Laravel\\Passport\\Http\\Controllers\\TransientTokenController@refresh',
-        'as' => 'passport.token.refresh',
-        'controller' => 'Laravel\\Passport\\Http\\Controllers\\TransientTokenController@refresh',
-        'namespace' => 'Laravel\\Passport\\Http\\Controllers',
-        'prefix' => 'oauth',
-        'where' => 
-        array (
-        ),
-      ),
-      'fallback' => false,
-      'defaults' => 
-      array (
-      ),
-      'wheres' => 
-      array (
-      ),
-      'bindingFields' => 
-      array (
-      ),
-      'lockSeconds' => NULL,
-      'waitSeconds' => NULL,
-      'withTrashed' => false,
-    ),
-    'passport.authorizations.approve' => 
-    array (
-      'methods' => 
-      array (
-        0 => 'POST',
-      ),
-      'uri' => 'oauth/authorize',
-      'action' => 
-      array (
-        'middleware' => 
-        array (
-          0 => 'web',
-          1 => 'auth:web',
-        ),
-        'uses' => 'Laravel\\Passport\\Http\\Controllers\\ApproveAuthorizationController@approve',
-        'as' => 'passport.authorizations.approve',
-        'controller' => 'Laravel\\Passport\\Http\\Controllers\\ApproveAuthorizationController@approve',
-        'namespace' => 'Laravel\\Passport\\Http\\Controllers',
-        'prefix' => 'oauth',
-        'where' => 
-        array (
-        ),
-      ),
-      'fallback' => false,
-      'defaults' => 
-      array (
-      ),
-      'wheres' => 
-      array (
-      ),
-      'bindingFields' => 
-      array (
-      ),
-      'lockSeconds' => NULL,
-      'waitSeconds' => NULL,
-      'withTrashed' => false,
-    ),
-    'passport.authorizations.deny' => 
-    array (
-      'methods' => 
-      array (
-        0 => 'DELETE',
-      ),
-      'uri' => 'oauth/authorize',
-      'action' => 
-      array (
-        'middleware' => 
-        array (
-          0 => 'web',
-          1 => 'auth:web',
-        ),
-        'uses' => 'Laravel\\Passport\\Http\\Controllers\\DenyAuthorizationController@deny',
-        'as' => 'passport.authorizations.deny',
-        'controller' => 'Laravel\\Passport\\Http\\Controllers\\DenyAuthorizationController@deny',
-        'namespace' => 'Laravel\\Passport\\Http\\Controllers',
-        'prefix' => 'oauth',
-        'where' => 
-        array (
-        ),
-      ),
-      'fallback' => false,
-      'defaults' => 
-      array (
-      ),
-      'wheres' => 
-      array (
-      ),
-      'bindingFields' => 
-      array (
-      ),
-      'lockSeconds' => NULL,
-      'waitSeconds' => NULL,
-      'withTrashed' => false,
-    ),
-    'passport.tokens.index' => 
-    array (
-      'methods' => 
-      array (
-        0 => 'GET',
-        1 => 'HEAD',
-      ),
-      'uri' => 'oauth/tokens',
-      'action' => 
-      array (
-        'middleware' => 
-        array (
-          0 => 'web',
-          1 => 'auth:web',
-        ),
-        'uses' => 'Laravel\\Passport\\Http\\Controllers\\AuthorizedAccessTokenController@forUser',
-        'as' => 'passport.tokens.index',
-        'controller' => 'Laravel\\Passport\\Http\\Controllers\\AuthorizedAccessTokenController@forUser',
-        'namespace' => 'Laravel\\Passport\\Http\\Controllers',
-        'prefix' => 'oauth',
-        'where' => 
-        array (
-        ),
-      ),
-      'fallback' => false,
-      'defaults' => 
-      array (
-      ),
-      'wheres' => 
-      array (
-      ),
-      'bindingFields' => 
-      array (
-      ),
-      'lockSeconds' => NULL,
-      'waitSeconds' => NULL,
-      'withTrashed' => false,
-    ),
-    'passport.tokens.destroy' => 
-    array (
-      'methods' => 
-      array (
-        0 => 'DELETE',
-      ),
-      'uri' => 'oauth/tokens/{token_id}',
-      'action' => 
-      array (
-        'middleware' => 
-        array (
-          0 => 'web',
-          1 => 'auth:web',
-        ),
-        'uses' => 'Laravel\\Passport\\Http\\Controllers\\AuthorizedAccessTokenController@destroy',
-        'as' => 'passport.tokens.destroy',
-        'controller' => 'Laravel\\Passport\\Http\\Controllers\\AuthorizedAccessTokenController@destroy',
-        'namespace' => 'Laravel\\Passport\\Http\\Controllers',
-        'prefix' => 'oauth',
-        'where' => 
-        array (
-        ),
-      ),
-      'fallback' => false,
-      'defaults' => 
-      array (
-      ),
-      'wheres' => 
-      array (
-      ),
-      'bindingFields' => 
-      array (
-      ),
-      'lockSeconds' => NULL,
-      'waitSeconds' => NULL,
-      'withTrashed' => false,
-    ),
-    'passport.clients.index' => 
-    array (
-      'methods' => 
-      array (
-        0 => 'GET',
-        1 => 'HEAD',
-      ),
-      'uri' => 'oauth/clients',
-      'action' => 
-      array (
-        'middleware' => 
-        array (
-          0 => 'web',
-          1 => 'auth:web',
-        ),
-        'uses' => 'Laravel\\Passport\\Http\\Controllers\\ClientController@forUser',
-        'as' => 'passport.clients.index',
-        'controller' => 'Laravel\\Passport\\Http\\Controllers\\ClientController@forUser',
-        'namespace' => 'Laravel\\Passport\\Http\\Controllers',
-        'prefix' => 'oauth',
-        'where' => 
-        array (
-        ),
-      ),
-      'fallback' => false,
-      'defaults' => 
-      array (
-      ),
-      'wheres' => 
-      array (
-      ),
-      'bindingFields' => 
-      array (
-      ),
-      'lockSeconds' => NULL,
-      'waitSeconds' => NULL,
-      'withTrashed' => false,
-    ),
-    'passport.clients.store' => 
-    array (
-      'methods' => 
-      array (
-        0 => 'POST',
-      ),
-      'uri' => 'oauth/clients',
-      'action' => 
-      array (
-        'middleware' => 
-        array (
-          0 => 'web',
-          1 => 'auth:web',
-        ),
-        'uses' => 'Laravel\\Passport\\Http\\Controllers\\ClientController@store',
-        'as' => 'passport.clients.store',
-        'controller' => 'Laravel\\Passport\\Http\\Controllers\\ClientController@store',
-        'namespace' => 'Laravel\\Passport\\Http\\Controllers',
-        'prefix' => 'oauth',
-        'where' => 
-        array (
-        ),
-      ),
-      'fallback' => false,
-      'defaults' => 
-      array (
-      ),
-      'wheres' => 
-      array (
-      ),
-      'bindingFields' => 
-      array (
-      ),
-      'lockSeconds' => NULL,
-      'waitSeconds' => NULL,
-      'withTrashed' => false,
-    ),
-    'passport.clients.update' => 
-    array (
-      'methods' => 
-      array (
-        0 => 'PUT',
-      ),
-      'uri' => 'oauth/clients/{client_id}',
-      'action' => 
-      array (
-        'middleware' => 
-        array (
-          0 => 'web',
-          1 => 'auth:web',
-        ),
-        'uses' => 'Laravel\\Passport\\Http\\Controllers\\ClientController@update',
-        'as' => 'passport.clients.update',
-        'controller' => 'Laravel\\Passport\\Http\\Controllers\\ClientController@update',
-        'namespace' => 'Laravel\\Passport\\Http\\Controllers',
-        'prefix' => 'oauth',
-        'where' => 
-        array (
-        ),
-      ),
-      'fallback' => false,
-      'defaults' => 
-      array (
-      ),
-      'wheres' => 
-      array (
-      ),
-      'bindingFields' => 
-      array (
-      ),
-      'lockSeconds' => NULL,
-      'waitSeconds' => NULL,
-      'withTrashed' => false,
-    ),
-    'passport.clients.destroy' => 
-    array (
-      'methods' => 
-      array (
-        0 => 'DELETE',
-      ),
-      'uri' => 'oauth/clients/{client_id}',
-      'action' => 
-      array (
-        'middleware' => 
-        array (
-          0 => 'web',
-          1 => 'auth:web',
-        ),
-        'uses' => 'Laravel\\Passport\\Http\\Controllers\\ClientController@destroy',
-        'as' => 'passport.clients.destroy',
-        'controller' => 'Laravel\\Passport\\Http\\Controllers\\ClientController@destroy',
-        'namespace' => 'Laravel\\Passport\\Http\\Controllers',
-        'prefix' => 'oauth',
-        'where' => 
-        array (
-        ),
-      ),
-      'fallback' => false,
-      'defaults' => 
-      array (
-      ),
-      'wheres' => 
-      array (
-      ),
-      'bindingFields' => 
-      array (
-      ),
-      'lockSeconds' => NULL,
-      'waitSeconds' => NULL,
-      'withTrashed' => false,
-    ),
-    'passport.scopes.index' => 
-    array (
-      'methods' => 
-      array (
-        0 => 'GET',
-        1 => 'HEAD',
-      ),
-      'uri' => 'oauth/scopes',
-      'action' => 
-      array (
-        'middleware' => 
-        array (
-          0 => 'web',
-          1 => 'auth:web',
-        ),
-        'uses' => 'Laravel\\Passport\\Http\\Controllers\\ScopeController@all',
-        'as' => 'passport.scopes.index',
-        'controller' => 'Laravel\\Passport\\Http\\Controllers\\ScopeController@all',
-        'namespace' => 'Laravel\\Passport\\Http\\Controllers',
-        'prefix' => 'oauth',
-        'where' => 
-        array (
-        ),
-      ),
-      'fallback' => false,
-      'defaults' => 
-      array (
-      ),
-      'wheres' => 
-      array (
-      ),
-      'bindingFields' => 
-      array (
-      ),
-      'lockSeconds' => NULL,
-      'waitSeconds' => NULL,
-      'withTrashed' => false,
-    ),
-    'passport.personal.tokens.index' => 
-    array (
-      'methods' => 
-      array (
-        0 => 'GET',
-        1 => 'HEAD',
-      ),
-      'uri' => 'oauth/personal-access-tokens',
-      'action' => 
-      array (
-        'middleware' => 
-        array (
-          0 => 'web',
-          1 => 'auth:web',
-        ),
-        'uses' => 'Laravel\\Passport\\Http\\Controllers\\PersonalAccessTokenController@forUser',
-        'as' => 'passport.personal.tokens.index',
-        'controller' => 'Laravel\\Passport\\Http\\Controllers\\PersonalAccessTokenController@forUser',
-        'namespace' => 'Laravel\\Passport\\Http\\Controllers',
-        'prefix' => 'oauth',
-        'where' => 
-        array (
-        ),
-      ),
-      'fallback' => false,
-      'defaults' => 
-      array (
-      ),
-      'wheres' => 
-      array (
-      ),
-      'bindingFields' => 
-      array (
-      ),
-      'lockSeconds' => NULL,
-      'waitSeconds' => NULL,
-      'withTrashed' => false,
-    ),
-    'passport.personal.tokens.store' => 
-    array (
-      'methods' => 
-      array (
-        0 => 'POST',
-      ),
-      'uri' => 'oauth/personal-access-tokens',
-      'action' => 
-      array (
-        'middleware' => 
-        array (
-          0 => 'web',
-          1 => 'auth:web',
-        ),
-        'uses' => 'Laravel\\Passport\\Http\\Controllers\\PersonalAccessTokenController@store',
-        'as' => 'passport.personal.tokens.store',
-        'controller' => 'Laravel\\Passport\\Http\\Controllers\\PersonalAccessTokenController@store',
-        'namespace' => 'Laravel\\Passport\\Http\\Controllers',
-        'prefix' => 'oauth',
-        'where' => 
-        array (
-        ),
-      ),
-      'fallback' => false,
-      'defaults' => 
-      array (
-      ),
-      'wheres' => 
-      array (
-      ),
-      'bindingFields' => 
-      array (
-      ),
-      'lockSeconds' => NULL,
-      'waitSeconds' => NULL,
-      'withTrashed' => false,
-    ),
-    'passport.personal.tokens.destroy' => 
-    array (
-      'methods' => 
-      array (
-        0 => 'DELETE',
-      ),
-      'uri' => 'oauth/personal-access-tokens/{token_id}',
-      'action' => 
-      array (
-        'middleware' => 
-        array (
-          0 => 'web',
-          1 => 'auth:web',
-        ),
-        'uses' => 'Laravel\\Passport\\Http\\Controllers\\PersonalAccessTokenController@destroy',
-        'as' => 'passport.personal.tokens.destroy',
-        'controller' => 'Laravel\\Passport\\Http\\Controllers\\PersonalAccessTokenController@destroy',
-        'namespace' => 'Laravel\\Passport\\Http\\Controllers',
-        'prefix' => 'oauth',
-        'where' => 
-        array (
-        ),
-      ),
-      'fallback' => false,
-      'defaults' => 
-      array (
-      ),
-      'wheres' => 
-      array (
-      ),
-      'bindingFields' => 
-      array (
-      ),
-      'lockSeconds' => NULL,
-      'waitSeconds' => NULL,
-      'withTrashed' => false,
-    ),
-    'sanctum.csrf-cookie' => 
-    array (
-      'methods' => 
-      array (
-        0 => 'GET',
-        1 => 'HEAD',
-      ),
-      'uri' => 'sanctum/csrf-cookie',
-      'action' => 
-      array (
-        'uses' => 'Laravel\\Sanctum\\Http\\Controllers\\CsrfCookieController@show',
-        'controller' => 'Laravel\\Sanctum\\Http\\Controllers\\CsrfCookieController@show',
-        'namespace' => NULL,
-        'prefix' => 'sanctum',
-        'where' => 
-        array (
-        ),
-        'middleware' => 
-        array (
-          0 => 'web',
-        ),
-        'as' => 'sanctum.csrf-cookie',
-      ),
-      'fallback' => false,
-      'defaults' => 
-      array (
-      ),
-      'wheres' => 
-      array (
-      ),
-      'bindingFields' => 
-      array (
-      ),
-      'lockSeconds' => NULL,
-      'waitSeconds' => NULL,
-      'withTrashed' => false,
-    ),
-    'generated::gX24DfUpIF4Oxdwx' => 
-    array (
-      'methods' => 
-      array (
-        0 => 'POST',
-      ),
-      'uri' => 'api/auth/login',
-      'action' => 
-      array (
-        'middleware' => 
-        array (
-          0 => 'api',
-        ),
-        'uses' => 'App\\Http\\Controllers\\AuthController@login',
-        'controller' => 'App\\Http\\Controllers\\AuthController@login',
-        'namespace' => NULL,
-        'prefix' => 'api/auth',
-        'where' => 
-        array (
-        ),
-        'as' => 'generated::gX24DfUpIF4Oxdwx',
-      ),
-      'fallback' => false,
-      'defaults' => 
-      array (
-      ),
-      'wheres' => 
-      array (
-      ),
-      'bindingFields' => 
-      array (
-      ),
-      'lockSeconds' => NULL,
-      'waitSeconds' => NULL,
-      'withTrashed' => false,
-    ),
-    'generated::G0GRL90guAyk4ud7' => 
-    array (
-      'methods' => 
-      array (
-        0 => 'POST',
-      ),
-      'uri' => 'api/auth/register',
-      'action' => 
-      array (
-        'middleware' => 
-        array (
-          0 => 'api',
-        ),
-        'uses' => 'App\\Http\\Controllers\\AuthController@register',
-        'controller' => 'App\\Http\\Controllers\\AuthController@register',
-        'namespace' => NULL,
-        'prefix' => 'api/auth',
-        'where' => 
-        array (
-        ),
-        'as' => 'generated::G0GRL90guAyk4ud7',
-      ),
-      'fallback' => false,
-      'defaults' => 
-      array (
-      ),
-      'wheres' => 
-      array (
-      ),
-      'bindingFields' => 
-      array (
-      ),
-      'lockSeconds' => NULL,
-      'waitSeconds' => NULL,
-      'withTrashed' => false,
-    ),
-    'generated::cHD4f08U6Ck0zcNN' => 
-    array (
-      'methods' => 
-      array (
-        0 => 'POST',
-      ),
-      'uri' => 'api/auth/logout',
-      'action' => 
-      array (
-        'middleware' => 
-        array (
-          0 => 'api',
-          1 => 'auth:api',
-        ),
-        'uses' => 'App\\Http\\Controllers\\AuthController@logout',
-        'controller' => 'App\\Http\\Controllers\\AuthController@logout',
-        'namespace' => NULL,
-        'prefix' => 'api/auth',
-        'where' => 
-        array (
-        ),
-        'as' => 'generated::cHD4f08U6Ck0zcNN',
-      ),
-      'fallback' => false,
-      'defaults' => 
-      array (
-      ),
-      'wheres' => 
-      array (
-      ),
-      'bindingFields' => 
-      array (
-      ),
-      'lockSeconds' => NULL,
-      'waitSeconds' => NULL,
-      'withTrashed' => false,
-    ),
-    'generated::wpja7F21g3eeVJID' => 
-    array (
-      'methods' => 
-      array (
-        0 => 'GET',
-        1 => 'HEAD',
-      ),
-      'uri' => 'api/auth/user',
-      'action' => 
-      array (
-        'middleware' => 
-        array (
-          0 => 'api',
-          1 => 'auth:api',
-        ),
-        'uses' => 'App\\Http\\Controllers\\AuthController@user',
-        'controller' => 'App\\Http\\Controllers\\AuthController@user',
-        'namespace' => NULL,
-        'prefix' => 'api/auth',
-        'where' => 
-        array (
-        ),
-        'as' => 'generated::wpja7F21g3eeVJID',
-      ),
-      'fallback' => false,
-      'defaults' => 
-      array (
-      ),
-      'wheres' => 
-      array (
-      ),
-      'bindingFields' => 
-      array (
-      ),
-      'lockSeconds' => NULL,
-      'waitSeconds' => NULL,
-      'withTrashed' => false,
-    ),
-    'generated::j6XsxGmASd5dLaHg' => 
-    array (
-      'methods' => 
-      array (
-        0 => 'GET',
-        1 => 'HEAD',
-      ),
-      'uri' => 'api/users',
-      'action' => 
-      array (
-        'middleware' => 
-        array (
-          0 => 'api',
-          1 => 'auth:api',
-        ),
-        'uses' => 'App\\Http\\Controllers\\UserController@index',
-        'controller' => 'App\\Http\\Controllers\\UserController@index',
-        'namespace' => NULL,
-        'prefix' => 'api',
-        'where' => 
-        array (
-        ),
-        'as' => 'generated::j6XsxGmASd5dLaHg',
-      ),
-      'fallback' => false,
-      'defaults' => 
-      array (
-      ),
-      'wheres' => 
-      array (
-      ),
-      'bindingFields' => 
-      array (
-      ),
-      'lockSeconds' => NULL,
-      'waitSeconds' => NULL,
-      'withTrashed' => false,
-    ),
-    'generated::IW55tj6tT97y4kh4' => 
-    array (
-      'methods' => 
-      array (
-        0 => 'GET',
-        1 => 'HEAD',
-      ),
-      'uri' => 'api/users/{id}',
-      'action' => 
-      array (
-        'middleware' => 
-        array (
-          0 => 'api',
-          1 => 'auth:api',
-        ),
-        'uses' => 'App\\Http\\Controllers\\UserController@showUser',
-        'controller' => 'App\\Http\\Controllers\\UserController@showUser',
-        'namespace' => NULL,
-        'prefix' => 'api',
-        'where' => 
-        array (
-        ),
-        'as' => 'generated::IW55tj6tT97y4kh4',
-      ),
-      'fallback' => false,
-      'defaults' => 
-      array (
-      ),
-      'wheres' => 
-      array (
-      ),
-      'bindingFields' => 
-      array (
-      ),
-      'lockSeconds' => NULL,
-      'waitSeconds' => NULL,
-      'withTrashed' => false,
-    ),
-    'users.store' => 
-    array (
-      'methods' => 
-      array (
-        0 => 'POST',
-      ),
-      'uri' => 'api/users',
-      'action' => 
-      array (
-        'middleware' => 
-        array (
-          0 => 'api',
-          1 => 'auth:api',
-        ),
-        'uses' => 'App\\Http\\Controllers\\UserController@addUser',
-        'controller' => 'App\\Http\\Controllers\\UserController@addUser',
-        'namespace' => NULL,
-        'prefix' => 'api',
-        'where' => 
-        array (
-        ),
-        'as' => 'users.store',
-      ),
-      'fallback' => false,
-      'defaults' => 
-      array (
-      ),
-      'wheres' => 
-      array (
-      ),
-      'bindingFields' => 
-      array (
-      ),
-      'lockSeconds' => NULL,
-      'waitSeconds' => NULL,
-      'withTrashed' => false,
-    ),
-    'generated::aMAlbOX5KIfubUj5' => 
-    array (
-      'methods' => 
-      array (
-        0 => 'PUT',
-      ),
-      'uri' => 'api/users/{id}',
-      'action' => 
-      array (
-        'middleware' => 
-        array (
-          0 => 'api',
-          1 => 'auth:api',
-        ),
-        'uses' => 'App\\Http\\Controllers\\UserController@updateUser',
-        'controller' => 'App\\Http\\Controllers\\UserController@updateUser',
-        'namespace' => NULL,
-        'prefix' => 'api',
-        'where' => 
-        array (
-        ),
-        'as' => 'generated::aMAlbOX5KIfubUj5',
-      ),
-      'fallback' => false,
-      'defaults' => 
-      array (
-      ),
-      'wheres' => 
-      array (
-      ),
-      'bindingFields' => 
-      array (
-      ),
-      'lockSeconds' => NULL,
-      'waitSeconds' => NULL,
-      'withTrashed' => false,
-    ),
-    'generated::c0ez22nbrY302XI0' => 
-    array (
-      'methods' => 
-      array (
-        0 => 'DELETE',
-      ),
-      'uri' => 'api/users/{id}',
-      'action' => 
-      array (
-        'middleware' => 
-        array (
-          0 => 'api',
-          1 => 'auth:api',
-        ),
-        'uses' => 'App\\Http\\Controllers\\UserController@deleteUser',
-        'controller' => 'App\\Http\\Controllers\\UserController@deleteUser',
-        'namespace' => NULL,
-        'prefix' => 'api',
-        'where' => 
-        array (
-        ),
-        'as' => 'generated::c0ez22nbrY302XI0',
-      ),
-      'fallback' => false,
-      'defaults' => 
-      array (
-      ),
-      'wheres' => 
-      array (
-      ),
-      'bindingFields' => 
-      array (
-      ),
-      'lockSeconds' => NULL,
-      'waitSeconds' => NULL,
-      'withTrashed' => false,
-    ),
-    'generated::aNfNj2JKKpKEoeO3' => 
-    array (
-      'methods' => 
-      array (
-        0 => 'GET',
-        1 => 'HEAD',
-      ),
-      'uri' => 'api/email',
-      'action' => 
-      array (
-        'middleware' => 
-        array (
-          0 => 'api',
-          1 => 'auth:api',
-        ),
-        'uses' => '\\App\\Http\\Controllers\\EmailController@index',
-        'controller' => '\\App\\Http\\Controllers\\EmailController@index',
-        'namespace' => NULL,
-        'prefix' => 'api',
-        'where' => 
-        array (
-        ),
-        'as' => 'generated::aNfNj2JKKpKEoeO3',
-      ),
-      'fallback' => false,
-      'defaults' => 
-      array (
-      ),
-      'wheres' => 
-      array (
-      ),
-      'bindingFields' => 
-      array (
-      ),
-      'lockSeconds' => NULL,
-      'waitSeconds' => NULL,
-      'withTrashed' => false,
-    ),
-    'generated::Ft4jhnrYNHgnr2Ae' => 
-    array (
-      'methods' => 
-      array (
-        0 => 'GET',
-        1 => 'HEAD',
-      ),
-      'uri' => 'api/companies/all',
-      'action' => 
-      array (
-        'middleware' => 
-        array (
-          0 => 'api',
-          1 => 'auth:api',
-        ),
-        'uses' => 'App\\Http\\Controllers\\CompanyController@allCompanies',
-        'controller' => 'App\\Http\\Controllers\\CompanyController@allCompanies',
-        'namespace' => NULL,
-        'prefix' => 'api',
-        'where' => 
-        array (
-        ),
-        'as' => 'generated::Ft4jhnrYNHgnr2Ae',
-      ),
-      'fallback' => false,
-      'defaults' => 
-      array (
-      ),
-      'wheres' => 
-      array (
-      ),
-      'bindingFields' => 
-      array (
-      ),
-      'lockSeconds' => NULL,
-      'waitSeconds' => NULL,
-      'withTrashed' => false,
-    ),
-    'generated::KxD6CMNnOaVS4Inw' => 
-    array (
-      'methods' => 
-      array (
-        0 => 'GET',
-        1 => 'HEAD',
-      ),
-      'uri' => 'api/paginatedCompanies',
-      'action' => 
-      array (
-        'middleware' => 
-        array (
-          0 => 'api',
-          1 => 'auth:api',
-        ),
-        'uses' => 'App\\Http\\Controllers\\CompanyController@paginatedIndex',
-        'controller' => 'App\\Http\\Controllers\\CompanyController@paginatedIndex',
-        'namespace' => NULL,
-        'prefix' => 'api',
-        'where' => 
-        array (
-        ),
-        'as' => 'generated::KxD6CMNnOaVS4Inw',
-      ),
-      'fallback' => false,
-      'defaults' => 
-      array (
-      ),
-      'wheres' => 
-      array (
-      ),
-      'bindingFields' => 
-      array (
-      ),
-      'lockSeconds' => NULL,
-      'waitSeconds' => NULL,
-      'withTrashed' => false,
-    ),
-    'generated::k6CsGlObmatbZbqi' => 
-    array (
-      'methods' => 
-      array (
-        0 => 'POST',
-      ),
-      'uri' => 'api/companies',
-      'action' => 
-      array (
-        'middleware' => 
-        array (
-          0 => 'api',
-          1 => 'auth:api',
-        ),
-        'uses' => 'App\\Http\\Controllers\\CompanyController@addCompany',
-        'controller' => 'App\\Http\\Controllers\\CompanyController@addCompany',
-        'namespace' => NULL,
-        'prefix' => 'api',
-        'where' => 
-        array (
-        ),
-        'as' => 'generated::k6CsGlObmatbZbqi',
-      ),
-      'fallback' => false,
-      'defaults' => 
-      array (
-      ),
-      'wheres' => 
-      array (
-      ),
-      'bindingFields' => 
-      array (
-      ),
-      'lockSeconds' => NULL,
-      'waitSeconds' => NULL,
-      'withTrashed' => false,
-    ),
-    'generated::RScKzkkQaISpM57R' => 
-    array (
-      'methods' => 
-      array (
-        0 => 'DELETE',
-      ),
-      'uri' => 'api/companies/{id}',
-      'action' => 
-      array (
-        'middleware' => 
-        array (
-          0 => 'api',
-          1 => 'auth:api',
-        ),
-        'uses' => 'App\\Http\\Controllers\\CompanyController@deleteCompany',
-        'controller' => 'App\\Http\\Controllers\\CompanyController@deleteCompany',
-        'namespace' => NULL,
-        'prefix' => 'api',
-        'where' => 
-        array (
-        ),
-        'as' => 'generated::RScKzkkQaISpM57R',
-      ),
-      'fallback' => false,
-      'defaults' => 
-      array (
-      ),
-      'wheres' => 
-      array (
-      ),
-      'bindingFields' => 
-      array (
-      ),
-      'lockSeconds' => NULL,
-      'waitSeconds' => NULL,
-      'withTrashed' => false,
-    ),
-    'generated::ijUywvVbfGFlTliN' => 
-    array (
-      'methods' => 
-      array (
-        0 => 'GET',
-        1 => 'HEAD',
-      ),
-      'uri' => 'api/companies/{id}',
-      'action' => 
-      array (
-        'middleware' => 
-        array (
-          0 => 'api',
-          1 => 'auth:api',
-        ),
-        'uses' => 'App\\Http\\Controllers\\CompanyController@showCompany',
-        'controller' => 'App\\Http\\Controllers\\CompanyController@showCompany',
-        'namespace' => NULL,
-        'prefix' => 'api',
-        'where' => 
-        array (
-        ),
-        'as' => 'generated::ijUywvVbfGFlTliN',
-      ),
-      'fallback' => false,
-      'defaults' => 
-      array (
-      ),
-      'wheres' => 
-      array (
-      ),
-      'bindingFields' => 
-      array (
-      ),
-      'lockSeconds' => NULL,
-      'waitSeconds' => NULL,
-      'withTrashed' => false,
-    ),
-    'generated::YUSoLPm5NYBmVRmt' => 
-    array (
-      'methods' => 
-      array (
-        0 => 'PUT',
-      ),
-      'uri' => 'api/companies/{id}',
-      'action' => 
-      array (
-        'middleware' => 
-        array (
-          0 => 'api',
-          1 => 'auth:api',
-        ),
-        'uses' => 'App\\Http\\Controllers\\CompanyController@updateCompany',
-        'controller' => 'App\\Http\\Controllers\\CompanyController@updateCompany',
-        'namespace' => NULL,
-        'prefix' => 'api',
-        'where' => 
-        array (
-        ),
-        'as' => 'generated::YUSoLPm5NYBmVRmt',
-      ),
-      'fallback' => false,
-      'defaults' => 
-      array (
-      ),
-      'wheres' => 
-      array (
-      ),
-      'bindingFields' => 
-      array (
-      ),
-      'lockSeconds' => NULL,
-      'waitSeconds' => NULL,
-      'withTrashed' => false,
-    ),
-    'generated::M8LBWtyJ9QGiMM1l' => 
-    array (
-      'methods' => 
-      array (
-        0 => 'GET',
-        1 => 'HEAD',
-      ),
-      'uri' => 'api/roles',
-      'action' => 
-      array (
-        'middleware' => 
-        array (
-          0 => 'api',
-          1 => 'auth:api',
-        ),
-        'uses' => '\\App\\Http\\Controllers\\RolesController@index',
-        'controller' => '\\App\\Http\\Controllers\\RolesController@index',
-        'namespace' => NULL,
-        'prefix' => 'api',
-        'where' => 
-        array (
-        ),
-        'as' => 'generated::M8LBWtyJ9QGiMM1l',
-      ),
-      'fallback' => false,
-      'defaults' => 
-      array (
-      ),
-      'wheres' => 
-      array (
-      ),
-      'bindingFields' => 
-      array (
-      ),
-      'lockSeconds' => NULL,
-      'waitSeconds' => NULL,
-      'withTrashed' => false,
-    ),
-    'generated::2TZfrtqT4mQ6hUld' => 
-    array (
-      'methods' => 
-      array (
-        0 => 'GET',
-        1 => 'HEAD',
-      ),
-      'uri' => 'api/{fallbackPlaceholder}',
-      'action' => 
-      array (
-        'middleware' => 
-        array (
-          0 => 'api',
-        ),
-        'uses' => 'O:55:"Laravel\\SerializableClosure\\UnsignedSerializableClosure":1:{s:12:"serializable";O:46:"Laravel\\SerializableClosure\\Serializers\\Native":5:{s:3:"use";a:0:{}s:8:"function";s:88:"function () {
-    return \\response()->json([\'message\' => \'Resource not found.\'], 404);
-}";s:5:"scope";s:37:"Illuminate\\Routing\\RouteFileRegistrar";s:4:"this";N;s:4:"self";s:32:"000000000000031f0000000000000000";}}',
-        'namespace' => NULL,
-        'prefix' => 'api',
-        'where' => 
-        array (
-        ),
-        'as' => 'generated::2TZfrtqT4mQ6hUld',
-      ),
-      'fallback' => true,
-      'defaults' => 
-      array (
-      ),
-      'wheres' => 
-      array (
-        'fallbackPlaceholder' => '.*',
-      ),
-      'bindingFields' => 
-      array (
-      ),
-      'lockSeconds' => NULL,
-      'waitSeconds' => NULL,
-      'withTrashed' => false,
-    ),
-    'generated::nELDa5VNm4r2ATAG' => 
-    array (
-      'methods' => 
-      array (
-        0 => 'GET',
-        1 => 'HEAD',
-      ),
-      'uri' => 'api/diagnostic',
-      'action' => 
-      array (
-        'middleware' => 
-        array (
-          0 => 'api',
-        ),
-        'uses' => 'O:55:"Laravel\\SerializableClosure\\UnsignedSerializableClosure":1:{s:12:"serializable";O:46:"Laravel\\SerializableClosure\\Serializers\\Native":5:{s:3:"use";a:0:{}s:8:"function";s:408:"function () {
-    return \\response()->json([
-        \'status\' => \'success\',
-        \'environment\' => \\app()->environment(),
-        \'app_url\' => \\config(\'app.url\'),
-        \'api_url\' => \\request()->fullUrl(),
-        \'db_connection\' => \\config(\'database.default\'),
-        \'db_host\' => \\config(\'database.connections.mysql.host\'),
-        \'db_name\' => \\config(\'database.connections.mysql.database\'),
-    ]);
-}";s:5:"scope";s:37:"Illuminate\\Routing\\RouteFileRegistrar";s:4:"this";N;s:4:"self";s:32:"00000000000003340000000000000000";}}',
-        'namespace' => NULL,
-        'prefix' => 'api',
-        'where' => 
-        array (
-        ),
-        'as' => 'generated::nELDa5VNm4r2ATAG',
-      ),
-      'fallback' => false,
-      'defaults' => 
-      array (
-      ),
-      'wheres' => 
-      array (
-      ),
-      'bindingFields' => 
-      array (
-      ),
-      'lockSeconds' => NULL,
-      'waitSeconds' => NULL,
-      'withTrashed' => false,
-    ),
-    'generated::ij0OHDLGdVJVz7nR' => 
-    array (
-      'methods' => 
-      array (
-        0 => 'GET',
-        1 => 'HEAD',
-      ),
-      'uri' => 'up',
-      'action' => 
-      array (
-        'middleware' => 
-        array (
-          0 => 'web',
-        ),
-        'uses' => 'O:55:"Laravel\\SerializableClosure\\UnsignedSerializableClosure":1:{s:12:"serializable";O:46:"Laravel\\SerializableClosure\\Serializers\\Native":5:{s:3:"use";a:0:{}s:8:"function";s:349:"function () {
-                    \\Illuminate\\Support\\Facades\\Event::dispatch(new \\Illuminate\\Foundation\\Events\\DiagnosingHealth);
-
-                    return \\Illuminate\\Support\\Facades\\View::file(\'/home/rogers/Code/Sneat-Test/vendor/laravel/framework/src/Illuminate/Foundation/Configuration\'.\'/../resources/health-up.blade.php\');
-                }";s:5:"scope";s:54:"Illuminate\\Foundation\\Configuration\\ApplicationBuilder";s:4:"this";N;s:4:"self";s:32:"00000000000003360000000000000000";}}',
-        'as' => 'generated::ij0OHDLGdVJVz7nR',
-      ),
-      'fallback' => false,
-      'defaults' => 
-      array (
-      ),
-      'wheres' => 
-      array (
-      ),
-      'bindingFields' => 
-      array (
-      ),
-      'lockSeconds' => NULL,
-      'waitSeconds' => NULL,
-      'withTrashed' => false,
-    ),
-    'generated::KO91U78e2HX6TcCX' => 
-    array (
-      'methods' => 
-      array (
-        0 => 'GET',
-        1 => 'HEAD',
-      ),
-      'uri' => '{any?}',
-      'action' => 
-      array (
-        'middleware' => 
-        array (
-          0 => 'web',
-        ),
-        'uses' => 'O:55:"Laravel\\SerializableClosure\\UnsignedSerializableClosure":1:{s:12:"serializable";O:46:"Laravel\\SerializableClosure\\Serializers\\Native":5:{s:3:"use";a:0:{}s:8:"function";s:47:"function() {
-    return \\view(\'application\');
-}";s:5:"scope";s:37:"Illuminate\\Routing\\RouteFileRegistrar";s:4:"this";N;s:4:"self";s:32:"00000000000003390000000000000000";}}',
-        'namespace' => NULL,
-        'prefix' => '',
-        'where' => 
-        array (
-        ),
-        'as' => 'generated::KO91U78e2HX6TcCX',
-      ),
-      'fallback' => false,
-      'defaults' => 
-      array (
-      ),
-      'wheres' => 
-      array (
-        'any' => '.*',
-      ),
-      'bindingFields' => 
-      array (
-      ),
-      'lockSeconds' => NULL,
-      'waitSeconds' => NULL,
-      'withTrashed' => false,
-    ),
-  ),
-)
-);
-
 
 
 ===== File: bootstrap/cache/packages.php =====
@@ -3833,7 +1704,7 @@ return [
 return [
     'paths' => ['api/*', 'sanctum/csrf-cookie'],
     'allowed_methods' => ['*'],
-    'allowed_origins' => ['http://localhost:8000', 'http://127.0.0.1:8000','https://stephandouglasduval.com'],
+    'allowed_origins' => ['*'],
     'allowed_origins_patterns' => [],
     'allowed_headers' => ['*'],
     'exposed_headers' => [],
@@ -3931,7 +1802,8 @@ return [
         'api' => [
             'driver' => 'passport',
         'provider' => 'users',
-        'hash' => false,
+        // Hashing the api breaks authentication
+        // 'hash' => false,
         ],
     ],
 
@@ -5431,41 +3303,6 @@ class UserFactory extends Factory
 
 
 
-===== File: database/migrations/2025_01_25_202355_create_oauth_auth_codes_table.php =====
-<?php
-
-use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
-
-return new class extends Migration
-{
-    /**
-     * Run the migrations.
-     */
-    public function up(): void
-    {
-        Schema::create('oauth_auth_codes', function (Blueprint $table) {
-            $table->string('id', 100)->primary();
-            $table->unsignedBigInteger('user_id')->index();
-            $table->unsignedBigInteger('client_id');
-            $table->text('scopes')->nullable();
-            $table->boolean('revoked');
-            $table->dateTime('expires_at')->nullable();
-        });
-    }
-
-    /**
-     * Reverse the migrations.
-     */
-    public function down(): void
-    {
-        Schema::dropIfExists('oauth_auth_codes');
-    }
-};
-
-
-
 ===== File: database/migrations/2024_10_14_191341_create_personal_access_tokens_table.php =====
 <?php
 
@@ -5536,45 +3373,6 @@ return new class extends Migration
 
 
 
-===== File: database/migrations/2025_01_15_231040_create_oauth_clients_table.php =====
-<?php
-
-use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
-
-return new class extends Migration
-{
-    /**
-     * Run the migrations.
-     */
-    public function up(): void
-    {
-        Schema::create('oauth_clients', function (Blueprint $table) {
-            $table->bigIncrements('id');
-            $table->unsignedBigInteger('user_id')->nullable()->index();
-            $table->string('name');
-            $table->string('secret', 100)->nullable();
-            $table->string('provider')->nullable();
-            $table->text('redirect');
-            $table->boolean('personal_access_client');
-            $table->boolean('password_client');
-            $table->boolean('revoked');
-            $table->timestamps();
-        });
-    }
-
-    /**
-     * Reverse the migrations.
-     */
-    public function down(): void
-    {
-        Schema::dropIfExists('oauth_clients');
-    }
-};
-
-
-
 ===== File: database/migrations/2024_10_31_171522_create_role_permissions_table.php =====
 <?php
 
@@ -5606,6 +3404,41 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('role_permissions');
+    }
+};
+
+
+
+===== File: database/migrations/2025_01_29_221548_create_oauth_auth_codes_table.php =====
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('oauth_auth_codes', function (Blueprint $table) {
+            $table->string('id', 100)->primary();
+            $table->unsignedBigInteger('user_id')->index();
+            $table->unsignedBigInteger('client_id');
+            $table->text('scopes')->nullable();
+            $table->boolean('revoked');
+            $table->dateTime('expires_at')->nullable();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('oauth_auth_codes');
     }
 };
 
@@ -5647,39 +3480,6 @@ return new class extends Migration
            Schema::dropIfExists('user_company');
        }
    }
-
-
-
-===== File: database/migrations/2025_01_15_231038_create_oauth_refresh_tokens_table.php =====
-<?php
-
-use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
-
-return new class extends Migration
-{
-    /**
-     * Run the migrations.
-     */
-    public function up(): void
-    {
-        Schema::create('oauth_refresh_tokens', function (Blueprint $table) {
-            $table->string('id', 100)->primary();
-            $table->string('access_token_id', 100)->index();
-            $table->boolean('revoked');
-            $table->dateTime('expires_at')->nullable();
-        });
-    }
-
-    /**
-     * Reverse the migrations.
-     */
-    public function down(): void
-    {
-        Schema::dropIfExists('oauth_refresh_tokens');
-    }
-};
 
 
 
@@ -5848,82 +3648,6 @@ class CreateMessageLabelsAndStatusesTables extends Migration
 
 
 
-===== File: database/migrations/2025_01_25_202353_create_oauth_access_tokens_table.php =====
-<?php
-
-use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
-
-return new class extends Migration
-{
-    /**
-     * Run the migrations.
-     */
-    public function up(): void
-    {
-        Schema::create('oauth_access_tokens', function (Blueprint $table) {
-            $table->string('id', 100)->primary();
-            $table->unsignedBigInteger('user_id')->nullable()->index();
-            $table->unsignedBigInteger('client_id');
-            $table->string('name')->nullable();
-            $table->text('scopes')->nullable();
-            $table->boolean('revoked');
-            $table->timestamps();
-            $table->dateTime('expires_at')->nullable();
-        });
-    }
-
-    /**
-     * Reverse the migrations.
-     */
-    public function down(): void
-    {
-        Schema::dropIfExists('oauth_access_tokens');
-    }
-};
-
-
-
-===== File: database/migrations/2025_01_25_202354_create_oauth_clients_table.php =====
-<?php
-
-use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
-
-return new class extends Migration
-{
-    /**
-     * Run the migrations.
-     */
-    public function up(): void
-    {
-        Schema::create('oauth_clients', function (Blueprint $table) {
-            $table->bigIncrements('id');
-            $table->unsignedBigInteger('user_id')->nullable()->index();
-            $table->string('name');
-            $table->string('secret', 100)->nullable();
-            $table->string('provider')->nullable();
-            $table->text('redirect');
-            $table->boolean('personal_access_client');
-            $table->boolean('password_client');
-            $table->boolean('revoked');
-            $table->timestamps();
-        });
-    }
-
-    /**
-     * Reverse the migrations.
-     */
-    public function down(): void
-    {
-        Schema::dropIfExists('oauth_clients');
-    }
-};
-
-
-
 ===== File: database/migrations/2024_10_31_171504_create_roles_table.php =====
 <?php
 
@@ -5981,41 +3705,6 @@ return new class extends Migration
 
 
 
-===== File: database/migrations/2025_01_15_231037_create_oauth_auth_codes_table.php =====
-<?php
-
-use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
-
-return new class extends Migration
-{
-    /**
-     * Run the migrations.
-     */
-    public function up(): void
-    {
-        Schema::create('oauth_auth_codes', function (Blueprint $table) {
-            $table->string('id', 100)->primary();
-            $table->unsignedBigInteger('user_id')->index();
-            $table->unsignedBigInteger('client_id');
-            $table->text('scopes')->nullable();
-            $table->boolean('revoked');
-            $table->dateTime('expires_at')->nullable();
-        });
-    }
-
-    /**
-     * Reverse the migrations.
-     */
-    public function down(): void
-    {
-        Schema::dropIfExists('oauth_auth_codes');
-    }
-};
-
-
-
 ===== File: database/migrations/2024_10_31_171426_create_permissions_table.php =====
 <?php
 
@@ -6049,7 +3738,7 @@ return new class extends Migration
 
 
 
-===== File: database/migrations/2025_01_25_202357_create_oauth_refresh_tokens_table.php =====
+===== File: database/migrations/2025_02_01_003824_create_oauth_access_tokens_table.php =====
 <?php
 
 use Illuminate\Database\Migrations\Migration;
@@ -6063,10 +3752,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('oauth_refresh_tokens', function (Blueprint $table) {
+        Schema::create('oauth_access_tokens', function (Blueprint $table) {
             $table->string('id', 100)->primary();
-            $table->string('access_token_id', 100)->index();
+            $table->unsignedBigInteger('user_id')->nullable()->index();
+            $table->unsignedBigInteger('client_id');
+            $table->string('name')->nullable();
+            $table->text('scopes')->nullable();
             $table->boolean('revoked');
+            $table->timestamps();
             $table->dateTime('expires_at')->nullable();
         });
     }
@@ -6076,7 +3769,78 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('oauth_refresh_tokens');
+        Schema::dropIfExists('oauth_access_tokens');
+    }
+};
+
+
+
+===== File: database/migrations/2025_02_01_003827_create_oauth_personal_access_clients_table.php =====
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('oauth_personal_access_clients', function (Blueprint $table) {
+            $table->bigIncrements('id');
+            $table->unsignedBigInteger('client_id');
+            $table->timestamps();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('oauth_personal_access_clients');
+    }
+};
+
+
+
+===== File: database/migrations/2025_02_01_003825_create_oauth_clients_table.php =====
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('oauth_clients', function (Blueprint $table) {
+            $table->bigIncrements('id');
+            $table->unsignedBigInteger('user_id')->nullable()->index();
+            $table->string('name');
+            $table->string('secret', 100)->nullable();
+            $table->string('provider')->nullable();
+            $table->text('redirect');
+            $table->boolean('personal_access_client');
+            $table->boolean('password_client');
+            $table->boolean('revoked');
+            $table->timestamps();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('oauth_clients');
     }
 };
 
@@ -6172,43 +3936,6 @@ return new class extends Migration
 
 
 
-===== File: database/migrations/2025_01_15_231039_create_oauth_access_tokens_table.php =====
-<?php
-
-use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
-
-return new class extends Migration
-{
-    /**
-     * Run the migrations.
-     */
-    public function up(): void
-    {
-        Schema::create('oauth_access_tokens', function (Blueprint $table) {
-            $table->string('id', 100)->primary();
-            $table->unsignedBigInteger('user_id')->nullable()->index();
-            $table->unsignedBigInteger('client_id');
-            $table->string('name')->nullable();
-            $table->text('scopes')->nullable();
-            $table->boolean('revoked');
-            $table->timestamps();
-            $table->dateTime('expires_at')->nullable();
-        });
-    }
-
-    /**
-     * Reverse the migrations.
-     */
-    public function down(): void
-    {
-        Schema::dropIfExists('oauth_access_tokens');
-    }
-};
-
-
-
 ===== File: database/migrations/2024_11_19_184318_create_assignments_table.php =====
 <?php
 
@@ -6246,6 +3973,74 @@ return new class extends Migration
            Schema::dropIfExists('assignments');
        }
    }
+
+
+
+===== File: database/migrations/2025_02_01_003826_create_oauth_auth_codes_table.php =====
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('oauth_auth_codes', function (Blueprint $table) {
+            $table->string('id', 100)->primary();
+            $table->unsignedBigInteger('user_id')->index();
+            $table->unsignedBigInteger('client_id');
+            $table->text('scopes')->nullable();
+            $table->boolean('revoked');
+            $table->dateTime('expires_at')->nullable();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('oauth_auth_codes');
+    }
+};
+
+
+
+===== File: database/migrations/2025_02_01_003828_create_oauth_refresh_tokens_table.php =====
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('oauth_refresh_tokens', function (Blueprint $table) {
+            $table->string('id', 100)->primary();
+            $table->string('access_token_id', 100)->index();
+            $table->boolean('revoked');
+            $table->dateTime('expires_at')->nullable();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('oauth_refresh_tokens');
+    }
+};
 
 
 
@@ -6368,7 +4163,44 @@ return new class extends Migration
 
 
 
-===== File: database/migrations/2025_01_25_202356_create_oauth_personal_access_clients_table.php =====
+===== File: database/migrations/2025_01_29_221550_create_oauth_access_tokens_table.php =====
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('oauth_access_tokens', function (Blueprint $table) {
+            $table->string('id', 100)->primary();
+            $table->unsignedBigInteger('user_id')->nullable()->index();
+            $table->unsignedBigInteger('client_id');
+            $table->string('name')->nullable();
+            $table->text('scopes')->nullable();
+            $table->boolean('revoked');
+            $table->timestamps();
+            $table->dateTime('expires_at')->nullable();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('oauth_access_tokens');
+    }
+};
+
+
+
+===== File: database/migrations/2025_01_29_221547_create_oauth_personal_access_clients_table.php =====
 <?php
 
 use Illuminate\Database\Migrations\Migration;
@@ -6400,7 +4232,7 @@ return new class extends Migration
 
 
 
-===== File: database/migrations/2025_01_15_231036_create_oauth_personal_access_clients_table.php =====
+===== File: database/migrations/2025_01_29_221551_create_oauth_clients_table.php =====
 <?php
 
 use Illuminate\Database\Migrations\Migration;
@@ -6414,9 +4246,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('oauth_personal_access_clients', function (Blueprint $table) {
+        Schema::create('oauth_clients', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->unsignedBigInteger('client_id');
+            $table->unsignedBigInteger('user_id')->nullable()->index();
+            $table->string('name');
+            $table->string('secret', 100)->nullable();
+            $table->string('provider')->nullable();
+            $table->text('redirect');
+            $table->boolean('personal_access_client');
+            $table->boolean('password_client');
+            $table->boolean('revoked');
             $table->timestamps();
         });
     }
@@ -6426,7 +4265,40 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('oauth_personal_access_clients');
+        Schema::dropIfExists('oauth_clients');
+    }
+};
+
+
+
+===== File: database/migrations/2025_01_29_221549_create_oauth_refresh_tokens_table.php =====
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('oauth_refresh_tokens', function (Blueprint $table) {
+            $table->string('id', 100)->primary();
+            $table->string('access_token_id', 100)->index();
+            $table->boolean('revoked');
+            $table->dateTime('expires_at')->nullable();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('oauth_refresh_tokens');
     }
 };
 
@@ -6436,10 +4308,13 @@ return new class extends Migration
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
 
-Route::get('{any?}', function() {
+//Catch-All Route (Placed at the bottom)
+Route::get('{any}', function() {
     return view('application');
 })->where('any', '.*');
+
 
 
 ===== File: routes/api.php =====
@@ -6505,16 +4380,7 @@ Route::fallback(function () {
 });
 
 Route::get('/diagnostic', function (Request $request) {
-    \Log::info('Diagnostic route hit', ['url' => $request->fullUrl()]);
-    return response()->json([
-        'status' => 'success',
-        'environment' => app()->environment(),
-        'app_url' => config('app.url'),
-        'api_url' => $request->fullUrl(),
-        'db_connection' => config('database.default'),
-        'db_host' => config('database.connections.mysql.host'),
-        'db_name' => config('database.connections.mysql.database'),
-    ]);
+    return response()->json(['message' => 'API is up', 'user' => $request->user()]);
 });
 
 
@@ -6537,9 +4403,7 @@ APP_ENV=local
 APP_KEY=base64:uQLa9JPsjytIrTcogu707ukvSD46ixiUM0F04qFTrJ0=
 APP_DEBUG=true
 APP_TIMEZONE=UTC
-APP_URL=https://stephandouglasduval.com
-
-
+APP_URL=http://localhost:8000/
 
 APP_LOCALE=en
 APP_FALLBACK_LOCALE=en
@@ -6556,11 +4420,11 @@ LOG_DEPRECATIONS_CHANNEL=null
 LOG_LEVEL=debug
 
 DB_CONNECTION=mysql
-DB_HOST=thh2lzgakldp794r.cbetxkdyhwsb.us-east-1.rds.amazonaws.com
+DB_HOST=127.0.0.1
 DB_PORT=3306
-DB_DATABASE=sb9jy34e678cfv0j
-DB_USERNAME=fs4pol56u2xtz6cp
-DB_PASSWORD=zhjie0rz9qwzmsqq
+DB_DATABASE=laravelweb_db
+DB_USERNAME=laravelweb
+DB_PASSWORD='Web#laravel@123'
 
 SESSION_DRIVER=database
 SESSION_LIFETIME=120
@@ -6598,22 +4462,22 @@ AWS_BUCKET=
 AWS_USE_PATH_STYLE_ENDPOINT=false
 
 VITE_APP_NAME="${APP_NAME}"
-VITE_API_BASE_URL=https://stephandouglasduval.com/api
-VITE_API_URL=https://stephandouglasduval.com/api
+VITE_API_BASE_URL=http://localhost:8000/api
+VITE_API_URL=http://localhost:8000/api
 
 
-PASSPORT_PERSONAL_ACCESS_CLIENT_ID=
-PASSPORT_PERSONAL_ACCESS_CLIENT_SECRET=
-PASSPORT_PASSWORD_GRANT_CLIENT_ID=
-PASSPORT_PASSWORD_GRANT_CLIENT_SECRET=
+PASSPORT_PERSONAL_ACCESS_CLIENT_ID=1
+PASSPORT_PERSONAL_ACCESS_CLIENT_SECRET=FCKF4ZWl1YKkTl93nLJRqrqb9ziozeE3HvAQjdI3
+PASSPORT_PASSWORD_GRANT_CLIENT_ID=2
+PASSPORT_PASSWORD_GRANT_CLIENT_SECRET=pfvDaMLUY8zjYSDsBDWmhrd7vrpURIcBgOuxoU8N
 
 
 
 ===== File: vite.config.ts =====
-import { fileURLToPath } from 'node:url'
 import vue from '@vitejs/plugin-vue'
 import vueJsx from '@vitejs/plugin-vue-jsx'
 import laravel from 'laravel-vite-plugin'
+import { fileURLToPath } from 'node:url'
 import AutoImport from 'unplugin-auto-import/vite'
 import Components from 'unplugin-vue-components/vite'
 import { VueRouterAutoImports, getPascalCaseRouteName } from 'unplugin-vue-router'
@@ -6625,17 +4489,16 @@ import svgLoader from 'vite-svg-loader'
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  base: '/', // Ensure correct base path for history mode
 
-  plugins: [// Docs: https://github.com/posva/unplugin-vue-router
-  // ℹ️ This plugin should be placed before vue plugin
+  plugins: [
+    // Vue Router plugin should be placed before Vue plugin
     VueRouter({
       getRouteName: routeNode => {
-      // Convert pascal case to kebab case
         return getPascalCaseRouteName(routeNode)
           .replace(/([a-z\d])([A-Z])/g, '$1-$2')
           .toLowerCase()
       },
-
       routesFolder: 'resources/ts/pages',
     }),
     vue({
@@ -6643,7 +4506,6 @@ export default defineConfig({
         compilerOptions: {
           isCustomElement: tag => tag === 'swiper-container' || tag === 'swiper-slide',
         },
-
         transformAssetUrls: {
           base: null,
           includeAbsolute: false,
@@ -6653,27 +4515,27 @@ export default defineConfig({
     laravel({
       input: ['resources/ts/main.ts'],
       refresh: true,
+      buildDirectory: 'public/build', // Ensure Laravel serves the correct build
     }),
-    vueJsx(), // Docs: https://github.com/vuetifyjs/vuetify-loader/tree/master/packages/vite-plugin
+    vueJsx(),
     vuetify({
       styles: {
         configFile: 'resources/styles/variables/_vuetify.scss',
       },
-    }), // Docs: https://github.com/johncampionjr/vite-plugin-vue-layouts#vite-plugin-vue-layouts
+    }),
     Layouts({
       layoutsDirs: './resources/ts/layouts/',
-    }), // Docs: https://github.com/antfu/unplugin-vue-components#unplugin-vue-components
+    }),
     Components({
       dirs: ['resources/ts/@core/components', 'resources/ts/views/demos', 'resources/ts/components'],
       dts: true,
       resolvers: [
         componentName => {
-        // Auto import `VueApexCharts`
           if (componentName === 'VueApexCharts')
             return { name: 'default', from: 'vue3-apexcharts', as: 'VueApexCharts' }
         },
       ],
-    }), // Docs: https://github.com/antfu/unplugin-auto-import#unplugin-auto-import
+    }),
     AutoImport({
       imports: ['vue', VueRouterAutoImports, '@vueuse/core', '@vueuse/math', 'vue-i18n', 'pinia'],
       dirs: [
@@ -6684,13 +4546,13 @@ export default defineConfig({
         './resources/ts/plugins/*/composables/*',
       ],
       vueTemplate: true,
-
-      // ℹ️ Disabled to avoid confusion & accidental usage
       ignore: ['useCookies', 'useStorage'],
     }),
     svgLoader(),
   ],
-  define: { 'process.env': {VITE_API_URL: process.env.VITE_API_URL,} },
+
+  define: { 'process.env': { VITE_API_URL: process.env.VITE_API_URL } },
+
   resolve: {
     alias: {
       '@core-scss': fileURLToPath(new URL('./resources/styles/@core', import.meta.url)),
@@ -6705,17 +4567,21 @@ export default defineConfig({
       '@api-utils': fileURLToPath(new URL('./resources/ts/plugins/fake-api/utils/', import.meta.url)),
     },
   },
+
   build: {
-    outDir: 'public',
+    outDir: 'public/build',
     chunkSizeWarningLimit: 5000,
+    emptyOutDir: false, // Prevents deleting non-build files
+    rollupOptions: {
+      input: 'resources/ts/main.ts',
+    },
   },
+
   optimizeDeps: {
     exclude: ['vuetify'],
-    entries: [
-      './resources/ts/**/*.vue',
-    ],
+    entries: ['./resources/ts/**/*.vue'],
   },
-})
+});
 
 
 
@@ -6874,7 +4740,14 @@ const headers = [
   { title: 'Actions', key: 'actions', sortable: false },
 ]
 
+
+//   GPT FETCH USERCODE START
+
+
+// GPT CODE END
+
 // 👉 Fetching users
+
 const { data: usersData, execute: fetchUsers } = useApi(() => {
   const params = new URLSearchParams({
     page: String(page.value),
@@ -6882,6 +4755,8 @@ const { data: usersData, execute: fetchUsers } = useApi(() => {
   }).toString()
 
   const token = localStorage.getItem('accessToken')
+  console.log('Access Token before API call:', token) // Debugging line
+
 
   console.log('Access Token:', token)
   console.log('API URL:', `/users?${params}`)
