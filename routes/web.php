@@ -7,3 +7,9 @@ use Illuminate\Support\Facades\Auth;
 Route::get('{any}', function() {
     return view('application');
 })->where('any', '.*');
+
+
+Route::get('/login', function () {
+    // Return a login view or an SPA page
+    return view('application'); 
+})->name('login');
