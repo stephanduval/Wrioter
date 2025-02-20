@@ -130,6 +130,8 @@
     "@types/video.js": "^7"
   },
   "msw": {
-    "workerDirectory": "public"
+    "workerDirectory": [
+      "public"
+    ]
   }
 }
