@@ -1,22 +1,39 @@
+# Ensure correct MIME types for JS and CSS
+<IfModule mod_mime.c>
+    AddType application/javascript .js
+    AddType text/css .css
+</IfModule>
+
+# Explicitly set Content-Type for JavaScript and CSS files
+<IfModule mod_headers.c>
+    <FilesMatch "\.js$">
+        Header set Content-Type "application/javascript"
+    </FilesMatch>
+    <FilesMatch "\.css$">
+        Header set Content-Type "text/css"
+    </FilesMatch>
+</IfModule>
+
+# Enable Rewrite Rules
 <IfModule mod_rewrite.c>
     Options +FollowSymLinks
     RewriteEngine On
     RewriteBase /
-    # Ensure the request is not already for the public directory
+
+    # Ensure requests are not for the public directory
     RewriteCond %{REQUEST_URI} !^/public/
 
     # Skip if the requested file or directory exists
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_FILENAME} !-f
 
-    # Redirect all other requests to /public/ directory
+    # Redirect all other requests to /public/
     RewriteRule ^(.*)$ /public/$1 [L]
 
     # Default rule to redirect root requests to public/index.php
     RewriteRule ^(/)?$ public/index.php [L]
 
-    #Steps to fix issue with API not working in deployment
+    # Ensure Authorization header is passed to PHP
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
-
 </IfModule>

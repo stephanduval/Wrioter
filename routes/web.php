@@ -14,6 +14,11 @@ Route::get('/login', function () {
     return view('application'); 
 })->name('login');
 
-Route::get('/build/{path}', function ($path) {
-    return response()->file(public_path("build/{$path}"));
-})->where('path', '.*');
+
+
+//Route::get('/build/{path}', function ($path) {
+//   return response()->file(public_path("build/{$path}"), [
+//        'Content-Type' => 'application/javascript',
+//    ]);
+//})->where('path', '.*');
+

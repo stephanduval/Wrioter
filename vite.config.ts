@@ -13,7 +13,7 @@ import svgLoader from 'vite-svg-loader'
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  base: '/', // Ensure correct base path for history mode
+  base: '/build/', // Ensure correct base path for history mode
 
   plugins: [
     // Vue Router plugin should be placed before Vue plugin
