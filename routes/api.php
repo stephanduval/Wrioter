@@ -23,14 +23,14 @@ Route::group(['prefix' => 'auth'], function () {
     Route::post('login', [AuthController::class, 'login']);
     Route::post('register', [AuthController::class, 'register']);
 
-    Route::middleware('auth:api')->group(function () {
+    Route::middleware('auth:sanctum')->group(function () {
         Route::post('logout', [AuthController::class, 'logout']);
         Route::get('user', [AuthController::class, 'user']);
     });
 });
 
 // User Management Routes
-Route::middleware('auth:api')->group(function () {
+Route::middleware('auth:sanctum')->group(function () {
     Route::get('/users', [UserController::class, 'index']);
     Route::get('/users/{id}', [UserController::class, 'showUser']);
     Route::post('/users', [UserController::class, 'addUser'])->name('users.store');
@@ -39,10 +39,10 @@ Route::middleware('auth:api')->group(function () {
 });
 
 // Email Management Routes
-Route::middleware('auth:api')->get('/email', [EmailController::class, 'index']);
+Route::middleware('auth:sanctum')->get('/email', [EmailController::class, 'index']);
 
 // Company Management Routes
-Route::middleware('auth:api')->group(function () {
+Route::middleware('auth:sanctum')->group(function () {
     Route::get('/companies/all', [CompanyController::class, 'allCompanies']);
     Route::get('/paginatedCompanies', [CompanyController::class, 'paginatedIndex']);
     Route::post('/companies', [CompanyController::class, 'addCompany']);
@@ -52,7 +52,7 @@ Route::middleware('auth:api')->group(function () {
 });
 
 // Role Management Routes
-Route::middleware('auth:api')->get('/roles', [RolesController::class, 'index']);
+Route::middleware('auth:sanctum')->get('/roles', [RolesController::class, 'index']);
 
 // Fallback Route
 Route::fallback(function () {
