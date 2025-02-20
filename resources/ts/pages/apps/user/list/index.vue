@@ -179,7 +179,8 @@ const resolveUserStatusVariant = (stat: string) => {
 
 // 👉 Add new user
 const addNewUser = async (userData: UserProperties) => {
-  await $api('/apps/users', {
+  // await $api('/apps/users', {
+    await $api('/users', {
     method: 'POST',
     body: userData,
   })
