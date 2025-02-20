@@ -13,3 +13,7 @@ Route::get('/login', function () {
     // Return a login view or an SPA page
     return view('application'); 
 })->name('login');
+
+Route::get('/build/{path}', function ($path) {
+    return response()->file(public_path("build/{$path}"));
+})->where('path', '.*');

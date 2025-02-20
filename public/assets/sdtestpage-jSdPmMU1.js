@@ -1,1 +1,0 @@
-import{d as n,o as t,c as o}from"./main-COzPSvmz.js";const a={key:0},c={key:1},_=n({__name:"sdtestpage",setup(p){const e={action:"read",subject:"admin"};return(s,i)=>s.$can(e.action,e.subject)?(t(),o("p",a," >Welcome to the Admin Reports page. ")):(t(),o("p",c," You don't have enough permission to view this page "))}});export{_ as default};

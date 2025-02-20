@@ -1,1 +1,0 @@
-import{b1 as s,b3 as r,b6 as o,b8 as c,be as n,b as m}from"./main-B_IkraXW.js";const p=s({opacity:[Number,String],...r(),...o()},"VCardText"),b=c()({name:"VCardText",props:p(),setup(e,t){let{slots:a}=t;return n(()=>m(e.tag,{class:["v-card-text",e.class],style:[{"--v-card-text-opacity":e.opacity},e.style]},a)),{}}});export{b as V};

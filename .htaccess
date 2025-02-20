@@ -14,4 +14,9 @@
 
     # Default rule to redirect root requests to public/index.php
     RewriteRule ^(/)?$ public/index.php [L]
+
+    #Steps to fix issue with API not working in deployment
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
 </IfModule>
