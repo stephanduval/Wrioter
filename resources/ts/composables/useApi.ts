@@ -7,6 +7,8 @@ export const useApi = createFetch({
     headers: {
       Accept: 'application/json',
     },
+    credentials: 'include', // Ensures cookies & tokens are sent
+
   },
   options: {
     refetch: true,
