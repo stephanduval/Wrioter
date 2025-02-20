@@ -1,13 +1,13 @@
+import { paginateArray } from '@api-utils/paginateArray'
+import { db } from '@db/apps/users/db'
 import is from '@sindresorhus/is'
 import destr from 'destr'
 import type { PathParams } from 'msw'
 import { HttpResponse, http } from 'msw'
-import { db } from '@db/apps/users/db'
-import { paginateArray } from '@api-utils/paginateArray'
 
 export const handlerAppsUsers = [
   // Get Users Details
-  http.get(('/api/apps/users'), ({ request }) => {
+  http.get(('/api/users'), ({ request }) => {
     const url = new URL(request.url)
 
     const q = url.searchParams.get('q')
@@ -107,7 +107,7 @@ export const handlerAppsUsers = [
   }),
 
   // Get Single User Detail
-  http.get<PathParams>(('/api/apps/users/:id'), ({ params }) => {
+  http.get<PathParams>(('/api/users/:id'), ({ params }) => {
     const userId = Number(params.id)
 
     const user = db.users.find(e => e.id === userId)
@@ -132,7 +132,7 @@ export const handlerAppsUsers = [
   }),
 
   // Delete User
-  http.delete(('/api/apps/users/:id'), ({ params }) => {
+  http.delete(('/api/users/:id'), ({ params }) => {
     const userId = Number(params.id)
 
     const userIndex = db.users.findIndex(e => e.id === userId)
@@ -150,7 +150,7 @@ export const handlerAppsUsers = [
   }),
 
   // 👉 Add user
-  http.post(('/api/apps/users'), async ({ request }) => {
+  http.post(('/api/users'), async ({ request }) => {
     const user = await request.json() as any
 
     db.users.push({
