@@ -16,9 +16,13 @@
 
 # Enable Rewrite Rules
 <IfModule mod_rewrite.c>
+
     Options +FollowSymLinks
     RewriteEngine On
     RewriteBase /
+
+    # Ensure Authorization header is passed to PHP
+    SetEnvIf Authorization "(.*)" HTTP_AUTHORIZATION=$1
 
     # Ensure requests are not for the public directory
     RewriteCond %{REQUEST_URI} !^/public/
@@ -33,7 +37,8 @@
     # Default rule to redirect root requests to public/index.php
     RewriteRule ^(/)?$ public/index.php [L]
 
-    # Ensure Authorization header is passed to PHP
-    RewriteCond %{HTTP:Authorization} .
+    # Ensure Authorization header is always passed to PHP
+    RewriteCond %{HTTP:Authorization} . 
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 </IfModule>
+
