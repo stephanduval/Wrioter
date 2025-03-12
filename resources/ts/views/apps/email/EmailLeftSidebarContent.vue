@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
-import { PerfectScrollbar } from 'vue3-perfect-scrollbar'
+import { computed, ref, watch } from 'vue';
+import { PerfectScrollbar } from 'vue3-perfect-scrollbar';
 
 defineOptions({
   inheritAttrs: false,

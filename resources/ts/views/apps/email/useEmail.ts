@@ -1,5 +1,5 @@
-import type { PartialDeep } from 'type-fest'
 import type { Email } from '@db/apps/email/types'
+import type { PartialDeep } from 'type-fest'
 
 export type MoveEmailToAction = 'inbox' | 'spam' | 'trash'
 

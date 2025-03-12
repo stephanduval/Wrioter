@@ -7,6 +7,8 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\RolesController;
 use App\Http\Controllers\EmailController;
+use App\Http\Controllers\MessageController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -62,3 +64,13 @@ Route::fallback(function () {
 Route::get('/diagnostic', function (Request $request) {
     return response()->json(['message' => 'API is up', 'user' => $request->user()]);
 });
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/messages', [MessageController::class, 'store']);
+    Route::delete('/messages/{id}', [MessageController::class, 'destroy']);
+    Route::get('/messages', [MessageController::class, 'index']);
+    Route::get('/messages/search', [MessageController::class, 'search']);
+    Route::post('/messages/{id}/labels', [MessageController::class, 'labelMessage']);
+});
+
+
