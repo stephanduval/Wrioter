@@ -9,7 +9,6 @@ use App\Http\Controllers\RolesController;
 use App\Http\Controllers\EmailController;
 use App\Http\Controllers\MessageController;
 
-
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -57,20 +56,28 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::middleware('auth:sanctum')->get('/roles', [RolesController::class, 'index']);
 
 // Fallback Route
-Route::fallback(function () {
-    return response()->json(['message' => 'Resource not found.'], 404);
-});
+// Route::fallback(function () {
+//     return response()->json(['message' => 'Resource not found.'], 404);
+// });
 
 Route::get('/diagnostic', function (Request $request) {
     return response()->json(['message' => 'API is up', 'user' => $request->user()]);
 });
 
+
+// Message Controller Routes:
+
+
 Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/messages', [MessageController::class, 'store']);
-    Route::delete('/messages/{id}', [MessageController::class, 'destroy']);
-    Route::get('/messages', [MessageController::class, 'index']);
-    Route::get('/messages/search', [MessageController::class, 'search']);
-    Route::post('/messages/{id}/labels', [MessageController::class, 'labelMessage']);
+    Route::get('/messages', [MessageController::class, 'index']); // Fetch all messages
+    Route::post('/messages', [MessageController::class, 'store']); // Create a new message
+    Route::delete('/messages/{id}', [MessageController::class, 'destroy']); // Delete a message
 });
 
+Route::get('/test', function () {
+    return response()->json(['message' => 'API is working']);
+});
 
+Route::middleware('auth:sanctum')->get('/test-middleware', function (Request $request) {
+    return response()->json(['user' => $request->user()]);
+});
