@@ -2,73 +2,72 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\Request;
 use App\Models\Message;
 use App\Models\Attachment;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
 
 class MessageController extends Controller
 {
-    /**
-     * Create a new message with optional attachments.
-     */
-    public function store(Request $request)
+    // ✅ 1. Fetch all messages
+    public function index(Request $request)
 {
     try {
+        \Log::info('Fetching all messages...');
+
+        $messages = Message::with(['sender', 'attachments'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        \Log::info('Messages Retrieved:', ['messages' => $messages]);
+        return response()->json(['emails' => $messages]);
+    } catch (\Exception $e) {
+        \Log::error('Error fetching messages: ' . $e->getMessage());
+        return response()->json(['error' => 'Server error'], 500);
+    }
+}
+
+    // ✅ 2. Create a new message
+    public function store(Request $request)
+    {
         $validated = $request->validate([
-            'sender_id' => 'required|exists:users,id',
-            'company_id' => 'required|exists:companies,id',
-            'assignment_id' => 'nullable|exists:assignments,id',
-            'project_id' => 'nullable|exists:projects,id',
             'subject' => 'required|string|max:255',
             'body' => 'required|string',
-            'attachments.*' => 'file|max:10240' // Max 10MB
+            'company_id' => 'required|exists:companies,id',
+            'attachments.*' => 'file|max:10240', // Optional file attachments (10MB max)
         ]);
 
-        \Log::info('Validated Data:', $validated);
-
-        // Ensure optional fields are explicitly set to null if not provided
         $message = Message::create([
-            'sender_id' => $validated['sender_id'],
+            'sender_id' => Auth::id(), // Authenticated user
             'company_id' => $validated['company_id'],
-            'assignment_id' => $validated['assignment_id'] ?? null,
-            'project_id' => $validated['project_id'] ?? null, // Explicitly set to null if not provided
             'subject' => $validated['subject'],
             'body' => $validated['body'],
+            'status' => 'inbox',
         ]);
 
+        if ($request->hasFile('attachments')) {
+            foreach ($request->file('attachments') as $file) {
+                $path = $file->store('attachments');
+                Attachment::create([
+                    'message_id' => $message->id,
+                    'filename' => $file->getClientOriginalName(),
+                    'path' => $path,
+                    'mime_type' => $file->getMimeType(),
+                    'size' => $file->getSize(),
+                ]);
+            }
+        }
+
         return response()->json(['message' => 'Message created successfully', 'data' => $message], 201);
-
-    } catch (\Illuminate\Validation\ValidationException $e) {
-        \Log::error('Validation Failed:', ['errors' => $e->errors()]);
-        return response()->json(['error' => 'Validation Failed', 'details' => $e->errors()], 422);
-    } catch (\Exception $e) {
-        \Log::error('Error creating message:', ['message' => $e->getMessage()]);
-        return response()->json(['error' => 'Server Error', 'details' => $e->getMessage()], 500);
     }
-}
 
-
-    /**
-     * Delete a message and its attachments.
-     */
+    // ✅ 3. Delete a message
     public function destroy($id)
     {
-        try {
-            $message = Message::findOrFail($id);
+        $message = Message::findOrFail($id);
+        $message->delete();
 
-            // Delete associated attachments
-            foreach ($message->attachments as $attachment) {
-                Storage::delete($attachment->path);
-                $attachment->delete();
-            }
-
-            $message->delete();
-
-            return response()->json(['message' => 'Message deleted successfully']);
-        } catch (\Exception $e) {
-            \Log::error('Error deleting message:', ['message' => $e->getMessage()]);
-            return response()->json(['error' => 'Server Error', 'details' => $e->getMessage()], 500);
-        }
+        return response()->json(['message' => 'Message deleted successfully']);
     }
 }
+
