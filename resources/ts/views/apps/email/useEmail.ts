@@ -1,5 +1,6 @@
-import type { Email } from '@db/apps/email/types'
-import type { PartialDeep } from 'type-fest'
+import type { Email } from '@db/apps/email/types';
+import type { PartialDeep } from 'type-fest';
+import { ref } from 'vue';
 
 export type MoveEmailToAction = 'inbox' | 'spam' | 'trash'
 
@@ -12,6 +13,60 @@ export const useEmail = () => {
       body: JSON.stringify({ ids, data }),
     })
   }
+
+  // ✅ Shared state
+const emails = ref<Email[]>([]);
+
+// ✅ Fetch all messages
+const fetchMessages = async (): Promise<Email[]> => {
+  try {
+    console.log("🔥 Fetching emails from API...");
+    const response = await $api('/messages', { method: 'GET' });
+
+    console.log("✅ Raw API Response:", response);
+
+    if (response?.emails && Array.isArray(response.emails)) {
+      return response.emails; // ✅ Extract `emails` array correctly
+    } else {
+      console.error("❌ Invalid API response format in useEmail.ts:", response);
+      return []; // ✅ Return empty array if format is incorrect
+    }
+  } catch (error) {
+    console.error("❌ Error fetching emails:", error);
+    return [];
+  }
+};
+
+
+
+
+
+// ✅ Create a new message
+const createMessage = async (subject: string, body: string, companyId: number, attachments: File[] = []) => {
+  try {
+    const formData = new FormData();
+    formData.append('subject', subject);
+    formData.append('body', body);
+    formData.append('company_id', companyId.toString());
+
+    attachments.forEach(file => formData.append('attachments[]', file));
+
+    const response = await $api('/messages', { method: 'POST', body: formData });
+    return response;
+  } catch (error) {
+    console.error('Error creating message:', error);
+  }
+};
+
+// ✅ Delete a message
+const deleteMessage = async (id: number) => {
+  try {
+    await $api(`/messages/${id}`, { method: 'DELETE' });
+    emails.value = emails.value.filter(email => email.id !== id); // Remove deleted email from UI
+  } catch (error) {
+    console.error('Error deleting message:', error);
+  }
+};
 
   const updateEmailLabels = async (ids: Email['id'][], label: Email['labels'][number]) => {
     await $api('/apps/email', {
@@ -105,5 +160,9 @@ export const useEmail = () => {
     moveSelectedEmailTo,
     updateEmails,
     updateEmailLabels,
+    emails,
+    fetchMessages,
+    createMessage,
+    deleteMessage,
   }
 }

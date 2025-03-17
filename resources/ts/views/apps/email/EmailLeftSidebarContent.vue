@@ -6,6 +6,8 @@ defineOptions({
   inheritAttrs: false,
 })
 
+console.log ("WTF sidebar");
+
 const props = defineProps<Props>()
 
 defineEmits<{ (e: 'toggleComposeDialogVisibility'): void }>()

@@ -1,17 +1,42 @@
 <script setup lang="ts">
-import { PerfectScrollbar } from 'vue3-perfect-scrollbar'
 import ComposeDialog from '@/views/apps/email/ComposeDialog.vue'
 import EmailLeftSidebarContent from '@/views/apps/email/EmailLeftSidebarContent.vue'
 import EmailView from '@/views/apps/email/EmailView.vue'
 import type { MoveEmailToAction } from '@/views/apps/email/useEmail'
 import { useEmail } from '@/views/apps/email/useEmail'
 import type { Email, EmailLabel } from '@db/apps/email/types'
+import { PerfectScrollbar } from 'vue3-perfect-scrollbar'
 
 definePage({
   meta: {
     layoutWrapperClasses: 'layout-content-height-fixed',
   },
 })
+
+console.log("🚀 Emails page Index.vue is loading!");
+
+const { fetchMessages } = useEmail(); // Import the API function
+const emails = ref<Email[]>([]); // ✅ Fixes 'never' type issue
+
+
+// Fetch Emails from API ->
+const fetchAllEmails = async () => {
+  try {
+    console.log("🔥 Fetching emails...");
+    const response: Email[] = await fetchMessages(); // ✅ Correctly typed
+
+    console.log("✅ Emails Data:", response); // ✅ Log response to check format
+
+    if (Array.isArray(response)) {
+      emails.value = response; // ✅ Vue now understands the correct structure
+    } else {
+      console.error("❌ Invalid API response format:", response);
+      emails.value = []; // ✅ Fallback to an empty array
+    }
+  } catch (error) {
+    console.error("❌ Error fetching emails:", error);
+  }
+};
 
 const { isLeftSidebarOpen } = useResponsiveLeftSidebar()
 
@@ -48,7 +73,7 @@ const { data: emailData, execute: fetchEmails } = await useApi<any>(createUrl('/
   },
 }))
 
-const emails = computed<Email[]>(() => emailData.value?.emails || [])
+// const emails = computed<Email[]>(() => emailData.value?.emails || [])
 const emailsMeta = computed(() => emailData.value?.emailsMeta || {})
 
 const toggleSelectedEmail = (emailId: Email['id']) => {
@@ -77,6 +102,8 @@ const selectAllCheckboxUpdate = () => {
     ? emails.value.map(email => email.id)
     : []
 }
+
+
 
 // Email View
 const openedEmail = ref<Email | null>(null)
@@ -180,6 +207,8 @@ const openEmail = async (email: Email) => {
 
   await handleActionClick('read', [email.id])
 }
+onMounted(fetchAllEmails);
+
 
 // Reset selected emails when filter or label is updated
 watch(
@@ -187,6 +216,11 @@ watch(
   () => { selectedEmails.value = [] },
   { deep: true },
 )
+
+
+
+
+
 </script>
 
 <template v-if="emails && emails.length">
@@ -384,116 +418,50 @@ watch(
         </div>
         <VDivider />
         <!-- 👉 Emails list -->
-        <PerfectScrollbar
-          v-if="emails && emails.length"
 
-          tag="ul"
-          :options="{ wheelPropagation: false }"
-          class="email-list"
+        
+<PerfectScrollbar v-if="emails.length" tag="ul" class="email-list">
+  <li
+    v-for="email in emails"
+    :key="email.id"
+    class="email-item d-flex align-center pa-3 gap-1 cursor-pointer"
+    :class="[{ 'email-read': email.isRead }]"
+    @click="openEmail(email)"
+  >
+    <!-- Left Section: Icons and Checkbox -->
+    <div class="d-flex flex-row flex-grow-1">
+      <div class="d-flex align-center gap-2">
+        <VCheckbox
+          :model-value="selectedEmails.includes(email.id)"
+          class="flex-shrink-0"
+          @update:model-value="toggleSelectedEmail(email.id)"
+          @click.stop
+        />
+        <IconBtn
+          :color="email.isStarred ? 'warning' : 'default'"
+          @click.stop="handleActionClick(email.isStarred ? 'unstar' : 'star', [email.id])"
         >
-          <li
-            v-for="email in emails"
-            v-show="emails?.length"
-            :key="email.id"
-            class="email-item d-flex align-center pa-4 gap-2 cursor-pointer"
-            :class="[{ 'email-read': email.isRead }]"
-            @click="openEmail(email)"
-          >
-            <VCheckbox
-              :model-value="selectedEmails.includes(email.id)"
-              class="flex-shrink-0"
-              @update:model-value="toggleSelectedEmail(email.id)"
-              @click.stop
-            />
-            <IconBtn
-              :color="email.isStarred ? 'warning' : 'default'"
-              @click.stop=" handleActionClick(email.isStarred ? 'unstar' : 'star', [email.id])"
-            >
-              <VIcon
-                icon="bx-star"
-                size="22"
-              />
-            </IconBtn>
-            <VAvatar size="32">
-              <VImg
-                :src="email.from?.avatar"
-                :alt="email.from?.name"
-              />
-            </VAvatar>
-            <h6 class="text-h6">
-              {{ email.from.name }}
-            </h6>
-            <span class="text-body-2 truncate">{{ email.subject }}</span>
+          <VIcon
+            icon="bx-star"
+            size="22"
+          />
+        </IconBtn>
 
-            <VSpacer />
+        <!-- Email Content -->
+        <div class="flex-grow-1" style="max-inline-size: calc(100% - 200px);">
+          <h3 class="text-h6 mb-1 truncate">{{ email.subject }}</h3>
+          <div class="text-body-2 truncate mb-0" v-html="email.body.replace(/<p>/g, '').replace(/<\/p>/g, '')"></div>
+        </div>
 
-            <!-- 👉 Email meta -->
-            <div
-              class="email-meta align-center gap-2"
-              :class="$vuetify.display.xs ? 'd-none' : ''"
-            >
-              <VIcon
-                v-for="label in email.labels"
-                :key="label"
-                icon="bx-bxs-circle"
-                size="8"
-                :color="resolveLabelColor(label)"
-              />
+        <!-- Sender Info -->
+        <h6 v-if="email.from?.name" class="text-h6 ms-2">
+          {{ email.from.name }}
+        </h6>
+      </div>
+    </div>
+  </li>
+</PerfectScrollbar>
 
-              <span class="text-sm text-disabled">
-                {{ formatDateToMonthShort(email.time) }}
-              </span>
-            </div>
-            <!-- 👉 Email actions -->
-            <div class="email-actions d-none">
-              <IconBtn @click.stop="handleActionClick('trash', [email.id])">
-                <VIcon
-                  icon="bx-trash"
-                  size="22"
-                />
-                <VTooltip
-                  activator="parent"
-                  location="top"
-                >
-                  Delete Mail
-                </VTooltip>
-              </IconBtn>
-              <IconBtn
-                class="mx-1"
-                @click.stop=" handleActionClick(email.isRead ? 'unread' : 'read', [email.id])"
-              >
-                <VIcon
-                  :icon="email.isRead ? 'bx-envelope' : 'bx-envelope-open'"
-                  size="22"
-                />
-                <VTooltip
-                  activator="parent"
-                  location="top"
-                >
-                  {{ email.isRead ? 'Mark as Unread' : 'Mark as Read' }}
-                </VTooltip>
-              </IconBtn>
-              <IconBtn @click.stop="handleActionClick('spam', [email.id])">
-                <VIcon
-                  icon="bx-info-circle"
-                  size="22"
-                />
-                <VTooltip
-                  activator="parent"
-                  location="top"
-                >
-                  Move to Spam
-                </VTooltip>
-              </IconBtn>
-            </div>
-          </li>
-          <li
-            v-show="!emails.length"
-            class="py-4 px-5 text-center"
-          >
-            <span class="text-high-emphasis">No items found.</span>
-          </li>
-        </PerfectScrollbar>
       </VCard>
       <ComposeDialog
         v-show="isComposeDialogVisible"
@@ -504,8 +472,8 @@ watch(
 </template>
 
 <style lang="scss">
-@use "@styles/variables/vuetify.scss";
-@use "@core-scss/base/mixins.scss";
+@use "@styles/variables/vuetify";
+@use "@core-scss/base/mixins";
 
 // ℹ️ Remove border. Using variant plain cause UI issue, caret isn't align in center
 .email-search {
