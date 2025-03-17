@@ -15,28 +15,34 @@ definePage({
 
 console.log("🚀 Emails page Index.vue is loading!");
 
-const { fetchMessages } = useEmail(); // Import the API function
-const emails = ref<Email[]>([]); // ✅ Fixes 'never' type issue
+const { fetchMessages } = useEmail();
+const messages = ref<Email[]>([]); // ✅ Change `emails` to `messages`
 
-
-// Fetch Emails from API ->
-const fetchAllEmails = async () => {
+// Fetch Messages from API ->
+const fetchAllMessages = async () => {  // ✅ Change function name
   try {
-    console.log("🔥 Fetching emails...");
-    const response: Email[] = await fetchMessages(); // ✅ Correctly typed
+    console.log("🔥 Fetching messages...");
+    const response: Email[] = await fetchMessages(); // ✅ API returns `messages`
 
-    console.log("✅ Emails Data:", response); // ✅ Log response to check format
+    console.log("✅ Messages Data:", response);
 
     if (Array.isArray(response)) {
-      emails.value = response; // ✅ Vue now understands the correct structure
+      messages.value = response; // ✅ Change `emails` to `messages`
     } else {
       console.error("❌ Invalid API response format:", response);
-      emails.value = []; // ✅ Fallback to an empty array
+      messages.value = [];
     }
   } catch (error) {
-    console.error("❌ Error fetching emails:", error);
+    console.error("❌ Error fetching messages:", error);
   }
 };
+
+// Change all `emails` references to `messages`
+const selectedMessages = ref<Email['id'][]>([]);
+const messagesMeta = computed(() => messages.value.length ? messages.value : {});
+
+onMounted(fetchAllMessages); // ✅ Update function name
+
 
 const { isLeftSidebarOpen } = useResponsiveLeftSidebar()
 
@@ -62,7 +68,6 @@ const q = ref('')
 // ------------------------------------------------
 // Email Selection
 // ------------------------------------------------
-const selectedEmails = ref<Email['id'][]>([])
 
 // Fetch Emails
 const { data: emailData, execute: fetchEmails } = await useApi<any>(createUrl('/apps/email', {
@@ -73,65 +78,83 @@ const { data: emailData, execute: fetchEmails } = await useApi<any>(createUrl('/
   },
 }))
 
-// const emails = computed<Email[]>(() => emailData.value?.emails || [])
-const emailsMeta = computed(() => emailData.value?.emailsMeta || {})
 
 const toggleSelectedEmail = (emailId: Email['id']) => {
-  const emailIndex = selectedEmails.value.indexOf(emailId)
+  const emailIndex = selectedMessages.value.indexOf(emailId)
   if (emailIndex === -1)
-    selectedEmails.value.push(emailId)
-  else selectedEmails.value.splice(emailIndex, 1)
+    selectedMessages.value.push(emailId)
+  else selectedMessages.value.splice(emailIndex, 1)
 }
 
 const selectAllEmailCheckbox = computed(
-  () => emails.value.length && emails.value.length === selectedEmails.value.length,
+  () => messages.value.length && messages.value.length === selectedMessages.value.length,
 )
 
 const isSelectAllEmailCheckboxIndeterminate = computed(
   () =>
-    Boolean(selectedEmails.value.length)
-    && emails.value.length !== selectedEmails.value.length,
+    Boolean(selectedMessages.value.length)
+    && messages.value.length !== selectedMessages.value.length,
 )
 
 const isAllMarkRead = computed (() => {
-  return selectedEmails.value.every(emailId => emails.value.find(email => email.id === emailId)?.isRead)
+  return selectedMessages.value.every(messageId => messages.value.find(message => message.id === messageId)?.isRead)
 })
 
+
 const selectAllCheckboxUpdate = () => {
-  selectedEmails.value = !selectAllEmailCheckbox.value
-    ? emails.value.map(email => email.id)
+  selectedMessages.value = !selectAllEmailCheckbox.value
+    ? messages.value.map(message => message.id)
     : []
 }
 
 
 
-// Email View
-const openedEmail = ref<Email | null>(null)
 
-const emailViewMeta = computed(() => {
+// Email View
+const openedMessage = ref<Email | null>(null)
+
+const messageViewMeta = computed(() => {
   const returnValue = {
     hasNextEmail: false,
     hasPreviousEmail: false,
   }
 
-  if (openedEmail.value) {
-    const openedEmailIndex = emails.value.findIndex(
-      e => e.id === openedEmail.value?.id,
+  if (openedMessage.value) {
+    const openedMessageIndex = messages.value.findIndex(
+      e => e.id === openedMessage.value?.id,
     )
 
-    returnValue.hasNextEmail = !!emails.value[openedEmailIndex + 1]
-    returnValue.hasPreviousEmail = !!emails.value[openedEmailIndex - 1]
+    returnValue.hasNextMessage = !!messages.value[openedMessageIndex + 1]
+    returnValue.hasPreviousMessage = !!messages.value[openedMessageIndex - 1]
   }
 
   return returnValue
 })
 
-const refreshOpenedEmail = async () => {
+const refreshOpenedMessage = async () => {
   await fetchEmails()
 
-  if (openedEmail.value)
-    openedEmail.value = emails.value.find(e => e.id === openedEmail.value?.id)!
+  if (openedMessage.value)
+    openedMessage.value = messages.value.find(m => m.id === openedMessage.value?.id)!
 }
+
+
+
+// const changeOpenedMessage = (dir: 'previous' | 'next') => {
+//   if (!openedMessage.value)
+//     return;
+
+//   const openedMessageIndex = messages.value.findIndex(
+//     m => m.id === openedMessage.value?.id,
+//   );
+
+//   const newMessageIndex = dir === 'previous' ? openedMessageIndex - 1 : openedMessageIndex + 1;
+
+//   if (newMessageIndex >= 0 && newMessageIndex < messages.value.length)
+//     openedMessage.value = messages.value[newMessageIndex];
+// };
+
+
 
 /*
   ℹ️ You can optimize it so it doesn't fetch emails on each action.
@@ -148,10 +171,10 @@ const refreshOpenedEmail = async () => {
 
 const handleActionClick = async (
   action: 'trash' | 'unread' | 'read' | 'spam' | 'star' | 'unstar',
-  emailIds: Email['id'][] = selectedEmails.value,
+  emailIds: Email['id'][] = selectedMessages.value,
 ) => {
-  selectedEmails.value = []
-  selectedEmails.value = []
+  selectedMessages.value = []
+  selectedMessages.value = []
   if (!emailIds.length)
     return
 
@@ -176,44 +199,43 @@ const handleActionClick = async (
 
 // Email actions
 const handleMoveMailsTo = async (action: MoveEmailToAction) => {
-  await moveSelectedEmailTo(action, selectedEmails.value)
+  await moveSelectedEmailTo(action, selectedMessages.value)
   await fetchEmails()
 }
 
 // Handle Email Labels
 const handleEmailLabels = async (labelTitle: EmailLabel) => {
-  await updateEmailLabels(selectedEmails.value, labelTitle)
-  await fetchEmails()
+  await updateEmailLabels(selectedMessages.value, labelTitle)
+  await fetchMessages()
 }
 
 // Email view
-const changeOpenedEmail = (dir: 'previous' | 'next') => {
-  if (!openedEmail.value)
-    return
+const changeOpenedMessage = async (dir: 'previous' | 'next') => {
+  if (!openedMessage.value) return;
 
-  const openedEmailIndex = emails.value.findIndex(
-    e => e.id === openedEmail.value?.id,
-  )
+  await updateEmailLabels(selectedMessages.value, labelTitle);
+  await fetchMessages();
+};
 
-  const newEmailIndex
-    = dir === 'previous' ? openedEmailIndex - 1 : openedEmailIndex + 1
 
-  if (newEmailIndex >= 0 && newEmailIndex < emails.value.length)
-    openedEmail.value = emails.value[newEmailIndex]
+// const openMessage = async (message: Email) => {
+//   openedMessage.value = message
+
+//   if (newMessageIndex >= 0 && newMessageIndex < messages.value.length)
+//     openedMessage.value = messages.value[newMessageIndex]
+// }
+
+const openMessage = async (message: Email) => {
+  openedMessage.value = message
+
+  await handleActionClick('read', [message.id])
 }
-
-const openEmail = async (email: Email) => {
-  openedEmail.value = email
-
-  await handleActionClick('read', [email.id])
-}
-onMounted(fetchAllEmails);
 
 
 // Reset selected emails when filter or label is updated
 watch(
   () => route.params,
-  () => { selectedEmails.value = [] },
+  () => { selectedMessages.value = [] },
   { deep: true },
 )
 
@@ -223,7 +245,7 @@ watch(
 
 </script>
 
-<template v-if="emails && emails.length">
+<template v-if="messages && messages.length">
   <VLayout
     style="min-block-size: 100%;"
     class="email-app-layout"
@@ -236,20 +258,20 @@ watch(
       :temporary="$vuetify.display.mdAndDown"
     >
       <EmailLeftSidebarContent
-        :emails-meta="emailsMeta"
+        :messages-meta="messagesMeta"
         @toggle-compose-dialog-visibility="isComposeDialogVisible = !isComposeDialogVisible"
       />
     </VNavigationDrawer>
     <EmailView
-      :email="openedEmail"
-      :email-meta="emailViewMeta"
-      @refresh="refreshOpenedEmail"
-      @navigated="changeOpenedEmail"
-      @close="openedEmail = null"
-      @trash="handleActionClick('trash', openedEmail ? [openedEmail.id] : [])"
-      @unread="handleActionClick('unread', openedEmail ? [openedEmail.id] : [])"
-      @star="handleActionClick('star', openedEmail ? [openedEmail.id] : [])"
-      @unstar="handleActionClick('unstar', openedEmail ? [openedEmail.id] : [])"
+      :message="openedMessage"
+      :message-meta="messageViewMeta"
+      @refresh="refreshOpenedMessage"
+      @navigated="changeOpenedMessage"
+      @close="openedMessage = null"
+      @trash="handleActionClick('trash', openedMessage ? [openedMessage.id] : [])"
+      @unread="handleActionClick('unread', openedMessage ? [openedMessage.id] : [])"
+      @star="handleActionClick('star', openedMessage ? [openedMessage.id] : [])"
+      @unstar="handleActionClick('unstar', openedMessage ? [openedMessage.id] : [])"
     />
     <VMain>
       <VCard
@@ -420,26 +442,26 @@ watch(
         <!-- 👉 Emails list -->
 
         
-<PerfectScrollbar v-if="emails.length" tag="ul" class="email-list">
+<PerfectScrollbar v-if="messages.length" tag="ul" class="Message-list">
   <li
-    v-for="email in emails"
-    :key="email.id"
+    v-for="message in messages"
+    :key="message.id"
     class="email-item d-flex align-center pa-3 gap-1 cursor-pointer"
-    :class="[{ 'email-read': email.isRead }]"
-    @click="openEmail(email)"
+    :class="[{ 'message-read': message.isRead }]"
+    @click="openMessage(message)"
   >
     <!-- Left Section: Icons and Checkbox -->
     <div class="d-flex flex-row flex-grow-1">
       <div class="d-flex align-center gap-2">
         <VCheckbox
-          :model-value="selectedEmails.includes(email.id)"
+          :model-value="selectedMessages.includes(message.id)"
           class="flex-shrink-0"
-          @update:model-value="toggleSelectedEmail(email.id)"
+          @update:model-value="toggleSelectedMessage(message.id)"
           @click.stop
         />
         <IconBtn
-          :color="email.isStarred ? 'warning' : 'default'"
-          @click.stop="handleActionClick(email.isStarred ? 'unstar' : 'star', [email.id])"
+          :color="message.isStarred ? 'warning' : 'default'"
+          @click.stop="handleActionClick(message.isStarred ? 'unstar' : 'star', [messages.id])"
         >
           <VIcon
             icon="bx-star"
@@ -449,13 +471,13 @@ watch(
 
         <!-- Email Content -->
         <div class="flex-grow-1" style="max-inline-size: calc(100% - 200px);">
-          <h3 class="text-h6 mb-1 truncate">{{ email.subject }}</h3>
-          <div class="text-body-2 truncate mb-0" v-html="email.body.replace(/<p>/g, '').replace(/<\/p>/g, '')"></div>
+          <h3 class="text-h6 mb-1 truncate">{{message.subject }}</h3>
+          <div class="text-body-2 truncate mb-0" v-html="message.body.replace(/<p>/g, '').replace(/<\/p>/g, '')"></div>
         </div>
 
         <!-- Sender Info -->
-        <h6 v-if="email.from?.name" class="text-h6 ms-2">
-          {{ email.from.name }}
+        <h6 v-if="message.from?.name" class="text-h6 ms-2">
+          {{ message.from.name }}
         </h6>
       </div>
     </div>

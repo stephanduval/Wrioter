@@ -69,9 +69,10 @@ Route::get('/diagnostic', function (Request $request) {
 
 
 Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/messages', [MessageController::class, 'index']); // Fetch all messages
-    Route::post('/messages', [MessageController::class, 'store']); // Create a new message
-    Route::delete('/messages/{id}', [MessageController::class, 'destroy']); // Delete a message
+    Route::get('/messages', [MessageController::class, 'index']); // Fetch messages
+    Route::post('/messages', [MessageController::class, 'store']); // Send message
+    Route::patch('/messages/{id}/read', [MessageController::class, 'markAsRead']); // Mark as read
+    Route::delete('/messages/{id}', [MessageController::class, 'destroy']); // Delete message
 });
 
 Route::get('/test', function () {

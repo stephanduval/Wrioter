@@ -15,27 +15,26 @@ export const useEmail = () => {
   }
 
   // ✅ Shared state
-const emails = ref<Email[]>([]);
+  const messages = ref<Email[]>([]); 
+
 
 // ✅ Fetch all messages
 const fetchMessages = async (): Promise<Email[]> => {
   try {
-    console.log("🔥 Fetching emails from API...");
+    console.log("🔥 Fetching messages from API...");
     const response = await $api('/messages', { method: 'GET' });
 
     console.log("✅ Raw API Response:", response);
 
-    if (response?.emails && Array.isArray(response.emails)) {
-      return response.emails; // ✅ Extract `emails` array correctly
-    } else {
-      console.error("❌ Invalid API response format in useEmail.ts:", response);
-      return []; // ✅ Return empty array if format is incorrect
-    }
+    return response?.messages || []; // ✅ API returns `messages`, so extract `messages`
   } catch (error) {
-    console.error("❌ Error fetching emails:", error);
+    console.error("❌ Error fetching messages:", error);
     return [];
   }
 };
+
+
+
 
 
 
@@ -62,7 +61,7 @@ const createMessage = async (subject: string, body: string, companyId: number, a
 const deleteMessage = async (id: number) => {
   try {
     await $api(`/messages/${id}`, { method: 'DELETE' });
-    emails.value = emails.value.filter(email => email.id !== id); // Remove deleted email from UI
+    messages.value = messages.value.filter(message => message.id !== id); // Remove deleted email from UI
   } catch (error) {
     console.error('Error deleting message:', error);
   }
@@ -160,7 +159,7 @@ const deleteMessage = async (id: number) => {
     moveSelectedEmailTo,
     updateEmails,
     updateEmailLabels,
-    emails,
+    messages,
     fetchMessages,
     createMessage,
     deleteMessage,

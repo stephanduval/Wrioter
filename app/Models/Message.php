@@ -11,21 +11,22 @@ class Message extends Model
 
     protected $fillable = [
         'sender_id',
-        'company_id',
-        'subject',
-        'body',
+        'receiver_id',
+        'message',
         'status',
     ];
 
-    // ✅ Relationship: Message belongs to a sender (User)
+    protected $casts = [
+        'status' => 'string', // ENUM values are stored as strings
+    ];
+
     public function sender()
     {
         return $this->belongsTo(User::class, 'sender_id');
     }
 
-    // ✅ Relationship: Message has many attachments
-    public function attachments()
+    public function receiver()
     {
-        return $this->hasMany(Attachment::class);
+        return $this->belongsTo(User::class, 'receiver_id');
     }
 }

@@ -1,0 +1,1 @@
+ sudo mysqldump laravelweb_db > laravelweb_schema
