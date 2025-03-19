@@ -5,7 +5,7 @@
   <meta charset="UTF-8" />
   <link rel="icon" href="{{ asset('favicon.ico') }}" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Sneat - Vuetify Vuejs Admin Template</title>
+  <title>Freynet-Gagné Customer Portal</title>
   <link rel="stylesheet" type="text/css" href="{{ asset('loader.css') }}" />
   @vite(['resources/ts/main.ts'])
   <script type="module" src="{{ asset('build/assets/main-BjEdgpcv.js') }}"></script>

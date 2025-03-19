@@ -41,12 +41,12 @@ const logout = async () => {
 
 const userProfileList = [
   { type: 'divider' },
-  { type: 'navItem', icon: 'bx-user', title: 'Profile', to: { name: 'apps-user-view-id', params: { id: 21 } } },
+  // { type: 'navItem', icon: 'bx-user', title: 'Profile', to: { name: 'apps-user-view-id', params: { id: 21 } } },
   { type: 'navItem', icon: 'bx-cog', title: 'Settings', to: { name: 'pages-account-settings-tab', params: { tab: 'account' } } },
-  { type: 'navItem', icon: 'bx-credit-card', title: 'Billing Plan', to: { name: 'pages-account-settings-tab', params: { tab: 'billing-plans' } }, badgeProps: { color: 'error', content: '4' } },
-  { type: 'divider' },
-  { type: 'navItem', icon: 'bx-dollar', title: 'Pricing', to: { name: 'pages-pricing' } },
-  { type: 'navItem', icon: 'bx-help-circle', title: 'FAQ', to: { name: 'pages-faq' } },
+  // { type: 'navItem', icon: 'bx-credit-card', title: 'Billing Plan', to: { name: 'pages-account-settings-tab', params: { tab: 'billing-plans' } }, badgeProps: { color: 'error', content: '4' } },
+  // { type: 'divider' },
+  // { type: 'navItem', icon: 'bx-dollar', title: 'Pricing', to: { name: 'pages-pricing' } },
+  // { type: 'navItem', icon: 'bx-help-circle', title: 'FAQ', to: { name: 'pages-faq' } },
 ]
 </script>
 

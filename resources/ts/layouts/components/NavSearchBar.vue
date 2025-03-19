@@ -1,9 +1,9 @@
 <script setup lang="ts">
+import { useConfigStore } from '@core/stores/config'
+import type { SearchResults } from '@db/app-bar-search/types'
 import Shepherd from 'shepherd.js'
 import { withQuery } from 'ufo'
 import type { RouteLocationRaw } from 'vue-router'
-import type { SearchResults } from '@db/app-bar-search/types'
-import { useConfigStore } from '@core/stores/config'
 
 interface Suggestion {
   icon: string
@@ -239,7 +239,7 @@ const LazyAppBarSearch = defineAsyncComponent(() => import('@core/components/App
 </template>
 
 <style lang="scss">
-@use "@styles/variables/vuetify.scss";
+@use "@styles/variables/vuetify";
 
 .meta-key {
   border: thin solid rgba(var(--v-border-color), var(--v-border-opacity));

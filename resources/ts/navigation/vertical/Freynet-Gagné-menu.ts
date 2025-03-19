@@ -1,27 +1,19 @@
 export default [
   { heading: 'Freynet-Gagné' },
+  
   {
     title: 'User Management',
     icon: { icon: 'bx-user' },
-    children: [
-      {
-        title: 'User List',
-        to: 'apps-user-list',
-      },
-
-    ],
-  },
+    to: 'apps-user-list',
+    },
   {
-    title: 'Company Management',
+    title: 'Company List',
     icon: { icon: 'bx-briefcase' },
-    children: [
-      { title: 'Company List', to: 'apps-companies-list' },
-      { title: 'My Course', to: 'apps-academy-my-course' },
-      { title: 'Course Details', to: 'apps-academy-course-details' },
-    ],
+    to: 'apps-companies-list'
+      
   },
   {
-    title: 'Project Management',
+    title: 'Project List',
     icon: { icon: 'bx-check-double' },
     children: [
       { title: 'Dashboard', to: 'apps-logistics-dashboard' },
