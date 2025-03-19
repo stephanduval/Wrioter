@@ -1,0 +1,388 @@
+diff --git a/laravelweb_schema b/laravelweb_schema
+index 03b3dd8..666b79b 100644
+--- a/laravelweb_schema
++++ b/laravelweb_schema
+@@ -312,7 +312,7 @@ CREATE TABLE `messages` (
+   `subject` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+   `body` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+   `reply_to_id` bigint unsigned DEFAULT NULL,
+-  `status` enum('draft','archived','deleted','inbox') COLLATE utf8mb4_unicode_ci NOT NULL,
++  `status` enum('draft','archived','deleted','sent','read') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'draft',
+   `created_at` timestamp NULL DEFAULT NULL,
+   `updated_at` timestamp NULL DEFAULT NULL,
+   PRIMARY KEY (`id`),
+@@ -337,7 +337,7 @@ CREATE TABLE `messages` (
+ 
+ LOCK TABLES `messages` WRITE;
+ /*!40000 ALTER TABLE `messages` DISABLE KEYS */;
+-INSERT INTO `messages` VALUES (1,4,NULL,3,NULL,NULL,'Dolorem ut reprehenderit facere cupiditate.','<p>Iure cum et voluptatem id itaque consequatur aut. Mollitia harum et officiis id. Optio dolor non quos reiciendis similique eligendi temporibus.</p>',NULL,'archived','2025-03-17 23:15:18','2025-03-17 23:15:18'),(2,3,NULL,1,NULL,NULL,'Tempore eligendi id eaque modi consequuntur excepturi.','<p>Ut eveniet nulla molestiae sapiente rem pariatur facere. Et quos suscipit mollitia voluptas. Ea reprehenderit alias asperiores molestias a eaque.</p>',NULL,'draft','2025-03-17 23:15:18','2025-03-17 23:15:18'),(3,1,NULL,2,NULL,NULL,'Provident ratione est enim odit.','<p>Placeat maxime eum sit modi provident. Repudiandae impedit voluptas assumenda possimus molestiae consectetur. Esse rerum nulla odit commodi qui quia.</p>',NULL,'inbox','2025-03-17 23:15:18','2025-03-17 23:15:18'),(4,1,NULL,3,NULL,NULL,'Mollitia impedit dolorem nisi iusto porro nam consequuntur.','<p>Saepe a sint tenetur. Debitis quas cumque praesentium quod voluptas.</p>',NULL,'deleted','2025-03-17 23:15:18','2025-03-17 23:15:18'),(5,3,NULL,3,NULL,NULL,'Excepturi eos aut qui corrupti eos recusandae.','<p>Et labore harum repudiandae quo saepe. Est rem libero dolores dicta quasi commodi. Sed perspiciatis optio nemo rerum aut vel voluptas. Labore esse illo nam ut provident cum.</p>',NULL,'deleted','2025-03-17 23:15:18','2025-03-17 23:15:18');
++INSERT INTO `messages` VALUES (1,4,2,3,NULL,NULL,'Dolorem ut reprehenderit facere cupiditate.','<p>Iure cum et voluptatem id itaque consequatur aut. Mollitia harum et officiis id. Optio dolor non quos reiciendis similique eligendi temporibus.</p>',NULL,'archived','2025-03-17 23:15:18','2025-03-17 23:15:18'),(2,3,2,1,NULL,NULL,'Tempore eligendi id eaque modi consequuntur excepturi.','<p>Ut eveniet nulla molestiae sapiente rem pariatur facere. Et quos suscipit mollitia voluptas. Ea reprehenderit alias asperiores molestias a eaque.</p>',NULL,'draft','2025-03-17 23:15:18','2025-03-17 23:15:18'),(3,1,2,2,NULL,NULL,'Provident ratione est enim odit.','<p>Placeat maxime eum sit modi provident. Repudiandae impedit voluptas assumenda possimus molestiae consectetur. Esse rerum nulla odit commodi qui quia.</p>',NULL,'draft','2025-03-17 23:15:18','2025-03-17 23:15:18'),(4,1,2,3,NULL,NULL,'Mollitia impedit dolorem nisi iusto porro nam consequuntur.','<p>Saepe a sint tenetur. Debitis quas cumque praesentium quod voluptas.</p>',NULL,'deleted','2025-03-17 23:15:18','2025-03-17 23:15:18'),(5,3,2,3,NULL,NULL,'Excepturi eos aut qui corrupti eos recusandae.','<p>Et labore harum repudiandae quo saepe. Est rem libero dolores dicta quasi commodi. Sed perspiciatis optio nemo rerum aut vel voluptas. Labore esse illo nam ut provident cum.</p>',NULL,'deleted','2025-03-17 23:15:18','2025-03-17 23:15:18');
+ /*!40000 ALTER TABLE `messages` ENABLE KEYS */;
+ UNLOCK TABLES;
+ 
+@@ -353,7 +353,7 @@ CREATE TABLE `migrations` (
+   `migration` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+   `batch` int NOT NULL,
+   PRIMARY KEY (`id`)
+-) ENGINE=InnoDB AUTO_INCREMENT=24 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
++) ENGINE=InnoDB AUTO_INCREMENT=25 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+ /*!40101 SET character_set_client = @saved_cs_client */;
+ 
+ --
+@@ -362,7 +362,7 @@ CREATE TABLE `migrations` (
+ 
+ LOCK TABLES `migrations` WRITE;
+ /*!40000 ALTER TABLE `migrations` DISABLE KEYS */;
+-INSERT INTO `migrations` VALUES (1,'0001_01_01_000000_create_users_table',1),(2,'0001_01_01_000001_create_cache_table',1),(3,'0001_01_01_000002_create_jobs_table',1),(4,'2024_10_14_191341_create_personal_access_tokens_table',1),(5,'2024_10_31_171426_create_permissions_table',1),(6,'2024_10_31_171504_create_roles_table',1),(7,'2024_10_31_171522_create_role_permissions_table',1),(8,'2024_10_31_171540_create_user_roles_table',1),(9,'2024_11_19_180625_create_companies_table',1),(10,'2024_11_19_181147_create_user_company_table',1),(11,'2024_11_19_184318_create_assignments_table',1),(12,'2024_11_19_185017_create_user_assignments_table',1),(13,'2024_11_23_031504_add_password_reset_required_to_users_table',1),(14,'2024_12_05_135714_create_projects_table',1),(15,'2024_12_05_135722_create_messages_table',1),(16,'2024_12_05_140737_create_message_labels_and_statuses_tables',1),(18,'2025_03_12_213152_modify_assignment_id_nullable_in_messages',1),(19,'2025_03_12_213511_modify_project_id_nullable_in_messages',1),(20,'2025_03_15_190918_modify_status_enum_in_messages_table',2),(21,'2025_03_12_190930_create_attachments_table',3),(23,'2025_03_17_195430_add_receiver_id_to_messages_table',4);
++INSERT INTO `migrations` VALUES (1,'0001_01_01_000000_create_users_table',1),(2,'0001_01_01_000001_create_cache_table',1),(3,'0001_01_01_000002_create_jobs_table',1),(4,'2024_10_14_191341_create_personal_access_tokens_table',1),(5,'2024_10_31_171426_create_permissions_table',1),(6,'2024_10_31_171504_create_roles_table',1),(7,'2024_10_31_171522_create_role_permissions_table',1),(8,'2024_10_31_171540_create_user_roles_table',1),(9,'2024_11_19_180625_create_companies_table',1),(10,'2024_11_19_181147_create_user_company_table',1),(11,'2024_11_19_184318_create_assignments_table',1),(12,'2024_11_19_185017_create_user_assignments_table',1),(13,'2024_11_23_031504_add_password_reset_required_to_users_table',1),(14,'2024_12_05_135714_create_projects_table',1),(15,'2024_12_05_135722_create_messages_table',1),(16,'2024_12_05_140737_create_message_labels_and_statuses_tables',1),(18,'2025_03_12_213152_modify_assignment_id_nullable_in_messages',1),(19,'2025_03_12_213511_modify_project_id_nullable_in_messages',1),(20,'2025_03_15_190918_modify_status_enum_in_messages_table',2),(21,'2025_03_12_190930_create_attachments_table',3),(23,'2025_03_17_195430_add_receiver_id_to_messages_table',4),(24,'2025_03_17_201713_modify_messages_table_for_internal_messaging',5);
+ /*!40000 ALTER TABLE `migrations` ENABLE KEYS */;
+ UNLOCK TABLES;
+ 
+@@ -447,7 +447,7 @@ CREATE TABLE `personal_access_tokens` (
+ 
+ LOCK TABLES `personal_access_tokens` WRITE;
+ /*!40000 ALTER TABLE `personal_access_tokens` DISABLE KEYS */;
+-INSERT INTO `personal_access_tokens` VALUES (1,'App\\Models\\User',5,'API Token','4158b47911e8b5d2589c07b56e85f14390ecdf2833258186c05fa31f2283cb11','[\"*\"]',NULL,NULL,'2025-03-17 08:32:07','2025-03-17 08:32:07'),(2,'App\\Models\\User',5,'API Token','b9ee4a8a1310a0cee125546d7d1c1e4974871b7746e6e3ae916419f13afd2ae9','[\"*\"]',NULL,NULL,'2025-03-17 08:37:38','2025-03-17 08:37:38'),(3,'App\\Models\\User',5,'NewToken','362551d9893d6db7f10d3a4f3f33bbeb46d4d55f30dc9a5e374067c12fed453c','[\"*\"]',NULL,NULL,'2025-03-17 08:38:32','2025-03-17 08:38:32'),(4,'App\\Models\\User',5,'TestToken','ca019862186edcf5d3c7cd5ed92641a858d0ab40f816bdbf54bb7779d39a90ed','[\"*\"]',NULL,NULL,'2025-03-17 08:52:28','2025-03-17 08:52:28'),(5,'App\\Models\\User',5,'API Token','e25b2c594679226ea93f787565fd4b71fef72c7e2209750eef2896cdc373c3ef','[\"*\"]',NULL,NULL,'2025-03-17 08:54:31','2025-03-17 08:54:31'),(6,'App\\Models\\User',5,'API Token','3342a62713bb076ccd120c57bba8a783fe91a12421590dcb565cd007c3c6b8da','[\"*\"]',NULL,NULL,'2025-03-17 08:54:33','2025-03-17 08:54:33'),(7,'App\\Models\\User',5,'API Token','8a611e87e24b8d65ebc75ae6d8de155de8fbf8786de53cd563081bb054c35d72','[\"*\"]',NULL,NULL,'2025-03-17 09:03:02','2025-03-17 09:03:02'),(8,'App\\Models\\User',5,'API Token','b7d803bb9da0a88016473458769a02d489c5c668d4539dd3e1ec51f12c7e978d','[\"*\"]',NULL,NULL,'2025-03-17 09:04:14','2025-03-17 09:04:14'),(9,'App\\Models\\User',5,'API Token','265b9822204617bcaad0a86c582021c7f442c870c25adbcbc7fcc322bea19e08','[\"*\"]',NULL,NULL,'2025-03-17 09:07:52','2025-03-17 09:07:52'),(10,'App\\Models\\User',5,'API Token','915be8c734738e70984ae7b9f01547820acf07511dfb1b76606915457a5acaed','[\"*\"]',NULL,NULL,'2025-03-17 09:12:59','2025-03-17 09:12:59'),(11,'App\\Models\\User',5,'API Token','09d077243c60e62cc906e6d3ee09863ca60b497273b3b87c9ac1e7adfbffc25c','[\"*\"]',NULL,NULL,'2025-03-17 09:13:42','2025-03-17 09:13:42'),(12,'App\\Models\\User',5,'API Token','ad17aa7ee830555edce65d6443e6f8e9057239a5ceba4b94db4a3c4509dcdbaa','[\"*\"]',NULL,NULL,'2025-03-17 09:17:52','2025-03-17 09:17:52'),(13,'App\\Models\\User',5,'API Token','4b6b1a6b81463fbf4f7e7358869042eb24d56b652efd215ddc2ac6e8a0328e2f','[\"*\"]',NULL,NULL,'2025-03-17 09:19:18','2025-03-17 09:19:18'),(14,'App\\Models\\User',5,'API Token','6cab214c6619759848ffc63613247bfbd5771724a519e09013a2596468dc6cb3','[\"*\"]',NULL,NULL,'2025-03-17 09:19:31','2025-03-17 09:19:31'),(15,'App\\Models\\User',5,'API Token','dbec9ecc7275a287ae9a9975ff3eeb3d73053984786f437006041fa6097e915d','[\"*\"]',NULL,NULL,'2025-03-17 09:21:06','2025-03-17 09:21:06'),(16,'App\\Models\\User',5,'API Token','71b2f90a7cb714b839af72f4ede34e6417eeab009c4bd4ae42a6dd30f7635e9e','[\"*\"]',NULL,NULL,'2025-03-17 09:22:21','2025-03-17 09:22:21'),(17,'App\\Models\\User',5,'API Token','0f56b5a144cd19c89aa023547eba86bd579334d80ccc5ac16dba904367ff03c1','[\"*\"]',NULL,NULL,'2025-03-17 09:24:54','2025-03-17 09:24:54'),(18,'App\\Models\\User',5,'API Token','151ac43b1717bd1aea8c7ef8fba68057e297a36fab80c274f357f78e0bc26597','[\"*\"]',NULL,NULL,'2025-03-17 09:33:24','2025-03-17 09:33:24'),(19,'App\\Models\\User',5,'API Token','e20b8f3879c1b4d9573a03f19fa6e0d8717d5b269e353ecb2571099c594806bc','[\"*\"]',NULL,NULL,'2025-03-17 09:33:24','2025-03-17 09:33:24'),(20,'App\\Models\\User',5,'API Token','2cf3dd3c2266b3c602def28e4e33b3aa32967079b4341c932668496d3699bcfa','[\"*\"]',NULL,NULL,'2025-03-17 10:27:16','2025-03-17 10:27:16'),(21,'App\\Models\\User',5,'API Token','811b22b6f469f8b10265f64c9658612337a99c822414db9660cd9533726f8445','[\"*\"]',NULL,NULL,'2025-03-17 10:28:11','2025-03-17 10:28:11'),(22,'App\\Models\\User',5,'API Token','686ce558f3cf7016ade8dbfc86c425b8c89fcd09c6f655824ffb34459f5675ea','[\"*\"]',NULL,NULL,'2025-03-17 10:29:18','2025-03-17 10:29:18'),(23,'App\\Models\\User',5,'API Token','5382a9072b0ae74b024349171eae1b03db11f764632c0cb333ad7dbf0d9a1158','[\"*\"]','2025-03-17 23:17:37',NULL,'2025-03-17 10:37:47','2025-03-17 23:17:37'),(24,'App\\Models\\User',5,'API Token','ee4633332d9ef5bd196ceb6b75932d9bf13768b1779d28fd654d78d456b65f78','[\"*\"]','2025-03-18 02:15:29',NULL,'2025-03-17 23:17:59','2025-03-18 02:15:29');
++INSERT INTO `personal_access_tokens` VALUES (1,'App\\Models\\User',5,'API Token','4158b47911e8b5d2589c07b56e85f14390ecdf2833258186c05fa31f2283cb11','[\"*\"]',NULL,NULL,'2025-03-17 08:32:07','2025-03-17 08:32:07'),(2,'App\\Models\\User',5,'API Token','b9ee4a8a1310a0cee125546d7d1c1e4974871b7746e6e3ae916419f13afd2ae9','[\"*\"]',NULL,NULL,'2025-03-17 08:37:38','2025-03-17 08:37:38'),(3,'App\\Models\\User',5,'NewToken','362551d9893d6db7f10d3a4f3f33bbeb46d4d55f30dc9a5e374067c12fed453c','[\"*\"]',NULL,NULL,'2025-03-17 08:38:32','2025-03-17 08:38:32'),(4,'App\\Models\\User',5,'TestToken','ca019862186edcf5d3c7cd5ed92641a858d0ab40f816bdbf54bb7779d39a90ed','[\"*\"]',NULL,NULL,'2025-03-17 08:52:28','2025-03-17 08:52:28'),(5,'App\\Models\\User',5,'API Token','e25b2c594679226ea93f787565fd4b71fef72c7e2209750eef2896cdc373c3ef','[\"*\"]',NULL,NULL,'2025-03-17 08:54:31','2025-03-17 08:54:31'),(6,'App\\Models\\User',5,'API Token','3342a62713bb076ccd120c57bba8a783fe91a12421590dcb565cd007c3c6b8da','[\"*\"]',NULL,NULL,'2025-03-17 08:54:33','2025-03-17 08:54:33'),(7,'App\\Models\\User',5,'API Token','8a611e87e24b8d65ebc75ae6d8de155de8fbf8786de53cd563081bb054c35d72','[\"*\"]',NULL,NULL,'2025-03-17 09:03:02','2025-03-17 09:03:02'),(8,'App\\Models\\User',5,'API Token','b7d803bb9da0a88016473458769a02d489c5c668d4539dd3e1ec51f12c7e978d','[\"*\"]',NULL,NULL,'2025-03-17 09:04:14','2025-03-17 09:04:14'),(9,'App\\Models\\User',5,'API Token','265b9822204617bcaad0a86c582021c7f442c870c25adbcbc7fcc322bea19e08','[\"*\"]',NULL,NULL,'2025-03-17 09:07:52','2025-03-17 09:07:52'),(10,'App\\Models\\User',5,'API Token','915be8c734738e70984ae7b9f01547820acf07511dfb1b76606915457a5acaed','[\"*\"]',NULL,NULL,'2025-03-17 09:12:59','2025-03-17 09:12:59'),(11,'App\\Models\\User',5,'API Token','09d077243c60e62cc906e6d3ee09863ca60b497273b3b87c9ac1e7adfbffc25c','[\"*\"]',NULL,NULL,'2025-03-17 09:13:42','2025-03-17 09:13:42'),(12,'App\\Models\\User',5,'API Token','ad17aa7ee830555edce65d6443e6f8e9057239a5ceba4b94db4a3c4509dcdbaa','[\"*\"]',NULL,NULL,'2025-03-17 09:17:52','2025-03-17 09:17:52'),(13,'App\\Models\\User',5,'API Token','4b6b1a6b81463fbf4f7e7358869042eb24d56b652efd215ddc2ac6e8a0328e2f','[\"*\"]',NULL,NULL,'2025-03-17 09:19:18','2025-03-17 09:19:18'),(14,'App\\Models\\User',5,'API Token','6cab214c6619759848ffc63613247bfbd5771724a519e09013a2596468dc6cb3','[\"*\"]',NULL,NULL,'2025-03-17 09:19:31','2025-03-17 09:19:31'),(15,'App\\Models\\User',5,'API Token','dbec9ecc7275a287ae9a9975ff3eeb3d73053984786f437006041fa6097e915d','[\"*\"]',NULL,NULL,'2025-03-17 09:21:06','2025-03-17 09:21:06'),(16,'App\\Models\\User',5,'API Token','71b2f90a7cb714b839af72f4ede34e6417eeab009c4bd4ae42a6dd30f7635e9e','[\"*\"]',NULL,NULL,'2025-03-17 09:22:21','2025-03-17 09:22:21'),(17,'App\\Models\\User',5,'API Token','0f56b5a144cd19c89aa023547eba86bd579334d80ccc5ac16dba904367ff03c1','[\"*\"]',NULL,NULL,'2025-03-17 09:24:54','2025-03-17 09:24:54'),(18,'App\\Models\\User',5,'API Token','151ac43b1717bd1aea8c7ef8fba68057e297a36fab80c274f357f78e0bc26597','[\"*\"]',NULL,NULL,'2025-03-17 09:33:24','2025-03-17 09:33:24'),(19,'App\\Models\\User',5,'API Token','e20b8f3879c1b4d9573a03f19fa6e0d8717d5b269e353ecb2571099c594806bc','[\"*\"]',NULL,NULL,'2025-03-17 09:33:24','2025-03-17 09:33:24'),(20,'App\\Models\\User',5,'API Token','2cf3dd3c2266b3c602def28e4e33b3aa32967079b4341c932668496d3699bcfa','[\"*\"]',NULL,NULL,'2025-03-17 10:27:16','2025-03-17 10:27:16'),(21,'App\\Models\\User',5,'API Token','811b22b6f469f8b10265f64c9658612337a99c822414db9660cd9533726f8445','[\"*\"]',NULL,NULL,'2025-03-17 10:28:11','2025-03-17 10:28:11'),(22,'App\\Models\\User',5,'API Token','686ce558f3cf7016ade8dbfc86c425b8c89fcd09c6f655824ffb34459f5675ea','[\"*\"]',NULL,NULL,'2025-03-17 10:29:18','2025-03-17 10:29:18'),(23,'App\\Models\\User',5,'API Token','5382a9072b0ae74b024349171eae1b03db11f764632c0cb333ad7dbf0d9a1158','[\"*\"]','2025-03-17 23:17:37',NULL,'2025-03-17 10:37:47','2025-03-17 23:17:37'),(24,'App\\Models\\User',5,'API Token','ee4633332d9ef5bd196ceb6b75932d9bf13768b1779d28fd654d78d456b65f78','[\"*\"]','2025-03-18 05:07:50',NULL,'2025-03-17 23:17:59','2025-03-18 05:07:50');
+ /*!40000 ALTER TABLE `personal_access_tokens` ENABLE KEYS */;
+ UNLOCK TABLES;
+ 
+@@ -696,4 +696,4 @@ UNLOCK TABLES;
+ /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+ /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
+ 
+--- Dump completed on 2025-03-17 14:19:52
++-- Dump completed on 2025-03-19 13:21:16
+diff --git a/public/favicon.ico b/public/favicon.ico
+index fb657fb..688e70f 100755
+Binary files a/public/favicon.ico and b/public/favicon.ico differ
+diff --git a/resources/images/logo.svg b/resources/images/logo.svg
+old mode 100755
+new mode 100644
+diff --git a/resources/ts/@layouts/components/VerticalNav.vue b/resources/ts/@layouts/components/VerticalNav.vue
+index ef8966f..bd1cfba 100755
+--- a/resources/ts/@layouts/components/VerticalNav.vue
++++ b/resources/ts/@layouts/components/VerticalNav.vue
+@@ -1,12 +1,12 @@
+ <script lang="ts" setup>
+-import type { Component } from 'vue'
+-import { PerfectScrollbar } from 'vue3-perfect-scrollbar'
+-import { VNodeRenderer } from './VNodeRenderer'
+ import { layoutConfig } from '@layouts'
+ import { VerticalNavGroup, VerticalNavLink, VerticalNavSectionTitle } from '@layouts/components'
+ import { useLayoutConfigStore } from '@layouts/stores/config'
+ import { injectionKeyIsVerticalNavHovered } from '@layouts/symbols'
+ import type { NavGroup, NavLink, NavSectionTitle, VerticalNavItems } from '@layouts/types'
++import type { Component } from 'vue'
++import { PerfectScrollbar } from 'vue3-perfect-scrollbar'
++import { VNodeRenderer } from './VNodeRenderer'
+ 
+ interface Props {
+   tag?: string | Component
+@@ -84,7 +84,7 @@ const hideTitleAndIcon = configStore.isVerticalNavMini(isHovered)
+               v-show="!hideTitleAndIcon"
+               class="app-logo-title leading-normal"
+             >
+-              {{ layoutConfig.app.title }}
++              <!-- {{ layoutConfig.app.title }} -->
+             </h1>
+           </Transition>
+         </RouterLink>
+diff --git a/resources/ts/@layouts/config.ts b/resources/ts/@layouts/config.ts
+index 3f14d70..bca5fbc 100755
+--- a/resources/ts/@layouts/config.ts
++++ b/resources/ts/@layouts/config.ts
+@@ -1,6 +1,6 @@
+-import { breakpointsVuetify } from '@vueuse/core'
+ import { AppContentLayoutNav, ContentWidth, FooterType, HorizontalNavType, NavbarType } from '@layouts/enums'
+ import type { LayoutConfig } from '@layouts/types'
++import { breakpointsVuetify } from '@vueuse/core'
+ 
+ export const layoutConfig: LayoutConfig = {
+   app: {
+diff --git a/resources/ts/@layouts/types.ts b/resources/ts/@layouts/types.ts
+index 736fee0..5e13d2c 100755
+--- a/resources/ts/@layouts/types.ts
++++ b/resources/ts/@layouts/types.ts
+@@ -1,6 +1,6 @@
+ import type { OffsetOptions } from '@floating-ui/dom'
+-import type { RouteLocationRaw } from 'vue-router'
+ import type { AppContentLayoutNav, ContentWidth, FooterType, HorizontalNavType, NavbarType } from '@layouts/enums'
++import type { RouteLocationRaw } from 'vue-router'
+ 
+ export interface LayoutConfig {
+   app: {
+diff --git a/resources/ts/App.vue b/resources/ts/App.vue
+index ee43e22..1e0c6f6 100755
+--- a/resources/ts/App.vue
++++ b/resources/ts/App.vue
+@@ -1,10 +1,9 @@
+ <script setup lang="ts">
+-import { useTheme } from 'vuetify'
+-import BuyNow from '@core/components/BuyNow.vue'
+ import ScrollToTop from '@core/components/ScrollToTop.vue'
+ import initCore from '@core/initCore'
+ import { initConfigStore, useConfigStore } from '@core/stores/config'
+ import { hexToRgb } from '@core/utils/colorConverter'
++import { useTheme } from 'vuetify'
+ 
+ const { global } = useTheme()
+ 
+@@ -20,7 +19,7 @@ const configStore = useConfigStore()
+     <!-- ℹ️ This is required to set the background color of active nav link based on currently active global theme's primary -->
+     <VApp :style="`--v-global-theme-primary: ${hexToRgb(global.current.value.colors.primary)}`">
+       <RouterView />
+-      <BuyNow />
++      <!-- <BuyNow /> -->
+       <ScrollToTop />
+     </VApp>
+   </VLocaleProvider>
+diff --git a/resources/ts/layouts/components/DefaultLayoutWithHorizontalNav.vue b/resources/ts/layouts/components/DefaultLayoutWithHorizontalNav.vue
+index 1d4d627..83bc28f 100755
+--- a/resources/ts/layouts/components/DefaultLayoutWithHorizontalNav.vue
++++ b/resources/ts/layouts/components/DefaultLayoutWithHorizontalNav.vue
+@@ -9,7 +9,6 @@ import NavBarNotifications from '@/layouts/components/NavBarNotifications.vue'
+ import NavSearchBar from '@/layouts/components/NavSearchBar.vue'
+ import NavbarShortcuts from '@/layouts/components/NavbarShortcuts.vue'
+ import NavbarThemeSwitcher from '@/layouts/components/NavbarThemeSwitcher.vue'
+-import UserProfile from '@/layouts/components/UserProfile.vue'
+ import NavBarI18n from '@core/components/I18n.vue'
+ import { HorizontalNavLayout } from '@layouts'
+ import { VNodeRenderer } from '@layouts/components/VNodeRenderer'
+@@ -41,7 +40,7 @@ import { VNodeRenderer } from '@layouts/components/VNodeRenderer'
+       <NavbarThemeSwitcher />
+       <NavbarShortcuts />
+       <NavBarNotifications class="me-2" />
+-      <UserProfile />
++      <!-- <UserProfile /> -->
+     </template>
+ 
+     <!-- 👉 Pages -->
+diff --git a/resources/ts/layouts/components/NavSearchBar.vue b/resources/ts/layouts/components/NavSearchBar.vue
+index 40d3e01..26e7704 100755
+--- a/resources/ts/layouts/components/NavSearchBar.vue
++++ b/resources/ts/layouts/components/NavSearchBar.vue
+@@ -1,9 +1,9 @@
+ <script setup lang="ts">
++import { useConfigStore } from '@core/stores/config'
++import type { SearchResults } from '@db/app-bar-search/types'
+ import Shepherd from 'shepherd.js'
+ import { withQuery } from 'ufo'
+ import type { RouteLocationRaw } from 'vue-router'
+-import type { SearchResults } from '@db/app-bar-search/types'
+-import { useConfigStore } from '@core/stores/config'
+ 
+ interface Suggestion {
+   icon: string
+@@ -239,7 +239,7 @@ const LazyAppBarSearch = defineAsyncComponent(() => import('@core/components/App
+ </template>
+ 
+ <style lang="scss">
+-@use "@styles/variables/vuetify.scss";
++@use "@styles/variables/vuetify";
+ 
+ .meta-key {
+   border: thin solid rgba(var(--v-border-color), var(--v-border-opacity));
+diff --git a/resources/ts/layouts/components/NavbarShortcuts.vue b/resources/ts/layouts/components/NavbarShortcuts.vue
+index 5f0d2f9..5a3e070 100755
+--- a/resources/ts/layouts/components/NavbarShortcuts.vue
++++ b/resources/ts/layouts/components/NavbarShortcuts.vue
+@@ -1,17 +1,17 @@
+ <script setup lang="ts">
+ const shortcuts = [
+-  {
+-    icon: 'bx-calendar',
+-    title: 'Calendar',
+-    subtitle: 'Appointments',
+-    to: { name: 'apps-calendar' },
+-  },
+-  {
+-    icon: 'bx-food-menu',
+-    title: 'Invoice App',
+-    subtitle: 'Manage Accounts',
+-    to: { name: 'apps-invoice-list' },
+-  },
++  // {
++  //   icon: 'bx-calendar',
++  //   title: 'Calendar',
++  //   subtitle: 'Appointments',
++  //   to: { name: 'apps-calendar' },
++  // },
++  // {
++  //   icon: 'bx-food-menu',
++  //   title: 'Invoice App',
++  //   subtitle: 'Manage Accounts',
++  //   to: { name: 'apps-invoice-list' },
++  // },
+   {
+     icon: 'bx-user',
+     title: 'Users',
+@@ -30,12 +30,12 @@ const shortcuts = [
+     subtitle: 'Dashboard Analytics',
+     to: { name: 'dashboards-analytics' },
+   },
+-  {
+-    icon: 'bx-cog',
+-    title: 'Settings',
+-    subtitle: 'Account Settings',
+-    to: { name: 'pages-account-settings-tab', params: { tab: 'account' } },
+-  },
++  // {
++  //   icon: 'bx-cog',
++  //   title: 'Settings',
++  //   subtitle: 'Account Settings',
++  //   to: { name: 'pages-account-settings-tab', params: { tab: 'account' } },
++  // },
+ 
+ ]
+ </script>
+diff --git a/resources/ts/layouts/components/NavbarThemeSwitcher.vue b/resources/ts/layouts/components/NavbarThemeSwitcher.vue
+index 6132b54..c518f73 100755
+--- a/resources/ts/layouts/components/NavbarThemeSwitcher.vue
++++ b/resources/ts/layouts/components/NavbarThemeSwitcher.vue
+@@ -1,5 +1,5 @@
+ <script setup lang="ts">
+-import type { ThemeSwitcherTheme } from '@layouts/types'
++import type { ThemeSwitcherTheme } from '@layouts/types';
+ 
+ const themes: ThemeSwitcherTheme[] = [
+   {
+diff --git a/resources/ts/layouts/components/UserProfile.vue b/resources/ts/layouts/components/UserProfile.vue
+index f27f333..0c2dec3 100755
+--- a/resources/ts/layouts/components/UserProfile.vue
++++ b/resources/ts/layouts/components/UserProfile.vue
+@@ -41,12 +41,12 @@ const logout = async () => {
+ 
+ const userProfileList = [
+   { type: 'divider' },
+-  { type: 'navItem', icon: 'bx-user', title: 'Profile', to: { name: 'apps-user-view-id', params: { id: 21 } } },
++  // { type: 'navItem', icon: 'bx-user', title: 'Profile', to: { name: 'apps-user-view-id', params: { id: 21 } } },
+   { type: 'navItem', icon: 'bx-cog', title: 'Settings', to: { name: 'pages-account-settings-tab', params: { tab: 'account' } } },
+-  { type: 'navItem', icon: 'bx-credit-card', title: 'Billing Plan', to: { name: 'pages-account-settings-tab', params: { tab: 'billing-plans' } }, badgeProps: { color: 'error', content: '4' } },
+-  { type: 'divider' },
+-  { type: 'navItem', icon: 'bx-dollar', title: 'Pricing', to: { name: 'pages-pricing' } },
+-  { type: 'navItem', icon: 'bx-help-circle', title: 'FAQ', to: { name: 'pages-faq' } },
++  // { type: 'navItem', icon: 'bx-credit-card', title: 'Billing Plan', to: { name: 'pages-account-settings-tab', params: { tab: 'billing-plans' } }, badgeProps: { color: 'error', content: '4' } },
++  // { type: 'divider' },
++  // { type: 'navItem', icon: 'bx-dollar', title: 'Pricing', to: { name: 'pages-pricing' } },
++  // { type: 'navItem', icon: 'bx-help-circle', title: 'FAQ', to: { name: 'pages-faq' } },
+ ]
+ </script>
+ 
+diff --git a/resources/ts/navigation/horizontal/index.ts b/resources/ts/navigation/horizontal/index.ts
+index fab8fa6..3581d55 100755
+--- a/resources/ts/navigation/horizontal/index.ts
++++ b/resources/ts/navigation/horizontal/index.ts
+@@ -1,3 +1,4 @@
++import type { HorizontalNavItems } from '@layouts/types'
+ import apps from './apps'
+ import charts from './charts'
+ import dashboard from './dashboard'
+@@ -6,6 +7,5 @@ import misc from './misc'
+ import pages from './pages'
+ import tables from './tables'
+ import uiElements from './ui-elements'
+-import type { HorizontalNavItems } from '@layouts/types'
+ 
+ export default [...dashboard, ...apps, ...pages, ...uiElements, ...forms, ...tables, ...charts, ...misc] as HorizontalNavItems
+diff --git "a/resources/ts/navigation/vertical/Freynet-Gagn\303\251-menu.ts" "b/resources/ts/navigation/vertical/Freynet-Gagn\303\251-menu.ts"
+index 5a0f084..65e16ca 100755
+--- "a/resources/ts/navigation/vertical/Freynet-Gagn\303\251-menu.ts"
++++ "b/resources/ts/navigation/vertical/Freynet-Gagn\303\251-menu.ts"
+@@ -1,27 +1,19 @@
+ export default [
+   { heading: 'Freynet-Gagné' },
++  
+   {
+     title: 'User Management',
+     icon: { icon: 'bx-user' },
+-    children: [
+-      {
+-        title: 'User List',
+-        to: 'apps-user-list',
+-      },
+-
+-    ],
+-  },
++    to: 'apps-user-list',
++    },
+   {
+-    title: 'Company Management',
++    title: 'Company List',
+     icon: { icon: 'bx-briefcase' },
+-    children: [
+-      { title: 'Company List', to: 'apps-companies-list' },
+-      { title: 'My Course', to: 'apps-academy-my-course' },
+-      { title: 'Course Details', to: 'apps-academy-course-details' },
+-    ],
++    to: 'apps-companies-list'
++      
+   },
+   {
+-    title: 'Project Management',
++    title: 'Project List',
+     icon: { icon: 'bx-check-double' },
+     children: [
+       { title: 'Dashboard', to: 'apps-logistics-dashboard' },
+diff --git a/resources/ts/navigation/vertical/index.ts b/resources/ts/navigation/vertical/index.ts
+index 911b0a8..9bc51fc 100755
+--- a/resources/ts/navigation/vertical/index.ts
++++ b/resources/ts/navigation/vertical/index.ts
+@@ -1,10 +1,13 @@
+-import FreynetGagne from './Freynet-Gagné-menu'
+-import appsAndPages from './apps-and-pages'
+-import charts from './charts'
+-import dashboard from './dashboard'
+-import forms from './forms'
+-import others from './others'
+-import uiElements from './ui-elements'
+ import type { VerticalNavItems } from '@layouts/types'
++import FreynetGagne from './Freynet-Gagné-menu'
++// import appsAndPages from './apps-and-pages'
++// import charts from './charts'
++// import dashboard from './dashboard'
++// import forms from './forms'
++// import others from './others'
++// import uiElements from './ui-elements'
++
++export default [...FreynetGagne] as VerticalNavItems
++
+ 
+-export default [...FreynetGagne, ...dashboard, ...appsAndPages, ...uiElements, ...forms, ...charts, ...others] as VerticalNavItems
++// export default [...FreynetGagne, ...dashboard, ...appsAndPages, ...uiElements, ...forms, ...charts, ...others] as VerticalNavItems
+diff --git a/resources/views/application.blade.php b/resources/views/application.blade.php
+index 1359ea6..73bb4c3 100755
+--- a/resources/views/application.blade.php
++++ b/resources/views/application.blade.php
+@@ -5,7 +5,7 @@
+   <meta charset="UTF-8" />
+   <link rel="icon" href="{{ asset('favicon.ico') }}" />
+   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+-  <title>Sneat - Vuetify Vuejs Admin Template</title>
++  <title>Freynet-Gagné Customer Portal</title>
+   <link rel="stylesheet" type="text/css" href="{{ asset('loader.css') }}" />
+   @vite(['resources/ts/main.ts'])
+   <script type="module" src="{{ asset('build/assets/main-BjEdgpcv.js') }}"></script>
+diff --git a/themeConfig.ts b/themeConfig.ts
+index a173191..67546b9 100755
+--- a/themeConfig.ts
++++ b/themeConfig.ts
+@@ -1,7 +1,7 @@
+-import { breakpointsVuetifyV3 } from '@vueuse/core'
+-import { VIcon } from 'vuetify/components/VIcon'
+ import { defineThemeConfig } from '@core'
+ import { Skins } from '@core/enums'
++import { breakpointsVuetifyV3 } from '@vueuse/core'
++import { VIcon } from 'vuetify/components/VIcon'
+ 
+ // ❗ Logo SVG must be imported with ?raw suffix
+ import logo from '@images/logo.svg?raw'
+@@ -10,7 +10,7 @@ import { AppContentLayoutNav, ContentWidth, FooterType, NavbarType } from '@layo
+ 
+ export const { themeConfig, layoutConfig } = defineThemeConfig({
+   app: {
+-    title: 'sneat',
++    title: 'Freynet-Gagné',
+     logo: h('div', { innerHTML: logo, style: 'line-height:0; color: rgb(var(--v-global-theme-primary))' }),
+     contentWidth: ContentWidth.Boxed,
+     contentLayoutNav: AppContentLayoutNav.Vertical,
