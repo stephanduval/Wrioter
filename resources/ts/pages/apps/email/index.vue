@@ -314,12 +314,6 @@ watch(
           />
           <div
             class="w-100 d-flex align-center action-bar-actions gap-x-1"
-            :style="{
-              visibility:
-                isSelectAllEmailCheckboxIndeterminate || selectAllEmailCheckbox
-                  ? undefined
-                  : 'hidden',
-            }"
           >
             <!-- Trash -->
             <IconBtn
@@ -486,8 +480,9 @@ watch(
 
       </VCard>
       <ComposeDialog
-        v-show="isComposeDialogVisible"
+        v-if="isComposeDialogVisible"
         @close="isComposeDialogVisible = false"
+        @refresh="fetchAllMessages"
       />
     </VMain>
   </VLayout>

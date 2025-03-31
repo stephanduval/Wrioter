@@ -1,8 +1,9 @@
 <script lang="ts" setup>
 import { onMounted, ref } from 'vue';
 
-defineEmits<{
+const emit = defineEmits<{
   (e: 'close'): void
+  (e: 'refresh'): void
 }>()
 
 const content = ref('')
@@ -91,8 +92,64 @@ const onInputChange = (value: string, field: 'to' | 'cc' | 'bcc') => {
   filterUsers(value, field)
 }
 
+// Add a function to send message
+const sendMessage = async () => {
+  if (!to.value || !subject.value || !content.value) {
+    // Show an error or alert that all fields are required
+    console.error('All fields are required')
+    return
+  }
+  
+  // Extract email from the formatted string (e.g., "John Doe <john@example.com>")
+  const receiverEmail = to.value.match(/<(.+)>/)?.[1] || to.value
+  
+  // Find the user by email
+  const receiver = users.value.find(user => user.email === receiverEmail)
+  
+  if (!receiver) {
+    console.error('Recipient not found')
+    return
+  }
+  
+  try {
+    const response = await fetch('/api/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+      },
+      body: JSON.stringify({
+        receiver_id: receiver.id,
+        company_id: 1, // Default to company ID 1 - adjust as needed for your app
+        subject: subject.value,
+        message: content.value,
+      }),
+    })
+    
+    if (!response.ok) {
+      const errorData = await response.json()
+      console.error('Error response:', errorData)
+      throw new Error('Failed to send message: ' + JSON.stringify(errorData))
+    }
+    
+    // Reset form and close dialog
+    resetValues()
+    content.value = ''
+    
+    // Notify parent component or show success message
+    console.log('Message sent successfully')
+    
+    // Close the dialog
+    emit('close')
+    emit('refresh')
+  } catch (error) {
+    console.error('Error sending message:', error)
+  }
+}
+
+// Replace the existing resetValues function
 const resetValues = () => {
-  to.value = subject.value = message.value = ''
+  to.value = subject.value = ''
   cc.value = bcc.value = ''
   filteredToUsers.value = filteredCcUsers.value = filteredBccUsers.value = []
 }
@@ -271,7 +328,7 @@ const resetValues = () => {
         class="me-4"
         append-icon="bx-paper-plane"
         :disabled="to === '' ? true : false"
-        @click="$emit('close'); content = ''; resetValues();"
+        @click="sendMessage"
       >
         send
       </VBtn>

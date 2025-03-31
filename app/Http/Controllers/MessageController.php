@@ -23,35 +23,34 @@ class MessageController extends Controller
     // }
 
     public function index()
-{
-    Log::info("Fetching all messages (no filtering).");
+    {
+        Log::info("Fetching all messages (no filtering).");
 
-    $messages = Message::with(['sender:id,name']) // ✅ No filtering applied
-        ->orderBy('created_at', 'desc')
-        ->get();
+        $messages = Message::with(['sender:id,name'])
+            ->orderBy('created_at', 'desc')
+            ->get();
 
-    Log::info("Retrieved messages:", $messages->toArray());
+        Log::info("Retrieved messages:", $messages->toArray());
 
-    return response()->json(['messages' => $messages]);
-}
-
-
-
-
-
+        return response()->json(['messages' => $messages]);
+    }
 
     // Send a new message
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'receiver_id' => 'required|exists:users,id',
+            'receiver_id' => 'nullable|exists:users,id',
+            'company_id' => 'required|exists:companies,id',
+            'subject' => 'required|string|max:255',
             'message' => 'required|string',
         ]);
 
         $message = Message::create([
             'sender_id' => Auth::id(),
-            'receiver_id' => $validated['receiver_id'],
-            'message' => $validated['message'],
+            'receiver_id' => $validated['receiver_id'] ?? null,
+            'company_id' => $validated['company_id'],
+            'subject' => $validated['subject'],
+            'body' => $validated['message'],
             'status' => 'sent',
         ]);
 
