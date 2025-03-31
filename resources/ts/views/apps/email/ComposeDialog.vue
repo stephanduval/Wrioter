@@ -1,4 +1,6 @@
 <script lang="ts" setup>
+import { onMounted, ref } from 'vue';
+
 defineEmits<{
   (e: 'close'): void
 }>()
@@ -14,8 +16,85 @@ const bcc = ref('')
 const isEmailCc = ref(false)
 const isEmailBcc = ref(false)
 
+// Add user data for autocomplete
+const users = ref<Array<{ id: number, fullName: string, email: string }>>([])
+const loading = ref(false)
+const searchQuery = ref('')
+
+// For filtered users in dropdown
+const filteredToUsers = ref<Array<{ id: number, fullName: string, email: string }>>([])
+const filteredCcUsers = ref<Array<{ id: number, fullName: string, email: string }>>([])
+const filteredBccUsers = ref<Array<{ id: number, fullName: string, email: string }>>([])
+
+// Fetch users on component mount
+onMounted(async () => {
+  try {
+    loading.value = true
+    const response = await fetch('/api/users?itemsPerPage=100', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+      },
+    })
+
+    if (!response.ok)
+      throw new Error('Failed to fetch users')
+
+    const result = await response.json()
+    users.value = result.data
+    loading.value = false
+  }
+  catch (error) {
+    console.error('Error fetching users:', error)
+    loading.value = false
+  }
+})
+
+// Filter users based on input
+const filterUsers = (query: string, field: 'to' | 'cc' | 'bcc') => {
+  if (!query) {
+    if (field === 'to') filteredToUsers.value = []
+    else if (field === 'cc') filteredCcUsers.value = []
+    else filteredBccUsers.value = []
+    return
+  }
+
+  const filtered = users.value.filter(user => 
+    user.fullName.toLowerCase().includes(query.toLowerCase()) || 
+    user.email.toLowerCase().includes(query.toLowerCase())
+  )
+
+  if (field === 'to') filteredToUsers.value = filtered
+  else if (field === 'cc') filteredCcUsers.value = filtered
+  else filteredBccUsers.value = filtered
+}
+
+// Handle user selection
+const selectUser = (user: { id: number, fullName: string, email: string }, field: 'to' | 'cc' | 'bcc') => {
+  const formattedEmail = `${user.fullName} <${user.email}>`
+  
+  if (field === 'to') {
+    to.value = formattedEmail
+    filteredToUsers.value = []
+  } else if (field === 'cc') {
+    cc.value = formattedEmail
+    filteredCcUsers.value = []
+  } else {
+    bcc.value = formattedEmail
+    filteredBccUsers.value = []
+  }
+}
+
+// Watch for input changes
+const onInputChange = (value: string, field: 'to' | 'cc' | 'bcc') => {
+  filterUsers(value, field)
+}
+
 const resetValues = () => {
   to.value = subject.value = message.value = ''
+  cc.value = bcc.value = ''
+  filteredToUsers.value = filteredCcUsers.value = filteredBccUsers.value = []
 }
 </script>
 
@@ -49,10 +128,11 @@ const resetValues = () => {
       </div>
     </VCardText>
 
-    <div class="px-1 pe-6 py-1">
+    <div class="px-1 pe-6 py-1 position-relative">
       <VTextField
         v-model="to"
         density="compact"
+        @input="onInputChange(to, 'to')"
       >
         <template #prepend-inner>
           <div class="text-base font-weight-medium text-disabled">
@@ -67,16 +147,35 @@ const resetValues = () => {
           </span>
         </template>
       </VTextField>
+      
+      <!-- To field autocomplete dropdown -->
+      <VCard
+        v-if="filteredToUsers.length > 0"
+        class="autocomplete-dropdown"
+        elevation="4"
+      >
+        <VList density="compact">
+          <VListItem
+            v-for="user in filteredToUsers"
+            :key="user.id"
+            @click="selectUser(user, 'to')"
+          >
+            <VListItemTitle>{{ user.fullName }}</VListItemTitle>
+            <VListItemSubtitle>{{ user.email }}</VListItemSubtitle>
+          </VListItem>
+        </VList>
+      </VCard>
     </div>
 
     <VExpandTransition>
-      <div v-if="isEmailCc">
+      <div v-if="isEmailCc" class="position-relative">
         <VDivider />
 
         <div class="px-1 pe-6 py-1">
           <VTextField
             v-model="cc"
             density="compact"
+            @input="onInputChange(cc, 'cc')"
           >
             <template #prepend-inner>
               <div class="text-disabled font-weight-medium">
@@ -84,18 +183,37 @@ const resetValues = () => {
               </div>
             </template>
           </VTextField>
+          
+          <!-- Cc field autocomplete dropdown -->
+          <VCard
+            v-if="filteredCcUsers.length > 0"
+            class="autocomplete-dropdown"
+            elevation="4"
+          >
+            <VList density="compact">
+              <VListItem
+                v-for="user in filteredCcUsers"
+                :key="user.id"
+                @click="selectUser(user, 'cc')"
+              >
+                <VListItemTitle>{{ user.fullName }}</VListItemTitle>
+                <VListItemSubtitle>{{ user.email }}</VListItemSubtitle>
+              </VListItem>
+            </VList>
+          </VCard>
         </div>
       </div>
     </VExpandTransition>
 
     <VExpandTransition>
-      <div v-if="isEmailBcc">
+      <div v-if="isEmailBcc" class="position-relative">
         <VDivider />
 
         <div class="px-1 pe-6 py-1">
           <VTextField
             v-model="bcc"
             density="compact"
+            @input="onInputChange(bcc, 'bcc')"
           >
             <template #prepend-inner>
               <div class="text-disabled font-weight-medium">
@@ -103,6 +221,24 @@ const resetValues = () => {
               </div>
             </template>
           </VTextField>
+          
+          <!-- Bcc field autocomplete dropdown -->
+          <VCard
+            v-if="filteredBccUsers.length > 0"
+            class="autocomplete-dropdown"
+            elevation="4"
+          >
+            <VList density="compact">
+              <VListItem
+                v-for="user in filteredBccUsers"
+                :key="user.id"
+                @click="selectUser(user, 'bcc')"
+              >
+                <VListItemTitle>{{ user.fullName }}</VListItemTitle>
+                <VListItemSubtitle>{{ user.email }}</VListItemSubtitle>
+              </VListItem>
+            </VList>
+          </VCard>
         </div>
       </div>
     </VExpandTransition>
@@ -238,6 +374,19 @@ const resetValues = () => {
     &-focused {
       outline: none;
     }
+  }
+
+  // Add styles for autocomplete dropdown
+  .autocomplete-dropdown {
+    position: absolute;
+    z-index: 999;
+    inline-size: 100%;
+    max-block-size: 200px;
+    overflow-y: auto;
+  }
+
+  .position-relative {
+    position: relative;
   }
 }
 </style>
