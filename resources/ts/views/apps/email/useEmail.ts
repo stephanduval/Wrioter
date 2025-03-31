@@ -8,10 +8,19 @@ export const useEmail = () => {
   const route = useRoute('apps-email-filter')
 
   const updateEmails = async (ids: Email['id'][], data: PartialDeep<Email>) => {
-    await $api('apps/email', {
-      method: 'POST',
-      body: JSON.stringify({ ids, data }),
-    })
+    try {
+      // For each ID, update it individually using the messages API endpoint
+      for (const id of ids) {
+        await $api(`/messages/${id}`, {
+          method: 'PUT',
+          body: JSON.stringify(data),
+        });
+      }
+      console.log('Successfully updated emails:', ids);
+    } catch (error) {
+      console.error('Error updating emails:', error);
+      throw error;
+    }
   }
 
   // ✅ Shared state
