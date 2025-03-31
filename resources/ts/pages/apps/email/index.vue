@@ -124,8 +124,8 @@ const messageViewMeta = computed(() => {
       e => e.id === openedMessage.value?.id,
     )
 
-    returnValue.hasNextMessage = !!messages.value[openedMessageIndex + 1]
-    returnValue.hasPreviousMessage = !!messages.value[openedMessageIndex - 1]
+    returnValue.hasNextEmail = !!messages.value[openedMessageIndex + 1]
+    returnValue.hasPreviousEmail = !!messages.value[openedMessageIndex - 1]
   }
 
   return returnValue
@@ -191,8 +191,8 @@ const handleActionClick = async (
   else if (action === 'unstar')
     await updateEmails(emailIds, { isStarred: false })
 
-  if (openedEmail.value)
-    refreshOpenedEmail()
+  if (openedMessage.value)
+    refreshOpenedMessage()
   else
     await fetchEmails()
 }
@@ -213,8 +213,14 @@ const handleEmailLabels = async (labelTitle: EmailLabel) => {
 const changeOpenedMessage = async (dir: 'previous' | 'next') => {
   if (!openedMessage.value) return;
 
-  await updateEmailLabels(selectedMessages.value, labelTitle);
-  await fetchMessages();
+  const openedMessageIndex = messages.value.findIndex(
+    e => e.id === openedMessage.value?.id,
+  );
+
+  const newMessageIndex = dir === 'previous' ? openedMessageIndex - 1 : openedMessageIndex + 1;
+
+  if (newMessageIndex >= 0 && newMessageIndex < messages.value.length)
+    openedMessage.value = messages.value[newMessageIndex];
 };
 
 
@@ -263,8 +269,8 @@ watch(
       />
     </VNavigationDrawer>
     <EmailView
-      :message="openedMessage"
-      :message-meta="messageViewMeta"
+      :email="openedMessage"
+      :email-meta="messageViewMeta"
       @refresh="refreshOpenedMessage"
       @navigated="changeOpenedMessage"
       @close="openedMessage = null"
@@ -450,12 +456,12 @@ watch(
         <VCheckbox
           :model-value="selectedMessages.includes(message.id)"
           class="flex-shrink-0"
-          @update:model-value="toggleSelectedMessage(message.id)"
+          @update:model-value="toggleSelectedEmail(message.id)"
           @click.stop
         />
         <IconBtn
           :color="message.isStarred ? 'warning' : 'default'"
-          @click.stop="handleActionClick(message.isStarred ? 'unstar' : 'star', [messages.id])"
+          @click.stop="handleActionClick(message.isStarred ? 'unstar' : 'star', [message.id])"
         >
           <VIcon
             icon="bx-star"
@@ -466,7 +472,7 @@ watch(
         <!-- Email Content -->
         <div class="flex-grow-1" style="max-inline-size: calc(100% - 200px);">
           <h3 class="text-h6 mb-1 truncate">{{message.subject }}</h3>
-          <div class="text-body-2 truncate mb-0" v-html="message.body.replace(/<p>/g, '').replace(/<\/p>/g, '')"></div>
+          <div class="text-body-2 truncate mb-0" v-html="message.body ? message.body.replace(/<p>/g, '').replace(/<\/p>/g, '') : message.message ? message.message.replace(/<p>/g, '').replace(/<\/p>/g, '') : ''"></div>
         </div>
 
         <!-- Sender Info -->

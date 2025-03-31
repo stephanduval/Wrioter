@@ -56,7 +56,7 @@ const updateMailLabel = async (label: Email['labels'][number]) => {
     floating
     class="email-view"
   >
-    <template v-if="props.message">
+    <template v-if="props.email">
       <!-- 👉 header -->
 
       <div class="email-view-header d-flex align-center px-6 py-4">
@@ -73,12 +73,12 @@ const updateMailLabel = async (label: Email['labels'][number]) => {
 
         <div class="d-flex align-center flex-wrap flex-grow-1 overflow-hidden gap-2">
           <div class="text-body-1 text-high-emphasis text-truncate">
-            {{ props.message.subject }}
+            {{ props.email.subject }}
           </div>
 
           <div class="d-flex flex-wrap gap-2">
             <VChip
-              v-for="label in props.message.labels"
+              v-for="label in props.email.labels"
               :key="label"
               :color="resolveLabelColor(label)"
               class="text-capitalize flex-shrink-0"
@@ -120,7 +120,7 @@ const updateMailLabel = async (label: Email['labels'][number]) => {
       <div class="email-view-action-bar d-flex align-center text-medium-emphasis ps-6 pe-4 gap-x-1">
         <!-- Trash -->
         <IconBtn
-          v-show="!props.message.isDeleted"
+          v-show="!props.email.isDeleted"
           @click="$emit('trash'); $emit('close')"
         >
           <VIcon
@@ -231,11 +231,11 @@ const updateMailLabel = async (label: Email['labels'][number]) => {
         <div class="d-flex align-center gap-x-1">
           <!-- Star/Unstar -->
           <IconBtn
-            :color="props.message.isStarred ? 'warning' : 'default'"
-            @click="props.message?.isStarred ? $emit('unstar') : $emit('star'); $emit('refresh')"
+            :color="props.email.isStarred ? 'warning' : 'default'"
+            @click="props.email?.isStarred ? $emit('unstar') : $emit('star'); $emit('refresh')"
           >
             <VIcon
-              :icon="props.message.isStarred ? 'bx-bxs-star' : 'bx-star' "
+              :icon="props.email.isStarred ? 'bx-bxs-star' : 'bx-star' "
               size="22"
             />
           </IconBtn>
@@ -260,18 +260,18 @@ const updateMailLabel = async (label: Email['labels'][number]) => {
           <div class="d-flex align-start align-sm-center pa-6 gap-x-4">
             <VAvatar size="38">
               <VImg
-                :src="props.message.from.avatar"
-                :alt="props.message.from.name"
+                :src="props.email.from.avatar"
+                :alt="props.email.from.name"
               />
             </VAvatar>
 
             <div class="d-flex flex-wrap flex-grow-1 overflow-hidden">
               <div class="text-truncate">
                 <div class="text-body-1 font-weight-medium text-high-emphasis text-truncate">
-                  {{ props.message.from.name }}
+                  {{ props.email.from.name }}
                 </div>
                 <div class="text-sm">
-                  {{ props.message.from.email }}
+                  {{ props.email.from.email }}
                 </div>
               </div>
 
@@ -279,10 +279,10 @@ const updateMailLabel = async (label: Email['labels'][number]) => {
 
               <div class="d-flex align-center gap-x-4">
                 <div class="text-disabled text-base">
-                  {{ new Date(props.message.time).toDateString() }}
+                  {{ new Date(props.email.time).toDateString() }}
                 </div>
                 <div>
-                  <IconBtn v-show="props.message.attachments.length">
+                  <IconBtn v-show="props.email.attachments.length">
                     <VIcon
                       icon="bx-paperclip"
                       size="22"
@@ -304,22 +304,22 @@ const updateMailLabel = async (label: Email['labels'][number]) => {
           <VCardText>
             <!-- eslint-disable vue/no-v-html -->
             <div class="text-body-1 font-weight-medium text-truncate mb-4">
-              {{ props.message.from.name }},
+              {{ props.email.from.name }},
             </div>
             <div
               class="text-base"
-              v-html="props.message.message"
+              v-html="props.email.message"
             />
             <!-- eslint-enable -->
           </VCardText>
 
-          <template v-if="props.message.attachments.length">
+          <template v-if="props.email.attachments.length">
             <VDivider />
 
             <VCardText class="d-flex flex-column gap-y-4 pt-4">
               <span>2 Attachments</span>
               <div
-                v-for="attachment in props.message.attachments"
+                v-for="attachment in props.email.attachments"
                 :key="attachment.fileName"
                 class="d-flex align-center"
               >
