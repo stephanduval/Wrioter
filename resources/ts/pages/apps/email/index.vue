@@ -5,6 +5,7 @@ import EmailView from '@/views/apps/email/EmailView.vue'
 import type { MoveEmailToAction } from '@/views/apps/email/useEmail'
 import { useEmail } from '@/views/apps/email/useEmail'
 import type { Email, EmailLabel } from '@db/apps/email/types'
+import { isRef, type Ref } from 'vue'
 import { PerfectScrollbar } from 'vue3-perfect-scrollbar'
 
 definePage({
@@ -57,6 +58,7 @@ const {
   moveSelectedEmailTo,
   updateEmails,
   updateEmailLabels,
+  deleteMessage,
 } = useEmail()
 
 // Compose dialog
@@ -245,6 +247,42 @@ watch(
   { deep: true },
 )
 
+// Handle message deletion
+const handleDeleteMessage = async (messageIds: Email['id'][] | Ref<Email['id'][]>) => {
+  // Extract array from ref if needed
+  const idsToDelete = isRef(messageIds) ? messageIds.value : messageIds;
+  
+  console.log('Delete button clicked');
+  console.log('messageIds:', messageIds);
+  console.log('idsToDelete:', idsToDelete);
+  
+  if (!idsToDelete || !idsToDelete.length) {
+    console.log('No IDs to delete, returning');
+    return;
+  }
+  
+  try {
+    console.log('Attempting to delete these IDs:', idsToDelete);
+    // Delete each message
+    for (const id of idsToDelete) {
+      console.log('Deleting message ID:', id);
+      await deleteMessage(id);
+    }
+    
+    // Close opened message if it was deleted
+    if (openedMessage.value && idsToDelete.includes(openedMessage.value.id)) {
+      console.log('Closing opened message as it was deleted');
+      openedMessage.value = null;
+    }
+    
+    // Refresh the messages list
+    console.log('Refreshing messages list');
+    await fetchAllMessages();
+  } catch (error) {
+    console.error('Error deleting messages:', error);
+  }
+}
+
 
 
 
@@ -274,7 +312,7 @@ watch(
       @refresh="refreshOpenedMessage"
       @navigated="changeOpenedMessage"
       @close="openedMessage = null"
-      @trash="handleActionClick('trash', openedMessage ? [openedMessage.id] : [])"
+      @trash="openedMessage ? handleDeleteMessage([openedMessage.id]) : null"
       @unread="handleActionClick('unread', openedMessage ? [openedMessage.id] : [])"
       @star="handleActionClick('star', openedMessage ? [openedMessage.id] : [])"
       @unstar="handleActionClick('unstar', openedMessage ? [openedMessage.id] : [])"
@@ -324,7 +362,7 @@ watch(
             <!-- Trash -->
             <IconBtn
               v-show="('filter' in route.params ? route.params.filter !== 'trashed' : true)"
-              @click="handleActionClick('trash')"
+              @click="handleDeleteMessage(selectedMessages)"
             >
               <VIcon
                 icon="bx-trash"
@@ -465,6 +503,17 @@ watch(
         >
           <VIcon
             icon="bx-star"
+            size="22"
+          />
+        </IconBtn>
+        
+        <!-- Delete Button -->
+        <IconBtn
+          @click.stop="handleDeleteMessage([message.id])"
+          color="error"
+        >
+          <VIcon
+            icon="bx-trash"
             size="22"
           />
         </IconBtn>
