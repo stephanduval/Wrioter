@@ -11,7 +11,6 @@ interface Props {
     hasNextEmail: boolean
   }
 }
-console.log ("WTF EmailVue");
 
 const props = defineProps<Props>()
 

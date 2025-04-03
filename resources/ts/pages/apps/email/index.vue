@@ -431,163 +431,163 @@ const handleDeleteMessage = async (messageIds: Email['id'][] | Ref<Email['id'][]
         <VDivider />
         
         <template v-if="!openedMessage">
-          <!-- 👉 Action bar -->
-          <div class="py-2 px-4 d-flex align-center d-flex gap-x-1">
-            <!-- TODO: Make checkbox primary on indeterminate state -->
-            <VCheckbox
-              :model-value="selectAllEmailCheckbox"
-              :indeterminate="isSelectAllEmailCheckboxIndeterminate"
-              class="d-flex"
-              @update:model-value="selectAllCheckboxUpdate"
-            />
-            <div
-              class="w-100 d-flex align-center action-bar-actions gap-x-1"
-            >
-              <!-- Trash -->
-              <IconBtn
-                v-show="('filter' in route.params ? route.params.filter !== 'trashed' : true)"
+        <!-- 👉 Action bar -->
+        <div class="py-2 px-4 d-flex align-center d-flex gap-x-1">
+          <!-- TODO: Make checkbox primary on indeterminate state -->
+          <VCheckbox
+            :model-value="selectAllEmailCheckbox"
+            :indeterminate="isSelectAllEmailCheckboxIndeterminate"
+            class="d-flex"
+            @update:model-value="selectAllCheckboxUpdate"
+          />
+          <div
+            class="w-100 d-flex align-center action-bar-actions gap-x-1"
+          >
+            <!-- Trash -->
+            <IconBtn
+              v-show="('filter' in route.params ? route.params.filter !== 'trashed' : true)"
                 @click="handleDeleteMessage(selectedMessages)"
-              >
-                <VIcon
-                  icon="bx-trash"
-                  size="22"
-                />
-                <VTooltip
-                  activator="parent"
-                  location="top"
-                >
-                  Delete Mail
-                </VTooltip>
-              </IconBtn>
-              <!-- Mark unread/read -->
-              <IconBtn @click="isAllMarkRead ? handleActionClick('unread') : handleActionClick('read') ">
-                <VIcon
-                  :icon="isAllMarkRead ? 'bx-envelope' : 'bx-envelope-open'"
-                  size="22"
-                />
-                <VTooltip
-                  activator="parent"
-                  location="top"
-                >
-                  {{ isAllMarkRead ? 'Mark as Unread' : 'Mark as Read' }}
-                </VTooltip>
-              </IconBtn>
-              <!-- Move to folder -->
-              <IconBtn>
-                <VIcon
-                  icon="bx-folder"
-                  size="22"
-                />
-                <VTooltip
-                  activator="parent"
-                  location="top"
-                >
-                  Folder
-                </VTooltip>
-                <VMenu activator="parent">
-                  <VList density="compact">
-                    <template
-                      v-for="moveTo in emailMoveToFolderActions"
-                      :key="moveTo.title"
-                    >
-                      <VListItem
-                        :class="shallShowMoveToActionFor(moveTo.action) ? 'd-flex' : 'd-none'"
-                        href="#"
-                        class="items-center"
-                        @click="handleMoveMailsTo(moveTo.action)"
-                      >
-                        <template #prepend>
-                          <VIcon
-                            :icon="moveTo.icon"
-                            class="me-2"
-                            size="20"
-                          />
-                        </template>
-                        <VListItemTitle class="text-capitalize">
-                          {{ moveTo.action }}
-                        </VListItemTitle>
-                      </VListItem>
-                    </template>
-                  </VList>
-                </VMenu>
-              </IconBtn>
-              <!-- Update labels -->
-              <IconBtn>
-                <VIcon
-                  icon="bx-label"
-                  size="22"
-                />
-                <VTooltip
-                  activator="parent"
-                  location="top"
-                >
-                  Label
-                </VTooltip>
-                <VMenu activator="parent">
-                  <VList density="compact">
-                    <VListItem
-                      v-for="label in labels"
-                      :key="label.title"
-                      href="#"
-                      @click="handleEmailLabels(label.title)"
-                    >
-                      <template #prepend>
-                        <VBadge
-                          inline
-                          :color="resolveLabelColor(label.title)"
-                          dot
-                        />
-                      </template>
-                      <VListItemTitle class="ms-2 text-capitalize">
-                        {{ label.title }}
-                      </VListItemTitle>
-                    </VListItem>
-                  </VList>
-                </VMenu>
-              </IconBtn>
-            </div>
-            <VSpacer />
-            <IconBtn @click="fetchEmails">
+            >
               <VIcon
-                icon="bx-refresh"
+                icon="bx-trash"
                 size="22"
               />
+              <VTooltip
+                activator="parent"
+                location="top"
+              >
+                Delete Mail
+              </VTooltip>
             </IconBtn>
+            <!-- Mark unread/read -->
+            <IconBtn @click="isAllMarkRead ? handleActionClick('unread') : handleActionClick('read') ">
+              <VIcon
+                :icon="isAllMarkRead ? 'bx-envelope' : 'bx-envelope-open'"
+                size="22"
+              />
+              <VTooltip
+                activator="parent"
+                location="top"
+              >
+                {{ isAllMarkRead ? 'Mark as Unread' : 'Mark as Read' }}
+              </VTooltip>
+            </IconBtn>
+            <!-- Move to folder -->
             <IconBtn>
               <VIcon
-                icon="bx-dots-vertical-rounded"
+                icon="bx-folder"
                 size="22"
               />
+              <VTooltip
+                activator="parent"
+                location="top"
+              >
+                Folder
+              </VTooltip>
+              <VMenu activator="parent">
+                <VList density="compact">
+                  <template
+                    v-for="moveTo in emailMoveToFolderActions"
+                    :key="moveTo.title"
+                  >
+                    <VListItem
+                      :class="shallShowMoveToActionFor(moveTo.action) ? 'd-flex' : 'd-none'"
+                      href="#"
+                      class="items-center"
+                      @click="handleMoveMailsTo(moveTo.action)"
+                    >
+                      <template #prepend>
+                        <VIcon
+                          :icon="moveTo.icon"
+                          class="me-2"
+                          size="20"
+                        />
+                      </template>
+                      <VListItemTitle class="text-capitalize">
+                        {{ moveTo.action }}
+                      </VListItemTitle>
+                    </VListItem>
+                  </template>
+                </VList>
+              </VMenu>
+            </IconBtn>
+            <!-- Update labels -->
+            <IconBtn>
+              <VIcon
+                icon="bx-label"
+                size="22"
+              />
+              <VTooltip
+                activator="parent"
+                location="top"
+              >
+                Label
+              </VTooltip>
+              <VMenu activator="parent">
+                <VList density="compact">
+                  <VListItem
+                    v-for="label in labels"
+                    :key="label.title"
+                    href="#"
+                    @click="handleEmailLabels(label.title)"
+                  >
+                    <template #prepend>
+                      <VBadge
+                        inline
+                        :color="resolveLabelColor(label.title)"
+                        dot
+                      />
+                    </template>
+                    <VListItemTitle class="ms-2 text-capitalize">
+                      {{ label.title }}
+                    </VListItemTitle>
+                  </VListItem>
+                </VList>
+              </VMenu>
             </IconBtn>
           </div>
-          <VDivider />
-          <!-- 👉 Emails list -->
-          <PerfectScrollbar v-if="messages.length" tag="ul" class="Message-list">
-            <li
-              v-for="message in messages"
-              :key="message.id"
-              class="email-item d-flex align-center pa-3 gap-1 cursor-pointer"
-              :class="[{ 'message-read': message.isRead }]"
-              @click="openMessage(message)"
-            >
-              <!-- Left Section: Icons and Checkbox -->
-              <div class="d-flex flex-row flex-grow-1">
-                <div class="d-flex align-center gap-2">
-                  <VCheckbox
-                    :model-value="selectedMessages.includes(message.id)"
-                    class="flex-shrink-0"
+          <VSpacer />
+          <IconBtn @click="fetchEmails">
+            <VIcon
+              icon="bx-refresh"
+              size="22"
+            />
+          </IconBtn>
+          <IconBtn>
+            <VIcon
+              icon="bx-dots-vertical-rounded"
+              size="22"
+            />
+          </IconBtn>
+        </div>
+        <VDivider />
+        <!-- 👉 Emails list -->
+<PerfectScrollbar v-if="messages.length" tag="ul" class="Message-list">
+  <li
+    v-for="message in messages"
+    :key="message.id"
+    class="email-item d-flex align-center pa-3 gap-1 cursor-pointer"
+    :class="[{ 'message-read': message.isRead }]"
+    @click="openMessage(message)"
+  >
+    <!-- Left Section: Icons and Checkbox -->
+    <div class="d-flex flex-row flex-grow-1">
+      <div class="d-flex align-center gap-2">
+        <VCheckbox
+          :model-value="selectedMessages.includes(message.id)"
+          class="flex-shrink-0"
                     @update:model-value="toggleSelectedEmail(message.id)"
-                    @click.stop
-                  />
-                  <IconBtn
-                    :color="message.isStarred ? 'warning' : 'default'"
+          @click.stop
+        />
+        <IconBtn
+          :color="message.isStarred ? 'warning' : 'default'"
                     @click.stop="handleActionClick(message.isStarred ? 'unstar' : 'star', [message.id])"
-                  >
-                    <VIcon
-                      icon="bx-star"
-                      size="22"
-                    />
-                  </IconBtn>
+        >
+          <VIcon
+            icon="bx-star"
+            size="22"
+          />
+        </IconBtn>
                   
                   <!-- Delete Button -->
                   <IconBtn
@@ -600,20 +600,20 @@ const handleDeleteMessage = async (messageIds: Email['id'][] | Ref<Email['id'][]
                     />
                   </IconBtn>
 
-                  <!-- Email Content -->
-                  <div class="flex-grow-1" style="max-inline-size: calc(100% - 200px);">
-                    <h3 class="text-h6 mb-1 truncate">{{message.subject }}</h3>
+        <!-- Email Content -->
+        <div class="flex-grow-1" style="max-inline-size: calc(100% - 200px);">
+          <h3 class="text-h6 mb-1 truncate">{{message.subject }}</h3>
                     <div class="text-body-2 truncate mb-0" v-html="message.message ? message.message.replace(/<p>/g, '').replace(/<\/p>/g, '') : ''"></div>
-                  </div>
+        </div>
 
-                  <!-- Sender Info -->
-                  <h6 v-if="message.from?.name" class="text-h6 ms-2">
-                    {{ message.from.name }}
-                  </h6>
-                </div>
-              </div>
-            </li>
-          </PerfectScrollbar>
+        <!-- Sender Info -->
+        <h6 v-if="message.from?.name" class="text-h6 ms-2">
+          {{ message.from.name }}
+        </h6>
+      </div>
+    </div>
+  </li>
+</PerfectScrollbar>
         </template>
         
         <template v-else>
