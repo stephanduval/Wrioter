@@ -14,10 +14,11 @@ export interface EmailFrom {
 }
 
 export interface EmailAttachment {
-  fileName: string
-  thumbnail: any
-  url: string
-  size: string
+  filename: string
+  size: number
+  path: string
+  mime_type: string
+  thumbnail?: any
 }
 
 /*
@@ -48,16 +49,16 @@ export interface Email {
   to: EmailTo[]
   from: EmailFrom
   subject: string
-  cc: string[]
-  bcc: string[]
+  cc?: string[]
+  bcc?: string[]
   message: string
   attachments: EmailAttachment[]
   time: string
-  replies: Email[]
+  replies?: Email[]
 
-  labels: EmailLabel[]
+  labels: string[]
 
-  folder: EmailFolder
+  folder: EmailFolder | string
 
   // Flags 🚩
   isRead: boolean

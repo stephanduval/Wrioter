@@ -5,6 +5,7 @@ import type { MoveEmailToAction } from '@/views/apps/email/useEmail'
 import { useEmail } from '@/views/apps/email/useEmail'
 import type { Email, EmailLabel } from '@db/apps/email/types'
 import { isRef, type Ref } from 'vue'
+import { useRoute } from 'vue-router'
 import { PerfectScrollbar } from 'vue3-perfect-scrollbar'
 
 definePage({
@@ -47,7 +48,7 @@ onMounted(fetchAllMessages); // ✅ Update function name
 const { isLeftSidebarOpen } = useResponsiveLeftSidebar()
 
 // Composables
-const route = useRoute<'apps-email-filter' | 'apps-email-label'>()
+const route = useRoute<'apps-email' | 'apps-email-filter' | 'apps-email-label'>()
 
 const {
   labels,
@@ -74,15 +75,14 @@ const replyMessage = ref('');
 // Email Selection
 // ------------------------------------------------
 
-// Fetch Emails
-const { data: emailData, execute: fetchEmails } = await useApi<any>(createUrl('/apps/email', {
-  query: {
-    q,
-    filter: () => 'filter' in route.params ? route.params.filter : undefined,
-    label: () => 'label' in route.params ? route.params.label : undefined,
-  },
-}))
-
+// Remove this old useApi call - we are using fetchAllMessages -> fetchMessages now
+// const { data: emailData, execute: fetchEmails } = await useApi<any>(createUrl('/apps/email', {
+//   query: {
+//     q,
+//     filter: () => 'filter' in route.params ? route.params.filter : undefined,
+//     label: () => 'label' in route.params ? route.params.label : undefined,
+//   },
+// }))
 
 const toggleSelectedEmail = (emailId: Email['id']) => {
   const emailIndex = selectedMessages.value.indexOf(emailId)
@@ -137,7 +137,7 @@ const messageViewMeta = computed(() => {
 })
 
 const refreshOpenedMessage = async () => {
-  await fetchEmails()
+  await fetchAllMessages()
 
   if (openedMessage.value)
     openedMessage.value = messages.value.find(m => m.id === openedMessage.value?.id)!
@@ -273,7 +273,7 @@ const handleActionClick = async (
 // Email actions
 const handleMoveMailsTo = async (action: MoveEmailToAction) => {
   await moveSelectedEmailTo(action, selectedMessages.value)
-  await fetchEmails()
+  await fetchAllMessages()
 }
 
 // Handle Email Labels
@@ -307,36 +307,53 @@ const changeOpenedMessage = async (dir: 'previous' | 'next') => {
 const openMessage = async (message: Email) => {
   console.log('Opening message:', message);
   
-  // Make sure we're getting a full message object with proper structure for the email view
+  // Ensure the message object matches the expected Email structure
+  // Use properties defined in the updated Email type
   openedMessage.value = {
     ...message,
-    // Add default properties if missing to match expected Email structure
-    from: message.from || {
-      name: message.sender_name || 'Unknown Sender',
-      email: message.sender_email || 'unknown@example.com',
-      avatar: '/images/avatars/avatar-1.png'
+    // Ensure required fields exist, using defaults if necessary
+    from: message.from || { 
+      name: 'Unknown Sender', 
+      email: 'unknown@example.com', 
+      avatar: '/images/avatars/avatar-1.png' 
     },
-    time: message.created_at || message.time || new Date().toISOString(),
+    time: message.time || new Date().toISOString(), // Use message.time directly
     labels: message.labels || [],
-    attachments: message.attachments || []
+    attachments: message.attachments || [],
+    // Ensure other required Email fields have defaults if not provided by API
+    to: message.to || [],
+    subject: message.subject || '(No Subject)',
+    message: message.message || '', // Use message.message directly
+    folder: message.folder || 'inbox', // Default folder if needed
+    isRead: message.isRead !== undefined ? message.isRead : true, // Default to read
+    isStarred: message.isStarred !== undefined ? message.isStarred : false,
+    isDeleted: message.isDeleted !== undefined ? message.isDeleted : false,
+    // cc, bcc, replies are optional
   };
   
   console.log('openedMessage set to:', openedMessage.value);
   
-  // Mark the message as read, but handle API errors gracefully
-  try {
-    await handleActionClick('read', [message.id]);
-  } catch (error) {
-    console.error('Error marking message as read:', error);
-    // Continue even if this fails - it's not critical
+  // Mark the message as read
+  if (!message.isRead) { // Only mark if currently unread
+    try {
+      await handleActionClick('read', [message.id]);
+      // Update the local state immediately for responsiveness
+      if (openedMessage.value) openedMessage.value.isRead = true;
+    } catch (error) {
+      console.error('Error marking message as read:', error);
+    }
   }
 }
 
 
-// Reset selected emails when filter or label is updated
+// Reset selected emails and fetch messages when filter or label is updated
 watch(
   () => route.params,
-  () => { selectedMessages.value = [] },
+  () => {
+    selectedMessages.value = []
+    // Fetch messages whenever the route params change
+    fetchAllMessages()
+  },
   { deep: true },
 )
 
@@ -547,7 +564,7 @@ const handleDeleteMessage = async (messageIds: Email['id'][] | Ref<Email['id'][]
             </IconBtn>
           </div>
           <VSpacer />
-          <IconBtn @click="fetchEmails">
+          <IconBtn @click="fetchAllMessages">
             <VIcon
               icon="bx-refresh"
               size="22"
@@ -584,7 +601,7 @@ const handleDeleteMessage = async (messageIds: Email['id'][] | Ref<Email['id'][]
                     @click.stop="handleActionClick(message.isStarred ? 'unstar' : 'star', [message.id])"
         >
           <VIcon
-            icon="bx-star"
+            :icon="message.isStarred ? 'bxs-star' : 'bx-star'"
             size="22"
           />
         </IconBtn>
@@ -751,10 +768,10 @@ const handleDeleteMessage = async (messageIds: Email['id'][] | Ref<Email['id'][]
                   <div class="d-flex flex-wrap flex-grow-1 overflow-hidden">
                     <div class="text-truncate">
                       <div class="text-body-1 font-weight-medium text-high-emphasis text-truncate">
-                        {{ openedMessage.from?.name || openedMessage.sender_name || 'Unknown Sender' }}
+                        {{ openedMessage.from?.name || 'Unknown Sender' }}
                       </div>
                       <div class="text-sm">
-                        {{ openedMessage.from?.email || openedMessage.sender_email || 'no-email@example.com' }}
+                        {{ openedMessage.from?.email || 'no-email@example.com' }}
                       </div>
                     </div>
 
@@ -762,7 +779,7 @@ const handleDeleteMessage = async (messageIds: Email['id'][] | Ref<Email['id'][]
 
                     <div class="d-flex align-center gap-x-4">
                       <div class="text-disabled text-base">
-                        {{ new Date(openedMessage.time || openedMessage.created_at || Date.now()).toDateString() }}
+                        {{ new Date(openedMessage.time || Date.now()).toDateString() }}
                       </div>
                     </div>
                   </div>
@@ -773,11 +790,11 @@ const handleDeleteMessage = async (messageIds: Email['id'][] | Ref<Email['id'][]
                 <VCardText>
                   <!-- eslint-disable vue/no-v-html -->
                   <div class="text-body-1 font-weight-medium text-truncate mb-4">
-                    {{ openedMessage.from?.name || openedMessage.sender_name || 'Unknown Sender' }},
+                    {{ openedMessage.from?.name || 'Unknown Sender' }},
                   </div>
                   <div
                     class="text-base"
-                    v-html="openedMessage.message || openedMessage.body || ''"
+                    v-html="openedMessage.message || ''"
                   />
                   <!-- eslint-enable -->
                 </VCardText>
@@ -789,18 +806,18 @@ const handleDeleteMessage = async (messageIds: Email['id'][] | Ref<Email['id'][]
                     <span>{{ openedMessage.attachments.length }} Attachments</span>
                     <div
                       v-for="attachment in openedMessage.attachments"
-                      :key="attachment.fileName || attachment.name || 'file'"
+                      :key="attachment.filename || 'file'"
                       class="d-flex align-center"
                     >
                       <VImg
                         :src="attachment.thumbnail || '/images/icons/file-icons/pdf.png'"
-                        :alt="attachment.fileName || attachment.name || 'file'"
+                        :alt="attachment.filename || 'file'"
                         aspect-ratio="1"
                         max-height="24"
                         max-width="24"
                         class="me-2"
                       />
-                      <span>{{ attachment.fileName || attachment.name || 'Attachment' }}</span>
+                      <span>{{ attachment.filename || 'Attachment' }}</span>
                     </div>
                   </VCardText>
                 </template>
@@ -828,7 +845,7 @@ const handleDeleteMessage = async (messageIds: Email['id'][] | Ref<Email['id'][]
               <VCard v-if="showReplyForm" class="mt-4">
                 <VCardText>
                   <div class="text-body-1 text-high-emphasis mb-6">
-                    Reply to {{ openedMessage.from?.name || openedMessage.sender_name || 'User' }}
+                    Reply to {{ openedMessage.from?.name || 'User' }}
                   </div>
                   <VTextarea
                     v-model="replyMessage"

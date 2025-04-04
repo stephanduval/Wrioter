@@ -22,10 +22,12 @@ class Message extends Model
         'body',
         'reply_to_id',
         'status',
+        'is_starred',
     ];
 
     protected $casts = [
         'status' => 'string', // ENUM values are stored as strings
+        'is_starred' => 'boolean',
     ];
 
     public function sender(): BelongsTo

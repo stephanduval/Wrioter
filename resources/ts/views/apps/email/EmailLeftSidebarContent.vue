@@ -49,24 +49,24 @@ const folders = computed(() => [
     to: { name: 'apps-email' },
     badge: { content: inboxEmails.value, color: 'primary' },
   },
-  {
-    title: 'Draft',
-    prependIcon: 'bx-edit',
-    to: { name: 'apps-email-filter', params: { filter: 'draft' } },
-    badge: { content: draftEmails.value, color: 'warning' },
-  },
+  // {
+  //   title: 'Draft',
+  //   prependIcon: 'bx-edit',
+  //   to: { name: 'apps-email-filter', params: { filter: 'draft' } },
+  //   badge: { content: draftEmails.value, color: 'warning' },
+  // },
   {
     title: 'Starred',
     prependIcon: 'bx-star',
     to: { name: 'apps-email-filter', params: { filter: 'starred' } },
     badge: { content: starredEmails.value, color: 'success' },
   },
-  {
-    title: 'Spam',
-    prependIcon: 'bx-error-alt',
-    to: { name: 'apps-email-filter', params: { filter: 'spam' } },
-    badge: { content: spamEmails.value, color: 'error' },
-  },
+  // {
+  //   title: 'Spam',
+  //   prependIcon: 'bx-error-alt',
+  //   to: { name: 'apps-email-filter', params: { filter: 'spam' } },
+  //   badge: { content: spamEmails.value, color: 'error' },
+  // },
 ])
 
 // Labels list

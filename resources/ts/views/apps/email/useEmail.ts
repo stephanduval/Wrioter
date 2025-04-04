@@ -1,4 +1,4 @@
-import type { Email } from '@db/apps/email/types';
+import type { Email, EmailLabel } from '@db/apps/email/types';
 import type { PartialDeep } from 'type-fest';
 import { ref } from 'vue';
 import { useRoute } from 'vue-router';
@@ -28,15 +28,34 @@ export const useEmail = () => {
   const messages = ref<Email[]>([]); 
 
 
-// ✅ Fetch all messages
+// ✅ Fetch messages, now including filter/label parameters
 const fetchMessages = async (): Promise<Email[]> => {
   try {
     console.log("🔥 Fetching messages from API...");
-    const response = await $api('/messages', { method: 'GET' });
+
+    // Prepare query parameters
+    const queryParams = new URLSearchParams();
+    const currentFilter = 'filter' in route.params ? route.params.filter as string : undefined;
+    const currentLabel = 'label' in route.params ? route.params.label as string : undefined;
+
+    if (currentFilter) {
+      queryParams.append('filter', currentFilter);
+      console.log(`🔍 Fetching with filter: ${currentFilter}`);
+    } else if (currentLabel) {
+      queryParams.append('label', currentLabel);
+      console.log(`🔍 Fetching with label: ${currentLabel}`);
+    }
+
+    // Construct API URL with parameters if they exist
+    const queryString = queryParams.toString();
+    const apiUrl = `/messages${queryString ? '?' + queryString : ''}`;
+    console.log(`📞 Calling API: ${apiUrl}`);
+
+    const response = await $api(apiUrl, { method: 'GET' });
 
     console.log("✅ Raw API Response:", response);
 
-    return response?.data || []; // ✅ API returns { data: [...] }, so extract `data`
+    return response?.data || []; // API returns { data: [...] }
   } catch (error) {
     console.error("❌ Error fetching messages:", error);
     return [];
@@ -77,7 +96,7 @@ const deleteMessage = async (id: number) => {
   }
 };
 
-  const updateEmailLabels = async (ids: Email['id'][], label: Email['labels'][number]) => {
+  const updateEmailLabels = async (ids: Email['id'][], label: EmailLabel) => {
     await $api('/apps/email', {
       method: 'POST',
       body: { ids, label },
@@ -90,7 +109,7 @@ const deleteMessage = async (id: number) => {
     { action: 'trash', icon: 'bx-trash' },
   ]
 
-  const labels: { title: Email['labels'][number]; color: string }[] = [
+  const labels: { title: EmailLabel; color: string }[] = [
     {
       title: 'personal',
       color: 'success',
@@ -113,7 +132,7 @@ const deleteMessage = async (id: number) => {
     },
   ]
 
-  const resolveLabelColor = (label: Email['labels'][number]) => {
+  const resolveLabelColor = (label: string) => {
     if (label === 'personal')
       return 'success'
     if (label === 'company')

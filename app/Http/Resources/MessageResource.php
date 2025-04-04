@@ -60,7 +60,7 @@ class MessageResource extends JsonResource
                 })->toArray() ?? [];
             }),
             'isRead' => $this->status === 'read',
-            'isStarred' => false, // Default as not supported by schema
+            'isStarred' => (bool) $this->is_starred, // Use the actual value from the model
             'isDeleted' => $this->status === 'deleted',
             'folder' => $folder,
 
