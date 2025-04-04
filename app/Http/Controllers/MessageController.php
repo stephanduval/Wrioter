@@ -6,6 +6,7 @@ use App\Models\Message;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use App\Http\Resources\MessageResource;
 
 class MessageController extends Controller
 {
@@ -24,15 +25,18 @@ class MessageController extends Controller
 
     public function index()
     {
-        Log::info("Fetching all messages (no filtering).");
-
-        $messages = Message::with(['sender:id,name'])
+        Log::info("Fetching all messages with relationships.");
+        
+        // Eager load all necessary relationships
+        $messages = Message::with(['sender', 'receiver', 'labels', 'attachments'])
             ->orderBy('created_at', 'desc')
             ->get();
 
-        Log::info("Retrieved messages:", $messages->toArray());
+        Log::info("Retrieved messages before transformation:", $messages->toArray());
 
-        return response()->json(['messages' => $messages]);
+        // Return the collection using MessageResource
+        // Note: Laravel automatically wraps this in a 'data' key
+        return MessageResource::collection($messages);
     }
 
     // Send a new message

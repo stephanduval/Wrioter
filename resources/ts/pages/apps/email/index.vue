@@ -596,9 +596,9 @@ const handleDeleteMessage = async (messageIds: Email['id'][] | Ref<Email['id'][]
                   >
                     <VIcon
                       icon="bx-trash"
-                      size="22"
-                    />
-                  </IconBtn>
+            size="22"
+          />
+        </IconBtn>
 
         <!-- Email Content -->
         <div class="flex-grow-1" style="max-inline-size: calc(100% - 200px);">

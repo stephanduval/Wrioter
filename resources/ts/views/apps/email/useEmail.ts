@@ -1,6 +1,7 @@
 import type { Email } from '@db/apps/email/types';
 import type { PartialDeep } from 'type-fest';
 import { ref } from 'vue';
+import { useRoute } from 'vue-router';
 
 export type MoveEmailToAction = 'inbox' | 'spam' | 'trash'
 
@@ -35,7 +36,7 @@ const fetchMessages = async (): Promise<Email[]> => {
 
     console.log("✅ Raw API Response:", response);
 
-    return response?.messages || []; // ✅ API returns `messages`, so extract `messages`
+    return response?.data || []; // ✅ API returns { data: [...] }, so extract `data`
   } catch (error) {
     console.error("❌ Error fetching messages:", error);
     return [];
