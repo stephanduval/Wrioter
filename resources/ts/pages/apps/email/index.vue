@@ -747,55 +747,72 @@ const confirmPermanentDeleteMessages = async () => {
     :class="[{ 'message-read': message.isRead }]"
     @click="openMessage(message)"
   >
-    <!-- Left Section: Icons and Checkbox -->
-    <div class="d-flex flex-row flex-grow-1">
-      <div class="d-flex align-center gap-2">
+    <!-- Container for alignment -->
+    <div class="d-flex align-center flex-grow-1 gap-2"> 
+        <!-- Checkbox -->
         <VCheckbox
           :model-value="selectedMessages.includes(message.id)"
-          class="flex-shrink-0"
-                    @update:model-value="toggleSelectedEmail(message.id)"
+          class="flex-shrink-0 me-1" 
+          @update:model-value="toggleSelectedEmail(message.id)"
           @click.stop
         />
+        <!-- Star -->
         <IconBtn
           :class="{ 'starred-button': message.isStarred }"
+          class="flex-shrink-0"
           @click.stop="handleActionClick(message.isStarred ? 'unstar' : 'star', [message.id])"
         >
-          <VIcon
-            :icon="message.isStarred ? 'bxs-star' : 'bx-star'"
-            size="22"
-          />
+          <VIcon :icon="message.isStarred ? 'bxs-star' : 'bx-star'" size="22" />
         </IconBtn>
-                  
-                  <!-- Trash/Delete Button (Conditional) -->
-                  <IconBtn
-                     v-if="route.params.filter !== 'trash'" 
-                     @click.stop="initiateTrashConfirmation([message.id])" 
-                     color="default" 
-                  >
-                    <VIcon icon="bx-trash" size="22" />
-                    <VTooltip activator="parent" location="top"> Move to Trash </VTooltip>
-        </IconBtn>
-
-        <IconBtn
-                     v-else 
-                     @click.stop="initiatePermanentDeleteConfirmation([message.id])" 
-                     color="error" 
-                  >
-                    <VIcon icon="bxs-trash" size="22" />
-                    <VTooltip activator="parent" location="top"> Delete Forever </VTooltip>
-        </IconBtn>
-
-        <!-- Sender Name First -->
-        <h6 v-if="message.from?.fullName" class="text-h6 ms-2 me-4 font-weight-bold flex-shrink-0" style=" max-inline-size: 180px;min-inline-size: 120px;">
+          
+        <!-- Sender Name -->
+        <h6 
+           v-if="message.from?.fullName" 
+           class="text-h6 font-weight-semibold flex-shrink-0 ws-no-wrap text-truncate" 
+           style=" max-inline-size: 180px;min-inline-size: 120px;"
+         >
           {{ message.from.fullName }}
         </h6>
+        
+        <!-- To Recipient Name -->
+        <div 
+           v-if="message.to && message.to.length > 0" 
+           class="text-caption text-medium-emphasis flex-shrink-0 ws-no-wrap text-truncate"
+           style=" max-inline-size: 180px;min-inline-size: 120px;"
+         >
+           To: {{ message.to[0]?.fullName || message.to[0]?.email || 'N/A' }}
+         </div>
+        
+         
 
-        <!-- Email Content -->
-        <div class="flex-grow-1 overflow-hidden">
-          <h3 class="text-h6 mb-1 truncate">{{ message.subject }}</h3>
-          <div class="text-body-2 truncate mb-0" v-html="message.message ? message.message.replace(/<p>/g, '').replace(/<\/p>/g, '') : ''"></div>
+        <!-- Email Content (Subject & Body Preview) -->
+        <div class="flex-grow-1 overflow-hidden ms-2">
+           <h6 class="text-h6 font-weight-regular ws-no-wrap text-truncate mb-0">
+              {{ message.subject }}
+           </h6>
+           <div class="text-body-2 text-medium-emphasis text-truncate" v-html="message.message ? message.message.replace(/<p>|<\/p>/g, '') : ''"></div>
         </div>
-      </div>
+
+         <!-- Trash/Delete Button -->
+        <IconBtn
+           v-if="route.params.filter !== 'trash'" 
+           class="ms-2 flex-shrink-0"
+           @click.stop="initiateTrashConfirmation([message.id])" 
+           color="default" 
+         >
+           <VIcon icon="bx-trash" size="22" />
+           <VTooltip activator="parent" location="top"> Move to Trash </VTooltip>
+         </IconBtn>
+          
+         <IconBtn
+           v-else 
+           class="ms-2 flex-shrink-0"
+           @click.stop="initiatePermanentDeleteConfirmation([message.id])" 
+           color="error" 
+         >
+           <VIcon icon="bxs-trash" size="22" />
+           <VTooltip activator="parent" location="top"> Delete Forever </VTooltip>
+         </IconBtn>
     </div>
   </li>
 </PerfectScrollbar>
@@ -1267,5 +1284,9 @@ const confirmPermanentDeleteMessages = async () => {
 
 .starred-button {
   background-color: rgba(var(--v-theme-primary), 0.1);
+}
+
+.ws-no-wrap {
+  white-space: nowrap;
 }
 </style>

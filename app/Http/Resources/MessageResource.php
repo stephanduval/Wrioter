@@ -40,7 +40,7 @@ class MessageResource extends JsonResource
             'to' => $this->whenLoaded('receiver', function () {
                  return $this->receiver ? [ // Check if receiver exists
                     [
-                        'name' => $this->receiver->name ?? 'Unknown Receiver',
+                        'fullName' => $this->receiver->name ?? 'Unknown Receiver',
                         'email' => $this->receiver->email ?? 'unknown@example.com',
                     ]
                  ] : []; // Return empty array if no receiver
@@ -64,11 +64,11 @@ class MessageResource extends JsonResource
             'isStarred' => (bool) $this->is_starred, // Use the actual value from the model
             'isDeleted' => $this->status === 'deleted',
             'folder' => $folder,
+            'status' => $this->status,
 
             // Include original fields if needed for debugging or specific logic
             // 'sender_id' => $this->sender_id,
             // 'receiver_id' => $this->receiver_id,
-            // 'status' => $this->status,
             // 'created_at' => $this->created_at,
             // 'updated_at' => $this->updated_at,
         ];

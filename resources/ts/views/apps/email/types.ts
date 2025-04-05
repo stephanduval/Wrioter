@@ -19,7 +19,11 @@ export interface EmailAttachment {
 export interface Email {
   id: number;
   from: EmailFrom;
-  to: { name?: string; email: string }[]; // Make 'to' more flexible
+  to: { 
+      name?: string; // Keep if used elsewhere
+      fullName?: string; // Add fullName
+      email: string 
+  }[]; 
   subject: string;
   message: string; // HTML content
   time: string | Date; // ISO string or Date object
@@ -34,4 +38,7 @@ export interface Email {
   cc?: { name?: string; email: string }[];
   bcc?: { name?: string; email: string }[];
   reply_to_id?: number | null;
-} 
+}
+
+// Add MoveEmailToAction if not present
+export type MoveEmailToAction = 'inbox' | 'spam' | 'trash'; 
