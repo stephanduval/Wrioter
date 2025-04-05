@@ -1,6 +1,6 @@
 import type { Email, EmailLabel } from '@db/apps/email/types';
 import type { PartialDeep } from 'type-fest';
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 
 export type MoveEmailToAction = 'inbox' | 'spam' | 'trash'
@@ -26,162 +26,184 @@ export const useEmail = () => {
 
   // ✅ Shared state
   const messages = ref<Email[]>([]); 
+  // ✅ Reactive labels fetched from DB
+  const userLabels = ref<{ title: EmailLabel; color: string }[]>([]);
 
-
-// ✅ Fetch messages, now including filter/label parameters
-const fetchMessages = async (): Promise<Email[]> => {
-  try {
-    console.log("🔥 Fetching messages from API...");
-
-    // Prepare query parameters
-    const queryParams = new URLSearchParams();
-    const currentFilter = 'filter' in route.params ? route.params.filter as string : undefined;
-    const currentLabel = 'label' in route.params ? route.params.label as string : undefined;
-
-    if (currentFilter) {
-      queryParams.append('filter', currentFilter);
-      console.log(`🔍 Fetching with filter: ${currentFilter}`);
-    } else if (currentLabel) {
-      queryParams.append('label', currentLabel);
-      console.log(`🔍 Fetching with label: ${currentLabel}`);
+  // ✅ Fetch user-specific labels from the API
+  const fetchUserLabels = async () => {
+    try {
+      console.log("useEmail: Fetching user labels...");
+      // Ensure this endpoint returns labels for the authenticated user
+      const response = await $api('/labels'); 
+      console.log("useEmail: Labels received:", response);
+      if (response && Array.isArray(response)) {
+        // Map API response (label_name, colour) to frontend structure (title, color)
+        userLabels.value = response.map((label: { label_name: string; colour: string | null }) => ({
+          title: label.label_name as EmailLabel,
+          // Provide a default color if backend returns null or empty string
+          color: label.colour || 'secondary', 
+        }));
+        console.log("useEmail: Mapped user labels:", userLabels.value);
+      } else {
+        console.error('useEmail: Invalid label data received:', response);
+        userLabels.value = []; // Clear labels on error
+      }
+    } catch (error) {
+      console.error('useEmail: Error fetching user labels:', error);
+      userLabels.value = []; // Clear labels on error
     }
+  };
 
-    // Construct API URL with parameters if they exist
-    const queryString = queryParams.toString();
-    const apiUrl = `/messages${queryString ? '?' + queryString : ''}`;
-    console.log(`📞 Calling API: ${apiUrl}`);
+  // Fetch labels when the composable is first used
+  onMounted(fetchUserLabels);
 
-    const response = await $api(apiUrl, { method: 'GET' });
+  // ✅ Fetch messages, now including filter/label parameters
+  const fetchMessages = async (): Promise<Email[]> => {
+    try {
+      console.log("🔥 Fetching messages from API...");
 
-    console.log("✅ Raw API Response:", response);
+      // Prepare query parameters
+      const queryParams = new URLSearchParams();
+      const currentFilter = 'filter' in route.params ? route.params.filter as string : undefined;
+      const currentLabel = 'label' in route.params ? route.params.label as string : undefined;
 
-    return response?.data || []; // API returns { data: [...] }
-  } catch (error) {
-    console.error("❌ Error fetching messages:", error);
-    return [];
-  }
-};
+      if (currentFilter) {
+        queryParams.append('filter', currentFilter);
+        console.log(`🔍 Fetching with filter: ${currentFilter}`);
+      } else if (currentLabel) {
+        queryParams.append('label', currentLabel);
+        console.log(`🔍 Fetching with label: ${currentLabel}`);
+      }
 
+      // Construct API URL with parameters if they exist
+      const queryString = queryParams.toString();
+      const apiUrl = `/messages${queryString ? '?' + queryString : ''}`;
+      console.log(`📞 Calling API: ${apiUrl}`);
 
+      const response = await $api(apiUrl, { method: 'GET' });
 
+      console.log("✅ Raw API Response:", response);
 
+      return response?.data || []; // API returns { data: [...] }
+    } catch (error) {
+      console.error("❌ Error fetching messages:", error);
+      return [];
+    }
+  };
 
-
-
-
-// ✅ Restore original createMessage (Assuming it used $api and 'message' key)
-//    Verify this matches how ComposeDialog was calling it when it worked.
-const createMessage = async (payload: {
+  // ✅ Restore original createMessage (Assuming it used $api and 'message' key)
+  //    Verify this matches how ComposeDialog was calling it when it worked.
+  const createMessage = async (payload: {
     receiver_id: number | null; // ID looked up by ComposeDialog
     company_id: number;
     subject: string;
     message: string; // Original key expected by backend for non-replies
     attachments?: File[];
-}) => {
+  }) => {
     console.log(">>> EXECUTING OLD createMessage <<<", payload); // Debug log
     try {
-        // Assuming the original used FormData and $api worked for it
-        const formData = new FormData();
-        formData.append('subject', payload.subject);
-        formData.append('message', payload.message); // Send 'message' key
-        formData.append('company_id', payload.company_id.toString());
-        if (payload.receiver_id !== null && payload.receiver_id !== undefined) {
-            formData.append('receiver_id', payload.receiver_id.toString());
-        }
-        if (payload.attachments) {
-            payload.attachments.forEach(file => formData.append('attachments[]', file));
-        }
+      // Assuming the original used FormData and $api worked for it
+      const formData = new FormData();
+      formData.append('subject', payload.subject);
+      formData.append('message', payload.message); // Send 'message' key
+      formData.append('company_id', payload.company_id.toString());
+      if (payload.receiver_id !== null && payload.receiver_id !== undefined) {
+        formData.append('receiver_id', payload.receiver_id.toString());
+      }
+      if (payload.attachments) {
+        payload.attachments.forEach(file => formData.append('attachments[]', file));
+      }
 
-        // Use $api if it was working before for this call, otherwise use fetch
-        const response = await $api('/messages', { 
-            method: 'POST', 
-            body: formData 
-            // $api might handle content-type correctly for FormData, or it might need adjusting
-        });
-        console.log(">>> createMessage response:", response);
-        // Add proper response checking based on how $api behaves
-        if(response && response.message === 'Message sent successfully') { // Example check
-           return response;
-        } else {
-           console.error("createMessage failed:", response);
-           return undefined;
-        }
-    } catch (error) {
-        console.error('Error creating message:', error);
+      // Use $api if it was working before for this call, otherwise use fetch
+      const response = await $api('/messages', { 
+        method: 'POST', 
+        body: formData 
+        // $api might handle content-type correctly for FormData, or it might need adjusting
+      });
+      console.log(">>> createMessage response:", response);
+      // Add proper response checking based on how $api behaves
+      if(response && response.message === 'Message sent successfully') { // Example check
+        return response;
+      } else {
+        console.error("createMessage failed:", response);
         return undefined;
+      }
+    } catch (error) {
+      console.error('Error creating message:', error);
+      return undefined;
     }
-};
+  };
 
-// ✅ NEW function specifically for sending replies
-const sendReplyMessage = async (payload: { 
-  receiver_id: number; // Original sender's ID - REQUIRED for reply
-  company_id: number; 
-  subject: string; 
-  body: string; // Use 'body' key for replies
-  reply_to_id: number; // Original message ID - REQUIRED for reply
-  attachments?: File[] 
-}): Promise<any | undefined> => { 
-  console.log("***** EXECUTING sendReplyMessage in useEmail.ts *****", payload); 
-  try {
-    const formData = new FormData();
+  // ✅ NEW function specifically for sending replies
+  const sendReplyMessage = async (payload: { 
+    receiver_id: number; // Original sender's ID - REQUIRED for reply
+    company_id: number; 
+    subject: string; 
+    body: string; // Use 'body' key for replies
+    reply_to_id: number; // Original message ID - REQUIRED for reply
+    attachments?: File[] 
+  }): Promise<any | undefined> => { 
+    console.log("***** EXECUTING sendReplyMessage in useEmail.ts *****", payload); 
+    try {
+      const formData = new FormData();
 
-    // Append fields for REPLY format
-    formData.append('subject', payload.subject);
-    formData.append('body', payload.body); // Send 'body' key
-    formData.append('company_id', payload.company_id.toString());
-    formData.append('receiver_id', payload.receiver_id.toString()); // Original sender
-    formData.append('reply_to_id', payload.reply_to_id.toString()); // Original message
+      // Append fields for REPLY format
+      formData.append('subject', payload.subject);
+      formData.append('body', payload.body); // Send 'body' key
+      formData.append('company_id', payload.company_id.toString());
+      formData.append('receiver_id', payload.receiver_id.toString()); // Original sender
+      formData.append('reply_to_id', payload.reply_to_id.toString()); // Original message
 
-    // Append attachments
-    if (payload.attachments && payload.attachments.length > 0) {
-      payload.attachments.forEach(file => formData.append('attachments[]', file));
-    }
-    
-    // --- Using fetch directly for reliability ---
-    const accessToken = localStorage.getItem('accessToken'); 
-    if (!accessToken) {
+      // Append attachments
+      if (payload.attachments && payload.attachments.length > 0) {
+        payload.attachments.forEach(file => formData.append('attachments[]', file));
+      }
+      
+      // --- Using fetch directly for reliability ---
+      const accessToken = localStorage.getItem('accessToken'); 
+      if (!accessToken) {
         console.error('No access token found for reply.');
         return undefined;
-    }
+      }
 
-    console.log('>>> reply formData type before fetch:', formData instanceof FormData); 
-    console.log('>>> reply formData entries:', Array.from(formData.entries())); 
+      console.log('>>> reply formData type before fetch:', formData instanceof FormData); 
+      console.log('>>> reply formData entries:', Array.from(formData.entries())); 
 
-    const response = await fetch('/api/messages', { 
-      method: 'POST',
-      body: formData, 
-      headers: {
+      const response = await fetch('/api/messages', { 
+        method: 'POST',
+        body: formData, 
+        headers: {
           'Authorization': `Bearer ${accessToken}`,
           'Accept': 'application/json', 
-      },
-    });
-    // --- End fetch ---
+        },
+      });
+      // --- End fetch ---
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ message: 'Failed to parse error response.' }));
-      console.error(`Error sending reply: ${response.status} ${response.statusText}`, errorData);
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Failed to parse error response.' }));
+        console.error(`Error sending reply: ${response.status} ${response.statusText}`, errorData);
+        return undefined; 
+      }
+
+      const responseData = await response.json(); 
+      console.log(">>> sendReplyMessage response:", responseData);
+      return responseData; 
+
+    } catch (error) {
+      console.error('Network or other error sending reply:', error);
       return undefined; 
     }
+  };
 
-    const responseData = await response.json(); 
-    console.log(">>> sendReplyMessage response:", responseData);
-    return responseData; 
-
-  } catch (error) {
-    console.error('Network or other error sending reply:', error);
-    return undefined; 
-  }
-};
-
-// ✅ Delete a message
-const deleteMessage = async (id: number) => {
-  try {
-    await $api(`/messages/${id}`, { method: 'DELETE' });
-    messages.value = messages.value.filter(message => message.id !== id); // Remove deleted email from UI
-  } catch (error) {
-    console.error('Error deleting message:', error);
-  }
-};
+  // ✅ Delete a message
+  const deleteMessage = async (id: number) => {
+    try {
+      await $api(`/messages/${id}`, { method: 'DELETE' });
+      messages.value = messages.value.filter(message => message.id !== id); // Remove deleted email from UI
+    } catch (error) {
+      console.error('Error deleting message:', error);
+    }
+  };
 
   const updateEmailLabels = async (ids: Email['id'][], label: EmailLabel) => {
     console.log(`Attempting to toggle label '${label}' for messages:`, ids);
@@ -205,42 +227,6 @@ const deleteMessage = async (id: number) => {
     { action: 'spam', icon: 'bx-error-alt' },
     { action: 'trash', icon: 'bx-trash' },
   ]
-
-  const labels: { title: EmailLabel; color: string }[] = [
-    {
-      title: 'personal',
-      color: 'success',
-
-    },
-    {
-      title: 'company',
-      color: 'primary',
-
-    },
-    {
-      title: 'important',
-      color: 'warning',
-
-    },
-    {
-      title: 'private',
-      color: 'error',
-
-    },
-  ]
-
-  const resolveLabelColor = (label: string) => {
-    if (label === 'personal')
-      return 'success'
-    if (label === 'company')
-      return 'primary'
-    if (label === 'important')
-      return 'warning'
-    if (label === 'private')
-      return 'error'
-
-    return 'secondary'
-  }
 
   const shallShowMoveToActionFor = (action: MoveEmailToAction) => {
     if (action === 'trash')
@@ -277,9 +263,15 @@ const deleteMessage = async (id: number) => {
     await updateEmails(selectedEmails, dataToUpdate)
   }
 
+  // ✅ Update resolveLabelColor to use the reactive userLabels ref
+  const resolveLabelColor = (labelTitle: string) => {
+    const foundLabel = userLabels.value.find(l => l.title === labelTitle);
+    return foundLabel ? foundLabel.color : 'secondary'; // Return default if not found
+  }
+
   return {
-    labels,
-    resolveLabelColor,
+    userLabels, // <-- Export reactive userLabels
+    resolveLabelColor, // Export updated function
     shallShowMoveToActionFor,
     emailMoveToFolderActions,
     moveSelectedEmailTo,

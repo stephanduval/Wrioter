@@ -51,7 +51,7 @@ const { isLeftSidebarOpen } = useResponsiveLeftSidebar()
 const route = useRoute<'apps-email' | 'apps-email-filter' | 'apps-email-label'>()
 
 const {
-  labels,
+  userLabels,
   resolveLabelColor,
   emailMoveToFolderActions,
   shallShowMoveToActionFor,
@@ -606,7 +606,7 @@ const sendReply = async () => {
               <VMenu activator="parent">
                 <VList density="compact">
                   <VListItem
-                    v-for="label in labels"
+                    v-for="label in userLabels"
                     :key="label.title"
                     href="#"
                     @click="handleEmailLabels(label.title)"
@@ -804,7 +804,7 @@ const sendReply = async () => {
                 <VMenu activator="parent">
                   <VList density="compact">
                     <VListItem
-                      v-for="label in labels"
+                      v-for="label in userLabels"
                       :key="label.title"
                       href="#"
                       @click="handleEmailLabels(label.title, [openedMessage.id])" 
