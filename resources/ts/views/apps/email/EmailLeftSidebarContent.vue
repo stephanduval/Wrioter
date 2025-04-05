@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, defineEmits, defineProps, onMounted, ref, watch } from 'vue';
+import { useEmail } from '@/views/apps/email/useEmail';
+import { computed, defineEmits, defineProps, ref, watch } from 'vue';
 import { PerfectScrollbar } from 'vue3-perfect-scrollbar';
 
 defineOptions({
@@ -22,6 +23,12 @@ interface EmailsMeta {
 interface Props {
   emailsMeta?: EmailsMeta
 }
+
+const { 
+  userLabels,
+  addLabel: addApiLabel,
+  resolveLabelColor
+} = useEmail();
 
 // Reactive email counts with defaults
 const inboxEmails = ref(0)
@@ -74,70 +81,27 @@ const folders = computed(() => [
   // },
 ])
 
-const labels = ref<any[]>([])
-
-const fetchUserLabels = async () => {
-  try {
-    console.log("Fetching user labels...")
-    const response = await $api('/labels')
-    console.log("Labels received:", response)
-    if (response && Array.isArray(response)) {
-      labels.value = response.map((label: { label_name: string; colour: string }) => ({
-        title: label.label_name,
-        colour: label.colour,
-        to: { name: 'apps-email-label', params: { label: label.label_name.toLowerCase() } },
-      }))
-      console.log("Mapped labels:", labels.value)
-    } else {
-       console.error('Invalid label data received:', response)
-       labels.value = []
-    }
-  }
-  catch (error) {
-    console.error('Error fetching labels:', error)
-    labels.value = []
-  }
-}
-
-onMounted(fetchUserLabels)
-
-// Ref to control the visibility of the add label form
+// Local state for the add label form
 const showAddLabelForm = ref(false)
 const newLabelName = ref('')
 const selectedColour = ref<string>('primary')
 const availableColours = ['primary', 'success', 'error', 'warning', 'info']
 
-const addLabel = async () => {
+const handleAddLabel = async () => {
   if (!newLabelName.value.trim()) {
     console.error('Label name cannot be empty')
     return
   }
 
-  try {
-    console.log(`Attempting to add label: ${newLabelName.value}, Color: ${selectedColour.value}`)
-    const response = await $api('/labels', {
-      method: 'POST',
-      body: {
-        label_name: newLabelName.value,
-        colour: selectedColour.value,
-      },
-    })
+  const success = await addApiLabel({
+    label_name: newLabelName.value,
+    colour: selectedColour.value,
+  })
 
-    console.log('Label added successfully:', response)
-
-    await fetchUserLabels()
-
+  if (success) {
     newLabelName.value = ''
     selectedColour.value = 'primary'
     showAddLabelForm.value = false
-  }
-  catch (error: any) {
-    console.error('Error adding label:', error)
-    if (error?.response?.status === 409 || error?.message?.includes('409')) {
-      console.warn('Label already exists.')
-    } else {
-      // Handle other errors
-    }
   }
 }
 </script>
@@ -184,7 +148,7 @@ const addLabel = async () => {
         </li>
       </ul>
 
-      <div v-if="labels.length">
+      <div v-if="userLabels.length > 0 || showAddLabelForm">
         <div class="text-caption text-disabled d-flex align-center justify-space-between px-6">
           <span>LABELS</span>
           <IconBtn size="small" @click="showAddLabelForm = !showAddLabelForm">
@@ -217,13 +181,13 @@ const addLabel = async () => {
                 &nbsp;
               </VChip>
             </div>
-            <VBtn size="small" block @click="addLabel">Add</VBtn>
+            <VBtn size="small" block @click="handleAddLabel">Add</VBtn>
           </div>
         </VExpandTransition>
 
-        <ul class="email-labels">
+        <ul class="email-labels" v-if="userLabels.length > 0">
           <li
-            v-for="label in labels"
+            v-for="label in userLabels"
             :key="label.title"
           >
             <RouterLink
@@ -237,7 +201,7 @@ const addLabel = async () => {
               >
                 <VIcon
                   icon="bx-bxs-circle"
-                  :color="label.colour"
+                  :color="label.color"
                 />
                 {{ label.title }}
               </div>

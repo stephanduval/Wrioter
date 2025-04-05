@@ -2,11 +2,14 @@ import type { Email, EmailLabel } from '@db/apps/email/types';
 import type { PartialDeep } from 'type-fest';
 import { onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
+// Import toast if you want notifications
+// import { useToast } from 'vue-toastification'; 
 
 export type MoveEmailToAction = 'inbox' | 'spam' | 'trash'
 
 export const useEmail = () => {
   const route = useRoute('apps-email-filter')
+  // const toast = useToast(); // Optional: for notifications
 
   const updateEmails = async (ids: Email['id'][], data: PartialDeep<Email>) => {
     try {
@@ -26,7 +29,6 @@ export const useEmail = () => {
 
   // ✅ Shared state
   const messages = ref<Email[]>([]); 
-  // ✅ Reactive labels fetched from DB
   const userLabels = ref<{ title: EmailLabel; color: string }[]>([]);
 
   // ✅ Fetch user-specific labels from the API
@@ -56,6 +58,31 @@ export const useEmail = () => {
 
   // Fetch labels when the composable is first used
   onMounted(fetchUserLabels);
+
+  // ✅ Add new label via API and refresh the list
+  const addLabel = async (labelData: { label_name: string; colour: string }) => {
+    console.log("useEmail: Adding label:", labelData);
+    try {
+        const response = await $api('/labels', {
+          method: 'POST',
+          body: labelData,
+        });
+        console.log('useEmail: Label added successfully:', response);
+        await fetchUserLabels(); // Refresh the labels list
+        // toast.success("Label added successfully!"); // Optional notification
+        return true; // Indicate success
+    } catch (error: any) {
+      console.error('useEmail: Error adding label:', error);
+      // Handle specific errors like conflict (409)
+      if (error?.response?.status === 409 || error?.message?.includes('409')) {
+        console.warn('useEmail: Label already exists.');
+        // toast.warning("Label already exists."); // Optional notification
+      } else {
+        // toast.error("Failed to add label."); // Optional notification
+      }
+      return false; // Indicate failure
+    }
+  }
 
   // ✅ Fetch messages, now including filter/label parameters
   const fetchMessages = async (): Promise<Email[]> => {
@@ -279,6 +306,8 @@ export const useEmail = () => {
   return {
     userLabels, // <-- Export reactive userLabels
     resolveLabelColor, // Export updated function
+    fetchUserLabels, // Export fetch function if needed elsewhere
+    addLabel, // Export add function
     shallShowMoveToActionFor,
     emailMoveToFolderActions,
     moveSelectedEmailTo,

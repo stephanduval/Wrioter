@@ -420,6 +420,7 @@ const sendReply = async () => {
 
   if (!replyMessage.value.trim()) {
     console.error('Cannot send reply: Message body is empty.');
+    // TODO: Show user feedback
     return;
   }
 
@@ -451,11 +452,14 @@ const sendReply = async () => {
       showReplyForm.value = false;
       replyMessage.value = '';
       await fetchAllMessages(); 
+      openedMessage.value = null; // <-- Close the detail view
     } else {
       console.error("Failed to send reply, API returned error or unexpected response:", result);
+       // TODO: Show error feedback to user
     }
   } catch (error) {
     console.error("Error sending reply:", error);
+     // TODO: Show error feedback to user
   }
   console.log("index.vue: sendReply function finished."); 
 };
@@ -611,7 +615,7 @@ const confirmPermanentDeleteMessages = async () => {
           >
             <!-- Trash Button (Move to Trash) -->
             <!-- Show unless in trash view -->
-             <IconBtn
+            <IconBtn
               v-if="route.params.filter !== 'trash'" 
               v-show="selectedMessages.length > 0" 
               @click="initiateTrashConfirmation(selectedMessages)" 
@@ -770,16 +774,16 @@ const confirmPermanentDeleteMessages = async () => {
                   >
                     <VIcon icon="bx-trash" size="22" />
                     <VTooltip activator="parent" location="top"> Move to Trash </VTooltip>
-                  </IconBtn>
-                  
-                  <IconBtn
+        </IconBtn>
+
+        <IconBtn
                      v-else 
                      @click.stop="initiatePermanentDeleteConfirmation([message.id])" 
                      color="error" 
                   >
                     <VIcon icon="bxs-trash" size="22" />
                     <VTooltip activator="parent" location="top"> Delete Forever </VTooltip>
-                  </IconBtn>
+        </IconBtn>
 
         <!-- Sender Name First -->
         <h6 v-if="message.from?.fullName" class="text-h6 ms-2 me-4 font-weight-bold flex-shrink-0" style=" max-inline-size: 180px;min-inline-size: 120px;">
@@ -879,7 +883,7 @@ const confirmPermanentDeleteMessages = async () => {
                >
                  <VIcon icon="bxs-trash" size="22" />
                  <VTooltip activator="parent" location="top"> Delete Forever </VTooltip>
-               </IconBtn>
+              </IconBtn>
 
               <!-- Read/Unread -->
               <IconBtn @click="handleActionClick('unread', [openedMessage.id]); openedMessage = null">
