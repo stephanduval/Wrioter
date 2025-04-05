@@ -1,14 +1,12 @@
-import type { Email, EmailLabel } from '@db/apps/email/types';
+import type { Email, EmailLabel, MoveEmailToAction } from '@db/apps/email/types';
 import type { PartialDeep } from 'type-fest';
 import { onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 // Import toast if you want notifications
 // import { useToast } from 'vue-toastification'; 
 
-export type MoveEmailToAction = 'inbox' | 'spam' | 'trash'
-
 export const useEmail = () => {
-  const route = useRoute('apps-email-filter')
+  const route = useRoute<'apps-email' | 'apps-email-filter' | 'apps-email-label'>()
   // const toast = useToast(); // Optional: for notifications
 
   const updateEmails = async (ids: Email['id'][], data: PartialDeep<Email>) => {
@@ -260,40 +258,40 @@ export const useEmail = () => {
   ]
 
   const shallShowMoveToActionFor = (action: MoveEmailToAction) => {
+    const currentFilter = route.params && 'filter' in route.params ? route.params.filter : undefined;
+    
+    // Never show move to trash if already in trash
     if (action === 'trash')
-      return route.params.filter !== 'trashed'
+      return currentFilter !== 'trash'; // Changed from 'trashed' to 'trash'
 
+    // Show move to inbox ONLY if NOT in inbox, sent, or draft
     else if (action === 'inbox')
-      return !(route.params.filter === undefined || route.params.filter === 'sent' || route.params.filter === 'draft')
+      return currentFilter !== undefined && currentFilter !== 'sent' && currentFilter !== 'draft';
 
+    // Show move to spam ONLY if NOT in spam, sent, or draft
     else if (action === 'spam')
-      return !(route.params.filter === 'spam' || route.params.filter === 'sent' || route.params.filter === 'draft')
+      return currentFilter !== 'spam' && currentFilter !== 'sent' && currentFilter !== 'draft';
 
-    return false
+    return false; // Default case
   }
 
   const moveSelectedEmailTo = async (action: MoveEmailToAction, selectedEmails: number[]) => {
-    const dataToUpdate: PartialDeep<Email> = {}
+    // Assuming Email type now includes 'status'
+    const dataToUpdate: PartialDeep<Email> = {} 
 
     if (action === 'inbox') {
-      // When moving from trash back to inbox, explicitly mark as not deleted
-      // and set status back (could be 'unread' or 'read' based on previous state,
-      // defaulting to 'unread' might be simplest unless you track original status)
-      dataToUpdate.status = 'unread'; // Or manage original read status if needed
-      dataToUpdate.folder = 'inbox'; // Keep folder logic if used elsewhere
+      dataToUpdate.status = 'unread'; 
+      // dataToUpdate.folder = 'inbox'; // Folder might be redundant if status drives filtering
     }
     else if (action === 'spam') {
-      // If moving from trash to spam, remove deleted status
-       dataToUpdate.status = 'spam'; // Set status to spam
-       dataToUpdate.folder = 'spam'; // Keep folder logic if used elsewhere
+       dataToUpdate.status = 'spam'; 
+       // dataToUpdate.folder = 'spam';
     }
     else if (action === 'trash') {
-      // When moving to trash, set status to deleted
       dataToUpdate.status = 'deleted'; 
-      dataToUpdate.folder = 'trash'; // Keep folder logic
+      // dataToUpdate.folder = 'trash';
     }
 
-    // Use updateEmails which calls the PUT endpoint
     await updateEmails(selectedEmails, dataToUpdate); 
   }
 

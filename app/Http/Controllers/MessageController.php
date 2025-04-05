@@ -38,45 +38,55 @@ class MessageController extends Controller
 
         Log::info("Request parameters:", ['filter' => $filter, 'label' => $label]);
 
-        // Basic filtering logic - adjust based on your needs
-        // This assumes messages are primarily filtered for the receiver (logged-in user)
-        // Modify if sender should also see messages in inbox/starred etc.
+        // --- Initial Query based on Role (Sender/Receiver) ---
+        // Adjust this part if you have more complex visibility rules
         $query->where(function ($q) use ($userId) {
-            $q->where('receiver_id', $userId)
-              ->orWhere('sender_id', $userId); // Allow sender to see their sent messages if needed
+            $q->where('receiver_id', $userId) // User is receiver
+              ->orWhere('sender_id', $userId); // User is sender
         });
+        // --- End Initial Query ---
 
         if ($filter) {
             Log::info("Applying filter: {$filter}");
             switch ($filter) {
                 case 'starred':
-                    $query->where('is_starred', true);
+                    // Starred can be from sender or receiver perspective, assuming receiver here primarily
+                    $query->where('is_starred', true)->where('receiver_id', $userId); // Or adjust if sender's starred matters
                     break;
                 case 'draft':
-                    $query->where('status', 'draft')->where('sender_id', $userId); // Drafts only for sender
+                    // Drafts are only relevant to the sender
+                    $query->where('status', 'draft')->where('sender_id', $userId); 
                     break;
-                case 'sent':
-                    $query->where('status', 'sent')->where('sender_id', $userId); // Sent only for sender
-                    break;
+                case 'sent': // <<<--- Add Sent Case
+                    // Sent items are only relevant to the sender
+                    $query->where('status', 'sent')->where('sender_id', $userId); 
+                    break; 
                 case 'spam':
-                     $query->where('status', 'spam'); // Or folder column if you have one
+                     // Spam usually relates to received mail
+                     $query->where('status', 'spam')->where('receiver_id', $userId); 
                      break;
                  case 'trash':
-                     $query->where('status', 'deleted');
+                     // Trash can contain items user received or sent
+                     $query->where('status', 'deleted')
+                           ->where(function ($q) use ($userId) { // Ensure user owns the trashed item
+                               $q->where('receiver_id', $userId)
+                                 ->orWhere('sender_id', $userId);
+                            });
                      break;
-                // Default case (inbox) - filter non-archived/deleted/spam for receiver
+                // Default case (inbox) - show non-archived/deleted/spam/draft for receiver
                 default:
                     $query->where('receiver_id', $userId)
                           ->whereNotIn('status', ['archived', 'deleted', 'spam', 'draft']);
             }
         } elseif ($label) {
             Log::info("Applying label filter: {$label}");
-            // Filter by label using the relationship
-            $query->whereHas('labels', function ($labelQuery) use ($label) {
-                $labelQuery->where('label_name', $label);
-            });
+            // Ensure label filtering considers user ownership if labels are user-specific
+             $query->whereHas('labels', function ($labelQuery) use ($label, $userId) {
+                 $labelQuery->where('label_name', $label)
+                            ->where('user_id', $userId); // Assuming labels belong to users
+             })->where('receiver_id', $userId); // Typically labels apply to received mail
         } else {
-            // Default to Inbox view if no filter or label
+            // Default to Inbox view
             Log::info("Defaulting to Inbox view");
             $query->where('receiver_id', $userId)
                    ->whereNotIn('status', ['archived', 'deleted', 'spam', 'draft']);

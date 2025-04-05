@@ -56,6 +56,11 @@ const folders = computed(() => [
     to: { name: 'apps-email' },
     badge: { content: inboxEmails.value, color: 'primary' },
   },
+  {
+    title: 'Sent',
+    prependIcon: 'bx-send',
+    to: { name: 'apps-email-filter', params: { filter: 'sent' } },
+  },
   // {
   //   title: 'Draft',
   //   prependIcon: 'bx-edit',
