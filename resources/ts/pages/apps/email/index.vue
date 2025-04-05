@@ -16,7 +16,7 @@ definePage({
 
 console.log("🚀 Emails page Index.vue is loading!");
 
-const { fetchMessages } = useEmail();
+const { fetchMessages, sendReplyMessage } = useEmail();
 const messages = ref<Email[]>([]); // ✅ Change `emails` to `messages`
 
 // Fetch Messages from API ->
@@ -408,9 +408,57 @@ const handleDeleteMessage = async (messageIds: Email['id'][] | Ref<Email['id'][]
   }
 }
 
+// Function to handle sending the reply
+const sendReply = async () => {
+  console.log("index.vue: sendReply function started."); 
 
+  // Linter error fixed by adding 'id' to EmailFrom type
+  if (!openedMessage.value || !openedMessage.value.from || !openedMessage.value.from.id || !openedMessage.value.id) { 
+    console.error('Cannot send reply: Original message, sender, or IDs missing.');
+    return;
+  }
 
+  if (!replyMessage.value.trim()) {
+    console.error('Cannot send reply: Message body is empty.');
+    return;
+  }
 
+  // Prepare subject
+  let replySubject = openedMessage.value.subject || '(No Subject)';
+  if (!replySubject.toLowerCase().startsWith('re:')) {
+    replySubject = `Re: ${replySubject}`;
+  }
+
+  const currentUserCompanyId = 1; // Placeholder
+
+  const payload = {
+    receiver_id: openedMessage.value.from.id, // Original sender's ID
+    subject: replySubject,
+    body: replyMessage.value, // Use 'body' key for replies
+    reply_to_id: openedMessage.value.id, // Original message ID
+    company_id: currentUserCompanyId, 
+  };
+
+  console.log("index.vue: Sending reply with payload:", payload); 
+
+  try {
+    // Call the NEW reply function
+    const result = await sendReplyMessage(payload); 
+    console.log("index.vue: sendReplyMessage call completed. Result:", result); 
+
+    if (result && result.message === 'Message sent successfully') { 
+      console.log("Reply sent successfully:", result.data);
+      showReplyForm.value = false;
+      replyMessage.value = '';
+      await fetchAllMessages(); 
+    } else {
+      console.error("Failed to send reply, API returned error or unexpected response:", result);
+    }
+  } catch (error) {
+    console.error("Error sending reply:", error);
+  }
+  console.log("index.vue: sendReply function finished."); 
+};
 
 </script>
 
@@ -883,10 +931,6 @@ const handleDeleteMessage = async (messageIds: Email['id'][] | Ref<Email['id'][]
                       @click="showReplyForm = !showReplyForm"
                     >
                       Reply
-                    </span> or <span 
-                      class="text-primary cursor-pointer"
-                    >
-                      Forward
                     </span>
                   </div>
                 </VCardText>
@@ -896,7 +940,7 @@ const handleDeleteMessage = async (messageIds: Email['id'][] | Ref<Email['id'][]
               <VCard v-if="showReplyForm" class="mt-4">
                 <VCardText>
                   <div class="text-body-1 text-high-emphasis mb-6">
-                    Reply to {{ openedMessage.from?.fullName || 'User' }}
+                    Reply to {{ openedMessage.from?.fullName || openedMessage.from?.email || 'User' }}
                   </div>
                   <VTextarea
                     v-model="replyMessage"
@@ -923,7 +967,10 @@ const handleDeleteMessage = async (messageIds: Email['id'][] | Ref<Email['id'][]
                       </template>
                       Attachments
                     </VBtn>
-                    <VBtn append-icon="bx-paper-plane">
+                    <VBtn 
+                      append-icon="bx-paper-plane" 
+                      @click="sendReply"
+                    >
                       Send
                     </VBtn>
                   </div>

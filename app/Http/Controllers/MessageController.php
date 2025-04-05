@@ -91,26 +91,62 @@ class MessageController extends Controller
         return MessageResource::collection($messages);
     }
 
-    // Send a new message
+    // Send a new message or reply
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'receiver_id' => 'nullable|exists:users,id',
+        Log::info('MessageController::store - Received request data:', $request->all());
+
+        // --- DYNAMIC VALIDATION based on presence of reply_to_id ---
+        $isReply = $request->has('reply_to_id') && $request->filled('reply_to_id');
+        
+        $rules = [
             'company_id' => 'required|exists:companies,id',
             'subject' => 'required|string|max:255',
-            'message' => 'required|string',
-        ]);
+        ];
 
-        $message = Message::create([
+        if ($isReply) {
+            // Validation for REPLY
+            $rules['body'] = 'required|string'; // Expect 'body' for replies
+            $rules['receiver_id'] = 'required|exists:users,id'; // Receiver is required for reply (original sender)
+            $rules['reply_to_id'] = 'required|exists:messages,id'; 
+        } else {
+            // Validation for NEW MESSAGE (Backward compatibility)
+            $rules['message'] = 'required|string'; // Expect 'message' for new compose
+            $rules['receiver_id'] = 'nullable|exists:users,id'; // Receiver is optional/nullable for new
+        }
+        
+        $validated = $request->validate($rules);
+        // --- End Dynamic Validation ---
+
+        Log::info('MessageController::store - Validation passed. Validated data:', $validated); 
+
+        $createData = [
             'sender_id' => Auth::id(),
             'receiver_id' => $validated['receiver_id'] ?? null,
             'company_id' => $validated['company_id'],
             'subject' => $validated['subject'],
-            'body' => $validated['message'],
+            // Use 'body' if it's a reply, otherwise use 'message'
+            'body' => $isReply ? $validated['body'] : $validated['message'], 
+            'reply_to_id' => $isReply ? $validated['reply_to_id'] : null, 
             'status' => 'sent',
-        ]);
+        ];
 
-        return response()->json(['message' => 'Message sent successfully', 'data' => $message], 201);
+        Log::info('MessageController::store - Attempting to create message with:', $createData); 
+
+        try {
+            $message = Message::create($createData);
+            Log::info('MessageController::store - Message created successfully.', ['message_id' => $message->id]); 
+            // Return full resource on success
+            return response()->json([
+                'message' => 'Message sent successfully', 
+                'data' => new MessageResource($message->load(['sender', 'receiver', 'labels', 'attachments']))
+            ], 201);
+        } catch (\Exception $e) {
+            Log::error('MessageController::store - Error creating message:', [
+                'error' => $e->getMessage(),
+            ]);
+            return response()->json(['message' => 'Failed to send message due to server error.'], 500);
+        }
     }
 
     // Mark message as read

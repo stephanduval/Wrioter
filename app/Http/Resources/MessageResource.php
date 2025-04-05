@@ -32,6 +32,7 @@ class MessageResource extends JsonResource
         return [
             'id' => $this->id,
             'from' => [
+                'id' => $this->whenLoaded('sender', fn() => $this->sender->id ?? null),
                 'fullName' => $this->whenLoaded('sender', fn() => $this->sender->name ?? 'Unknown Sender'),
                 'email' => $this->whenLoaded('sender', fn() => $this->sender->email ?? 'unknown@example.com'),
                 'avatar' => $this->whenLoaded('sender', fn() => $this->sender->avatar ?? '/images/avatars/avatar-1.png'), // Adjust default avatar path as needed
