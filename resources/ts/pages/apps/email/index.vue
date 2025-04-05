@@ -277,9 +277,24 @@ const handleMoveMailsTo = async (action: MoveEmailToAction) => {
 }
 
 // Handle Email Labels
-const handleEmailLabels = async (labelTitle: EmailLabel) => {
-  await updateEmailLabels(selectedMessages.value, labelTitle)
-  await fetchMessages()
+const handleEmailLabels = async (labelTitle: EmailLabel, messageIds: Email['id'][] | Ref<Email['id'][]> = selectedMessages) => {
+  const idsToUpdate = isRef(messageIds) ? messageIds.value : messageIds;
+  if (!idsToUpdate || idsToUpdate.length === 0) return;
+
+  await updateEmailLabels(idsToUpdate, labelTitle)
+
+  // Refresh data
+  if (openedMessage.value && idsToUpdate.includes(openedMessage.value.id)) {
+    // If the currently opened message was affected, refresh it specifically
+    await refreshOpenedMessage(); 
+  } else if (idsToUpdate === selectedMessages.value) {
+    // If we updated based on selection, clear selection and refresh list
+    selectedMessages.value = [];
+    await fetchAllMessages();
+  } else {
+    // Otherwise just refresh the main list (e.g., if called from detail view)
+    await fetchAllMessages();
+  }
 }
 
 // Email view
@@ -597,8 +612,8 @@ const handleDeleteMessage = async (messageIds: Email['id'][] | Ref<Email['id'][]
           @click.stop
         />
         <IconBtn
-          :color="message.isStarred ? 'warning' : 'default'"
-                    @click.stop="handleActionClick(message.isStarred ? 'unstar' : 'star', [message.id])"
+          :class="{ 'starred-button': message.isStarred }"
+          @click.stop="handleActionClick(message.isStarred ? 'unstar' : 'star', [message.id])"
         >
           <VIcon
             :icon="message.isStarred ? 'bxs-star' : 'bx-star'"
@@ -617,16 +632,16 @@ const handleDeleteMessage = async (messageIds: Email['id'][] | Ref<Email['id'][]
           />
         </IconBtn>
 
-        <!-- Email Content -->
-        <div class="flex-grow-1" style="max-inline-size: calc(100% - 200px);">
-          <h3 class="text-h6 mb-1 truncate">{{message.subject }}</h3>
-                    <div class="text-body-2 truncate mb-0" v-html="message.message ? message.message.replace(/<p>/g, '').replace(/<\/p>/g, '') : ''"></div>
-        </div>
-
-        <!-- Sender Info -->
-        <h6 v-if="message.from?.name" class="text-h6 ms-2">
-          {{ message.from.name }}
+        <!-- Sender Name First -->
+        <h6 v-if="message.from?.fullName" class="text-h6 ms-2 me-4 font-weight-bold flex-shrink-0" style=" max-inline-size: 180px;min-inline-size: 120px;">
+          {{ message.from.fullName }}
         </h6>
+
+        <!-- Email Content -->
+        <div class="flex-grow-1 overflow-hidden">
+          <h3 class="text-h6 mb-1 truncate">{{ message.subject }}</h3>
+          <div class="text-body-2 truncate mb-0" v-html="message.message ? message.message.replace(/<p>/g, '').replace(/<\/p>/g, '') : ''"></div>
+        </div>
       </div>
     </div>
   </li>
@@ -726,12 +741,48 @@ const handleDeleteMessage = async (messageIds: Email['id'][] | Ref<Email['id'][]
                 </VTooltip>
               </IconBtn>
 
+              <!-- Label Dropdown -->
+              <IconBtn>
+                <VIcon
+                  icon="bx-label"
+                  size="22"
+                />
+                <VTooltip
+                  activator="parent"
+                  location="top"
+                >
+                  Label
+                </VTooltip>
+                <VMenu activator="parent">
+                  <VList density="compact">
+                    <VListItem
+                      v-for="label in labels"
+                      :key="label.title"
+                      href="#"
+                      @click="handleEmailLabels(label.title, [openedMessage.id])" 
+                    >
+                      <template #prepend>
+                        <VBadge
+                          inline
+                          :color="resolveLabelColor(label.title)"
+                          dot
+                        />
+                      </template>
+                      <VListItemTitle class="ms-2 text-capitalize">
+                        {{ label.title }}
+                      </VListItemTitle>
+                    </VListItem>
+                  </VList>
+                </VMenu>
+              </IconBtn>
+              <!-- End Label Dropdown -->
+
               <VSpacer />
 
               <div class="d-flex align-center gap-x-1">
                 <!-- Star/Unstar -->
                 <IconBtn
-                  :color="openedMessage.isStarred ? 'warning' : 'default'"
+                  :class="{ 'starred-button': openedMessage.isStarred }"
                   @click="openedMessage.isStarred ? handleActionClick('unstar', [openedMessage.id]) : handleActionClick('star', [openedMessage.id]); refreshOpenedMessage()"
                 >
                   <VIcon
@@ -761,14 +812,14 @@ const handleDeleteMessage = async (messageIds: Email['id'][] | Ref<Email['id'][]
                   <VAvatar size="38">
                     <VImg
                       :src="openedMessage.from?.avatar || '/images/avatars/avatar-1.png'"
-                      :alt="openedMessage.from?.name || 'User'"
+                      :alt="openedMessage.from?.fullName || 'User'"
                     />
                   </VAvatar>
 
                   <div class="d-flex flex-wrap flex-grow-1 overflow-hidden">
                     <div class="text-truncate">
                       <div class="text-body-1 font-weight-medium text-high-emphasis text-truncate">
-                        {{ openedMessage.from?.name || 'Unknown Sender' }}
+                        {{ openedMessage.from?.fullName || 'Unknown Sender' }}
                       </div>
                       <div class="text-sm">
                         {{ openedMessage.from?.email || 'no-email@example.com' }}
@@ -790,7 +841,7 @@ const handleDeleteMessage = async (messageIds: Email['id'][] | Ref<Email['id'][]
                 <VCardText>
                   <!-- eslint-disable vue/no-v-html -->
                   <div class="text-body-1 font-weight-medium text-truncate mb-4">
-                    {{ openedMessage.from?.name || 'Unknown Sender' }},
+                    {{ openedMessage.from?.fullName || 'Unknown Sender' }},
                   </div>
                   <div
                     class="text-base"
@@ -845,7 +896,7 @@ const handleDeleteMessage = async (messageIds: Email['id'][] | Ref<Email['id'][]
               <VCard v-if="showReplyForm" class="mt-4">
                 <VCardText>
                   <div class="text-body-1 text-high-emphasis mb-6">
-                    Reply to {{ openedMessage.from?.name || 'User' }}
+                    Reply to {{ openedMessage.from?.fullName || 'User' }}
                   </div>
                   <VTextarea
                     v-model="replyMessage"
@@ -1022,5 +1073,9 @@ const handleDeleteMessage = async (messageIds: Email['id'][] | Ref<Email['id'][]
   flex-grow: 1;
   background-color: rgb(var(--v-theme-on-surface), var(--v-hover-opacity));
   overflow-y: auto;
+}
+
+.starred-button {
+  background-color: rgba(var(--v-theme-primary), 0.1);
 }
 </style>

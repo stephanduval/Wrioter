@@ -8,6 +8,7 @@ use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\RolesController;
 use App\Http\Controllers\EmailController;
 use App\Http\Controllers\MessageController;
+use App\Http\Controllers\LabelController;
 
 /*
 |--------------------------------------------------------------------------
@@ -73,6 +74,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/messages', [MessageController::class, 'store']); // Send message
     Route::put('/messages/{id}', [MessageController::class, 'update']); // Update message (e.g., status, read, starred)
     Route::delete('/messages/{id}', [MessageController::class, 'destroy']); // Delete message
+});
+
+// Label Controller Routes
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/labels', [LabelController::class, 'index']); // Fetch user labels
+    Route::post('/labels', [LabelController::class, 'store']); // Create new label
+    // Add other label routes if needed (index, update, destroy)
 });
 
 Route::get('/test', function () {

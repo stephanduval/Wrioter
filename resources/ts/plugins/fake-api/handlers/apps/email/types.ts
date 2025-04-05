@@ -9,7 +9,7 @@ export interface EmailTo {
 
 export interface EmailFrom {
   email: string
-  name: string
+  fullName: string
   avatar: any
 }
 

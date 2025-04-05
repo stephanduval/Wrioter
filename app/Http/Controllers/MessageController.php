@@ -3,6 +3,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Message;
+use App\Models\Label;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
@@ -137,14 +138,41 @@ class MessageController extends Controller
         // Validate the incoming data first
         $request->validate([
             'status' => 'sometimes|string|in:read,unread,sent,draft,archived,deleted,spam',
-            'is_starred' => 'sometimes|boolean',
+            'isStarred' => 'sometimes|boolean',
             'folder' => 'sometimes|string',
             'isDeleted' => 'sometimes|boolean',
+            'toggleLabel' => 'sometimes|string|max:191',
         ]);
 
         // Get all input after validation passed
         $input = $request->all();
         Log::info("Updating message {$id} with input:", $input);
+
+        $userId = Auth::id();
+
+        // --- Handle Label Toggling --- >
+        if (isset($input['toggleLabel'])) {
+            $labelName = $input['toggleLabel'];
+            Log::info("Attempting to toggle label '{$labelName}' for user {$userId} on message {$id}");
+
+            // Find or create the label specific to the user
+            $label = Label::firstOrCreate(
+                ['label_name' => $labelName, 'user_id' => $userId]
+            );
+
+            // Toggle the label association for the message
+            // `toggle` returns an array of attached/detached IDs
+            $syncResult = $message->labels()->toggle($label->id);
+            Log::info("Label toggle result for label ID {$label->id}:", $syncResult);
+
+            // If ONLY toggling label, we can potentially return early
+            // Check if other fields were also sent
+            if (count(array_diff_key($input, array_flip(['toggleLabel']))) === 0) {
+                 $message->touch(); // Update timestamps even if only label changed
+                 return new MessageResource($message->load('labels')); // Reload labels before returning
+            }
+        }
+        // --- End Handle Label Toggling --- <
 
         // Handle is_starred update if the field exists in the request input
         if (isset($input['isStarred'])) {
@@ -164,6 +192,9 @@ class MessageController extends Controller
         $message->save();
 
         Log::info("Message {$id} updated successfully.");
+
+        // Ensure labels are loaded if they were potentially modified
+        $message->load('labels');
 
         return new MessageResource($message);
     }

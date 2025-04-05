@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, defineEmits, defineProps, onMounted, ref, watch } from 'vue';
 import { PerfectScrollbar } from 'vue3-perfect-scrollbar';
 
 defineOptions({
@@ -69,13 +69,72 @@ const folders = computed(() => [
   // },
 ])
 
-// Labels list
-const labels = ref([
-  { title: 'Personal', color: 'success', to: { name: 'apps-email-label', params: { label: 'personal' } } },
-  { title: 'Company', color: 'primary', to: { name: 'apps-email-label', params: { label: 'company' } } },
-  { title: 'Important', color: 'warning', to: { name: 'apps-email-label', params: { label: 'important' } } },
-  { title: 'Private', color: 'error', to: { name: 'apps-email-label', params: { label: 'private' } } },
-])
+const labels = ref<any[]>([])
+
+const fetchUserLabels = async () => {
+  try {
+    console.log("Fetching user labels...")
+    const response = await $api('/labels')
+    console.log("Labels received:", response)
+    if (response && Array.isArray(response)) {
+      labels.value = response.map((label: { label_name: string; colour: string }) => ({
+        title: label.label_name,
+        colour: label.colour,
+        to: { name: 'apps-email-label', params: { label: label.label_name.toLowerCase() } },
+      }))
+      console.log("Mapped labels:", labels.value)
+    } else {
+       console.error('Invalid label data received:', response)
+       labels.value = []
+    }
+  }
+  catch (error) {
+    console.error('Error fetching labels:', error)
+    labels.value = []
+  }
+}
+
+onMounted(fetchUserLabels)
+
+// Ref to control the visibility of the add label form
+const showAddLabelForm = ref(false)
+const newLabelName = ref('')
+const selectedColour = ref<string>('primary')
+const availableColours = ['primary', 'success', 'error', 'warning', 'info']
+
+const addLabel = async () => {
+  if (!newLabelName.value.trim()) {
+    console.error('Label name cannot be empty')
+    return
+  }
+
+  try {
+    console.log(`Attempting to add label: ${newLabelName.value}, Color: ${selectedColour.value}`)
+    const response = await $api('/labels', {
+      method: 'POST',
+      body: {
+        label_name: newLabelName.value,
+        colour: selectedColour.value,
+      },
+    })
+
+    console.log('Label added successfully:', response)
+
+    await fetchUserLabels()
+
+    newLabelName.value = ''
+    selectedColour.value = 'primary'
+    showAddLabelForm.value = false
+  }
+  catch (error: any) {
+    console.error('Error adding label:', error)
+    if (error?.response?.status === 409 || error?.message?.includes('409')) {
+      console.warn('Label already exists.')
+    } else {
+      // Handle other errors
+    }
+  }
+}
 </script>
 
 <template>
@@ -121,9 +180,42 @@ const labels = ref([
       </ul>
 
       <div v-if="labels.length">
-        <div class="text-caption text-disabled">
-          LABELS
+        <div class="text-caption text-disabled d-flex align-center justify-space-between px-6">
+          <span>LABELS</span>
+          <IconBtn size="small" @click="showAddLabelForm = !showAddLabelForm">
+            <VIcon :icon="showAddLabelForm ? 'bx-chevron-up' : 'bx-plus'" />
+          </IconBtn>
         </div>
+
+        <!-- Add Label Form -->
+        <VExpandTransition>
+          <div v-show="showAddLabelForm" class="px-6 pb-4">
+            <VTextField
+              v-model="newLabelName"
+              label="New Label Name"
+              density="compact"
+              hide-details="auto"
+              class="mb-2"
+            />
+            <div class="d-flex gap-1 mb-2">
+              <span class="text-caption align-self-center">Colour:</span>
+              <VChip
+                v-for="colour in availableColours"
+                :key="colour"
+                :color="colour"
+                size="small"
+                :value="colour"
+                @click="selectedColour = colour"
+                class="cursor-pointer"
+                :style="selectedColour === colour ? 'border: 2px solid grey;' : ''"
+              >
+                &nbsp;
+              </VChip>
+            </div>
+            <VBtn size="small" block @click="addLabel">Add</VBtn>
+          </div>
+        </VExpandTransition>
+
         <ul class="email-labels">
           <li
             v-for="label in labels"
@@ -131,7 +223,7 @@ const labels = ref([
           >
             <RouterLink
               v-slot="{ isActive, navigate }"
-              :to="label.to"
+              :to="{ name: 'apps-email-label', params: { label: label.title.toLowerCase() } }"
               custom
             >
               <div
@@ -140,7 +232,7 @@ const labels = ref([
               >
                 <VIcon
                   icon="bx-bxs-circle"
-                  :color="label.color"
+                  :color="label.colour"
                 />
                 {{ label.title }}
               </div>

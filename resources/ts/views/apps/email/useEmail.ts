@@ -97,10 +97,20 @@ const deleteMessage = async (id: number) => {
 };
 
   const updateEmailLabels = async (ids: Email['id'][], label: EmailLabel) => {
-    await $api('/apps/email', {
-      method: 'POST',
-      body: { ids, label },
-    })
+    console.log(`Attempting to toggle label '${label}' for messages:`, ids);
+    try {
+      // Call the updated PUT endpoint for each message ID
+      for (const id of ids) {
+        await $api(`/messages/${id}`, {
+          method: 'PUT',
+          body: JSON.stringify({ toggleLabel: label }),
+        });
+      }
+      console.log(`Successfully toggled label '${label}' for messages:`, ids);
+    } catch (error) {
+      console.error(`Error toggling label '${label}':`, error);
+      throw error;
+    }
   }
 
   const emailMoveToFolderActions: { action: MoveEmailToAction; icon: string }[] = [
