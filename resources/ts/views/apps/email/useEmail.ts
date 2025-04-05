@@ -197,11 +197,15 @@ export const useEmail = () => {
 
   // ✅ Delete a message
   const deleteMessage = async (id: number) => {
+    console.log(`useEmail: Attempting permanent delete for message ID: ${id}`);
     try {
       await $api(`/messages/${id}`, { method: 'DELETE' });
-      messages.value = messages.value.filter(message => message.id !== id); // Remove deleted email from UI
+      console.log(`useEmail: Successfully permanently deleted message ID: ${id}`);
+      // Optimistically remove from local state if needed, or rely on refresh
+      messages.value = messages.value.filter(message => message.id !== id);
     } catch (error) {
-      console.error('Error deleting message:', error);
+      console.error(`useEmail: Error permanently deleting message ${id}:`, error);
+      throw error; // Re-throw to signal failure
     }
   };
 
@@ -245,22 +249,25 @@ export const useEmail = () => {
     const dataToUpdate: PartialDeep<Email> = {}
 
     if (action === 'inbox') {
-      if (route.params.filter === 'trashed')
-        dataToUpdate.isDeleted = false
-      dataToUpdate.folder = 'inbox'
+      // When moving from trash back to inbox, explicitly mark as not deleted
+      // and set status back (could be 'unread' or 'read' based on previous state,
+      // defaulting to 'unread' might be simplest unless you track original status)
+      dataToUpdate.status = 'unread'; // Or manage original read status if needed
+      dataToUpdate.folder = 'inbox'; // Keep folder logic if used elsewhere
     }
-
     else if (action === 'spam') {
-      if (route.params.filter === 'trashed')
-        dataToUpdate.isDeleted = false
-      dataToUpdate.folder = 'spam'
+      // If moving from trash to spam, remove deleted status
+       dataToUpdate.status = 'spam'; // Set status to spam
+       dataToUpdate.folder = 'spam'; // Keep folder logic if used elsewhere
     }
-
     else if (action === 'trash') {
-      dataToUpdate.isDeleted = true
+      // When moving to trash, set status to deleted
+      dataToUpdate.status = 'deleted'; 
+      dataToUpdate.folder = 'trash'; // Keep folder logic
     }
 
-    await updateEmails(selectedEmails, dataToUpdate)
+    // Use updateEmails which calls the PUT endpoint
+    await updateEmails(selectedEmails, dataToUpdate); 
   }
 
   // ✅ Update resolveLabelColor to use the reactive userLabels ref

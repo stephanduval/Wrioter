@@ -460,6 +460,92 @@ const sendReply = async () => {
   console.log("index.vue: sendReply function finished."); 
 };
 
+// --- Dialog State ---
+const isTrashConfirmDialogVisible = ref(false);
+const messageIdsToConfirmTrash = ref<number[]>([]);
+const isPermanentDeleteConfirmDialogVisible = ref(false);
+const messageIdsToConfirmPermanentDelete = ref<number[]>([]);
+// --- End Dialog State ---
+
+// --- Trash Confirmation Logic ---
+const initiateTrashConfirmation = (ids: number[] | Ref<number[]>) => {
+  const actualIds = isRef(ids) ? ids.value : ids;
+  if (!actualIds || actualIds.length === 0) return;
+  console.log('Initiating trash confirmation for IDs:', actualIds);
+  messageIdsToConfirmTrash.value = [...actualIds]; // Store a copy
+  isTrashConfirmDialogVisible.value = true;
+};
+
+const confirmTrashMessages = async () => {
+  if (!messageIdsToConfirmTrash.value.length) return;
+
+  console.log('Confirming move to trash for IDs:', messageIdsToConfirmTrash.value);
+  try {
+    // Use moveSelectedEmailTo for consistency
+    await moveSelectedEmailTo('trash', messageIdsToConfirmTrash.value); 
+
+    // Close opened message if it was trashed
+    if (openedMessage.value && messageIdsToConfirmTrash.value.includes(openedMessage.value.id)) {
+        openedMessage.value = null;
+    }
+    
+    // Clear selection if it matches the trashed items
+    if (selectedMessages.value.length > 0 && messageIdsToConfirmTrash.value.every(id => selectedMessages.value.includes(id)) && messageIdsToConfirmTrash.value.length === selectedMessages.value.length) {
+         selectedMessages.value = [];
+    }
+    
+    await fetchAllMessages(); // Refresh list
+  } catch (error) {
+    console.error('Error moving messages to trash:', error);
+    // TODO: Show error notification to user
+  } finally {
+    isTrashConfirmDialogVisible.value = false;
+    messageIdsToConfirmTrash.value = [];
+  }
+};
+// --- End Trash Confirmation Logic ---
+
+
+// --- Permanent Delete Confirmation Logic ---
+const initiatePermanentDeleteConfirmation = (ids: number[] | Ref<number[]>) => {
+  const actualIds = isRef(ids) ? ids.value : ids;
+  if (!actualIds || actualIds.length === 0) return;
+  console.log('Initiating permanent delete confirmation for IDs:', actualIds);
+  messageIdsToConfirmPermanentDelete.value = [...actualIds];
+  isPermanentDeleteConfirmDialogVisible.value = true;
+};
+
+const confirmPermanentDeleteMessages = async () => {
+  if (!messageIdsToConfirmPermanentDelete.value.length) return;
+
+  console.log('Confirming permanent delete for IDs:', messageIdsToConfirmPermanentDelete.value);
+  try {
+    // Call deleteMessage for each ID
+    for (const id of messageIdsToConfirmPermanentDelete.value) {
+        await deleteMessage(id); // Call the permanent delete function
+    }
+
+    // Close opened message if it was deleted
+    if (openedMessage.value && messageIdsToConfirmPermanentDelete.value.includes(openedMessage.value.id)) {
+        openedMessage.value = null;
+    }
+     
+    // Clear selection if it matches the deleted items
+    if (selectedMessages.value.length > 0 && messageIdsToConfirmPermanentDelete.value.every(id => selectedMessages.value.includes(id)) && messageIdsToConfirmPermanentDelete.value.length === selectedMessages.value.length) {
+         selectedMessages.value = [];
+    }
+
+    await fetchAllMessages(); // Refresh list
+  } catch (error) {
+    console.error('Error permanently deleting messages:', error);
+    // TODO: Show error notification to user
+  } finally {
+    isPermanentDeleteConfirmDialogVisible.value = false;
+    messageIdsToConfirmPermanentDelete.value = [];
+  }
+};
+// --- End Permanent Delete Confirmation Logic ---
+
 </script>
 
 <template v-if="messages && messages.length">
@@ -523,22 +609,29 @@ const sendReply = async () => {
           <div
             class="w-100 d-flex align-center action-bar-actions gap-x-1"
           >
-            <!-- Trash -->
-            <IconBtn
-              v-show="('filter' in route.params ? route.params.filter !== 'trashed' : true)"
-                @click="handleDeleteMessage(selectedMessages)"
+            <!-- Trash Button (Move to Trash) -->
+            <!-- Show unless in trash view -->
+             <IconBtn
+              v-if="route.params.filter !== 'trash'" 
+              v-show="selectedMessages.length > 0" 
+              @click="initiateTrashConfirmation(selectedMessages)" 
             >
-              <VIcon
-                icon="bx-trash"
-                size="22"
-              />
-              <VTooltip
-                activator="parent"
-                location="top"
-              >
-                Delete Mail
-              </VTooltip>
+              <VIcon icon="bx-trash" size="22" />
+              <VTooltip activator="parent" location="top"> Move to Trash </VTooltip>
             </IconBtn>
+
+            <!-- Delete Forever Button -->
+            <!-- Show ONLY in trash view -->
+            <IconBtn
+              v-if="route.params.filter === 'trash'" 
+              v-show="selectedMessages.length > 0"
+              color="error"
+              @click="initiatePermanentDeleteConfirmation(selectedMessages)"
+            >
+              <VIcon icon="bxs-trash" size="22" /> <!-- Use filled icon -->
+              <VTooltip activator="parent" location="top"> Delete Forever </VTooltip>
+            </IconBtn>
+
             <!-- Mark unread/read -->
             <IconBtn @click="isAllMarkRead ? handleActionClick('unread') : handleActionClick('read') ">
               <VIcon
@@ -669,16 +762,24 @@ const sendReply = async () => {
           />
         </IconBtn>
                   
-                  <!-- Delete Button -->
+                  <!-- Trash/Delete Button (Conditional) -->
                   <IconBtn
-                    @click.stop="handleDeleteMessage([message.id])"
-                    color="error"
+                     v-if="route.params.filter !== 'trash'" 
+                     @click.stop="initiateTrashConfirmation([message.id])" 
+                     color="default" 
                   >
-                    <VIcon
-                      icon="bx-trash"
-            size="22"
-          />
-        </IconBtn>
+                    <VIcon icon="bx-trash" size="22" />
+                    <VTooltip activator="parent" location="top"> Move to Trash </VTooltip>
+                  </IconBtn>
+                  
+                  <IconBtn
+                     v-else 
+                     @click.stop="initiatePermanentDeleteConfirmation([message.id])" 
+                     color="error" 
+                  >
+                    <VIcon icon="bxs-trash" size="22" />
+                    <VTooltip activator="parent" location="top"> Delete Forever </VTooltip>
+                  </IconBtn>
 
         <!-- Sender Name First -->
         <h6 v-if="message.from?.fullName" class="text-h6 ms-2 me-4 font-weight-bold flex-shrink-0" style=" max-inline-size: 180px;min-inline-size: 120px;">
@@ -759,21 +860,26 @@ const sendReply = async () => {
 
             <!-- 👉 Action bar -->
             <div class="email-view-action-bar d-flex align-center text-medium-emphasis ps-6 pe-4 gap-x-1">
-              <!-- Trash -->
+              <!-- Trash Button (Move to Trash) -->
+              <!-- Show unless already in trash -->
               <IconBtn
-                @click="handleDeleteMessage([openedMessage.id]); openedMessage = null"
+                 v-if="openedMessage.folder !== 'trash'" 
+                 @click="initiateTrashConfirmation([openedMessage.id]); openedMessage = null"
               >
-                <VIcon
-                  icon="bx-trash"
-                  size="22"
-                />
-                <VTooltip
-                  activator="parent"
-                  location="top"
-                >
-                  Delete Mail
-                </VTooltip>
+                <VIcon icon="bx-trash" size="22" />
+                <VTooltip activator="parent" location="top"> Move to Trash </VTooltip>
               </IconBtn>
+
+              <!-- Delete Forever Button -->
+              <!-- Show ONLY if message is in trash -->
+               <IconBtn
+                 v-if="openedMessage.folder === 'trash'" 
+                 color="error"
+                 @click="initiatePermanentDeleteConfirmation([openedMessage.id]); openedMessage = null"
+               >
+                 <VIcon icon="bxs-trash" size="22" />
+                 <VTooltip activator="parent" location="top"> Delete Forever </VTooltip>
+               </IconBtn>
 
               <!-- Read/Unread -->
               <IconBtn @click="handleActionClick('unread', [openedMessage.id]); openedMessage = null">
@@ -985,6 +1091,39 @@ const sendReply = async () => {
         @close="isComposeDialogVisible = false"
         @refresh="fetchAllMessages"
       />
+      
+       <!-- Move to Trash Confirmation Dialog -->
+        <VDialog v-model="isTrashConfirmDialogVisible" max-width="500px">
+          <VCard>
+            <VCardTitle>Confirm Move to Trash</VCardTitle>
+            <VCardText>
+              Are you sure you want to move the selected message(s) to the trash?
+            </VCardText>
+            <VCardActions>
+              <VSpacer />
+              <VBtn color="secondary" @click="isTrashConfirmDialogVisible = false">Cancel</VBtn>
+              <VBtn color="error" @click="confirmTrashMessages">Move to Trash</VBtn>
+            </VCardActions>
+          </VCard>
+        </VDialog>
+
+        <!-- Permanent Delete Confirmation Dialog -->
+        <VDialog v-model="isPermanentDeleteConfirmDialogVisible" max-width="500px">
+          <VCard>
+            <VCardTitle class="text-h5 error--text">Confirm Permanent Deletion</VCardTitle>
+            <VCardText>
+              <VAlert type="warning" dense outlined class="mb-3">
+                This action cannot be undone.
+              </VAlert>
+              Are you sure you want to permanently delete the selected message(s)?
+            </VCardText>
+            <VCardActions>
+              <VSpacer />
+              <VBtn color="secondary" @click="isPermanentDeleteConfirmDialogVisible = false">Cancel</VBtn>
+              <VBtn color="error" @click="confirmPermanentDeleteMessages">Delete Forever</VBtn>
+            </VCardActions>
+          </VCard>
+        </VDialog>
     </VMain>
   </VLayout>
 </template>

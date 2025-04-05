@@ -61,6 +61,11 @@ const folders = computed(() => [
     to: { name: 'apps-email-filter', params: { filter: 'starred' } },
     badge: { content: starredEmails.value, color: 'success' },
   },
+  {
+    title: 'Trash',
+    prependIcon: 'bx-trash',
+    to: { name: 'apps-email-filter', params: { filter: 'trash' } },
+  },
   // {
   //   title: 'Spam',
   //   prependIcon: 'bx-error-alt',
@@ -169,7 +174,7 @@ const addLabel = async () => {
               <VIcon :icon="folder.prependIcon" />
               {{ folder.title }}
               <VChip
-                v-if="folder.badge.content"
+                v-if="folder.badge?.content"
                 :color="folder.badge.color"
               >
                 {{ folder.badge.content }}

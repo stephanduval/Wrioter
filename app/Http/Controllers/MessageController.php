@@ -172,7 +172,7 @@ class MessageController extends Controller
                     ->firstOrFail();
 
         // Validate the incoming data first
-        $request->validate([
+        $validatedData = $request->validate([
             'status' => 'sometimes|string|in:read,unread,sent,draft,archived,deleted,spam',
             'isStarred' => 'sometimes|boolean',
             'folder' => 'sometimes|string',
@@ -180,15 +180,13 @@ class MessageController extends Controller
             'toggleLabel' => 'sometimes|string|max:191',
         ]);
 
-        // Get all input after validation passed
-        $input = $request->all();
-        Log::info("Updating message {$id} with input:", $input);
+        Log::info("Updating message {$id} with validated input:", $validatedData);
 
         $userId = Auth::id();
 
-        // --- Handle Label Toggling --- >
-        if (isset($input['toggleLabel'])) {
-            $labelName = $input['toggleLabel'];
+        // --- Handle Label Toggling ---
+        if (isset($validatedData['toggleLabel'])) {
+            $labelName = $validatedData['toggleLabel'];
             Log::info("Attempting to toggle label '{$labelName}' for user {$userId} on message {$id}");
 
             // Find or create the label specific to the user
@@ -203,27 +201,37 @@ class MessageController extends Controller
 
             // If ONLY toggling label, we can potentially return early
             // Check if other fields were also sent
-            if (count(array_diff_key($input, array_flip(['toggleLabel']))) === 0) {
+            if (count(array_diff_key($validatedData, array_flip(['toggleLabel']))) === 0) {
                  $message->touch(); // Update timestamps even if only label changed
                  return new MessageResource($message->load('labels')); // Reload labels before returning
             }
         }
-        // --- End Handle Label Toggling --- <
+        // --- End Handle Label Toggling ---
 
+        // --- Handle Status and Folder Updates ---
+
+        // Explicitly check for moving to trash via folder or isDeleted flag
+        if ( (isset($validatedData['folder']) && $validatedData['folder'] === 'trash') || (isset($validatedData['isDeleted']) && $validatedData['isDeleted'] === true) ) {
+             Log::info("Marking message {$id} as deleted (moving to trash).");
+             $message->status = 'deleted'; // Set status to 'deleted'
+        } 
+        // Handle other status updates if not moving to trash
+        elseif (isset($validatedData['status']) && in_array($validatedData['status'], ['read', 'unread', 'sent', 'draft', 'archived', 'spam'])) {
+            Log::info("Setting message {$id} status to: " . $validatedData['status']);
+            $message->status = $validatedData['status'];
+        }
+        // Also handle moving to spam via folder property
+        elseif (isset($validatedData['folder']) && $validatedData['folder'] === 'spam') {
+             Log::info("Marking message {$id} as spam.");
+             $message->status = 'spam'; 
+        }
+        
         // Handle is_starred update if the field exists in the request input
-        if (isset($input['isStarred'])) {
-            $message->is_starred = $input['isStarred'];
+        if (isset($validatedData['isStarred'])) {
+            $message->is_starred = $validatedData['isStarred'];
         }
-
-        // Handle explicit deletion flag if sent separately
-        if (isset($input['isDeleted']) && $input['isDeleted'] === true) {
-            $message->status = 'deleted';
-        }
-
-        // Handle read/unread status update (if needed as part of update)
-        if (isset($input['status']) && in_array($input['status'], ['read', 'unread', 'sent', 'draft', 'archived', 'deleted', 'spam'])) {
-            $message->status = $input['status'];
-        }
+        
+        // --- End Status/Folder Updates ---
 
         $message->save();
 
@@ -235,19 +243,23 @@ class MessageController extends Controller
         return new MessageResource($message);
     }
 
-    // Delete a message
+    // Delete a message PERMANENTLY
     public function destroy($id)
     {
+        Log::info("Attempting to permanently delete message {$id}.");
         $message = Message::where('id', $id)
             ->where(function ($query) {
                 $query->where('sender_id', Auth::id())
                       ->orWhere('receiver_id', Auth::id());
             })
+            // Optionally ensure it's already in 'deleted' status before permanent deletion
+            // ->where('status', 'deleted') 
             ->firstOrFail();
 
-        $message->delete();
+        $message->delete(); // This performs the actual delete
 
-        return response()->json(['message' => 'Message deleted successfully']);
+        Log::info("Message {$id} permanently deleted successfully.");
+        return response()->json(['message' => 'Message permanently deleted successfully']);
     }
 }
 
