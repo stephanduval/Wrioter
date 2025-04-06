@@ -27,10 +27,14 @@ class MessageController extends Controller
     public function index(Request $request)
     {
         Log::info("Fetching messages with relationships.");
-        $userId = Auth::id(); // Get the authenticated user's ID
+        $userId = Auth::id();
 
-        // Start building the query
-        $query = Message::with(['sender', 'receiver', 'labels', 'attachments']);
+        // Start building the query with base visibility
+        $query = Message::with(['sender', 'receiver', 'labels', 'attachments'])
+                      ->where(function ($q) use ($userId) {
+                          $q->where('receiver_id', $userId)
+                            ->orWhere('sender_id', $userId);
+                      });
 
         // Apply filters based on request parameters
         $filter = $request->query('filter');
@@ -38,64 +42,66 @@ class MessageController extends Controller
 
         Log::info("Request parameters:", ['filter' => $filter, 'label' => $label]);
 
-        // --- Initial Query based on Role (Sender/Receiver) ---
-        // Adjust this part if you have more complex visibility rules
-        $query->where(function ($q) use ($userId) {
-            $q->where('receiver_id', $userId) // User is receiver
-              ->orWhere('sender_id', $userId); // User is sender
-        });
-        // --- End Initial Query ---
-
-        // --- Apply Archive Filter First ---
-        // By default, exclude archived unless specifically requested
-        if ($filter === 'archive') {
-            Log::info("Applying filter: archive");
-            $query->where('is_archived', true);
-        } else {
-            // For all other views (inbox, sent, starred, trash, labels, default), exclude archived
-            $query->where('is_archived', false); 
-        }
-        // --- End Archive Filter ---
-
-        if ($filter && $filter !== 'archive') { // Process other filters only if not archive
+        // --- Apply Specific Filters --- 
+        if ($filter) {
             Log::info("Applying filter: {$filter}");
             switch ($filter) {
-                case 'starred':
-                    // Starred can be from sender or receiver perspective, assuming receiver here primarily
-                    $query->where('is_starred', true)->where('receiver_id', $userId); // Or adjust if sender's starred matters
+                case 'archive':
+                    // Restore original logic
+                    $query->where('is_archived', true);
                     break;
-                case 'sent': 
-                    // Sent items are only relevant to the sender
-                    $query->where('status', 'sent')->where('sender_id', $userId); 
-                    break; 
+                case 'starred':
+                    // Starred assumes non-archived, non-deleted unless explicitly in those folders
+                    $query->where('is_starred', true)
+                          ->where('is_archived', false) // Exclude archived from starred view
+                          ->where('status', '!=', 'deleted'); // Exclude trashed from starred view
+                    break;
+                case 'sent':
+                    // Sent items are from the sender, exclude archived/deleted
+                    $query->where('sender_id', $userId)
+                          ->where('status', 'sent') // Can likely remove this if sender_id implies sent
+                          ->where('is_archived', false)
+                          ->where('status', '!=', 'deleted');
+                    break;
                 case 'trash':
-                     // Trash can contain items user received or sent
-                     $query->where('status', 'deleted'); // Applies to both sender/receiver owned items in trash
+                    $query->where('status', 'deleted');
+                    // Trash view ignores archive status (can un-delete to inbox/archive)
+                    break;
+                 // Add other filters like 'spam', 'draft' if needed
+
+                // Default case (treat any other filter value like inbox? Or ignore?)
+                // Let's assume unknown filters default to inbox logic (below)
+                default:
+                     Log::info("Filter '{$$filter}' not explicitly handled, defaulting to inbox logic.");
+                     // Fall through to the default inbox logic
+                     $query->where('receiver_id', $userId)
+                           ->where('is_archived', false)
+                           ->whereNotIn('status', ['deleted', 'draft', 'spam']);
                      break;
-                // Default case (inbox) 
-                default: // Handles 'inbox' or any other filter value not explicitly caught
-                    $query->where('receiver_id', $userId)
-                          ->whereNotIn('status', ['deleted', 'draft', 'spam']); // Keep existing non-deleted/draft logic for inbox
             }
         } elseif ($label) {
             Log::info("Applying label filter: {$label}");
-            // Ensure label filtering considers user ownership if labels are user-specific
+            // Labels apply to non-archived, non-deleted received mail
              $query->whereHas('labels', function ($labelQuery) use ($label, $userId) {
                  $labelQuery->where('label_name', $label)
-                            ->where('user_id', $userId); // Assuming labels belong to users
-             })->where('receiver_id', $userId); // Typically labels apply to received mail
-        } elseif (!$filter) { // This is the default inbox view (no filter param)
+                            ->where('user_id', $userId); 
+             })
+             ->where('receiver_id', $userId)
+             ->where('is_archived', false)
+             ->where('status', '!=', 'deleted');
+        } else { // Default view: INBOX
              Log::info("Defaulting to Inbox view (no filter specified)");
              $query->where('receiver_id', $userId)
-                    ->where('is_archived', false) // Ensure inbox excludes archived
+                    ->where('is_archived', false) 
                     ->whereNotIn('status', ['deleted', 'draft', 'spam']);
         }
+        // --- End Specific Filters ---
 
-        // Execute the query
         $messages = $query->orderBy('created_at', 'desc')->get();
 
         Log::info("Retrieved messages count: " . $messages->count());
-        Log::info("Retrieved messages after filtering and transformation:", $messages->toArray());
+        // Avoid logging potentially large arrays in production
+        // Log::debug("Retrieved messages after filtering:", $messages->toArray());
 
         return MessageResource::collection($messages);
     }
@@ -228,27 +234,64 @@ class MessageController extends Controller
 
         // 1. Archive Status (explicit is_archived flag takes precedence)
         if (isset($validatedData['is_archived'])) {
-            $message->is_archived = $validatedData['is_archived'];
-            Log::info("Setting archive status to: " . ($message->is_archived ? 'true' : 'false'));
-            // If archiving, potentially clear 'deleted' status if moving from trash
-            if ($message->is_archived && $message->status === 'deleted') {
-                 $message->status = 'read'; // Or 'unread' based on previous state? Defaulting to read.
+            $archiveValue = $validatedData['is_archived'];
+            
+            // ONLY perform direct update and immediate return when ARCHIVING (true)
+            if ($archiveValue === true) {
+                Log::info("Attempting direct DB update for is_archived on message {$id} to: true");
+                try {
+                    $affectedRows = Message::where('id', $id)
+                                            // Add user check for security
+                                            ->where(function ($query) use ($userId) {
+                                                $query->where('sender_id', $userId)
+                                                      ->orWhere('receiver_id', $userId);
+                                            })
+                                            ->update(['is_archived' => true]);
+
+                    Log::info("Direct DB update affected rows for is_archived on message {$id}: {$affectedRows}");
+                    
+                    if ($affectedRows > 0) {
+                        // Return immediately after successful direct update
+                        return new MessageResource(Message::findOrFail($id)->loadMissing('labels'));
+                    } else {
+                        Log::warning("Direct DB update for is_archived affected 0 rows for message {$id}.");
+                        // Fall through to standard logic if direct update failed?
+                    }
+                } catch (\Exception $e) {
+                    Log::error("Error during direct DB update for is_archived on message {$id}: {$e->getMessage()}");
+                    throw $e; // Rethrow
+                }
+            } else {
+                 // If is_archived is explicitly false (e.g., trash, unarchive)
+                 // Set it on the model but let the standard save() handle it later
+                 Log::info("Setting is_archived to false on model for message {$id}, will save later.");
+                 $message->is_archived = false;
             }
+
+            // Remove from validated data so it's not processed by the final fill()
+            unset($validatedData['is_archived']);
         }
-        // Archive Status (via folder property)
+        // Archive Status (via folder property) - Let this use the standard save for now
         elseif (isset($validatedData['folder']) && $validatedData['folder'] === 'archive') {
-             if (!$message->is_archived) { // Only log/update if changing
+             if (!$message->is_archived) { 
                  Log::info("Archiving message {$id} via folder property.");
                  $message->is_archived = true;
-                 if ($message->status === 'deleted') { $message->status = 'read'; } // Clear deleted status
+                 // We'll rely on the later save() for this path
              }
+             // We still need to handle the status change if moving from trash
+             if ($message->status === 'deleted') { 
+                 $message->status = 'read';
+             }
+             unset($validatedData['folder']); // Remove folder so it's not processed again
         }
-         // Unarchive Status (via folder property = inbox)
+         // Unarchive Status (via folder property = inbox) - Let this use standard save
          elseif (isset($validatedData['folder']) && $validatedData['folder'] === 'inbox') {
-            if ($message->is_archived) { // Only log/update if changing
+            if ($message->is_archived) { 
                 Log::info("Unarchiving message {$id} via folder property.");
                 $message->is_archived = false;
+                 // Rely on later save()
             }
+            unset($validatedData['folder']);
          }
 
         // 2. Trash Status (explicit status=deleted or folder=trash or isDeleted=true)
@@ -292,14 +335,22 @@ class MessageController extends Controller
         
         // --- End Status/Folder Updates ---
 
-        $message->save();
+        // Fill and Save any *other* remaining changes 
+        $message->fill(array_diff_key($validatedData, array_flip(['toggleLabel', 'is_archived']))); // Exclude toggleLabel & is_archived 
 
-        Log::info("Message {$id} updated successfully.");
+        if ($message->isDirty()) { 
+           Log::info("Saving remaining dirty attributes for message {$id}. Dirty: " . json_encode($message->getDirty()));
+           $message->save();
+        } else {
+            Log::info("No remaining dirty attributes to save for message {$id}.");
+        }
+
+        Log::info("Message {$id} update process completed.");
 
         // Ensure labels are loaded if they were potentially modified
-        $message->load('labels');
+        $message->loadMissing('labels'); 
 
-        return new MessageResource($message);
+        return new MessageResource($message); // Return the potentially modified $message instance
     }
 
     // Delete a message PERMANENTLY

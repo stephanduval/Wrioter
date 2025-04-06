@@ -285,19 +285,20 @@ export const useEmail = () => {
 
   const moveSelectedEmailTo = async (action: MoveEmailToAction, selectedEmails: number[]) => {
     // Define the type for the update payload explicitly
-    const dataToUpdate: { status?: Email['status']; isArchived?: boolean } = {};
+    // Use snake_case keys expected by the backend validation
+    const dataToUpdate: { status?: Email['status']; is_archived?: boolean } = {};
 
     if (action === 'inbox') { // Handles Unarchive or Undelete
-        dataToUpdate.isArchived = false;
+        dataToUpdate.is_archived = false; // Use snake_case
         dataToUpdate.status = 'unread'; // Set back to unread (or read based on prev state if needed)
     }
     else if (action === 'archive') {
-        dataToUpdate.isArchived = true;
+        dataToUpdate.is_archived = true; // Use snake_case
         // Set status to read? Or keep original? Depends on desired behavior.
         // If moving from trash, the backend controller already sets status to read.
     }
     else if (action === 'trash') {
-        dataToUpdate.isArchived = false; // Cannot be archived and trashed
+        dataToUpdate.is_archived = false; // Cannot be archived and trashed - Use snake_case
         dataToUpdate.status = 'deleted';
     }
 

@@ -1,5 +1,5 @@
 export interface EmailFrom {
-  id: number | null; // Ensure ID is here
+  id: number;
   fullName: string;
   email: string;
   avatar?: string | null; // Make avatar optional or provide default
@@ -45,4 +45,4 @@ export interface Email {
 }
 
 // Add MoveEmailToAction if not present
-export type MoveEmailToAction = 'inbox' | 'trash' | 'archive'; 
+export type MoveEmailToAction = 'inbox' | 'archive' | 'trash' | 'spam'; 

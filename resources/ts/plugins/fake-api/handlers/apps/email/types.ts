@@ -1,24 +1,25 @@
-export type EmailFolder = 'inbox' | 'sent' | 'draft' | 'spam'
+export type EmailFolder = 'inbox' | 'sent' | 'draft' | 'starred' | 'spam' | 'trash' | 'archive'
 export type EmailFilter = EmailFolder | 'trashed' | 'starred'
-export type EmailLabel = 'personal' | 'company' | 'important' | 'private'
+export type EmailLabel = 'personal' | 'company' | 'important' | 'private' | string
 
 export interface EmailTo {
+  name?: string
+  fullName?: string
   email: string
-  name: string
 }
 
 export interface EmailFrom {
-  email: string
+  id: number
   fullName: string
-  avatar: any
+  email: string
+  avatar: string
 }
 
 export interface EmailAttachment {
-  filename: string
-  size: number
-  path: string
-  mime_type: string
-  thumbnail?: any
+  fileName: string
+  thumbnail: string
+  url: string
+  size: string
 }
 
 /*
@@ -46,8 +47,8 @@ export interface EmailAttachment {
 
 export interface Email {
   id: number
-  to: EmailTo[]
   from: EmailFrom
+  to: EmailTo[]
   subject: string
   cc?: string[]
   bcc?: string[]
@@ -56,14 +57,23 @@ export interface Email {
   time: string
   replies?: Email[]
 
-  labels: string[]
+  labels: EmailLabel[]
 
-  folder: EmailFolder | string
+  folder?: EmailFolder
 
   // Flags 🚩
   isRead: boolean
   isStarred: boolean
-  isDeleted: boolean
+  isDeleted?: boolean
+
+  status: 'read' | 'unread' | 'deleted' | 'sent' | 'draft' | 'spam'
+  task_status: 'new' | 'completed'
+  dueDate: string | null
+  requestedDate: string
+  isArchived: boolean
+
+  company_id?: number
+  reply_to_id?: number | null
 }
 
 export interface FetchEmailsPayload {
@@ -71,3 +81,5 @@ export interface FetchEmailsPayload {
   filter?: EmailFilter
   label?: EmailLabel
 }
+
+export type MoveEmailToAction = 'inbox' | 'archive' | 'trash' | 'spam'

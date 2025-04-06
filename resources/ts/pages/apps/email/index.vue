@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import ComposeDialog from '@/views/apps/email/ComposeDialog.vue'
 import EmailLeftSidebarContent from '@/views/apps/email/EmailLeftSidebarContent.vue'
+import type { Email, EmailLabel, MoveEmailToAction } from '@/views/apps/email/types'
 import { useEmail } from '@/views/apps/email/useEmail'
-import type { Email, EmailLabel, MoveEmailToAction } from '@db/apps/email/types'
+import { useResponsiveLeftSidebar } from '@core/composable/useResponsiveSidebar'
 import { format, parseISO } from 'date-fns'
+import type { PartialDeep } from 'type-fest'
 import type { Ref } from 'vue'
-import { computed, isRef, ref, watch } from 'vue'
+import { computed, isRef, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { PerfectScrollbar } from 'vue3-perfect-scrollbar'
 
@@ -44,11 +46,18 @@ const fetchAllMessages = async () => {
     }
   } catch (error) {
     console.error("❌ Error fetching messages:", error);
+    messages.value = [];
   }
 };
 
-const selectedMessages = ref<Email['id'][]>([]);
-const messagesMeta = computed(() => messages.value.length ? messages.value : {});
+const selectedMessages = ref<number[]>([]);
+const messagesMeta = computed(() => ({
+  inbox: messages.value.filter(m => m.folder === 'inbox' && !m.isArchived && m.status !== 'deleted').length,
+  sent: messages.value.filter(m => m.folder === 'sent').length,
+  archive: messages.value.filter(m => m.isArchived).length,
+  trash: messages.value.filter(m => m.status === 'deleted').length,
+  starred: messages.value.filter(m => m.isStarred).length,
+}));
 
 onMounted(fetchAllMessages); 
 
@@ -80,7 +89,7 @@ const formatDate = (dateString: string | Date | undefined | null, includeTime = 
 };
 
 // --- Selection Logic ---
-const toggleSelectedEmail = (emailId: Email['id']) => {
+const toggleSelectedEmail = (emailId: number) => {
   const emailIndex = selectedMessages.value.indexOf(emailId)
   if (emailIndex === -1)
     selectedMessages.value.push(emailId)
@@ -151,43 +160,17 @@ const changeOpenedMessage = async (dir: 'previous' | 'next') => {
 const openMessage = async (message: Email) => {
   console.log('Opening message:', message);
   
-  // Ensure the message object matches the expected Email structure
-  // Use properties defined in the updated Email type
-  openedMessage.value = {
-    ...message,
-    // Ensure required fields exist, using defaults if necessary
-    from: message.from || { 
-      name: 'Unknown Sender', 
-      email: 'unknown@example.com', 
-      avatar: '/images/avatars/avatar-1.png' 
-    },
-    time: message.time || new Date().toISOString(), // Use message.time directly
-    labels: message.labels || [],
-    attachments: message.attachments || [],
-    // Ensure other required Email fields have defaults if not provided by API
-    to: message.to || [],
-    subject: message.subject || '(No Subject)',
-    message: message.message || '', // Use message.message directly
-    folder: message.folder || 'inbox', // Default folder if needed
-    isRead: message.isRead !== undefined ? message.isRead : true, // Default to read
-    isStarred: message.isStarred !== undefined ? message.isStarred : false,
-    isDeleted: message.isDeleted !== undefined ? message.isDeleted : false,
-    // cc, bcc, replies are optional
-  };
+  openedMessage.value = message;
   
   console.log('openedMessage set to:', openedMessage.value);
   
-  // Mark the message as read
   if (!message.isRead) {
     try {
-      // Use updateEmails directly for status change
-      await updateEmails([message.id], { status: 'read' }); 
-      // Update local state optimistically
+      await updateEmails([message.id], { status: 'read', isRead: true }); 
       if (openedMessage.value && openedMessage.value.id === message.id) {
         openedMessage.value.isRead = true;
-        openedMessage.value.status = 'read'; // Also update status locally
+        openedMessage.value.status = 'read';
       }
-      // Update list item optimistically
       const messageInList = messages.value.find(m => m.id === message.id);
       if (messageInList) {
         messageInList.isRead = true;
@@ -208,22 +191,21 @@ watch(() => route.params, () => { fetchAllMessages(); selectedMessages.value = [
 // Generic action handler (for star/unstar, read/unread - now simplified)
 const handleActionClick = async (
   action: 'star' | 'unstar' | 'read' | 'unread',
-  emailIds: Email['id'][] = selectedMessages.value,
+  emailIds: number[] | Ref<number[]> = selectedMessages,
 ) => {
-  const ids = isRef(emailIds) ? emailIds.value : emailIds;
-  if (!ids.length) return;
+  const ids: number[] = isRef(emailIds) ? emailIds.value : emailIds;
+  if (!ids || ids.length === 0) return;
 
   let updateData: PartialDeep<Email> = {};
 
   if (action === 'star') updateData = { isStarred: true };
   else if (action === 'unstar') updateData = { isStarred: false };
-  else if (action === 'read') updateData = { status: 'read' };
-  else if (action === 'unread') updateData = { status: 'unread' };
+  else if (action === 'read') updateData = { status: 'read', isRead: true };
+  else if (action === 'unread') updateData = { status: 'unread', isRead: false };
 
   try {
     await updateEmails(ids, updateData);
     
-    // Optimistic UI updates
     messages.value.forEach(msg => {
       if (ids.includes(msg.id)) {
         if (action === 'star') msg.isStarred = true;
@@ -245,39 +227,36 @@ const handleActionClick = async (
 
 // Handle Moving Mails (Trash, Archive, Inbox) - Uses moveSelectedEmailTo composable
 const handleMoveMailsTo = async (action: MoveEmailToAction, ids: number[] | Ref<number[]> = selectedMessages) => {
-  const actualIds = isRef(ids) ? ids.value : ids;
+  const actualIds: number[] = isRef(ids) ? ids.value : ids;
   if (!actualIds || actualIds.length === 0) return;
   
   console.log(`Moving emails ${actualIds} to ${action}`);
   try {
     await moveSelectedEmailTo(action, actualIds);
 
-    // Close opened message if it was moved
     if (openedMessage.value && actualIds.includes(openedMessage.value.id)) {
       openedMessage.value = null;
     }
-    // Clear selection if needed (optional)
     if (actualIds === selectedMessages.value) {
       selectedMessages.value = [];
     }
     
-    await fetchAllMessages(); // Refresh the list after moving
+    await fetchAllMessages();
   } catch (error) {
     console.error(`Error moving emails to ${action}:`, error);
   }
 };
 
-// Handle Labels (keep existing)
-const handleEmailLabels = async (labelTitle: EmailLabel, messageIds: Email['id'][] | Ref<Email['id'][]> = selectedMessages) => {
-  const idsToUpdate = isRef(messageIds) ? messageIds.value : messageIds;
+// Handle Labels (ensure payload matches expected type)
+const handleEmailLabels = async (labelTitle: EmailLabel, messageIds: number[] | Ref<number[]> = selectedMessages) => {
+  const idsToUpdate: number[] = isRef(messageIds) ? messageIds.value : messageIds;
   if (!idsToUpdate || idsToUpdate.length === 0) return;
 
-  await updateEmails(idsToUpdate, labelTitle);
+  await updateEmails(idsToUpdate, { toggleLabel: labelTitle } as PartialDeep<Email>);
 
-  // Refresh data
   if (openedMessage.value && idsToUpdate.includes(openedMessage.value.id)) {
     await refreshOpenedMessage(); 
-  } else if (idsToUpdate === selectedMessages.value) {
+  } else if (messageIds === selectedMessages) {
     selectedMessages.value = [];
     await fetchAllMessages();
   } else {
@@ -291,14 +270,12 @@ const handleTaskStatusToggle = async (message: Email) => {
   console.log(`Toggling task status for message ${message.id} to ${newStatus}`);
   try {
     await updateEmails([message.id], { task_status: newStatus });
-    // Optimistic update
     message.task_status = newStatus;
     if(openedMessage.value?.id === message.id) {
       openedMessage.value.task_status = newStatus;
     }
   } catch (error) {
     console.error(`Error updating task status for message ${message.id}:`, error);
-    // TODO: Revert optimistic update or show error
   }
 };
 
