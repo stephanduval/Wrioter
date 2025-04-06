@@ -7,7 +7,7 @@ export interface EmailFrom {
 
 export type EmailLabel = 'personal' | 'company' | 'important' | 'private' | string; // Allow any string
 
-export type EmailFolder = 'inbox' | 'sent' | 'draft' | 'starred' | 'spam' | 'trash';
+export type EmailFolder = 'inbox' | 'sent' | 'draft' | 'starred' | 'spam' | 'trash' | 'archive';
 
 export interface EmailAttachment {
   fileName: string;
@@ -38,7 +38,11 @@ export interface Email {
   cc?: { name?: string; email: string }[];
   bcc?: { name?: string; email: string }[];
   reply_to_id?: number | null;
+  requestedDate?: string | Date; // Added for 'Requested' column (maps from created_at)
+  dueDate?: string | null;       // Added Due Date (YYYY-MM-DD or null)
+  task_status: 'new' | 'completed'; // Added Task Status
+  isArchived: boolean;          // Added Archive flag
 }
 
 // Add MoveEmailToAction if not present
-export type MoveEmailToAction = 'inbox' | 'spam' | 'trash'; 
+export type MoveEmailToAction = 'inbox' | 'trash' | 'archive'; 

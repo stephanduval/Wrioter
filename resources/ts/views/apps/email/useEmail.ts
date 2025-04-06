@@ -11,14 +11,15 @@ export const useEmail = () => {
 
   const updateEmails = async (ids: Email['id'][], data: PartialDeep<Email>) => {
     try {
-      // For each ID, update it individually using the messages API endpoint
       for (const id of ids) {
+        const payload = JSON.stringify(data); // Backend expects booleans/nulls correctly
         await $api(`/messages/${id}`, {
           method: 'PUT',
-          body: JSON.stringify(data),
+          body: payload, 
+          headers: { 'Content-Type': 'application/json' } 
         });
       }
-      console.log('Successfully updated emails:', ids);
+      console.log('Successfully updated emails:', ids, 'with data:', data);
     } catch (error) {
       console.error('Error updating emails:', error);
       throw error;
@@ -124,30 +125,31 @@ export const useEmail = () => {
     subject: string;
     message: string; // Original key expected by backend for non-replies
     attachments?: File[];
+    due_date?: string | null; // Optional due date YYYY-MM-DD
   }) => {
-    console.log(">>> EXECUTING OLD createMessage <<<", payload); // Debug log
+    console.log(">>> EXECUTING createMessage <<<", payload); 
     try {
-      // Assuming the original used FormData and $api worked for it
       const formData = new FormData();
       formData.append('subject', payload.subject);
-      formData.append('message', payload.message); // Send 'message' key
+      formData.append('message', payload.message); 
       formData.append('company_id', payload.company_id.toString());
       if (payload.receiver_id !== null && payload.receiver_id !== undefined) {
         formData.append('receiver_id', payload.receiver_id.toString());
+      }
+      // Append due_date if provided and not null/empty
+      if (payload.due_date) { 
+           formData.append('due_date', payload.due_date);
       }
       if (payload.attachments) {
         payload.attachments.forEach(file => formData.append('attachments[]', file));
       }
 
-      // Use $api if it was working before for this call, otherwise use fetch
       const response = await $api('/messages', { 
         method: 'POST', 
         body: formData 
-        // $api might handle content-type correctly for FormData, or it might need adjusting
       });
       console.log(">>> createMessage response:", response);
-      // Add proper response checking based on how $api behaves
-      if(response && response.message === 'Message sent successfully') { // Example check
+      if(response && response.message === 'Message sent successfully') { 
         return response;
       } else {
         console.error("createMessage failed:", response);
@@ -166,9 +168,10 @@ export const useEmail = () => {
     subject: string; 
     body: string; // Use 'body' key for replies
     reply_to_id: number; // Original message ID - REQUIRED for reply
-    attachments?: File[] 
+    attachments?: File[];
+    due_date?: string | null; // Optional due date YYYY-MM-DD
   }): Promise<any | undefined> => { 
-    console.log("***** EXECUTING sendReplyMessage in useEmail.ts *****", payload); 
+    console.log("***** EXECUTING sendReplyMessage *****", payload); 
     try {
       const formData = new FormData();
 
@@ -178,6 +181,11 @@ export const useEmail = () => {
       formData.append('company_id', payload.company_id.toString());
       formData.append('receiver_id', payload.receiver_id.toString()); // Original sender
       formData.append('reply_to_id', payload.reply_to_id.toString()); // Original message
+
+      // Append due_date if provided and not null/empty
+      if (payload.due_date) {
+           formData.append('due_date', payload.due_date);
+      }
 
       // Append attachments
       if (payload.attachments && payload.attachments.length > 0) {
@@ -252,47 +260,50 @@ export const useEmail = () => {
   }
 
   const emailMoveToFolderActions: { action: MoveEmailToAction; icon: string }[] = [
-    { action: 'inbox', icon: 'bx-mail' },
-    { action: 'spam', icon: 'bx-error-alt' },
+    { action: 'inbox', icon: 'bx-envelope' },
+    { action: 'archive', icon: 'bx-archive' },
     { action: 'trash', icon: 'bx-trash' },
   ]
 
   const shallShowMoveToActionFor = (action: MoveEmailToAction) => {
     const currentFilter = route.params && 'filter' in route.params ? route.params.filter : undefined;
+    const isInbox = !currentFilter;
+
+    if (action === 'archive') {
+      return currentFilter !== 'archive' && currentFilter !== 'trash';
+    } 
+    else if (action === 'trash') {
+      return currentFilter !== 'trash';
+    } 
+    else if (action === 'inbox') {
+      // Show 'Move to Inbox' only when viewing Archive or Trash
+      return currentFilter === 'archive' || currentFilter === 'trash';
+    }
     
-    // Never show move to trash if already in trash
-    if (action === 'trash')
-      return currentFilter !== 'trash'; // Changed from 'trashed' to 'trash'
-
-    // Show move to inbox ONLY if NOT in inbox, sent, or draft
-    else if (action === 'inbox')
-      return currentFilter !== undefined && currentFilter !== 'sent' && currentFilter !== 'draft';
-
-    // Show move to spam ONLY if NOT in spam, sent, or draft
-    else if (action === 'spam')
-      return currentFilter !== 'spam' && currentFilter !== 'sent' && currentFilter !== 'draft';
-
-    return false; // Default case
+    return false;
   }
 
   const moveSelectedEmailTo = async (action: MoveEmailToAction, selectedEmails: number[]) => {
-    // Assuming Email type now includes 'status'
-    const dataToUpdate: PartialDeep<Email> = {} 
+    // Define the type for the update payload explicitly
+    const dataToUpdate: { status?: Email['status']; isArchived?: boolean } = {};
 
-    if (action === 'inbox') {
-      dataToUpdate.status = 'unread'; 
-      // dataToUpdate.folder = 'inbox'; // Folder might be redundant if status drives filtering
+    if (action === 'inbox') { // Handles Unarchive or Undelete
+        dataToUpdate.isArchived = false;
+        dataToUpdate.status = 'unread'; // Set back to unread (or read based on prev state if needed)
     }
-    else if (action === 'spam') {
-       dataToUpdate.status = 'spam'; 
-       // dataToUpdate.folder = 'spam';
+    else if (action === 'archive') {
+        dataToUpdate.isArchived = true;
+        // Set status to read? Or keep original? Depends on desired behavior.
+        // If moving from trash, the backend controller already sets status to read.
     }
     else if (action === 'trash') {
-      dataToUpdate.status = 'deleted'; 
-      // dataToUpdate.folder = 'trash';
+        dataToUpdate.isArchived = false; // Cannot be archived and trashed
+        dataToUpdate.status = 'deleted';
     }
 
-    await updateEmails(selectedEmails, dataToUpdate); 
+    // Cast the payload to PartialDeep<Email> if updateEmails expects it
+    // Although sending a plain object with correct keys should also work with the updated backend validation
+    await updateEmails(selectedEmails, dataToUpdate as PartialDeep<Email>);
   }
 
   // ✅ Update resolveLabelColor to use the reactive userLabels ref

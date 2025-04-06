@@ -18,15 +18,20 @@ class MessageResource extends JsonResource
         // Eager load relationships if they aren't already
         $this->resource->loadMissing(['sender', 'receiver', 'labels', 'attachments']);
 
-        // Determine folder based on status
-        $folder = 'inbox'; // Default to inbox
-        if ($this->status === 'draft') {
-            $folder = 'draft';
+        // Determine folder based on status AND archive flag
+        $folder = 'inbox'; // Default
+        if ($this->is_archived) {
+            $folder = 'archive';
         } elseif ($this->status === 'deleted') {
             $folder = 'trash';
-        } elseif ($this->status === 'archived') {
-            $folder = 'archived'; // Assuming frontend handles this
-        } // 'sent' and 'read' remain 'inbox'
+        } elseif ($this->status === 'draft') { // Assuming sender perspective for draft/sent
+            $folder = 'draft';
+        } elseif ($this->status === 'sent') { // Assuming sender perspective for draft/sent
+             // Sent items usually appear in inbox for receiver, but maybe 'sent' folder for sender view?
+             // Let's keep it simple: if receiver sees it, it's inbox unless archived/deleted.
+             // If sender is viewing 'sent' filter, the controller handles that.
+             // So, resource doesn't need complex folder logic based on viewer.
+        }
         
 
         return [
@@ -48,6 +53,8 @@ class MessageResource extends JsonResource
             'subject' => $this->subject,
             'message' => $this->body, // Map body to message
             'time' => $this->created_at->toISOString(), // Map created_at to time
+            'requestedDate' => $this->created_at->toISOString(), // Add requestedDate mapping
+            'dueDate' => $this->due_date?->toDateString(), // Format Y-m-d, handle null
             'labels' => $this->whenLoaded('labels', fn() => $this->labels->pluck('label_name')->toArray() ?? []),
             'attachments' => $this->whenLoaded('attachments', function() {
                 return $this->attachments->map(function ($attachment) {
@@ -62,9 +69,10 @@ class MessageResource extends JsonResource
             }),
             'isRead' => $this->status === 'read',
             'isStarred' => (bool) $this->is_starred, // Use the actual value from the model
-            'isDeleted' => $this->status === 'deleted',
-            'folder' => $folder,
-            'status' => $this->status,
+            'isArchived' => (bool) $this->is_archived, // Add archive flag
+            'folder' => $folder, // Calculated folder
+            'status' => $this->status, // Existing status (read/unread/deleted)
+            'task_status' => $this->task_status, // New task status ('new'/'completed')
 
             // Include original fields if needed for debugging or specific logic
             // 'sender_id' => $this->sender_id,

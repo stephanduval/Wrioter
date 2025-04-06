@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import ComposeDialog from '@/views/apps/email/ComposeDialog.vue'
 import EmailLeftSidebarContent from '@/views/apps/email/EmailLeftSidebarContent.vue'
-import type { MoveEmailToAction } from '@/views/apps/email/useEmail'
 import { useEmail } from '@/views/apps/email/useEmail'
-import type { Email, EmailLabel } from '@db/apps/email/types'
-import { isRef, type Ref } from 'vue'
+import type { Email, EmailLabel, MoveEmailToAction } from '@db/apps/email/types'
+import { format, parseISO } from 'date-fns'
+import type { Ref } from 'vue'
+import { computed, isRef, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { PerfectScrollbar } from 'vue3-perfect-scrollbar'
 
@@ -16,19 +17,27 @@ definePage({
 
 console.log("🚀 Emails page Index.vue is loading!");
 
-const { fetchMessages, sendReplyMessage } = useEmail();
-const messages = ref<Email[]>([]); // ✅ Change `emails` to `messages`
+const { 
+    fetchMessages, 
+    sendReplyMessage,
+    userLabels,
+    resolveLabelColor,
+    emailMoveToFolderActions,
+    shallShowMoveToActionFor,
+    moveSelectedEmailTo,
+    updateEmails,
+    deleteMessage,
+ } = useEmail();
 
-// Fetch Messages from API ->
-const fetchAllMessages = async () => {  // ✅ Change function name
+const messages = ref<Email[]>([]); 
+
+const fetchAllMessages = async () => {  
   try {
     console.log("🔥 Fetching messages...");
-    const response: Email[] = await fetchMessages(); // ✅ API returns `messages`
-
+    const response: Email[] = await fetchMessages(); 
     console.log("✅ Messages Data:", response);
-
     if (Array.isArray(response)) {
-      messages.value = response; // ✅ Change `emails` to `messages`
+      messages.value = response; 
     } else {
       console.error("❌ Invalid API response format:", response);
       messages.value = [];
@@ -38,28 +47,14 @@ const fetchAllMessages = async () => {  // ✅ Change function name
   }
 };
 
-// Change all `emails` references to `messages`
 const selectedMessages = ref<Email['id'][]>([]);
 const messagesMeta = computed(() => messages.value.length ? messages.value : {});
 
-onMounted(fetchAllMessages); // ✅ Update function name
+onMounted(fetchAllMessages); 
 
 
 const { isLeftSidebarOpen } = useResponsiveLeftSidebar()
-
-// Composables
 const route = useRoute<'apps-email' | 'apps-email-filter' | 'apps-email-label'>()
-
-const {
-  userLabels,
-  resolveLabelColor,
-  emailMoveToFolderActions,
-  shallShowMoveToActionFor,
-  moveSelectedEmailTo,
-  updateEmails,
-  updateEmailLabels,
-  deleteMessage,
-} = useEmail()
 
 // Compose dialog
 const isComposeDialogVisible = ref(false)
@@ -67,23 +62,24 @@ const isComposeDialogVisible = ref(false)
 // Ref
 const q = ref('')
 
-// Add these near where other refs are defined
+// Reply state
 const showReplyForm = ref(false);
 const replyMessage = ref('');
 
-// ------------------------------------------------
-// Email Selection
-// ------------------------------------------------
+// --- Helper Functions ---
+const formatDate = (dateString: string | Date | undefined | null, includeTime = false): string => {
+  if (!dateString) return 'N/A';
+  try {
+    const date = typeof dateString === 'string' ? parseISO(dateString) : dateString;
+    const formatString = includeTime ? 'yyyy-MM-dd HH:mm' : 'yyyy-MM-dd';
+    return format(date, formatString);
+  } catch (error) {
+    console.error("Error formatting date:", dateString, error);
+    return 'Invalid Date';
+  }
+};
 
-// Remove this old useApi call - we are using fetchAllMessages -> fetchMessages now
-// const { data: emailData, execute: fetchEmails } = await useApi<any>(createUrl('/apps/email', {
-//   query: {
-//     q,
-//     filter: () => 'filter' in route.params ? route.params.filter : undefined,
-//     label: () => 'label' in route.params ? route.params.label : undefined,
-//   },
-// }))
-
+// --- Selection Logic ---
 const toggleSelectedEmail = (emailId: Email['id']) => {
   const emailIndex = selectedMessages.value.indexOf(emailId)
   if (emailIndex === -1)
@@ -112,12 +108,8 @@ const selectAllCheckboxUpdate = () => {
     : []
 }
 
-
-
-
-// Email View
+// --- Email View Logic ---
 const openedMessage = ref<Email | null>(null)
-
 const messageViewMeta = computed(() => {
   const returnValue = {
     hasNextEmail: false,
@@ -143,161 +135,6 @@ const refreshOpenedMessage = async () => {
     openedMessage.value = messages.value.find(m => m.id === openedMessage.value?.id)!
 }
 
-
-
-// const changeOpenedMessage = (dir: 'previous' | 'next') => {
-//   if (!openedMessage.value)
-//     return;
-
-//   const openedMessageIndex = messages.value.findIndex(
-//     m => m.id === openedMessage.value?.id,
-//   );
-
-//   const newMessageIndex = dir === 'previous' ? openedMessageIndex - 1 : openedMessageIndex + 1;
-
-//   if (newMessageIndex >= 0 && newMessageIndex < messages.value.length)
-//     openedMessage.value = messages.value[newMessageIndex];
-// };
-
-
-
-/*
-  ℹ️ You can optimize it so it doesn't fetch emails on each action.
-    Currently, if you just star the email, two API calls will get fired.
-      1. star the email
-      2. Fetch all latest emails
-
-    You can limit this to single API call by:
-      - making API to star the email
-      - modify the state (set that email's isStarred property to true/false) in the store instead of making API for fetching emails
-
-  😊 For simplicity of the code and possible of modification, we kept it simple.
-*/
-
-const handleActionClick = async (
-  action: 'trash' | 'unread' | 'read' | 'spam' | 'star' | 'unstar',
-  emailIds: Email['id'][] = selectedMessages.value,
-) => {
-  if (!emailIds.length)
-    return
-
-  try {
-    // Since some actions need to go through an API that's not implemented yet, 
-    // we'll do these operations optimistically on the local data
-    if (action === 'trash') {
-      // First update local data
-      const messagesToUpdate = messages.value.filter(msg => emailIds.includes(msg.id));
-      messagesToUpdate.forEach(msg => {
-        msg.isDeleted = true;
-      });
-      
-      // Try API call, but don't block on it
-      try {
-        await updateEmails(emailIds, { isDeleted: true });
-      } catch (error) {
-        console.warn('API error when trashing messages:', error);
-      }
-    }
-    else if (action === 'spam') {
-      try {
-        await updateEmails(emailIds, { folder: 'spam' });
-      } catch (error) {
-        console.warn('API error when marking messages as spam:', error);
-      }
-    }
-    else if (action === 'unread') {
-      // Update local data
-      const messagesToUpdate = messages.value.filter(msg => emailIds.includes(msg.id));
-      messagesToUpdate.forEach(msg => {
-        msg.isRead = false;
-      });
-      
-      try {
-        await updateEmails(emailIds, { isRead: false });
-      } catch (error) {
-        console.warn('API error when marking messages as unread:', error);
-      }
-    }
-    else if (action === 'read') {
-      // Update local data
-      const messagesToUpdate = messages.value.filter(msg => emailIds.includes(msg.id));
-      messagesToUpdate.forEach(msg => {
-        msg.isRead = true;
-      });
-      
-      try {
-        await updateEmails(emailIds, { isRead: true });
-      } catch (error) {
-        console.warn('API error when marking messages as read:', error);
-      }
-    }
-    else if (action === 'star') {
-      // Update local data
-      const messagesToUpdate = messages.value.filter(msg => emailIds.includes(msg.id));
-      messagesToUpdate.forEach(msg => {
-        msg.isStarred = true;
-      });
-      
-      try {
-        await updateEmails(emailIds, { isStarred: true });
-      } catch (error) {
-        console.warn('API error when starring messages:', error);
-      }
-    }
-    else if (action === 'unstar') {
-      // Update local data
-      const messagesToUpdate = messages.value.filter(msg => emailIds.includes(msg.id));
-      messagesToUpdate.forEach(msg => {
-        msg.isStarred = false;
-      });
-      
-      try {
-        await updateEmails(emailIds, { isStarred: false });
-      } catch (error) {
-        console.warn('API error when unstarring messages:', error);
-      }
-    }
-
-    // Clear selected messages after the action is complete
-    selectedMessages.value = [];
-    
-    if (openedMessage.value)
-      refreshOpenedMessage();
-    else
-      await fetchAllMessages();
-  } catch (error) {
-    console.error('Error performing action:', action, error);
-  }
-}
-
-// Email actions
-const handleMoveMailsTo = async (action: MoveEmailToAction) => {
-  await moveSelectedEmailTo(action, selectedMessages.value)
-  await fetchAllMessages()
-}
-
-// Handle Email Labels
-const handleEmailLabels = async (labelTitle: EmailLabel, messageIds: Email['id'][] | Ref<Email['id'][]> = selectedMessages) => {
-  const idsToUpdate = isRef(messageIds) ? messageIds.value : messageIds;
-  if (!idsToUpdate || idsToUpdate.length === 0) return;
-
-  await updateEmailLabels(idsToUpdate, labelTitle)
-
-  // Refresh data
-  if (openedMessage.value && idsToUpdate.includes(openedMessage.value.id)) {
-    // If the currently opened message was affected, refresh it specifically
-    await refreshOpenedMessage(); 
-  } else if (idsToUpdate === selectedMessages.value) {
-    // If we updated based on selection, clear selection and refresh list
-    selectedMessages.value = [];
-    await fetchAllMessages();
-  } else {
-    // Otherwise just refresh the main list (e.g., if called from detail view)
-    await fetchAllMessages();
-  }
-}
-
-// Email view
 const changeOpenedMessage = async (dir: 'previous' | 'next') => {
   if (!openedMessage.value) return;
 
@@ -310,14 +147,6 @@ const changeOpenedMessage = async (dir: 'previous' | 'next') => {
   if (newMessageIndex >= 0 && newMessageIndex < messages.value.length)
     openedMessage.value = messages.value[newMessageIndex];
 };
-
-
-// const openMessage = async (message: Email) => {
-//   openedMessage.value = message
-
-//   if (newMessageIndex >= 0 && newMessageIndex < messages.value.length)
-//     openedMessage.value = messages.value[newMessageIndex]
-// }
 
 const openMessage = async (message: Email) => {
   console.log('Opening message:', message);
@@ -349,70 +178,135 @@ const openMessage = async (message: Email) => {
   console.log('openedMessage set to:', openedMessage.value);
   
   // Mark the message as read
-  if (!message.isRead) { // Only mark if currently unread
+  if (!message.isRead) {
     try {
-      await handleActionClick('read', [message.id]);
-      // Update the local state immediately for responsiveness
-      if (openedMessage.value) openedMessage.value.isRead = true;
+      // Use updateEmails directly for status change
+      await updateEmails([message.id], { status: 'read' }); 
+      // Update local state optimistically
+      if (openedMessage.value && openedMessage.value.id === message.id) {
+        openedMessage.value.isRead = true;
+        openedMessage.value.status = 'read'; // Also update status locally
+      }
+      // Update list item optimistically
+      const messageInList = messages.value.find(m => m.id === message.id);
+      if (messageInList) {
+        messageInList.isRead = true;
+        messageInList.status = 'read';
+      }
     } catch (error) {
       console.error('Error marking message as read:', error);
     }
   }
 }
 
+// --- Watchers ---
+watch(() => route.params, () => { fetchAllMessages(); selectedMessages.value = []; }, { deep: true })
 
-// Reset selected emails and fetch messages when filter or label is updated
-watch(
-  () => route.params,
-  () => {
-    selectedMessages.value = []
-    // Fetch messages whenever the route params change
-    fetchAllMessages()
-  },
-  { deep: true },
-)
 
-// Handle message deletion
-const handleDeleteMessage = async (messageIds: Email['id'][] | Ref<Email['id'][]>) => {
-  // Extract array from ref if needed
-  const idsToDelete = isRef(messageIds) ? messageIds.value : messageIds;
-  
-  console.log('Delete button clicked');
-  console.log('messageIds:', messageIds);
-  console.log('idsToDelete:', idsToDelete);
-  
-  if (!idsToDelete || !idsToDelete.length) {
-    console.log('No IDs to delete, returning');
-    return;
-  }
-  
+// --- Action Handling ---
+
+// Generic action handler (for star/unstar, read/unread - now simplified)
+const handleActionClick = async (
+  action: 'star' | 'unstar' | 'read' | 'unread',
+  emailIds: Email['id'][] = selectedMessages.value,
+) => {
+  const ids = isRef(emailIds) ? emailIds.value : emailIds;
+  if (!ids.length) return;
+
+  let updateData: PartialDeep<Email> = {};
+
+  if (action === 'star') updateData = { isStarred: true };
+  else if (action === 'unstar') updateData = { isStarred: false };
+  else if (action === 'read') updateData = { status: 'read' };
+  else if (action === 'unread') updateData = { status: 'unread' };
+
   try {
-    console.log('Attempting to delete these IDs:', idsToDelete);
-    // Delete each message
-    for (const id of idsToDelete) {
-      console.log('Deleting message ID:', id);
-      await deleteMessage(id);
-    }
+    await updateEmails(ids, updateData);
     
-    // Close opened message if it was deleted
-    if (openedMessage.value && idsToDelete.includes(openedMessage.value.id)) {
-      console.log('Closing opened message as it was deleted');
-      openedMessage.value = null;
+    // Optimistic UI updates
+    messages.value.forEach(msg => {
+      if (ids.includes(msg.id)) {
+        if (action === 'star') msg.isStarred = true;
+        if (action === 'unstar') msg.isStarred = false;
+        if (action === 'read') { msg.isRead = true; msg.status = 'read'; }
+        if (action === 'unread') { msg.isRead = false; msg.status = 'unread'; }
+      }
+    });
+    if (openedMessage.value && ids.includes(openedMessage.value.id)) {
+      if (action === 'star') openedMessage.value.isStarred = true;
+      if (action === 'unstar') openedMessage.value.isStarred = false;
+      if (action === 'read') { openedMessage.value.isRead = true; openedMessage.value.status = 'read'; }
+      if (action === 'unread') { openedMessage.value.isRead = false; openedMessage.value.status = 'unread'; }
     }
-    
-    // Refresh the messages list
-    console.log('Refreshing messages list');
-    await fetchAllMessages();
   } catch (error) {
-    console.error('Error deleting messages:', error);
+    console.error('Error performing action:', action, error);
   }
 }
 
-// Function to handle sending the reply
+// Handle Moving Mails (Trash, Archive, Inbox) - Uses moveSelectedEmailTo composable
+const handleMoveMailsTo = async (action: MoveEmailToAction, ids: number[] | Ref<number[]> = selectedMessages) => {
+  const actualIds = isRef(ids) ? ids.value : ids;
+  if (!actualIds || actualIds.length === 0) return;
+  
+  console.log(`Moving emails ${actualIds} to ${action}`);
+  try {
+    await moveSelectedEmailTo(action, actualIds);
+
+    // Close opened message if it was moved
+    if (openedMessage.value && actualIds.includes(openedMessage.value.id)) {
+      openedMessage.value = null;
+    }
+    // Clear selection if needed (optional)
+    if (actualIds === selectedMessages.value) {
+      selectedMessages.value = [];
+    }
+    
+    await fetchAllMessages(); // Refresh the list after moving
+  } catch (error) {
+    console.error(`Error moving emails to ${action}:`, error);
+  }
+};
+
+// Handle Labels (keep existing)
+const handleEmailLabels = async (labelTitle: EmailLabel, messageIds: Email['id'][] | Ref<Email['id'][]> = selectedMessages) => {
+  const idsToUpdate = isRef(messageIds) ? messageIds.value : messageIds;
+  if (!idsToUpdate || idsToUpdate.length === 0) return;
+
+  await updateEmails(idsToUpdate, labelTitle);
+
+  // Refresh data
+  if (openedMessage.value && idsToUpdate.includes(openedMessage.value.id)) {
+    await refreshOpenedMessage(); 
+  } else if (idsToUpdate === selectedMessages.value) {
+    selectedMessages.value = [];
+    await fetchAllMessages();
+  } else {
+    await fetchAllMessages();
+  }
+}
+
+// Handle Task Status Toggle
+const handleTaskStatusToggle = async (message: Email) => {
+  const newStatus = message.task_status === 'new' ? 'completed' : 'new';
+  console.log(`Toggling task status for message ${message.id} to ${newStatus}`);
+  try {
+    await updateEmails([message.id], { task_status: newStatus });
+    // Optimistic update
+    message.task_status = newStatus;
+    if(openedMessage.value?.id === message.id) {
+      openedMessage.value.task_status = newStatus;
+    }
+  } catch (error) {
+    console.error(`Error updating task status for message ${message.id}:`, error);
+    // TODO: Revert optimistic update or show error
+  }
+};
+
+
+// --- Reply Logic ---
 const sendReply = async () => {
   console.log("index.vue: sendReply function started."); 
 
-  // Linter error fixed by adding 'id' to EmailFrom type
   if (!openedMessage.value || !openedMessage.value.from || !openedMessage.value.from.id || !openedMessage.value.id) { 
     console.error('Cannot send reply: Original message, sender, or IDs missing.');
     return;
@@ -420,30 +314,27 @@ const sendReply = async () => {
 
   if (!replyMessage.value.trim()) {
     console.error('Cannot send reply: Message body is empty.');
-    // TODO: Show user feedback
     return;
   }
 
-  // Prepare subject
   let replySubject = openedMessage.value.subject || '(No Subject)';
   if (!replySubject.toLowerCase().startsWith('re:')) {
     replySubject = `Re: ${replySubject}`;
   }
 
-  const currentUserCompanyId = 1; // Placeholder
+  const currentUserCompanyId = 1;
 
   const payload = {
-    receiver_id: openedMessage.value.from.id, // Original sender's ID
+    receiver_id: openedMessage.value.from.id,
     subject: replySubject,
-    body: replyMessage.value, // Use 'body' key for replies
-    reply_to_id: openedMessage.value.id, // Original message ID
+    body: replyMessage.value,
+    reply_to_id: openedMessage.value.id,
     company_id: currentUserCompanyId, 
   };
 
   console.log("index.vue: Sending reply with payload:", payload); 
 
   try {
-    // Call the NEW reply function
     const result = await sendReplyMessage(payload); 
     console.log("index.vue: sendReplyMessage call completed. Result:", result); 
 
@@ -452,31 +343,27 @@ const sendReply = async () => {
       showReplyForm.value = false;
       replyMessage.value = '';
       await fetchAllMessages(); 
-      openedMessage.value = null; // <-- Close the detail view
+      openedMessage.value = null;
     } else {
       console.error("Failed to send reply, API returned error or unexpected response:", result);
-       // TODO: Show error feedback to user
     }
   } catch (error) {
     console.error("Error sending reply:", error);
-     // TODO: Show error feedback to user
   }
   console.log("index.vue: sendReply function finished."); 
 };
 
-// --- Dialog State ---
+// --- Dialog State & Confirmation Logic ---
 const isTrashConfirmDialogVisible = ref(false);
 const messageIdsToConfirmTrash = ref<number[]>([]);
 const isPermanentDeleteConfirmDialogVisible = ref(false);
 const messageIdsToConfirmPermanentDelete = ref<number[]>([]);
-// --- End Dialog State ---
 
-// --- Trash Confirmation Logic ---
 const initiateTrashConfirmation = (ids: number[] | Ref<number[]>) => {
   const actualIds = isRef(ids) ? ids.value : ids;
   if (!actualIds || actualIds.length === 0) return;
   console.log('Initiating trash confirmation for IDs:', actualIds);
-  messageIdsToConfirmTrash.value = [...actualIds]; // Store a copy
+  messageIdsToConfirmTrash.value = [...actualIds];
   isTrashConfirmDialogVisible.value = true;
 };
 
@@ -484,33 +371,11 @@ const confirmTrashMessages = async () => {
   if (!messageIdsToConfirmTrash.value.length) return;
 
   console.log('Confirming move to trash for IDs:', messageIdsToConfirmTrash.value);
-  try {
-    // Use moveSelectedEmailTo for consistency
-    await moveSelectedEmailTo('trash', messageIdsToConfirmTrash.value); 
-
-    // Close opened message if it was trashed
-    if (openedMessage.value && messageIdsToConfirmTrash.value.includes(openedMessage.value.id)) {
-        openedMessage.value = null;
-    }
-    
-    // Clear selection if it matches the trashed items
-    if (selectedMessages.value.length > 0 && messageIdsToConfirmTrash.value.every(id => selectedMessages.value.includes(id)) && messageIdsToConfirmTrash.value.length === selectedMessages.value.length) {
-         selectedMessages.value = [];
-    }
-    
-    await fetchAllMessages(); // Refresh list
-  } catch (error) {
-    console.error('Error moving messages to trash:', error);
-    // TODO: Show error notification to user
-  } finally {
-    isTrashConfirmDialogVisible.value = false;
-    messageIdsToConfirmTrash.value = [];
-  }
+  await handleMoveMailsTo('trash', messageIdsToConfirmTrash.value); 
+  isTrashConfirmDialogVisible.value = false;
+  messageIdsToConfirmTrash.value = [];
 };
-// --- End Trash Confirmation Logic ---
 
-
-// --- Permanent Delete Confirmation Logic ---
 const initiatePermanentDeleteConfirmation = (ids: number[] | Ref<number[]>) => {
   const actualIds = isRef(ids) ? ids.value : ids;
   if (!actualIds || actualIds.length === 0) return;
@@ -524,65 +389,38 @@ const confirmPermanentDeleteMessages = async () => {
 
   console.log('Confirming permanent delete for IDs:', messageIdsToConfirmPermanentDelete.value);
   try {
-    // Call deleteMessage for each ID
     for (const id of messageIdsToConfirmPermanentDelete.value) {
-        await deleteMessage(id); // Call the permanent delete function
+      await deleteMessage(id); 
     }
-
-    // Close opened message if it was deleted
     if (openedMessage.value && messageIdsToConfirmPermanentDelete.value.includes(openedMessage.value.id)) {
-        openedMessage.value = null;
+      openedMessage.value = null;
     }
-     
-    // Clear selection if it matches the deleted items
     if (selectedMessages.value.length > 0 && messageIdsToConfirmPermanentDelete.value.every(id => selectedMessages.value.includes(id)) && messageIdsToConfirmPermanentDelete.value.length === selectedMessages.value.length) {
-         selectedMessages.value = [];
+      selectedMessages.value = [];
     }
-
-    await fetchAllMessages(); // Refresh list
+    await fetchAllMessages(); 
   } catch (error) {
     console.error('Error permanently deleting messages:', error);
-    // TODO: Show error notification to user
   } finally {
     isPermanentDeleteConfirmDialogVisible.value = false;
     messageIdsToConfirmPermanentDelete.value = [];
   }
 };
-// --- End Permanent Delete Confirmation Logic ---
 
 </script>
 
 <template v-if="messages && messages.length">
-  <VLayout
-    style="min-block-size: 100%;"
-    class="email-app-layout"
-  >
-    <VNavigationDrawer
-      v-model="isLeftSidebarOpen"
-      absolute
-      touchless
-      location="start"
-      :temporary="$vuetify.display.mdAndDown"
-    >
-      <EmailLeftSidebarContent
-        :messages-meta="messagesMeta"
-        @toggle-compose-dialog-visibility="isComposeDialogVisible = !isComposeDialogVisible"
-      />
+  <VLayout style="min-block-size: 100%;" class="email-app-layout">
+    <VNavigationDrawer v-model="isLeftSidebarOpen" absolute touchless location="start" :temporary="$vuetify.display.mdAndDown">
+      <EmailLeftSidebarContent :messages-meta="messagesMeta" @toggle-compose-dialog-visibility="isComposeDialogVisible = !isComposeDialogVisible" />
     </VNavigationDrawer>
     <VMain>
-      <VCard
-        flat
-        class="email-content-list h-100 d-flex flex-column"
-      >
+      <VCard flat class="email-content-list h-100 d-flex flex-column">
         <div class="d-flex align-center">
-          <IconBtn
-            class="d-lg-none ms-3"
-            @click="isLeftSidebarOpen = true"
-          >
+          <IconBtn class="d-lg-none ms-3" @click="isLeftSidebarOpen = true">
             <VIcon icon="bx-menu" />
           </IconBtn>
 
-          <!-- 👉 Search -->
           <VTextField
             v-model="q"
             density="default"
@@ -601,227 +439,97 @@ const confirmPermanentDeleteMessages = async () => {
         <VDivider />
         
         <template v-if="!openedMessage">
-        <!-- 👉 Action bar -->
-        <div class="py-2 px-4 d-flex align-center d-flex gap-x-1">
-          <!-- TODO: Make checkbox primary on indeterminate state -->
-          <VCheckbox
-            :model-value="selectAllEmailCheckbox"
-            :indeterminate="isSelectAllEmailCheckboxIndeterminate"
-            class="d-flex"
-            @update:model-value="selectAllCheckboxUpdate"
-          />
-          <div
-            class="w-100 d-flex align-center action-bar-actions gap-x-1"
-          >
-            <!-- Trash Button (Move to Trash) -->
-            <!-- Show unless in trash view -->
-            <IconBtn
-              v-if="route.params.filter !== 'trash'" 
-              v-show="selectedMessages.length > 0" 
-              @click="initiateTrashConfirmation(selectedMessages)" 
+          <div class="py-2 px-4 d-flex align-center gap-x-1">
+            <VCheckbox :model-value="selectAllEmailCheckbox" :indeterminate="isSelectAllEmailCheckboxIndeterminate" class="d-flex" @update:model-value="selectAllCheckboxUpdate"/>
+            <div
+              class="w-100 d-flex align-center action-bar-actions gap-x-1"
             >
-              <VIcon icon="bx-trash" size="22" />
-              <VTooltip activator="parent" location="top"> Move to Trash </VTooltip>
-            </IconBtn>
-
-            <!-- Delete Forever Button -->
-            <!-- Show ONLY in trash view -->
-            <IconBtn
-              v-if="route.params.filter === 'trash'" 
-              v-show="selectedMessages.length > 0"
-              color="error"
-              @click="initiatePermanentDeleteConfirmation(selectedMessages)"
-            >
-              <VIcon icon="bxs-trash" size="22" /> <!-- Use filled icon -->
-              <VTooltip activator="parent" location="top"> Delete Forever </VTooltip>
-            </IconBtn>
-
-            <!-- Mark unread/read -->
-            <IconBtn @click="isAllMarkRead ? handleActionClick('unread') : handleActionClick('read') ">
-              <VIcon
-                :icon="isAllMarkRead ? 'bx-envelope' : 'bx-envelope-open'"
-                size="22"
-              />
-              <VTooltip
-                activator="parent"
-                location="top"
-              >
-                {{ isAllMarkRead ? 'Mark as Unread' : 'Mark as Read' }}
-              </VTooltip>
-            </IconBtn>
-            <!-- Move to folder -->
-            <IconBtn>
-              <VIcon
-                icon="bx-folder"
-                size="22"
-              />
-              <VTooltip
-                activator="parent"
-                location="top"
-              >
-                Folder
-              </VTooltip>
-              <VMenu activator="parent">
-                <VList density="compact">
-                  <template
-                    v-for="moveTo in emailMoveToFolderActions"
-                    :key="moveTo.title"
-                  >
-                    <VListItem
-                      :class="shallShowMoveToActionFor(moveTo.action) ? 'd-flex' : 'd-none'"
-                      href="#"
-                      class="items-center"
-                      @click="handleMoveMailsTo(moveTo.action)"
-                    >
-                      <template #prepend>
-                        <VIcon
-                          :icon="moveTo.icon"
-                          class="me-2"
-                          size="20"
-                        />
-                      </template>
-                      <VListItemTitle class="text-capitalize">
-                        {{ moveTo.action }}
-                      </VListItemTitle>
+              <IconBtn v-if="shallShowMoveToActionFor('archive')" @click="handleMoveMailsTo('archive')">
+                <VIcon icon="bx-archive" size="22" />
+                <VTooltip activator="parent" location="top">Archive</VTooltip>
+              </IconBtn>
+              <IconBtn v-if="shallShowMoveToActionFor('inbox')" @click="handleMoveMailsTo('inbox')">
+                <VIcon icon="bx-envelope" size="22" />
+                <VTooltip activator="parent" location="top">Move to Inbox</VTooltip>
+              </IconBtn>
+              <IconBtn v-if="shallShowMoveToActionFor('trash')" @click="initiateTrashConfirmation(selectedMessages)">
+                <VIcon icon="bx-trash" size="22" />
+                <VTooltip activator="parent" location="top">Move to Trash</VTooltip>
+              </IconBtn>
+              <IconBtn v-if="route.params.filter === 'trash'" color="error" @click="initiatePermanentDeleteConfirmation(selectedMessages)">
+                <VIcon icon="bxs-trash" size="22" />
+                <VTooltip activator="parent" location="top">Delete Forever</VTooltip>
+              </IconBtn>
+              <IconBtn @click="handleActionClick(isAllMarkRead ? 'unread' : 'read')">
+                <VIcon :icon="isAllMarkRead ? 'bx-envelope' : 'bx-envelope-open'" size="22"/>
+                <VTooltip activator="parent" location="top">{{ isAllMarkRead ? 'Mark as Unread' : 'Mark as Read' }}</VTooltip>
+              </IconBtn>
+              <IconBtn>
+                <VIcon icon="bx-label" size="22"/>
+                <VTooltip activator="parent" location="top">Label</VTooltip>
+                <VMenu activator="parent">
+                  <VList density="compact">
+                    <VListItem v-for="label in userLabels" :key="label.title" href="#" @click="handleEmailLabels(label.title)">
+                      <template #prepend><VBadge inline :color="resolveLabelColor(label.title)" dot/></template>
+                      <VListItemTitle class="ms-2 text-capitalize">{{ label.title }}</VListItemTitle>
                     </VListItem>
-                  </template>
-                </VList>
-              </VMenu>
-            </IconBtn>
-            <!-- Update labels -->
-            <IconBtn>
-              <VIcon
-                icon="bx-label"
-                size="22"
-              />
-              <VTooltip
-                activator="parent"
-                location="top"
-              >
-                Label
-              </VTooltip>
-              <VMenu activator="parent">
-                <VList density="compact">
-                  <VListItem
-                    v-for="label in userLabels"
-                    :key="label.title"
-                    href="#"
-                    @click="handleEmailLabels(label.title)"
-                  >
-                    <template #prepend>
-                      <VBadge
-                        inline
-                        :color="resolveLabelColor(label.title)"
-                        dot
-                      />
-                    </template>
-                    <VListItemTitle class="ms-2 text-capitalize">
-                      {{ label.title }}
-                    </VListItemTitle>
-                  </VListItem>
-                </VList>
-              </VMenu>
-            </IconBtn>
+                  </VList>
+                </VMenu>
+              </IconBtn>
+            </div>
+            <VSpacer />
+            <IconBtn @click="fetchAllMessages"> <VIcon icon="bx-refresh" size="22" /> </IconBtn>
           </div>
-          <VSpacer />
-          <IconBtn @click="fetchAllMessages">
-            <VIcon
-              icon="bx-refresh"
-              size="22"
-            />
-          </IconBtn>
-          <IconBtn>
-            <VIcon
-              icon="bx-dots-vertical-rounded"
-              size="22"
-            />
-          </IconBtn>
-        </div>
-        <VDivider />
-        <!-- 👉 Emails list -->
-<PerfectScrollbar v-if="messages.length" tag="ul" class="Message-list">
-  <li
-    v-for="message in messages"
-    :key="message.id"
-    class="email-item d-flex align-center pa-3 gap-1 cursor-pointer"
-    :class="[{ 'message-read': message.isRead }]"
-    @click="openMessage(message)"
-  >
-    <!-- Container for alignment -->
-    <div class="d-flex align-center flex-grow-1 gap-2"> 
-        <!-- Checkbox -->
-        <VCheckbox
-          :model-value="selectedMessages.includes(message.id)"
-          class="flex-shrink-0 me-1" 
-          @update:model-value="toggleSelectedEmail(message.id)"
-          @click.stop
-        />
-        <!-- Star -->
-        <IconBtn
-          :class="{ 'starred-button': message.isStarred }"
-          class="flex-shrink-0"
-          @click.stop="handleActionClick(message.isStarred ? 'unstar' : 'star', [message.id])"
-        >
-          <VIcon :icon="message.isStarred ? 'bxs-star' : 'bx-star'" size="22" />
-        </IconBtn>
-          
-        <!-- Sender Name -->
-        <h6 
-           v-if="message.from?.fullName" 
-           class="text-h6 font-weight-semibold flex-shrink-0 ws-no-wrap text-truncate" 
-           style=" max-inline-size: 180px;min-inline-size: 120px;"
-         >
-          {{ message.from.fullName }}
-        </h6>
-        
-        <!-- To Recipient Name -->
-        <div 
-           v-if="message.to && message.to.length > 0" 
-           class="text-caption text-medium-emphasis flex-shrink-0 ws-no-wrap text-truncate"
-           style=" max-inline-size: 180px;min-inline-size: 120px;"
-         >
-           To: {{ message.to[0]?.fullName || message.to[0]?.email || 'N/A' }}
-         </div>
-        
-         
-
-        <!-- Email Content (Subject & Body Preview) -->
-        <div class="flex-grow-1 overflow-hidden ms-2">
-           <h6 class="text-h6 font-weight-regular ws-no-wrap text-truncate mb-0">
-              {{ message.subject }}
-           </h6>
-           <div class="text-body-2 text-medium-emphasis text-truncate" v-html="message.message ? message.message.replace(/<p>|<\/p>/g, '') : ''"></div>
-        </div>
-
-         <!-- Trash/Delete Button -->
-        <IconBtn
-           v-if="route.params.filter !== 'trash'" 
-           class="ms-2 flex-shrink-0"
-           @click.stop="initiateTrashConfirmation([message.id])" 
-           color="default" 
-         >
-           <VIcon icon="bx-trash" size="22" />
-           <VTooltip activator="parent" location="top"> Move to Trash </VTooltip>
-         </IconBtn>
-          
-         <IconBtn
-           v-else 
-           class="ms-2 flex-shrink-0"
-           @click.stop="initiatePermanentDeleteConfirmation([message.id])" 
-           color="error" 
-         >
-           <VIcon icon="bxs-trash" size="22" />
-           <VTooltip activator="parent" location="top"> Delete Forever </VTooltip>
-         </IconBtn>
-    </div>
-  </li>
-</PerfectScrollbar>
+          <VDivider />
+          <PerfectScrollbar v-if="messages.length" tag="ul" class="Message-list">
+            <li
+              v-for="message in messages"
+              :key="message.id"
+              class="email-item d-flex align-center pa-3 gap-1 cursor-pointer"
+              :class="[{ 'message-read': message.isRead }]"
+              @click="openMessage(message)"
+            >
+              <div class="d-flex align-center flex-grow-1 gap-2"> 
+                <VCheckbox
+                  :model-value="selectedMessages.includes(message.id)"
+                  class="flex-shrink-0 me-1" 
+                  @update:model-value="toggleSelectedEmail(message.id)"
+                  @click.stop
+                />
+                <IconBtn
+                  :class="{ 'starred-button': message.isStarred }"
+                  class="flex-shrink-0"
+                  @click.stop="handleActionClick(message.isStarred ? 'unstar' : 'star', [message.id])"
+                >
+                  <VIcon :icon="message.isStarred ? 'bxs-star' : 'bx-star'" size="22" />
+                </IconBtn>
+                <h6 
+                  v-if="message.from?.fullName" 
+                  class="text-h6 font-weight-semibold flex-shrink-0 ws-no-wrap text-truncate" 
+                  style=" max-inline-size: 180px;min-inline-size: 120px;"
+                >
+                  {{ message.from.fullName }}
+                </h6>
+                <div 
+                  v-if="message.to && message.to.length > 0" 
+                  class="text-caption text-medium-emphasis flex-shrink-0 ws-no-wrap text-truncate"
+                  style=" max-inline-size: 180px;min-inline-size: 120px;"
+                >
+                  To: {{ message.to[0]?.fullName || message.to[0]?.email || 'N/A' }}
+                </div>
+                <div class="flex-grow-1 overflow-hidden ms-2">
+                  <h6 class="text-h6 font-weight-regular ws-no-wrap text-truncate mb-0">
+                    {{ message.subject }}
+                  </h6>
+                  <div class="text-body-2 text-medium-emphasis text-truncate" v-html="message.message ? message.message.replace(/<p>|<\/p>/g, '') : ''"></div>
+                </div>
+              </div>
+            </li>
+          </PerfectScrollbar>
         </template>
         
         <template v-else>
-          <!-- Email View Content -->
           <div class="email-detail-view">
-            <!-- 👉 header -->
             <div class="email-view-header d-flex align-center px-6 py-4">
               <IconBtn
                 class="me-2"
@@ -879,104 +587,49 @@ const confirmPermanentDeleteMessages = async () => {
 
             <VDivider />
 
-            <!-- 👉 Action bar -->
             <div class="email-view-action-bar d-flex align-center text-medium-emphasis ps-6 pe-4 gap-x-1">
-              <!-- Trash Button (Move to Trash) -->
-              <!-- Show unless already in trash -->
-              <IconBtn
-                 v-if="openedMessage.folder !== 'trash'" 
-                 @click="initiateTrashConfirmation([openedMessage.id]); openedMessage = null"
-              >
+              <IconBtn v-if="!openedMessage.isArchived && openedMessage.status !== 'deleted'" @click="handleMoveMailsTo('archive', [openedMessage.id]); openedMessage = null">
+                <VIcon icon="bx-archive" size="22" />
+                <VTooltip activator="parent" location="top">Archive</VTooltip>
+              </IconBtn>
+              <IconBtn v-if="openedMessage.isArchived" @click="handleMoveMailsTo('inbox', [openedMessage.id]); openedMessage = null">
+                <VIcon icon="bx-envelope" size="22" />
+                <VTooltip activator="parent" location="top">Move to Inbox</VTooltip>
+              </IconBtn>
+              <IconBtn v-if="openedMessage.status !== 'deleted'" @click="initiateTrashConfirmation([openedMessage.id]); openedMessage = null">
                 <VIcon icon="bx-trash" size="22" />
-                <VTooltip activator="parent" location="top"> Move to Trash </VTooltip>
+                <VTooltip activator="parent" location="top">Move to Trash</VTooltip>
               </IconBtn>
-
-              <!-- Delete Forever Button -->
-              <!-- Show ONLY if message is in trash -->
-               <IconBtn
-                 v-if="openedMessage.folder === 'trash'" 
-                 color="error"
-                 @click="initiatePermanentDeleteConfirmation([openedMessage.id]); openedMessage = null"
-               >
-                 <VIcon icon="bxs-trash" size="22" />
-                 <VTooltip activator="parent" location="top"> Delete Forever </VTooltip>
+              <IconBtn v-if="openedMessage.status === 'deleted'" color="error" @click="initiatePermanentDeleteConfirmation([openedMessage.id]); openedMessage = null">
+                <VIcon icon="bxs-trash" size="22" />
+                <VTooltip activator="parent" location="top">Delete Forever</VTooltip>
               </IconBtn>
-
-              <!-- Read/Unread -->
               <IconBtn @click="handleActionClick('unread', [openedMessage.id]); openedMessage = null">
-                <VIcon
-                  icon="bx-envelope"
-                  size="22"
-                />
-                <VTooltip
-                  activator="parent"
-                  location="top"
-                >
-                  Mark as Unread
-                </VTooltip>
+                <VIcon icon="bx-envelope" size="22" />
+                <VTooltip activator="parent" location="top">Mark as Unread</VTooltip>
               </IconBtn>
-
-              <!-- Label Dropdown -->
               <IconBtn>
-                <VIcon
-                  icon="bx-label"
-                  size="22"
-                />
-                <VTooltip
-                  activator="parent"
-                  location="top"
-                >
-                  Label
-                </VTooltip>
+                <VIcon icon="bx-label" size="22" />
+                <VTooltip activator="parent" location="top">Label</VTooltip>
                 <VMenu activator="parent">
                   <VList density="compact">
-                    <VListItem
-                      v-for="label in userLabels"
-                      :key="label.title"
-                      href="#"
-                      @click="handleEmailLabels(label.title, [openedMessage.id])" 
-                    >
-                      <template #prepend>
-                        <VBadge
-                          inline
-                          :color="resolveLabelColor(label.title)"
-                          dot
-                        />
-                      </template>
-                      <VListItemTitle class="ms-2 text-capitalize">
-                        {{ label.title }}
-                      </VListItemTitle>
+                    <VListItem v-for="label in userLabels" :key="label.title" href="#" @click="handleEmailLabels(label.title, [openedMessage.id])">
+                      <template #prepend><VBadge inline :color="resolveLabelColor(label.title)" dot /></template>
+                      <VListItemTitle class="ms-2 text-capitalize">{{ label.title }}</VListItemTitle>
                     </VListItem>
                   </VList>
                 </VMenu>
               </IconBtn>
-              <!-- End Label Dropdown -->
-
               <VSpacer />
-
               <div class="d-flex align-center gap-x-1">
-                <!-- Star/Unstar -->
-                <IconBtn
-                  :class="{ 'starred-button': openedMessage.isStarred }"
-                  @click="openedMessage.isStarred ? handleActionClick('unstar', [openedMessage.id]) : handleActionClick('star', [openedMessage.id]); refreshOpenedMessage()"
-                >
-                  <VIcon
-                    :icon="openedMessage.isStarred ? 'bx-bxs-star' : 'bx-star'"
-                    size="22"
-                  />
-                </IconBtn>
-                <IconBtn>
-                  <VIcon
-                    icon="bx-dots-vertical-rounded"
-                    size="22"
-                  />
+                <IconBtn :class="{ 'starred-button': openedMessage.isStarred }" @click="handleActionClick(openedMessage.isStarred ? 'unstar' : 'star', [openedMessage.id])">
+                  <VIcon :icon="openedMessage.isStarred ? 'bxs-star' : 'bx-star'" size="22" />
                 </IconBtn>
               </div>
             </div>
 
             <VDivider />
 
-            <!-- 👉 Mail Content -->
             <PerfectScrollbar
               tag="div"
               class="mail-content-container flex-grow-1 pa-sm-12 pa-6"
@@ -1014,15 +667,7 @@ const confirmPermanentDeleteMessages = async () => {
                 <VDivider />
 
                 <VCardText>
-                  <!-- eslint-disable vue/no-v-html -->
-                  <div class="text-body-1 font-weight-medium text-truncate mb-4">
-                    {{ openedMessage.from?.fullName || 'Unknown Sender' }},
-                  </div>
-                  <div
-                    class="text-base"
-                    v-html="openedMessage.message || ''"
-                  />
-                  <!-- eslint-enable -->
+                  <div class="text-base" v-html="openedMessage.message || ''" />
                 </VCardText>
 
                 <template v-if="openedMessage.attachments && openedMessage.attachments.length">
@@ -1049,13 +694,12 @@ const confirmPermanentDeleteMessages = async () => {
                 </template>
               </VCard>
 
-              <!-- Reply or Forward -->
-              <VCard>
+              <VCard v-if="!showReplyForm">
                 <VCardText class="font-weight-medium text-high-emphasis">
                   <div class="text-base">
                     Click here to <span
                       class="text-primary cursor-pointer"
-                      @click="showReplyForm = !showReplyForm"
+                      @click="showReplyForm = true"
                     >
                       Reply
                     </span>
@@ -1063,7 +707,6 @@ const confirmPermanentDeleteMessages = async () => {
                 </VCardText>
               </VCard>
 
-              <!-- Reply Form -->
               <VCard v-if="showReplyForm" class="mt-4">
                 <VCardText>
                   <div class="text-body-1 text-high-emphasis mb-6">
@@ -1113,38 +756,36 @@ const confirmPermanentDeleteMessages = async () => {
         @refresh="fetchAllMessages"
       />
       
-       <!-- Move to Trash Confirmation Dialog -->
-        <VDialog v-model="isTrashConfirmDialogVisible" max-width="500px">
-          <VCard>
-            <VCardTitle>Confirm Move to Trash</VCardTitle>
-            <VCardText>
-              Are you sure you want to move the selected message(s) to the trash?
-            </VCardText>
-            <VCardActions>
-              <VSpacer />
-              <VBtn color="secondary" @click="isTrashConfirmDialogVisible = false">Cancel</VBtn>
-              <VBtn color="error" @click="confirmTrashMessages">Move to Trash</VBtn>
-            </VCardActions>
-          </VCard>
-        </VDialog>
+      <VDialog v-model="isTrashConfirmDialogVisible" max-width="500px">
+        <VCard>
+          <VCardTitle>Confirm Move to Trash</VCardTitle>
+          <VCardText>
+            Are you sure you want to move the selected message(s) to the trash?
+          </VCardText>
+          <VCardActions>
+            <VSpacer />
+            <VBtn color="secondary" @click="isTrashConfirmDialogVisible = false">Cancel</VBtn>
+            <VBtn color="error" @click="confirmTrashMessages">Move to Trash</VBtn>
+          </VCardActions>
+        </VCard>
+      </VDialog>
 
-        <!-- Permanent Delete Confirmation Dialog -->
-        <VDialog v-model="isPermanentDeleteConfirmDialogVisible" max-width="500px">
-          <VCard>
-            <VCardTitle class="text-h5 error--text">Confirm Permanent Deletion</VCardTitle>
-            <VCardText>
-              <VAlert type="warning" dense outlined class="mb-3">
-                This action cannot be undone.
-              </VAlert>
-              Are you sure you want to permanently delete the selected message(s)?
-            </VCardText>
-            <VCardActions>
-              <VSpacer />
-              <VBtn color="secondary" @click="isPermanentDeleteConfirmDialogVisible = false">Cancel</VBtn>
-              <VBtn color="error" @click="confirmPermanentDeleteMessages">Delete Forever</VBtn>
-            </VCardActions>
-          </VCard>
-        </VDialog>
+      <VDialog v-model="isPermanentDeleteConfirmDialogVisible" max-width="500px">
+        <VCard>
+          <VCardTitle class="text-h5 error--text">Confirm Permanent Deletion</VCardTitle>
+          <VCardText>
+            <VAlert type="warning" dense outlined class="mb-3">
+              This action cannot be undone.
+            </VAlert>
+            Are you sure you want to permanently delete the selected message(s)?
+          </VCardText>
+          <VCardActions>
+            <VSpacer />
+            <VBtn color="secondary" @click="isPermanentDeleteConfirmDialogVisible = false">Cancel</VBtn>
+            <VBtn color="error" @click="confirmPermanentDeleteMessages">Delete Forever</VBtn>
+          </VCardActions>
+        </VCard>
+      </VDialog>
     </VMain>
   </VLayout>
 </template>
@@ -1153,7 +794,6 @@ const confirmPermanentDeleteMessages = async () => {
 @use "@styles/variables/vuetify";
 @use "@core-scss/base/mixins";
 
-// ℹ️ Remove border. Using variant plain cause UI issue, caret isn't align in center
 .email-search {
   .v-field__outline {
     display: none;
@@ -1212,7 +852,6 @@ const confirmPermanentDeleteMessages = async () => {
 
     @include mixins.elevation(4);
 
-    // ℹ️ Don't show actions on hover on mobile & tablet devices
     @media screen and (min-width: 1280px) {
       .email-actions {
         display: block !important;
@@ -1248,7 +887,6 @@ const confirmPermanentDeleteMessages = async () => {
   }
 }
 
-/* Email detail view styles */
 .email-detail-view {
   display: flex;
   flex-direction: column;

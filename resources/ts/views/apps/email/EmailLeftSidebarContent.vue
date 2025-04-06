@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useEmail } from '@/views/apps/email/useEmail';
 import { computed, defineEmits, defineProps, ref, watch } from 'vue';
+import type { RouteLocationRaw } from 'vue-router';
 import { PerfectScrollbar } from 'vue3-perfect-scrollbar';
 
 defineOptions({
@@ -53,37 +54,24 @@ const folders = computed(() => [
   {
     title: 'Inbox',
     prependIcon: 'bx-envelope',
-    to: { name: 'apps-email' },
+    to: { name: 'apps-email' } as RouteLocationRaw,
     badge: { content: inboxEmails.value, color: 'primary' },
   },
   {
     title: 'Sent',
-    prependIcon: 'bx-send',
-    to: { name: 'apps-email-filter', params: { filter: 'sent' } },
+    prependIcon: 'bx-paper-plane',
+    to: { name: 'apps-email-filter', params: { filter: 'sent' } } as RouteLocationRaw,
   },
-  // {
-  //   title: 'Draft',
-  //   prependIcon: 'bx-edit',
-  //   to: { name: 'apps-email-filter', params: { filter: 'draft' } },
-  //   badge: { content: draftEmails.value, color: 'warning' },
-  // },
   {
-    title: 'Starred',
-    prependIcon: 'bx-star',
-    to: { name: 'apps-email-filter', params: { filter: 'starred' } },
-    badge: { content: starredEmails.value, color: 'success' },
+    title: 'Archive',
+    prependIcon: 'bx-archive',
+    to: { name: 'apps-email-filter', params: { filter: 'archive' } } as RouteLocationRaw,
   },
   {
     title: 'Trash',
     prependIcon: 'bx-trash',
-    to: { name: 'apps-email-filter', params: { filter: 'trash' } },
+    to: { name: 'apps-email-filter', params: { filter: 'trash' } } as RouteLocationRaw,
   },
-  // {
-  //   title: 'Spam',
-  //   prependIcon: 'bx-error-alt',
-  //   to: { name: 'apps-email-filter', params: { filter: 'spam' } },
-  //   badge: { content: spamEmails.value, color: 'error' },
-  // },
 ])
 
 // Local state for the add label form
@@ -197,7 +185,7 @@ const handleAddLabel = async () => {
           >
             <RouterLink
               v-slot="{ isActive, navigate }"
-              :to="{ name: 'apps-email-label', params: { label: label.title.toLowerCase() } }"
+              :to="{ name: 'apps-email-label', params: { label: label.title.toLowerCase() } } as RouteLocationRaw"
               custom
             >
               <div

@@ -23,11 +23,17 @@ class Message extends Model
         'reply_to_id',
         'status',
         'is_starred',
+        'task_status',
+        'due_date',
+        'is_archived',
     ];
 
     protected $casts = [
         'status' => 'string', // ENUM values are stored as strings
         'is_starred' => 'boolean',
+        'task_status' => 'string', // Cast enum to string
+        'due_date' => 'date',     // Cast to date object
+        'is_archived' => 'boolean',
     ];
 
     public function sender(): BelongsTo

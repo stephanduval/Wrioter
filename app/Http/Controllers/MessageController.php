@@ -46,37 +46,36 @@ class MessageController extends Controller
         });
         // --- End Initial Query ---
 
-        if ($filter) {
+        // --- Apply Archive Filter First ---
+        // By default, exclude archived unless specifically requested
+        if ($filter === 'archive') {
+            Log::info("Applying filter: archive");
+            $query->where('is_archived', true);
+        } else {
+            // For all other views (inbox, sent, starred, trash, labels, default), exclude archived
+            $query->where('is_archived', false); 
+        }
+        // --- End Archive Filter ---
+
+        if ($filter && $filter !== 'archive') { // Process other filters only if not archive
             Log::info("Applying filter: {$filter}");
             switch ($filter) {
                 case 'starred':
                     // Starred can be from sender or receiver perspective, assuming receiver here primarily
                     $query->where('is_starred', true)->where('receiver_id', $userId); // Or adjust if sender's starred matters
                     break;
-                case 'draft':
-                    // Drafts are only relevant to the sender
-                    $query->where('status', 'draft')->where('sender_id', $userId); 
-                    break;
-                case 'sent': // <<<--- Add Sent Case
+                case 'sent': 
                     // Sent items are only relevant to the sender
                     $query->where('status', 'sent')->where('sender_id', $userId); 
                     break; 
-                case 'spam':
-                     // Spam usually relates to received mail
-                     $query->where('status', 'spam')->where('receiver_id', $userId); 
-                     break;
-                 case 'trash':
+                case 'trash':
                      // Trash can contain items user received or sent
-                     $query->where('status', 'deleted')
-                           ->where(function ($q) use ($userId) { // Ensure user owns the trashed item
-                               $q->where('receiver_id', $userId)
-                                 ->orWhere('sender_id', $userId);
-                            });
+                     $query->where('status', 'deleted'); // Applies to both sender/receiver owned items in trash
                      break;
-                // Default case (inbox) - show non-archived/deleted/spam/draft for receiver
-                default:
+                // Default case (inbox) 
+                default: // Handles 'inbox' or any other filter value not explicitly caught
                     $query->where('receiver_id', $userId)
-                          ->whereNotIn('status', ['archived', 'deleted', 'spam', 'draft']);
+                          ->whereNotIn('status', ['deleted', 'draft', 'spam']); // Keep existing non-deleted/draft logic for inbox
             }
         } elseif ($label) {
             Log::info("Applying label filter: {$label}");
@@ -85,11 +84,11 @@ class MessageController extends Controller
                  $labelQuery->where('label_name', $label)
                             ->where('user_id', $userId); // Assuming labels belong to users
              })->where('receiver_id', $userId); // Typically labels apply to received mail
-        } else {
-            // Default to Inbox view
-            Log::info("Defaulting to Inbox view");
-            $query->where('receiver_id', $userId)
-                   ->whereNotIn('status', ['archived', 'deleted', 'spam', 'draft']);
+        } elseif (!$filter) { // This is the default inbox view (no filter param)
+             Log::info("Defaulting to Inbox view (no filter specified)");
+             $query->where('receiver_id', $userId)
+                    ->where('is_archived', false) // Ensure inbox excludes archived
+                    ->whereNotIn('status', ['deleted', 'draft', 'spam']);
         }
 
         // Execute the query
@@ -112,6 +111,7 @@ class MessageController extends Controller
         $rules = [
             'company_id' => 'required|exists:companies,id',
             'subject' => 'required|string|max:255',
+            'due_date' => 'nullable|date_format:Y-m-d', // Validate due_date
         ];
 
         if ($isReply) {
@@ -139,6 +139,9 @@ class MessageController extends Controller
             'body' => $isReply ? $validated['body'] : $validated['message'], 
             'reply_to_id' => $isReply ? $validated['reply_to_id'] : null, 
             'status' => 'sent',
+            'task_status' => 'new',     // Default task status
+            'due_date' => $validated['due_date'] ?? null, // Add due date
+            'is_archived' => false,    // Default archive status
         ];
 
         Log::info('MessageController::store - Attempting to create message with:', $createData); 
@@ -183,10 +186,13 @@ class MessageController extends Controller
 
         // Validate the incoming data first
         $validatedData = $request->validate([
-            'status' => 'sometimes|string|in:read,unread,sent,draft,archived,deleted,spam',
+            'status' => 'sometimes|string|in:read,unread,deleted', // Removed sent, draft, spam, archived from here
+            'task_status' => 'sometimes|string|in:new,completed', // Validate new task status
+            'due_date' => 'sometimes|nullable|date_format:Y-m-d', // Allow updating/clearing due date
+            'is_archived' => 'sometimes|boolean', // Allow updating archive status
             'isStarred' => 'sometimes|boolean',
-            'folder' => 'sometimes|string',
-            'isDeleted' => 'sometimes|boolean',
+            'folder' => 'sometimes|string|in:inbox,trash,archive', // Updated allowed folders
+            'isDeleted' => 'sometimes|boolean', // Keep for potential backward compat/alternative trash trigger
             'toggleLabel' => 'sometimes|string|max:191',
         ]);
 
@@ -218,27 +224,70 @@ class MessageController extends Controller
         }
         // --- End Handle Label Toggling ---
 
-        // --- Handle Status and Folder Updates ---
+        // --- Handle Status, Archive, Task Status, Due Date Updates ---
 
-        // Explicitly check for moving to trash via folder or isDeleted flag
-        if ( (isset($validatedData['folder']) && $validatedData['folder'] === 'trash') || (isset($validatedData['isDeleted']) && $validatedData['isDeleted'] === true) ) {
-             Log::info("Marking message {$id} as deleted (moving to trash).");
-             $message->status = 'deleted'; // Set status to 'deleted'
-        } 
-        // Handle other status updates if not moving to trash
-        elseif (isset($validatedData['status']) && in_array($validatedData['status'], ['read', 'unread', 'sent', 'draft', 'archived', 'spam'])) {
-            Log::info("Setting message {$id} status to: " . $validatedData['status']);
-            $message->status = $validatedData['status'];
+        // 1. Archive Status (explicit is_archived flag takes precedence)
+        if (isset($validatedData['is_archived'])) {
+            $message->is_archived = $validatedData['is_archived'];
+            Log::info("Setting archive status to: " . ($message->is_archived ? 'true' : 'false'));
+            // If archiving, potentially clear 'deleted' status if moving from trash
+            if ($message->is_archived && $message->status === 'deleted') {
+                 $message->status = 'read'; // Or 'unread' based on previous state? Defaulting to read.
+            }
         }
-        // Also handle moving to spam via folder property
-        elseif (isset($validatedData['folder']) && $validatedData['folder'] === 'spam') {
-             Log::info("Marking message {$id} as spam.");
-             $message->status = 'spam'; 
+        // Archive Status (via folder property)
+        elseif (isset($validatedData['folder']) && $validatedData['folder'] === 'archive') {
+             if (!$message->is_archived) { // Only log/update if changing
+                 Log::info("Archiving message {$id} via folder property.");
+                 $message->is_archived = true;
+                 if ($message->status === 'deleted') { $message->status = 'read'; } // Clear deleted status
+             }
+        }
+         // Unarchive Status (via folder property = inbox)
+         elseif (isset($validatedData['folder']) && $validatedData['folder'] === 'inbox') {
+            if ($message->is_archived) { // Only log/update if changing
+                Log::info("Unarchiving message {$id} via folder property.");
+                $message->is_archived = false;
+            }
+         }
+
+        // 2. Trash Status (explicit status=deleted or folder=trash or isDeleted=true)
+        if ( (isset($validatedData['status']) && $validatedData['status'] === 'deleted') || (isset($validatedData['folder']) && $validatedData['folder'] === 'trash') || (isset($validatedData['isDeleted']) && $validatedData['isDeleted'] === true) ) {
+             if ($message->status !== 'deleted') { // Only log/update if changing
+                 Log::info("Marking message {$id} as deleted (moving to trash).");
+                 $message->status = 'deleted'; 
+                 $message->is_archived = false; // Cannot be archived and trashed simultaneously
+             }
+        } 
+        // 3. Read/Unread Status (only if not being deleted/archived in the same request)
+        elseif (isset($validatedData['status']) && in_array($validatedData['status'], ['read', 'unread']) && $message->status !== 'deleted' && !$message->is_archived) {
+             if ($message->status !== $validatedData['status']) { // Only log/update if changing
+                 Log::info("Setting message {$id} status to: " . $validatedData['status']);
+                 $message->status = $validatedData['status'];
+             }
+        }
+
+        // 4. Task Status
+        if (isset($validatedData['task_status'])) {
+             if ($message->task_status !== $validatedData['task_status']) {
+                Log::info("Setting task status to: " . $validatedData['task_status']);
+                $message->task_status = $validatedData['task_status'];
+             }
         }
         
-        // Handle is_starred update if the field exists in the request input
+        // 5. Due Date (allow setting or clearing)
+        if (array_key_exists('due_date', $validatedData)) { // Check if key exists (even if null)
+             if ($message->due_date != $validatedData['due_date']) { // Use loose comparison for dates/null
+                Log::info("Setting due date to: " . ($validatedData['due_date'] ?? 'null'));
+                $message->due_date = $validatedData['due_date'];
+             }
+        }
+
+        // 6. Starred Status
         if (isset($validatedData['isStarred'])) {
-            $message->is_starred = $validatedData['isStarred'];
+             if ($message->is_starred != $validatedData['isStarred']) {
+                $message->is_starred = $validatedData['isStarred'];
+             }
         }
         
         // --- End Status/Folder Updates ---

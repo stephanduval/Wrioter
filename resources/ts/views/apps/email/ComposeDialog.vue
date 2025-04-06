@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import { useEmail } from '@/views/apps/email/useEmail';
 import { onMounted, ref } from 'vue';
 
 const emit = defineEmits<{
@@ -6,11 +7,14 @@ const emit = defineEmits<{
   (e: 'refresh'): void
 }>()
 
+const { createMessage } = useEmail();
+
 const content = ref('')
 
 const to = ref('')
 const subject = ref('')
 const message = ref('')
+const dueDate = ref<string | null>(null);
 
 const cc = ref('')
 const bcc = ref('')
@@ -92,66 +96,66 @@ const onInputChange = (value: string, field: 'to' | 'cc' | 'bcc') => {
   filterUsers(value, field)
 }
 
-// Add a function to send message
+// Update sendMessage to use composable and include due date
 const sendMessage = async () => {
+  console.log("ComposeDialog: sendMessage called");
+  // Basic validation
   if (!to.value || !subject.value || !content.value) {
-    // Show an error or alert that all fields are required
-    console.error('All fields are required')
-    return
+    console.error('To, Subject, and Message fields are required');
+    // TODO: Add user feedback (e.g., toast notification)
+    return;
   }
   
-  // Extract email from the formatted string (e.g., "John Doe <john@example.com>")
-  const receiverEmail = to.value.match(/<(.+)>/)?.[1] || to.value
-  
-  // Find the user by email
-  const receiver = users.value.find(user => user.email === receiverEmail)
-  
-  if (!receiver) {
-    console.error('Recipient not found')
-    return
+  // Extract email and find receiver ID (keep existing logic)
+  const receiverEmail = to.value.match(/<(.+)>/)?.[1] || to.value;
+  const receiver = users.value.find(user => user.email === receiverEmail);
+  const receiverId = receiver ? receiver.id : null; // Get ID or null
+
+  if (!receiver && to.value.trim() !== '') { // Allow sending without recipient? If so, receiverId should be null. Adjust logic if recipient is mandatory.
+      console.warn('Recipient not found in user list, sending without specific receiver_id');
+      // If recipient email *must* match a user, add error handling here:
+      // console.error('Recipient not found');
+      // return;
   }
   
+  // Prepare payload for the composable function
+  const payload = {
+    receiver_id: receiverId, 
+    company_id: 1, // Adjust as needed
+    subject: subject.value,
+    message: content.value, // Use 'content' which is bound to TiptapEditor
+    due_date: dueDate.value || null // Pass due date (or null)
+    // attachments: [] // Add attachment handling if needed later
+  };
+
+  console.log("ComposeDialog: Sending payload:", payload);
+
   try {
-    const response = await fetch('/api/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-      },
-      body: JSON.stringify({
-        receiver_id: receiver.id,
-        company_id: 1, // Default to company ID 1 - adjust as needed for your app
-        subject: subject.value,
-        message: content.value,
-      }),
-    })
-    
-    if (!response.ok) {
-      const errorData = await response.json()
-      console.error('Error response:', errorData)
-      throw new Error('Failed to send message: ' + JSON.stringify(errorData))
+    // Call the composable's createMessage function
+    const result = await createMessage(payload); 
+
+    if (result && result.message === 'Message sent successfully') {
+      console.log('ComposeDialog: Message sent successfully');
+      resetValues(); // Reset form fields
+      content.value = ''; // Clear editor content specifically
+      emit('close');
+      emit('refresh');
+    } else {
+      console.error('ComposeDialog: Failed to send message, API returned error or unexpected response:', result);
+      // TODO: Show error feedback
     }
-    
-    // Reset form and close dialog
-    resetValues()
-    content.value = ''
-    
-    // Notify parent component or show success message
-    console.log('Message sent successfully')
-    
-    // Close the dialog
-    emit('close')
-    emit('refresh')
   } catch (error) {
-    console.error('Error sending message:', error)
+    console.error('ComposeDialog: Error sending message:', error);
+     // TODO: Show error feedback
   }
 }
 
-// Replace the existing resetValues function
+// Update resetValues to include dueDate
 const resetValues = () => {
-  to.value = subject.value = ''
-  cc.value = bcc.value = ''
-  filteredToUsers.value = filteredCcUsers.value = filteredBccUsers.value = []
+  to.value = subject.value = '';
+  cc.value = bcc.value = '';
+  filteredToUsers.value = filteredCcUsers.value = filteredBccUsers.value = [];
+  dueDate.value = null; // Reset due date
 }
 </script>
 
@@ -315,6 +319,23 @@ const resetValues = () => {
     </div>
 
     <VDivider />
+    <div class="px-1 pe-6 py-1">
+      <VTextField 
+        v-model="dueDate" 
+        density="compact" 
+        type="date"  
+        placeholder="YYYY-MM-DD"
+        clearable 
+      >
+        <template #prepend-inner>
+          <div class="text-base font-weight-medium text-disabled">
+            Due Date:
+          </div>
+        </template>
+      </VTextField>
+    </div>
+
+    <VDivider />
 
     <!-- 👉 Tiptap Editor  -->
     <TiptapEditor
@@ -327,7 +348,7 @@ const resetValues = () => {
         color="primary"
         class="me-4"
         append-icon="bx-paper-plane"
-        :disabled="to === '' ? true : false"
+        :disabled="!subject || !content"
         @click="sendMessage"
       >
         send
