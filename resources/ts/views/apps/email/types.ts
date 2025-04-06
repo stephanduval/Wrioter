@@ -40,7 +40,7 @@ export interface Email {
   reply_to_id?: number | null;
   requestedDate?: string | Date; // Added for 'Requested' column (maps from created_at)
   dueDate?: string | null;       // Added Due Date (YYYY-MM-DD or null)
-  task_status: 'new' | 'completed'; // Added Task Status
+  task_status?: 'new' | 'in_process' | 'completed'; // Added Task Status
   isArchived: boolean;          // Added Archive flag
 }
 

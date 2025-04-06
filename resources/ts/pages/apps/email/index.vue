@@ -88,6 +88,21 @@ const formatDate = (dateString: string | Date | undefined | null, includeTime = 
   }
 };
 
+// New helper for status colors
+const resolveStatusColor = (status?: 'new' | 'in_process' | 'completed' | null): string => {
+  if (status === 'new') return 'primary'
+  if (status === 'in_process') return 'warning'
+  if (status === 'completed') return 'success'
+  return 'secondary'
+}
+
+// Task status options for the dropdown
+const taskStatusOptions: { title: string, value: 'new' | 'in_process' | 'completed' }[] = [
+  { title: 'New', value: 'new' },
+  { title: 'In Progress', value: 'in_process' },
+  { title: 'Completed', value: 'completed' },
+];
+
 // --- Selection Logic ---
 const toggleSelectedEmail = (emailId: number) => {
   const emailIndex = selectedMessages.value.indexOf(emailId)
@@ -109,7 +124,6 @@ const isSelectAllEmailCheckboxIndeterminate = computed(
 const isAllMarkRead = computed (() => {
   return selectedMessages.value.every(messageId => messages.value.find(message => message.id === messageId)?.isRead)
 })
-
 
 const selectAllCheckboxUpdate = () => {
   selectedMessages.value = !selectAllEmailCheckbox.value
@@ -264,21 +278,54 @@ const handleEmailLabels = async (labelTitle: EmailLabel, messageIds: number[] | 
   }
 }
 
-// Handle Task Status Toggle
+// UPDATED: Handle Task Status Toggle for a single message (cycles through statuses)
 const handleTaskStatusToggle = async (message: Email) => {
-  const newStatus = message.task_status === 'new' ? 'completed' : 'new';
-  console.log(`Toggling task status for message ${message.id} to ${newStatus}`);
+  let newStatus: 'new' | 'in_process' | 'completed';
+  if (message.task_status === 'new') {
+    newStatus = 'in_process';
+  } else if (message.task_status === 'in_process') {
+    newStatus = 'completed';
+  } else { // completed or null/undefined
+    newStatus = 'new';
+  }
+
+  console.log(`Cycling task status for message ${message.id} to ${newStatus}`);
   try {
-    await updateEmails([message.id], { task_status: newStatus });
+    await updateEmails([message.id], { task_status: newStatus } as PartialDeep<Email>);
     message.task_status = newStatus;
-    if(openedMessage.value?.id === message.id) {
-      openedMessage.value.task_status = newStatus;
-    }
+    // No need to update openedMessage here as it's the same object reference
   } catch (error) {
     console.error(`Error updating task status for message ${message.id}:`, error);
   }
 };
 
+// NEW: Handle updating task status for SELECTED messages to a specific status
+const handleSelectedTaskStatusUpdate = async (status: 'new' | 'in_process' | 'completed') => {
+  const ids = selectedMessages.value;
+  if (!ids || ids.length === 0) return;
+
+  console.log(`Updating task status for selected messages ${ids} to ${status}`);
+
+  try {
+    await updateEmails(ids, { task_status: status } as PartialDeep<Email>);
+
+    // Update local state
+    messages.value.forEach(msg => {
+      if (ids.includes(msg.id)) {
+        msg.task_status = status;
+      }
+    });
+    if (openedMessage.value && ids.includes(openedMessage.value.id)) {
+      openedMessage.value.task_status = status;
+    }
+
+    // Clear selection after action
+    selectedMessages.value = [];
+
+  } catch (error) {
+    console.error(`Error updating task status for selected messages:`, error);
+  }
+};
 
 // --- Reply Logic ---
 const sendReply = async () => {
@@ -441,7 +488,26 @@ const confirmPermanentDeleteMessages = async () => {
                 <VIcon :icon="isAllMarkRead ? 'bx-envelope' : 'bx-envelope-open'" size="22"/>
                 <VTooltip activator="parent" location="top">{{ isAllMarkRead ? 'Mark as Unread' : 'Mark as Read' }}</VTooltip>
               </IconBtn>
-              <IconBtn>
+              <IconBtn :disabled="!selectedMessages.length">
+                <VIcon icon="bx-comment-check" size="22"/>
+                <VTooltip activator="parent" location="top">Change Task Status</VTooltip>
+                <VMenu activator="parent">
+                  <VList density="compact">
+                    <VListItem 
+                      v-for="statusOption in taskStatusOptions" 
+                      :key="statusOption.value" 
+                      href="#" 
+                      @click="handleSelectedTaskStatusUpdate(statusOption.value)"
+                    >
+                      <template #prepend>
+                        <VBadge inline :color="resolveStatusColor(statusOption.value)" dot/>
+                      </template>
+                      <VListItemTitle class="ms-2">{{ statusOption.title }}</VListItemTitle>
+                    </VListItem>
+                  </VList>
+                </VMenu>
+              </IconBtn>
+              <IconBtn :disabled="!selectedMessages.length">
                 <VIcon icon="bx-label" size="22"/>
                 <VTooltip activator="parent" location="top">Label</VTooltip>
                 <VMenu activator="parent">
@@ -458,12 +524,28 @@ const confirmPermanentDeleteMessages = async () => {
             <IconBtn @click="fetchAllMessages"> <VIcon icon="bx-refresh" size="22" /> </IconBtn>
           </div>
           <VDivider />
+          
+          <!-- START: Column Headers -->
+          <div class="email-list-header d-none d-md-flex align-center px-3 py-2 gap-2 text-caption text-disabled">
+            <!-- Placeholders to align with Checkbox and Star -->
+            <span style="max-inline-size: 20px; min-inline-size: 20px;" class="me-1"></span>
+            <span style="max-inline-size: 38px; min-inline-size: 38px;"></span> 
+            <!-- Headers matching list item styles -->
+            <span class="font-weight-semibold flex-shrink-0 ws-no-wrap text-truncate" style="max-inline-size: 90px; min-inline-size: 90px;">Status</span>
+            <span class="font-weight-semibold flex-shrink-0 ws-no-wrap ms-2" style="min-inline-size: 80px;">Due Date</span>
+            <span class="font-weight-semibold flex-shrink-0 ws-no-wrap text-truncate" style=" max-inline-size: 180px;min-inline-size: 120px;">Sender</span>
+            <span class="font-weight-semibold flex-shrink-0 ws-no-wrap text-truncate" style=" max-inline-size: 180px;min-inline-size: 120px;">To</span>
+            <span class="font-weight-semibold flex-grow-1 ws-no-wrap ms-2">Subject</span>
+          </div>
+          <VDivider class="d-none d-md-block"/>
+          <!-- END: Column Headers -->
+
           <PerfectScrollbar v-if="messages.length" tag="ul" class="Message-list">
             <li
               v-for="message in messages"
               :key="message.id"
               class="email-item d-flex align-center pa-3 gap-1 cursor-pointer"
-              :class="[{ 'message-read': message.isRead }]"
+              :class="[{ 'message-read': message.isRead } ]"
               @click="openMessage(message)"
             >
               <div class="d-flex align-center flex-grow-1 gap-2"> 
@@ -480,17 +562,47 @@ const confirmPermanentDeleteMessages = async () => {
                 >
                   <VIcon :icon="message.isStarred ? 'bxs-star' : 'bx-star'" size="22" />
                 </IconBtn>
+                <VChip
+                    v-if="message.task_status"
+                    :color="resolveStatusColor(message.task_status)"
+                    size="small"
+                    class="flex-shrink-0 ws-no-wrap text-capitalize ms-2"
+                    style=" max-inline-size: 90px;min-inline-size: 90px;"
+                 >
+                  {{ message.task_status }}
+                 </VChip>
+                 <span
+                    v-else
+                    class="text-caption text-disabled flex-shrink-0 ws-no-wrap ms-2"
+                    style=" max-inline-size: 90px;min-inline-size: 90px;"
+                 >
+                    N/A
+                 </span>
+                <span
+                  v-if="message.dueDate"
+                  class="text-caption text-medium-emphasis flex-shrink-0 ws-no-wrap ms-2"
+                  style="min-inline-size: 80px;"
+                >
+                  {{ formatDate(message.dueDate) }}
+                </span>
+                <span
+                  v-else
+                  class="text-caption text-disabled flex-shrink-0 ws-no-wrap ms-2"
+                  style="min-inline-size: 80px;"
+                >
+                  N/A
+                </span>
                 <h6 
                   v-if="message.from?.fullName" 
-                  class="text-h6 font-weight-semibold flex-shrink-0 ws-no-wrap text-truncate" 
-                  style=" max-inline-size: 180px;min-inline-size: 120px;"
+                  class="text-h6 font-weight-semibold flex-shrink-0 ws-no-wrap text-truncate"
+                  style="max-inline-size: 180px; min-inline-size: 120px;"
                 >
                   {{ message.from.fullName }}
                 </h6>
                 <div 
                   v-if="message.to && message.to.length > 0" 
                   class="text-caption text-medium-emphasis flex-shrink-0 ws-no-wrap text-truncate"
-                  style=" max-inline-size: 180px;min-inline-size: 120px;"
+                  style="max-inline-size: 180px; min-inline-size: 120px;"
                 >
                   To: {{ message.to[0]?.fullName || message.to[0]?.email || 'N/A' }}
                 </div>
@@ -584,6 +696,10 @@ const confirmPermanentDeleteMessages = async () => {
               <IconBtn @click="handleActionClick('unread', [openedMessage.id]); openedMessage = null">
                 <VIcon icon="bx-envelope" size="22" />
                 <VTooltip activator="parent" location="top">Mark as Unread</VTooltip>
+              </IconBtn>
+              <IconBtn @click="handleTaskStatusToggle(openedMessage)">
+                <VIcon icon="bx-comment-check" size="22"/>
+                <VTooltip activator="parent" location="top">Cycle Task Status (New -> In Progress -> Completed)</VTooltip>
               </IconBtn>
               <IconBtn>
                 <VIcon icon="bx-label" size="22" />
