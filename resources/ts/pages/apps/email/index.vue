@@ -431,12 +431,12 @@ const sendReply = async () => {
       console.log("Reply sent successfully:", result.data);
       showReplyForm.value = false;
       replyMessage.value = '';
-      await fetchAllMessages(); 
+    await fetchAllMessages();
       openedMessage.value = null;
     } else {
       console.error("Failed to send reply, API returned error or unexpected response:", result);
     }
-    } catch (error) {
+  } catch (error) {
     console.error("Error sending reply:", error);
   }
   console.log("index.vue: sendReply function finished."); 

@@ -67,11 +67,11 @@ class MessageController extends Controller
                           // ->where('status', 'sent') // Can likely remove this if sender_id implies sent
                           ->where('is_archived', false)
                           ->where('status', '!=', 'deleted');
-                    break;
-                case 'trash':
-                    $query->where('status', 'deleted');
+                     break;
+                 case 'trash':
+                     $query->where('status', 'deleted');
                     // Trash view ignores archive status (can un-delete to inbox/archive)
-                    break;
+                     break;
                  // Add other filters like 'spam', 'draft' if needed
 
                 // Default case (treat any other filter value like inbox? Or ignore?)
@@ -79,7 +79,7 @@ class MessageController extends Controller
                 default:
                      Log::info("Filter '{$filter}' not explicitly handled, defaulting to inbox logic."); // Corrected variable name here
                      // Fall through to the default inbox logic
-                     $query->where('receiver_id', $userId)
+                    $query->where('receiver_id', $userId)
                            ->where('is_archived', false)
                            ->whereNotIn('status', ['deleted', 'draft', 'spam']); // Inbox excludes these
                      break;
@@ -96,7 +96,7 @@ class MessageController extends Controller
              ->where('status', '!=', 'deleted');
         } else { // Default view: INBOX
              Log::info("Defaulting to Inbox view (no filter specified)");
-             $query->where('receiver_id', $userId)
+            $query->where('receiver_id', $userId)
                     ->where('is_archived', false) 
                     ->whereNotIn('status', ['deleted', 'draft', 'spam']); // Inbox excludes these
         }
@@ -345,7 +345,7 @@ class MessageController extends Controller
 
         if ($message->isDirty()) { 
            Log::info("Saving remaining dirty attributes for message {$id}. Dirty: " . json_encode($message->getDirty()));
-           $message->save();
+        $message->save();
         } else {
             Log::info("No remaining dirty attributes to save for message {$id}.");
         }
