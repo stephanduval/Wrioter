@@ -32,7 +32,7 @@ class Message extends Model
         'status' => 'string', // ENUM values are stored as strings
         'is_starred' => 'boolean',
         'task_status' => 'string', // Cast enum to string
-        'due_date' => 'date',     // Cast to date object
+        'due_date' => 'date:Y-m-d', // Cast to simple YYYY-MM-DD string
         'is_archived' => 'boolean',
     ];
 

@@ -107,16 +107,24 @@ const replyMessage = ref('');
 const dueTodayCount = computed(() => {
   // Count based on ALL user messages summary
   const today = new Date(); 
-  return allUserMessagesSummary.value.filter(m => {
-    if (!m.due_date) return false;
+
+  const count = allUserMessagesSummary.value.filter(m => {
+    if (!m.due_date) return false; // Skip if no due date
+
     try {
-      const dueDate = parseISO(m.due_date as string); // Use summary data field name
-      return isToday(dueDate);
+      const dueDateObj = parseISO(m.due_date);
+
+      const isDueToday = isToday(dueDateObj);
+
+      return isDueToday;
     } catch (e) {
-      console.error(`Error parsing due_date ${m.due_date} for message ${m.id} in summary:`, e);
+      // Log errors during parsing - Keep this one for actual errors
+      console.error(`  Error processing due_date ${m.due_date} for message ${m.id}:`, e);
       return false;
     }
   }).length;
+
+  return count;
 });
 
 const newStatusCount = computed(() => {
