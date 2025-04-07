@@ -1,4 +1,4 @@
-import type { Email, EmailLabel, MoveEmailToAction } from '@db/apps/email/types';
+import type { Email, EmailLabel, MoveEmailToAction } from '@/views/apps/email/types';
 import type { PartialDeep } from 'type-fest';
 import { onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
@@ -28,18 +28,24 @@ export const useEmail = () => {
 
   // ✅ Shared state
   const messages = ref<Email[]>([]); 
-  const userLabels = ref<{ title: EmailLabel; color: string }[]>([]);
+  // Define the structure for userLabels including id
+  const userLabels = ref<{
+    id: number;       // ID of the label from the database
+    title: EmailLabel; // Name of the label (string)
+    color: string;    // Color identifier (e.g., 'primary')
+  }[]>([]);
 
   // ✅ Fetch user-specific labels from the API
   const fetchUserLabels = async () => {
     try {
       console.log("useEmail: Fetching user labels...");
-      // Ensure this endpoint returns labels for the authenticated user
+      // Ensure this endpoint returns labels for the authenticated user including the id
       const response = await $api('/labels'); 
       console.log("useEmail: Labels received:", response);
       if (response && Array.isArray(response)) {
-        // Map API response (label_name, colour) to frontend structure (title, color)
-        userLabels.value = response.map((label: { label_name: string; colour: string | null }) => ({
+        // Map API response (id, label_name, colour) to frontend structure (id, title, color)
+        userLabels.value = response.map((label: { id: number; label_name: string; colour: string | null }) => ({
+          id: label.id, // Map the ID
           title: label.label_name as EmailLabel,
           // Provide a default color if backend returns null or empty string
           color: label.colour || 'secondary', 
@@ -110,7 +116,7 @@ export const useEmail = () => {
 
       console.log("✅ Raw API Response:", response);
 
-      return response?.data || []; // API returns { data: [...] }
+      return (response?.data || []) as Email[]; // API returns { data: [...] }
     } catch (error) {
       console.error("❌ Error fetching messages:", error);
       return [];
@@ -285,7 +291,6 @@ export const useEmail = () => {
 
   const moveSelectedEmailTo = async (action: MoveEmailToAction, selectedEmails: number[]) => {
     // Define the type for the update payload explicitly
-    // Use snake_case keys expected by the backend validation
     const dataToUpdate: { status?: Email['status']; is_archived?: boolean } = {};
 
     if (action === 'inbox') { // Handles Unarchive or Undelete
@@ -302,8 +307,7 @@ export const useEmail = () => {
         dataToUpdate.status = 'deleted';
     }
 
-    // Cast the payload to PartialDeep<Email> if updateEmails expects it
-    // Although sending a plain object with correct keys should also work with the updated backend validation
+    // Cast the payload to PartialDeep<Email> (view type)
     await updateEmails(selectedEmails, dataToUpdate as PartialDeep<Email>);
   }
 
@@ -312,6 +316,22 @@ export const useEmail = () => {
     const foundLabel = userLabels.value.find(l => l.title === labelTitle);
     return foundLabel ? foundLabel.color : 'secondary'; // Return default if not found
   }
+
+  // ✅ Delete a label
+  const deleteLabel = async (id: number) => {
+    console.log(`useEmail: Attempting to delete label ID: ${id}`);
+    try {
+      await $api(`/labels/${id}`, { method: 'DELETE' });
+      console.log(`useEmail: Successfully deleted label ID: ${id}`);
+      // Refresh labels after deletion
+      await fetchUserLabels();
+      return true; // Indicate success
+    } catch (error) {
+      console.error(`useEmail: Error deleting label ${id}:`, error);
+      // Add user feedback (e.g., toast) if desired
+      return false; // Indicate failure
+    }
+  };
 
   return {
     userLabels, // <-- Export reactive userLabels
@@ -328,5 +348,6 @@ export const useEmail = () => {
     createMessage,
     sendReplyMessage,
     deleteMessage,
+    deleteLabel,
   }
 }

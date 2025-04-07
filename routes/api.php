@@ -70,7 +70,8 @@ Route::get('/diagnostic', function (Request $request) {
 
 
 Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/messages', [MessageController::class, 'index']); // Fetch messages
+    Route::get('/messages', [MessageController::class, 'index']); // Fetch messages for UI display
+    Route::get('/messages/summary', [MessageController::class, 'summary']); // Fetch summary data for counts
     Route::post('/messages', [MessageController::class, 'store']); // Send message
     Route::put('/messages/{id}', [MessageController::class, 'update']); // Update message (e.g., status, read, starred)
     Route::delete('/messages/{id}', [MessageController::class, 'destroy']); // Delete message
@@ -80,6 +81,7 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/labels', [LabelController::class, 'index']); // Fetch user labels
     Route::post('/labels', [LabelController::class, 'store']); // Create new label
+    Route::delete('/labels/{id}', [LabelController::class, 'destroy']); // Delete label
     // Add other label routes if needed (index, update, destroy)
 });
 

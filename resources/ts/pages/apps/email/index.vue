@@ -4,7 +4,7 @@ import EmailLeftSidebarContent from '@/views/apps/email/EmailLeftSidebarContent.
 import type { Email, EmailLabel, MoveEmailToAction } from '@/views/apps/email/types'
 import { useEmail } from '@/views/apps/email/useEmail'
 import { useResponsiveLeftSidebar } from '@core/composable/useResponsiveSidebar'
-import { format, parseISO } from 'date-fns'
+import { format, isToday, parseISO } from 'date-fns'
 import type { PartialDeep } from 'type-fest'
 import type { Ref } from 'vue'
 import { computed, isRef, onMounted, ref, watch } from 'vue'
@@ -33,20 +33,46 @@ const {
 
 const messages = ref<Email[]>([]); 
 
+// NEW: Ref for storing summary data of ALL user messages
+interface MessageSummary {
+  id: number;
+  due_date: string | null;
+  task_status: 'new' | 'in_process' | 'completed' | null;
+}
+const allUserMessagesSummary = ref<MessageSummary[]>([]);
+
 const fetchAllMessages = async () => {  
   try {
-    console.log("🔥 Fetching messages...");
-    const response: Email[] = await fetchMessages(); 
-    console.log("✅ Messages Data:", response);
+    console.log("🔥 Fetching messages for current view...");
+    const response = await fetchMessages(); // This should resolve to Email[] from the view types
+    console.log("✅ View Messages Data:", response);
     if (Array.isArray(response)) {
       messages.value = response; 
     } else {
-      console.error("❌ Invalid API response format:", response);
+      console.error("❌ Invalid API response format for view messages:", response);
       messages.value = [];
     }
   } catch (error) {
-    console.error("❌ Error fetching messages:", error);
+    console.error("❌ Error fetching view messages:", error);
     messages.value = [];
+  }
+};
+
+// NEW: Fetch summary data for ALL user messages
+const fetchAllUserMessagesSummary = async () => {
+  try {
+    console.log("🔥 Fetching summary data for ALL user messages...");
+    const response = await $api('/messages/summary'); 
+    console.log("✅ Summary Data:", response);
+    if (response && Array.isArray(response)) {
+      allUserMessagesSummary.value = response;
+    } else {
+      console.error("❌ Invalid API response format for summary data:", response);
+      allUserMessagesSummary.value = [];
+    }
+  } catch (error) {
+    console.error("❌ Error fetching summary data:", error);
+    allUserMessagesSummary.value = [];
   }
 };
 
@@ -59,8 +85,10 @@ const messagesMeta = computed(() => ({
   starred: messages.value.filter(m => m.isStarred).length,
 }));
 
-onMounted(fetchAllMessages); 
-
+onMounted(async () => {  
+  await fetchAllMessages(); // Fetch messages for the initial view
+  await fetchAllUserMessagesSummary(); // Fetch summary data for counts
+});
 
 const { isLeftSidebarOpen } = useResponsiveLeftSidebar()
 const route = useRoute<'apps-email' | 'apps-email-filter' | 'apps-email-label'>()
@@ -74,6 +102,27 @@ const q = ref('')
 // Reply state
 const showReplyForm = ref(false);
 const replyMessage = ref('');
+
+// --- Computed Properties for Summary Boxes (Using Summary Data) ---
+const dueTodayCount = computed(() => {
+  // Count based on ALL user messages summary
+  const today = new Date(); 
+  return allUserMessagesSummary.value.filter(m => {
+    if (!m.due_date) return false;
+    try {
+      const dueDate = parseISO(m.due_date as string); // Use summary data field name
+      return isToday(dueDate);
+    } catch (e) {
+      console.error(`Error parsing due_date ${m.due_date} for message ${m.id} in summary:`, e);
+      return false;
+    }
+  }).length;
+});
+
+const newStatusCount = computed(() => {
+  // Count based on ALL user messages summary
+  return allUserMessagesSummary.value.filter(m => m.task_status === 'new').length;
+});
 
 // --- Helper Functions ---
 const formatDate = (dateString: string | Date | undefined | null, includeTime = false): string => {
@@ -197,7 +246,11 @@ const openMessage = async (message: Email) => {
 }
 
 // --- Watchers ---
-watch(() => route.params, () => { fetchAllMessages(); selectedMessages.value = []; }, { deep: true })
+watch(() => route.params, async () => {  
+  await fetchAllMessages(); // Refetch view messages on route change
+  // Summary data doesn't depend on route, no need to refetch here unless actions modify it broadly
+  selectedMessages.value = []; 
+}, { deep: true })
 
 
 // --- Action Handling ---
@@ -234,7 +287,7 @@ const handleActionClick = async (
       if (action === 'read') { openedMessage.value.isRead = true; openedMessage.value.status = 'read'; }
       if (action === 'unread') { openedMessage.value.isRead = false; openedMessage.value.status = 'unread'; }
     }
-  } catch (error) {
+      } catch (error) {
     console.error('Error performing action:', action, error);
   }
 }
@@ -255,7 +308,7 @@ const handleMoveMailsTo = async (action: MoveEmailToAction, ids: number[] | Ref<
       selectedMessages.value = [];
     }
     
-    await fetchAllMessages();
+      await fetchAllMessages();
   } catch (error) {
     console.error(`Error moving emails to ${action}:`, error);
   }
@@ -293,7 +346,8 @@ const handleTaskStatusToggle = async (message: Email) => {
   try {
     await updateEmails([message.id], { task_status: newStatus } as PartialDeep<Email>);
     message.task_status = newStatus;
-    // No need to update openedMessage here as it's the same object reference
+    // Refresh summary data after status change
+    await fetchAllUserMessagesSummary();
   } catch (error) {
     console.error(`Error updating task status for message ${message.id}:`, error);
   }
@@ -321,6 +375,9 @@ const handleSelectedTaskStatusUpdate = async (status: 'new' | 'in_process' | 'co
 
     // Clear selection after action
     selectedMessages.value = [];
+
+    // Refresh summary data after status change
+    await fetchAllUserMessagesSummary();
 
   } catch (error) {
     console.error(`Error updating task status for selected messages:`, error);
@@ -371,7 +428,7 @@ const sendReply = async () => {
     } else {
       console.error("Failed to send reply, API returned error or unexpected response:", result);
     }
-  } catch (error) {
+    } catch (error) {
     console.error("Error sending reply:", error);
   }
   console.log("index.vue: sendReply function finished."); 
@@ -414,7 +471,7 @@ const confirmPermanentDeleteMessages = async () => {
   console.log('Confirming permanent delete for IDs:', messageIdsToConfirmPermanentDelete.value);
   try {
     for (const id of messageIdsToConfirmPermanentDelete.value) {
-      await deleteMessage(id); 
+      await deleteMessage(id);
     }
     if (openedMessage.value && messageIdsToConfirmPermanentDelete.value.includes(openedMessage.value.id)) {
       openedMessage.value = null;
@@ -422,7 +479,7 @@ const confirmPermanentDeleteMessages = async () => {
     if (selectedMessages.value.length > 0 && messageIdsToConfirmPermanentDelete.value.every(id => selectedMessages.value.includes(id)) && messageIdsToConfirmPermanentDelete.value.length === selectedMessages.value.length) {
       selectedMessages.value = [];
     }
-    await fetchAllMessages(); 
+    await fetchAllMessages();
   } catch (error) {
     console.error('Error permanently deleting messages:', error);
   } finally {
@@ -465,17 +522,17 @@ const confirmPermanentDeleteMessages = async () => {
         <template v-if="!openedMessage">
           <div class="py-2 px-4 d-flex align-center gap-x-1">
             <VCheckbox :model-value="selectAllEmailCheckbox" :indeterminate="isSelectAllEmailCheckboxIndeterminate" class="d-flex" @update:model-value="selectAllCheckboxUpdate"/>
-            <div
-              class="w-100 d-flex align-center action-bar-actions gap-x-1"
-            >
+          <div
+            class="w-100 d-flex align-center action-bar-actions gap-x-1"
+          >
               <IconBtn v-if="shallShowMoveToActionFor('archive')" @click="handleMoveMailsTo('archive')">
                 <VIcon icon="bx-archive" size="22" />
                 <VTooltip activator="parent" location="top">Archive</VTooltip>
-              </IconBtn>
+            </IconBtn>
               <IconBtn v-if="shallShowMoveToActionFor('inbox')" @click="handleMoveMailsTo('inbox')">
                 <VIcon icon="bx-envelope" size="22" />
                 <VTooltip activator="parent" location="top">Move to Inbox</VTooltip>
-              </IconBtn>
+            </IconBtn>
               <IconBtn v-if="shallShowMoveToActionFor('trash')" @click="initiateTrashConfirmation(selectedMessages)">
                 <VIcon icon="bx-trash" size="22" />
                 <VTooltip activator="parent" location="top">Move to Trash</VTooltip>
@@ -491,12 +548,12 @@ const confirmPermanentDeleteMessages = async () => {
               <IconBtn :disabled="!selectedMessages.length">
                 <VIcon icon="bx-comment-check" size="22"/>
                 <VTooltip activator="parent" location="top">Change Task Status</VTooltip>
-                <VMenu activator="parent">
-                  <VList density="compact">
-                    <VListItem 
+              <VMenu activator="parent">
+                <VList density="compact">
+                    <VListItem
                       v-for="statusOption in taskStatusOptions" 
                       :key="statusOption.value" 
-                      href="#" 
+                      href="#"
                       @click="handleSelectedTaskStatusUpdate(statusOption.value)"
                     >
                       <template #prepend>
@@ -504,27 +561,39 @@ const confirmPermanentDeleteMessages = async () => {
                       </template>
                       <VListItemTitle class="ms-2">{{ statusOption.title }}</VListItemTitle>
                     </VListItem>
-                  </VList>
-                </VMenu>
-              </IconBtn>
+                </VList>
+              </VMenu>
+            </IconBtn>
               <IconBtn :disabled="!selectedMessages.length">
                 <VIcon icon="bx-label" size="22"/>
                 <VTooltip activator="parent" location="top">Label</VTooltip>
-                <VMenu activator="parent">
-                  <VList density="compact">
+              <VMenu activator="parent">
+                <VList density="compact">
                     <VListItem v-for="label in userLabels" :key="label.title" href="#" @click="handleEmailLabels(label.title)">
                       <template #prepend><VBadge inline :color="resolveLabelColor(label.title)" dot/></template>
                       <VListItemTitle class="ms-2 text-capitalize">{{ label.title }}</VListItemTitle>
-                    </VListItem>
-                  </VList>
-                </VMenu>
-              </IconBtn>
-            </div>
-            <VSpacer />
+                  </VListItem>
+                </VList>
+              </VMenu>
+            </IconBtn>
+          </div>
+          <VSpacer />
             <IconBtn @click="fetchAllMessages"> <VIcon icon="bx-refresh" size="22" /> </IconBtn>
+        </div>
+        <VDivider />
+          
+          <!-- START: Summary Boxes (Always Visible) -->
+          <div class="px-4 py-2 d-flex gap-4">
+            <VChip color="warning" label size="small">
+              Due Today: {{ dueTodayCount }}
+            </VChip>
+            <VChip color="primary" label size="small">
+              New Tasks: {{ newStatusCount }}
+            </VChip>
           </div>
           <VDivider />
-          
+          <!-- END: Summary Boxes -->
+
           <!-- START: Column Headers -->
           <div class="email-list-header d-none d-md-flex align-center px-3 py-2 gap-2 text-caption text-disabled">
             <!-- Placeholders to align with Checkbox and Star -->
@@ -540,28 +609,28 @@ const confirmPermanentDeleteMessages = async () => {
           <VDivider class="d-none d-md-block"/>
           <!-- END: Column Headers -->
 
-          <PerfectScrollbar v-if="messages.length" tag="ul" class="Message-list">
-            <li
-              v-for="message in messages"
-              :key="message.id"
-              class="email-item d-flex align-center pa-3 gap-1 cursor-pointer"
+<PerfectScrollbar v-if="messages.length" tag="ul" class="Message-list">
+  <li
+    v-for="message in messages"
+    :key="message.id"
+    class="email-item d-flex align-center pa-3 gap-1 cursor-pointer"
               :class="[{ 'message-read': message.isRead } ]"
-              @click="openMessage(message)"
-            >
+    @click="openMessage(message)"
+  >
               <div class="d-flex align-center flex-grow-1 gap-2"> 
-                <VCheckbox
-                  :model-value="selectedMessages.includes(message.id)"
+        <VCheckbox
+          :model-value="selectedMessages.includes(message.id)"
                   class="flex-shrink-0 me-1" 
-                  @update:model-value="toggleSelectedEmail(message.id)"
-                  @click.stop
-                />
-                <IconBtn
-                  :class="{ 'starred-button': message.isStarred }"
+                    @update:model-value="toggleSelectedEmail(message.id)"
+          @click.stop
+        />
+        <IconBtn
+          :class="{ 'starred-button': message.isStarred }"
                   class="flex-shrink-0"
-                  @click.stop="handleActionClick(message.isStarred ? 'unstar' : 'star', [message.id])"
-                >
+          @click.stop="handleActionClick(message.isStarred ? 'unstar' : 'star', [message.id])"
+        >
                   <VIcon :icon="message.isStarred ? 'bxs-star' : 'bx-star'" size="22" />
-                </IconBtn>
+        </IconBtn>
                 <VChip
                     v-if="message.task_status"
                     :color="resolveStatusColor(message.task_status)"
@@ -592,29 +661,29 @@ const confirmPermanentDeleteMessages = async () => {
                 >
                   N/A
                 </span>
-                <h6 
-                  v-if="message.from?.fullName" 
+        <h6
+          v-if="message.from?.fullName"
                   class="text-h6 font-weight-semibold flex-shrink-0 ws-no-wrap text-truncate"
                   style="max-inline-size: 180px; min-inline-size: 120px;"
-                >
-                  {{ message.from.fullName }}
-                </h6>
+        >
+          {{ message.from.fullName }}
+        </h6>
                 <div 
                   v-if="message.to && message.to.length > 0" 
                   class="text-caption text-medium-emphasis flex-shrink-0 ws-no-wrap text-truncate"
                   style="max-inline-size: 180px; min-inline-size: 120px;"
                 >
                   To: {{ message.to[0]?.fullName || message.to[0]?.email || 'N/A' }}
-                </div>
+        </div>
                 <div class="flex-grow-1 overflow-hidden ms-2">
                   <h6 class="text-h6 font-weight-regular ws-no-wrap text-truncate mb-0">
                     {{ message.subject }}
                   </h6>
                   <div class="text-body-2 text-medium-emphasis text-truncate" v-html="message.message ? message.message.replace(/<p>|<\/p>/g, '') : ''"></div>
-                </div>
-              </div>
-            </li>
-          </PerfectScrollbar>
+      </div>
+    </div>
+  </li>
+</PerfectScrollbar>
         </template>
         
         <template v-else>
@@ -770,18 +839,18 @@ const confirmPermanentDeleteMessages = async () => {
                     <span>{{ openedMessage.attachments.length }} Attachments</span>
                     <div
                       v-for="attachment in openedMessage.attachments"
-                      :key="attachment.filename || 'file'"
+                      :key="attachment.fileName || 'file'"
                       class="d-flex align-center"
                     >
                       <VImg
                         :src="attachment.thumbnail || '/images/icons/file-icons/pdf.png'"
-                        :alt="attachment.filename || 'file'"
+                        :alt="attachment.fileName || 'file'"
                         aspect-ratio="1"
                         max-height="24"
                         max-width="24"
                         class="me-2"
                       />
-                      <span>{{ attachment.filename || 'Attachment' }}</span>
+                      <span>{{ attachment.fileName || 'Attachment' }}</span>
                     </div>
                   </VCardText>
                 </template>

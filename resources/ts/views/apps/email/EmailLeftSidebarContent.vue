@@ -14,6 +14,12 @@ const props = defineProps<Props>()
 
 defineEmits<{ (e: 'toggleComposeDialogVisibility'): void }>()
 
+interface EmailLabelData {
+  id: number;
+  title: string;
+  color: string;
+}
+
 interface EmailsMeta {
   inbox: number
   draft: number
@@ -28,7 +34,8 @@ interface Props {
 const { 
   userLabels,
   addLabel: addApiLabel,
-  resolveLabelColor
+  resolveLabelColor,
+  deleteLabel: deleteApiLabel,
 } = useEmail();
 
 // Reactive email counts with defaults
@@ -61,6 +68,11 @@ const folders = computed(() => [
     title: 'Sent',
     prependIcon: 'bx-paper-plane',
     to: { name: 'apps-email-filter', params: { filter: 'sent' } } as RouteLocationRaw,
+  },
+  {
+    title: 'All Mail',
+    prependIcon: 'bx-bxs-inbox',
+    to: { name: 'apps-email-filter', params: { filter: 'all' } } as RouteLocationRaw,
   },
   {
     title: 'Archive',
@@ -97,6 +109,34 @@ const handleAddLabel = async () => {
     showAddLabelForm.value = false
   }
 }
+
+// --- Label Deletion State & Logic ---
+const isDeleteDialogOpen = ref(false);
+const labelToDelete = ref<EmailLabelData | null>(null);
+
+const initiateLabelDelete = (label: EmailLabelData) => {
+  console.log("Initiating delete for label:", label);
+  labelToDelete.value = label;
+  isDeleteDialogOpen.value = true;
+};
+
+const confirmLabelDelete = async () => {
+  if (!labelToDelete.value) return;
+
+  console.log("Confirming delete for label ID:", labelToDelete.value.id);
+  const success = await deleteApiLabel(labelToDelete.value.id);
+
+  if (success) {
+    console.log("Label deleted successfully.");
+    // The useEmail composable's deleteLabel already refreshes the list
+  } else {
+    console.error("Failed to delete label.");
+    // Optional: Show error feedback to user
+  }
+
+  isDeleteDialogOpen.value = false;
+  labelToDelete.value = null;
+};
 </script>
 
 <template>
@@ -121,7 +161,7 @@ const handleAddLabel = async () => {
         >
           <RouterLink
             v-slot="{ isActive, navigate }"
-            :to="folder.to"
+            :to="folder.to as any"
             custom
           >
             <div
@@ -178,31 +218,62 @@ const handleAddLabel = async () => {
           </div>
         </VExpandTransition>
 
-        <ul class="email-labels" v-if="userLabels.length > 0">
+        <!-- Label List -->
+        <ul class="email-labels mt-4" v-if="userLabels.length > 0">
           <li
             v-for="label in userLabels"
-            :key="label.title"
+            :key="label.id"
           >
             <RouterLink
               v-slot="{ isActive, navigate }"
-              :to="{ name: 'apps-email-label', params: { label: label.title.toLowerCase() } } as RouteLocationRaw"
+              :to="{ name: 'apps-email-label', params: { label: label.title.toLowerCase() } } as any"
               custom
             >
               <div
+                class="d-flex align-center justify-space-between email-label-item"
                 :class="{ 'email-label-active': isActive }"
                 @click="navigate"
               >
-                <VIcon
-                  icon="bx-bxs-circle"
-                  :color="label.color"
-                />
-                {{ label.title }}
+                <div class="d-flex align-center">
+                  <VIcon
+                    icon="bx-bxs-circle"
+                    :color="resolveLabelColor(label.title)"
+                    size="20"
+                    class="me-2"
+                  />
+                  <span class="text-body-11">{{ label.title }}</span>
+                </div>
+                <IconBtn
+                  size="x-small"
+                  variant="text"
+                  color="disabled"
+                  class="delete-label-btn"
+                  @click.stop="initiateLabelDelete(label)"
+                >
+                  <VIcon icon="bx-trash" size="25"/>
+                </IconBtn>
               </div>
             </RouterLink>
           </li>
         </ul>
       </div>
     </PerfectScrollbar>
+
+    <!-- Delete Confirmation Dialog -->
+    <VDialog v-model="isDeleteDialogOpen" max-width="500px">
+      <VCard>
+        <VCardTitle>Confirm Delete Label</VCardTitle>
+        <VCardText>
+          Are you sure you want to delete the label "<strong>{{ labelToDelete?.title }}</strong>"?
+          This will remove the label from all associated messages. This action cannot be undone.
+        </VCardText>
+        <VCardActions>
+          <VSpacer />
+          <VBtn color="secondary" @click="isDeleteDialogOpen = false">Cancel</VBtn>
+          <VBtn color="error" @click="confirmLabelDelete">Delete</VBtn>
+        </VCardActions>
+      </VCard>
+    </VDialog>
   </div>
 </template>
 
@@ -224,12 +295,13 @@ const handleAddLabel = async () => {
 }
 
 .email-labels {
+  padding: 0;
+
   > li {
-    position: relative;
-    padding-inline: 24px;
+    padding: 0;
 
     &:not(:last-child) {
-      margin-block-end: 0.75rem;
+      margin-block-end: 2px;
     }
   }
 }
@@ -243,6 +315,40 @@ const handleAddLabel = async () => {
 
     &:not(:last-child) {
       margin-block-end: 4px;
+    }
+  }
+}
+
+.email-label-item {
+  position: relative;
+  border-radius: var(--v-border-radius);
+  cursor: pointer;
+  margin-inline: 8px;
+  padding-block: 4px;
+  padding-inline: 24px;
+
+  .delete-label-btn {
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+  }
+
+  &:hover {
+    background-color: rgba(var(--v-theme-on-surface), var(--v-hover-opacity));
+
+    .delete-label-btn {
+      opacity: 1;
+    }
+  }
+
+  &.email-label-active {
+    &::after {
+      position: absolute;
+      background: currentcolor;
+      block-size: 100%;
+      content: "";
+      inline-size: 3px;
+      inset-block-start: 0;
+      inset-inline-start: 0;
     }
   }
 }

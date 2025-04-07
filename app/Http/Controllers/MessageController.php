@@ -42,10 +42,15 @@ class MessageController extends Controller
 
         Log::info("Request parameters:", ['filter' => $filter, 'label' => $label]);
 
-        // --- Apply Specific Filters --- 
+        // --- Apply Specific Filters ---
         if ($filter) {
             Log::info("Applying filter: {$filter}");
             switch ($filter) {
+                case 'all':
+                    // No additional filters needed, base query already includes sender/receiver
+                    // We want everything, including archived and deleted (trash)
+                    Log::info("Filter 'all' selected. Showing all messages.");
+                    break;
                 case 'archive':
                     // Restore original logic
                     $query->where('is_archived', true);
@@ -59,7 +64,7 @@ class MessageController extends Controller
                 case 'sent':
                     // Sent items are from the sender, exclude archived/deleted
                     $query->where('sender_id', $userId)
-                          ->where('status', 'sent') // Can likely remove this if sender_id implies sent
+                          // ->where('status', 'sent') // Can likely remove this if sender_id implies sent
                           ->where('is_archived', false)
                           ->where('status', '!=', 'deleted');
                     break;
@@ -72,11 +77,11 @@ class MessageController extends Controller
                 // Default case (treat any other filter value like inbox? Or ignore?)
                 // Let's assume unknown filters default to inbox logic (below)
                 default:
-                     Log::info("Filter '{$$filter}' not explicitly handled, defaulting to inbox logic.");
+                     Log::info("Filter '{$filter}' not explicitly handled, defaulting to inbox logic."); // Corrected variable name here
                      // Fall through to the default inbox logic
                      $query->where('receiver_id', $userId)
                            ->where('is_archived', false)
-                           ->whereNotIn('status', ['deleted', 'draft', 'spam']);
+                           ->whereNotIn('status', ['deleted', 'draft', 'spam']); // Inbox excludes these
                      break;
             }
         } elseif ($label) {
@@ -93,7 +98,7 @@ class MessageController extends Controller
              Log::info("Defaulting to Inbox view (no filter specified)");
              $query->where('receiver_id', $userId)
                     ->where('is_archived', false) 
-                    ->whereNotIn('status', ['deleted', 'draft', 'spam']);
+                    ->whereNotIn('status', ['deleted', 'draft', 'spam']); // Inbox excludes these
         }
         // --- End Specific Filters ---
 
@@ -351,6 +356,25 @@ class MessageController extends Controller
         $message->loadMissing('labels'); 
 
         return new MessageResource($message); // Return the potentially modified $message instance
+    }
+
+    // Fetch summary data (due date, task status) for ALL user messages
+    public function summary(Request $request)
+    {
+        $userId = Auth::id();
+        Log::info("Fetching message summary for user {$userId}");
+
+        $summaryData = Message::where(function ($query) use ($userId) {
+            $query->where('sender_id', $userId)
+                  ->orWhere('receiver_id', $userId);
+        })
+        ->select('id', 'due_date', 'task_status') // Select only needed fields
+        ->get();
+
+        Log::info("Retrieved " . $summaryData->count() . " messages for summary count for user {$userId}.");
+
+        // Return the raw data - frontend will compute counts
+        return response()->json($summaryData);
     }
 
     // Delete a message PERMANENTLY

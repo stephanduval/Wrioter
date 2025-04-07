@@ -17,11 +17,18 @@ class LabelController extends Controller
         $userId = Auth::id();
         Log::info("Fetching labels for user {$userId}");
 
-        $labels = Label::where('user_id', $userId)->orderBy('label_name')->get();
+        $labels = Label::where('user_id', $userId)->get();
 
-        Log::info("Found {" . count($labels) . "} labels for user {$userId}");
+        Log::info("Found {" . $labels->count() . "} labels for user {$userId}");
 
-        return response()->json($labels);
+        // Ensure ID is included along with name and color
+        return response()->json($labels->map(function ($label) {
+            return [
+                'id' => $label->id,
+                'label_name' => $label->label_name,
+                'colour' => $label->colour,
+            ];
+        }));
     }
 
     /**
@@ -80,6 +87,31 @@ class LabelController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        $userId = Auth::id();
+        Log::info("Attempting to delete label {$id} for user {$userId}");
+
+        $label = Label::where('id', $id)
+                      ->where('user_id', $userId)
+                      ->first();
+
+        if (!$label) {
+            Log::warning("Label {$id} not found or does not belong to user {$userId}.");
+            return response()->json(['message' => 'Label not found.'], 404);
+        }
+
+        try {
+            // Detach the label from all messages first (optional but good practice)
+            $label->messages()->detach();
+            Log::info("Detached label {$id} from messages.");
+
+            // Delete the label itself
+            $label->delete();
+            Log::info("Successfully deleted label {$id}.");
+
+            return response()->json(['message' => 'Label deleted successfully.']);
+        } catch (\Exception $e) {
+            Log::error("Error deleting label {$id}: {$e->getMessage()}");
+            return response()->json(['message' => 'Failed to delete label.'], 500);
+        }
     }
 }
