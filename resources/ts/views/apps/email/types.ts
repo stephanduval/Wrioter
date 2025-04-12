@@ -10,10 +10,12 @@ export type EmailLabel = 'personal' | 'company' | 'important' | 'private' | stri
 export type EmailFolder = 'inbox' | 'sent' | 'draft' | 'starred' | 'spam' | 'trash' | 'archive';
 
 export interface EmailAttachment {
+  id: number;
   fileName: string;
   size: string;
   thumbnail: string; // Or make optional
   url?: string;     // Or make optional
+  download_url?: string;
 }
 
 export interface Email {

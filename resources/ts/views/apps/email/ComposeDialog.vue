@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { useEmail } from '@/views/apps/email/useEmail';
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 
 const emit = defineEmits<{
   (e: 'close'): void
@@ -15,6 +15,10 @@ const to = ref('')
 const subject = ref('')
 const message = ref('')
 const dueDate = ref<string | null>(null);
+
+// Ref for attachments
+const attachmentsRef = ref<File[]>([]); // Use VFileInput's multiple capability
+const attachmentErrors = ref<string[]>([]); // To store validation errors
 
 const cc = ref('')
 const bcc = ref('')
@@ -96,6 +100,47 @@ const onInputChange = (value: string, field: 'to' | 'cc' | 'bcc') => {
   filterUsers(value, field)
 }
 
+// --- Attachment Handling & Validation ---
+const MAX_FILE_SIZE_MB = 25;
+const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
+
+// NEW: Manual file handling instead of v-model
+const handleFileChange = (event: Event) => {
+  const target = event.target as HTMLInputElement;
+  if (target && target.files) {
+    // Append new files to the existing array
+    for (let i = 0; i < target.files.length; i++) {
+      attachmentsRef.value.push(target.files[i]);
+    }
+    // Trigger validation watch manually if needed (it should still trigger)
+    // console.log('Appended files:', attachmentsRef.value);
+  }
+};
+
+// NEW: Function to remove attachment by index
+const removeAttachment = (index: number) => {
+  attachmentsRef.value.splice(index, 1);
+};
+
+watch(attachmentsRef, (newFiles) => {
+  attachmentErrors.value = []; // Clear previous errors
+  let totalSize = 0;
+
+  newFiles.forEach((file, index) => {
+    totalSize += file.size;
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+      attachmentErrors.value.push(`File "${file.name}" (${(file.size / 1024 / 1024).toFixed(2)} MB) exceeds the ${MAX_FILE_SIZE_MB} MB limit.`);
+    }
+  });
+
+  // Optional: Check total size limit if needed
+  // const MAX_TOTAL_SIZE_MB = 100;
+  // const MAX_TOTAL_SIZE_BYTES = MAX_TOTAL_SIZE_MB * 1024 * 1024;
+  // if (totalSize > MAX_TOTAL_SIZE_BYTES) {
+  //   attachmentErrors.value.push(`Total attachment size (${(totalSize / 1024 / 1024).toFixed(2)} MB) exceeds the ${MAX_TOTAL_SIZE_MB} MB limit.`);
+  // }
+}, { deep: true });
+
 // Update sendMessage to use composable and include due date
 const sendMessage = async () => {
   console.log("ComposeDialog: sendMessage called");
@@ -103,6 +148,13 @@ const sendMessage = async () => {
   if (!to.value || !subject.value || !content.value) {
     console.error('To, Subject, and Message fields are required');
     // TODO: Add user feedback (e.g., toast notification)
+    return;
+  }
+  
+  // --- Attachment Validation Check ---
+  if (attachmentErrors.value.length > 0) {
+    console.error('Cannot send: Attachment validation errors exist.', attachmentErrors.value);
+    // TODO: Show user-friendly error (e.g., toast)
     return;
   }
   
@@ -124,7 +176,8 @@ const sendMessage = async () => {
     company_id: 1, // Adjust as needed
     subject: subject.value,
     message: content.value, // Use 'content' which is bound to TiptapEditor
-    due_date: dueDate.value || null // Pass due date (or null)
+    due_date: dueDate.value || null, // Pass due date (or null)
+    attachments: attachmentsRef.value // Pass the validated files
     // attachments: [] // Add attachment handling if needed later
   };
 
@@ -153,9 +206,12 @@ const sendMessage = async () => {
 // Update resetValues to include dueDate
 const resetValues = () => {
   to.value = subject.value = '';
+  content.value = ''; // Ensure Tiptap content is also reset
   cc.value = bcc.value = '';
   filteredToUsers.value = filteredCcUsers.value = filteredBccUsers.value = [];
   dueDate.value = null; // Reset due date
+  attachmentsRef.value = []; // Clear attachments
+  attachmentErrors.value = []; // Clear errors
 }
 </script>
 
@@ -343,20 +399,52 @@ const resetValues = () => {
       placeholder="Message"
     />
 
+    <!-- Attachment Section -->
+    <VDivider />
+    <div class="px-6 py-2">
+      <VFileInput
+        :model-value="attachmentsRef"
+        multiple
+        label="Attachments"
+        placeholder="Select your files"
+        prepend-icon="bx-paperclip"
+        density="compact"
+        :error-messages="attachmentErrors"
+        @change="handleFileChange"
+        @click:clear="attachmentsRef = []"
+      >
+        <!-- REMOVED #selection slot -->
+        <template #selection="{ fileNames }">
+          <!-- This slot is no longer used for display -->
+        </template>
+      </VFileInput>
+
+      <!-- NEW: Manual Chip Display Area -->
+      <div v-if="attachmentsRef.length > 0" class="mt-2 d-flex flex-wrap gap-2">
+        <VChip
+          v-for="(file, index) in attachmentsRef"
+          :key="index + '-' + file.name" 
+          label
+          closable
+          size="small"
+          color="primary"
+          @click:close="removeAttachment(index)"
+        >
+          {{ file.name }} ({{ (file.size / 1024 / 1024).toFixed(2) }} MB)
+        </VChip>
+      </div>
+    </div>
+
     <div class="d-flex align-center px-6 py-4">
       <VBtn
         color="primary"
         class="me-4"
         append-icon="bx-paper-plane"
-        :disabled="!subject || !content"
+        :disabled="!subject || !content || attachmentErrors.length > 0"
         @click="sendMessage"
       >
         send
       </VBtn>
-
-      <IconBtn size="small">
-        <VIcon icon="bx-paperclip" />
-      </IconBtn>
 
       <VSpacer />
 

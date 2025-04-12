@@ -138,5 +138,5 @@ import cube from '@images/cards/cube-secondary.png'
 </template>
 
 <style lang="scss">
-@use "@core-scss/template/libs/apex-chart.scss";
+@use "@core-scss/template/libs/apex-chart";
 </style>

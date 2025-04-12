@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import type { RouteLocationRaw } from 'vue-router'
-import { useRouter } from 'vue-router'
-import { VForm } from 'vuetify/components/VForm'
 import AuthProvider from '@/views/pages/authentication/AuthProvider.vue'
 import authV2LoginIllustration from '@images/pages/auth-v2-login-illustration.png'
 import { VNodeRenderer } from '@layouts/components/VNodeRenderer'
 import { themeConfig } from '@themeConfig'
+import type { RouteLocationRaw } from 'vue-router'
+import { useRouter } from 'vue-router'
+import { VForm } from 'vuetify/components/VForm'
 
 definePage({
   meta: {
@@ -45,7 +45,7 @@ const isAuthenticated = () => {
 }
 
 if (isAuthenticated())
-  router.replace({ name: 'dashboards-crm' }) // Redirect to home if already logged in
+  router.replace({ name: 'dashboards-analytics' }) // Redirect to home if already logged in
 
 const rememberMe = ref(false)
 
@@ -104,13 +104,13 @@ const login = async () => {
     const userRole = userData.role?.toLowerCase() || 'User'
 
     const targetRoute = userRole === 'admin'
-      ? { name: 'sdtestpage' }
+      ? { name: 'dashboards-analytics' }
       : userRole === 'client'
-        ? { name: 'sdtestpage' }
+        ? { name: 'dashboards-analytics' }
         : userRole === 'user'
-          ? { name: 'dashboards-crm' }
+          ? { name: 'dashboards-analytics' }
           : userRole === 'manager'
-            ? { name: 'sdtestpage' }
+            ? { name: 'dashboards-analytics' }
             : { name: 'dashboards-analytics' }
 
     router.replace(targetRoute as RouteLocationRaw)
@@ -293,5 +293,5 @@ const onSubmit = () => {
 </template>
 
 <style lang="scss">
-@use "@core-scss/template/pages/page-auth.scss";
+@use "@core-scss/template/pages/page-auth";
 </style>

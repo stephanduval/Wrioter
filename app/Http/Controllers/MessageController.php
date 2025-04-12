@@ -8,6 +8,9 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use App\Http\Resources\MessageResource;
+use Illuminate\Support\Facades\Storage;
+use App\Models\Attachment;
+use Illuminate\Support\Str;
 
 class MessageController extends Controller
 {
@@ -136,6 +139,10 @@ class MessageController extends Controller
             $rules['receiver_id'] = 'nullable|exists:users,id'; // Receiver is optional/nullable for new
         }
         
+        // Add validation for attachments (optional array, each file max 10MB)
+        $rules['attachments'] = 'sometimes|array';
+        $rules['attachments.*'] = 'file|max:25600'; // Max 25MB (25 * 1024) per file
+
         $validated = $request->validate($rules);
         // --- End Dynamic Validation ---
 
@@ -160,6 +167,36 @@ class MessageController extends Controller
         try {
             $message = Message::create($createData);
             Log::info('MessageController::store - Message created successfully.', ['message_id' => $message->id]); 
+
+            // Handle Attachments
+            if ($request->hasFile('attachments')) {
+                Log::info('Processing attachments for message: ' . $message->id);
+                foreach ($request->file('attachments') as $file) {
+                    if ($file->isValid()) {
+                        $originalName = $file->getClientOriginalName();
+                        $mimeType = $file->getMimeType();
+                        $size = $file->getSize();
+                        // Generate a unique path, e.g., attachments/user_id/message_id/unique_id_filename.ext
+                        $path = $file->store('attachments/' . Auth::id() . '/' . $message->id, 'public');
+                        
+                        if ($path) {
+                            Attachment::create([
+                                'message_id' => $message->id,
+                                'filename' => $originalName,
+                                'path' => $path, // Store the path returned by store()
+                                'mime_type' => $mimeType,
+                                'size' => $size,
+                            ]);
+                            Log::info('Saved attachment:', ['path' => $path, 'original_name' => $originalName]);
+                        } else {
+                            Log::warning('Failed to store attachment:', ['original_name' => $originalName]);
+                        }
+                    } else {
+                        Log::warning('Invalid file uploaded:', ['error' => $file->getErrorMessage()]);
+                    }
+                }
+            }
+
             // Return full resource on success
             return response()->json([
                 'message' => 'Message sent successfully', 
@@ -197,7 +234,7 @@ class MessageController extends Controller
 
         // Validate the incoming data first
         $validatedData = $request->validate([
-            'status' => 'sometimes|string|in:read,unread,deleted', // Removed sent, draft, spam, archived from here
+            'status' => 'sometimes|string|in:read,deleted', // REMOVED unread
             'task_status' => 'sometimes|string|in:new,in_process,completed', // Added 'in_process'
             'due_date' => 'sometimes|nullable|date_format:Y-m-d', // Allow updating/clearing due date
             'is_archived' => 'sometimes|boolean', // Allow updating archive status
@@ -299,21 +336,47 @@ class MessageController extends Controller
             unset($validatedData['folder']);
          }
 
-        // 2. Trash Status (explicit status=deleted or folder=trash or isDeleted=true)
-        if ( (isset($validatedData['status']) && $validatedData['status'] === 'deleted') || (isset($validatedData['folder']) && $validatedData['folder'] === 'trash') || (isset($validatedData['isDeleted']) && $validatedData['isDeleted'] === true) ) {
+        // 2. Trash Status (Explicit status=deleted or folder=trash or isDeleted=true)
+        // Important: Check this *before* read/unread
+        $isBeingTrashed = (isset($validatedData['status']) && $validatedData['status'] === 'deleted') || 
+                          (isset($validatedData['folder']) && $validatedData['folder'] === 'trash') || 
+                          (isset($validatedData['isDeleted']) && $validatedData['isDeleted'] === true);
+
+        if ($isBeingTrashed) {
              if ($message->status !== 'deleted') { // Only log/update if changing
                  Log::info("Marking message {$id} as deleted (moving to trash).");
                  $message->status = 'deleted'; 
                  $message->is_archived = false; // Cannot be archived and trashed simultaneously
              }
         } 
-        // 3. Read/Unread Status (only if not being deleted/archived in the same request)
-        elseif (isset($validatedData['status']) && in_array($validatedData['status'], ['read', 'unread']) && $message->status !== 'deleted' && !$message->is_archived) {
-             if ($message->status !== $validatedData['status']) { // Only log/update if changing
-                 Log::info("Setting message {$id} status to: " . $validatedData['status']);
-                 $message->status = $validatedData['status'];
-             }
-        }
+        // 3. Read/Unread Status (only apply if not being trashed or archived in this request)
+        elseif (isset($validatedData['status']) && in_array($validatedData['status'], ['read', 'unread'])) {
+            // Ensure not being archived at the same time (handled by folder logic)
+            $isBeingArchived = (isset($validatedData['folder']) && $validatedData['folder'] === 'archive') || (isset($validatedData['is_archived']) && $validatedData['is_archived'] === true);
+
+            if (!$isBeingTrashed && !$isBeingArchived) {
+                $newStatus = $validatedData['status'];
+                // *** Critical Fix: Convert 'unread' to a valid ENUM value ***
+                if ($newStatus === 'unread') {
+                    // Option 1: Revert to 'sent'. Assumes message was sent or read before.
+                    // $actualDbStatus = 'sent'; 
+                    // Option 2: Revert to a default non-read status like 'draft' if applicable?
+                    // Option 3: If your ENUM supports it, use that. Assuming 'sent' is the best fallback.
+                    $actualDbStatus = 'sent'; 
+                    Log::info("Received status 'unread', mapping to DB status: {$actualDbStatus}");
+                } else { // status is 'read'
+                    $actualDbStatus = 'read';
+                }
+
+                if ($message->status !== $actualDbStatus) { // Only log/update if changing
+                    Log::info("Setting message {$id} status to: " . $actualDbStatus);
+                    $message->status = $actualDbStatus;
+                }
+            }
+        } 
+        // --- Remove the explicit isRead handling block as status now covers it --- 
+        // // Handle isRead boolean input -> maps to status
+        // if (array_key_exists('isRead', $input)) { ... }
 
         // 4. Task Status
         if (isset($validatedData['task_status'])) {

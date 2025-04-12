@@ -269,6 +269,7 @@ const handleActionClick = async (
   emailIds: number[] | Ref<number[]> = selectedMessages,
 ) => {
   const ids: number[] = isRef(emailIds) ? emailIds.value : emailIds;
+  console.log(`>>> handleActionClick: action=${action}, ids=`, ids);
   if (!ids || ids.length === 0) return;
 
   let updateData: PartialDeep<Email> = {};
@@ -276,26 +277,33 @@ const handleActionClick = async (
   if (action === 'star') updateData = { isStarred: true };
   else if (action === 'unstar') updateData = { isStarred: false };
   else if (action === 'read') updateData = { status: 'read', isRead: true };
-  else if (action === 'unread') updateData = { status: 'unread', isRead: false };
+  else if (action === 'unread') updateData = { isRead: false };
+
+  console.log(`>>> handleActionClick: Prepared updateData:`, updateData);
 
   try {
+    console.log(`>>> handleActionClick: Calling updateEmails...`);
     await updateEmails(ids, updateData);
+    console.log(`>>> handleActionClick: updateEmails finished. Updating local state...`);
     
     messages.value.forEach(msg => {
       if (ids.includes(msg.id)) {
+        console.log(`  - Updating local message ID ${msg.id}: action=${action}`);
         if (action === 'star') msg.isStarred = true;
         if (action === 'unstar') msg.isStarred = false;
         if (action === 'read') { msg.isRead = true; msg.status = 'read'; }
-        if (action === 'unread') { msg.isRead = false; msg.status = 'unread'; }
+        if (action === 'unread') { msg.isRead = false; msg.status = 'sent'; }
       }
     });
     if (openedMessage.value && ids.includes(openedMessage.value.id)) {
+      console.log(`  - Updating openedMessage ID ${openedMessage.value.id}: action=${action}`);
       if (action === 'star') openedMessage.value.isStarred = true;
       if (action === 'unstar') openedMessage.value.isStarred = false;
       if (action === 'read') { openedMessage.value.isRead = true; openedMessage.value.status = 'read'; }
-      if (action === 'unread') { openedMessage.value.isRead = false; openedMessage.value.status = 'unread'; }
+      if (action === 'unread') { openedMessage.value.isRead = false; openedMessage.value.status = 'sent'; }
     }
-      } catch (error) {
+    console.log(`>>> handleActionClick: Local state update finished.`);
+  } catch (error) {
     console.error('Error performing action:', action, error);
   }
 }
@@ -616,7 +624,7 @@ const confirmPermanentDeleteMessages = async () => {
           </div>
           <VDivider class="d-none d-md-block"/>
           <!-- END: Column Headers -->
-
+        
 <PerfectScrollbar v-if="messages.length" tag="ul" class="Message-list">
   <li
     v-for="message in messages"
@@ -639,12 +647,22 @@ const confirmPermanentDeleteMessages = async () => {
         >
                   <VIcon :icon="message.isStarred ? 'bxs-star' : 'bx-star'" size="22" />
         </IconBtn>
-                <VChip
-                    v-if="message.task_status"
-                    :color="resolveStatusColor(message.task_status)"
-                    size="small"
-                    class="flex-shrink-0 ws-no-wrap text-capitalize ms-2"
-                    style=" max-inline-size: 90px;min-inline-size: 90px;"
+        <!-- Read/Unread Toggle Icon -->
+        <IconBtn 
+           @click.stop="handleActionClick(message.isRead ? 'unread' : 'read', [message.id])"
+           class="ms-1 me-1" >
+           <VIcon :icon="message.isRead ? 'bx-envelope-open' : 'bx-envelope'" size="22" />
+           <VTooltip activator="parent" location="top">
+             {{ message.isRead ? 'Mark as Unread' : 'Mark as Read' }}
+           </VTooltip>
+        </IconBtn>
+
+                 <VChip
+                     v-if="message.task_status"
+                     :color="resolveStatusColor(message.task_status)"
+                     size="small"
+                     class="flex-shrink-0 ws-no-wrap text-capitalize ms-2"
+                     style=" max-inline-size: 90px;min-inline-size: 90px;"
                  >
                   {{ message.task_status }}
                  </VChip>
@@ -686,7 +704,8 @@ const confirmPermanentDeleteMessages = async () => {
                 <div class="flex-grow-1 overflow-hidden ms-2">
                   <h6 class="text-h6 font-weight-regular ws-no-wrap text-truncate mb-0">
                     {{ message.subject }}
-                  </h6>
+                    <VIcon v-if="message.attachments && message.attachments.length > 0" icon="bx-paperclip" size="18" class="ms-1 text-disabled align-self-center" />
+          </h6>
                   <div class="text-body-2 text-medium-emphasis text-truncate" v-html="message.message ? message.message.replace(/<p>|<\/p>/g, '') : ''"></div>
       </div>
     </div>
@@ -847,18 +866,25 @@ const confirmPermanentDeleteMessages = async () => {
                     <span>{{ openedMessage.attachments.length }} Attachments</span>
                     <div
                       v-for="attachment in openedMessage.attachments"
-                      :key="attachment.fileName || 'file'"
+                      :key="attachment.id || attachment.fileName || 'file'"
                       class="d-flex align-center"
                     >
-                      <VImg
-                        :src="attachment.thumbnail || '/images/icons/file-icons/pdf.png'"
-                        :alt="attachment.fileName || 'file'"
-                        aspect-ratio="1"
-                        max-height="24"
-                        max-width="24"
-                        class="me-2"
-                      />
-                      <span>{{ attachment.fileName || 'Attachment' }}</span>
+                      <a 
+                        :href="attachment.download_url" 
+                        target="_blank" 
+                        class="d-flex align-center text-decoration-none"
+                        @click.stop
+                      >
+                        <VImg
+                          :src="attachment.thumbnail || '/images/icons/file-icons/doc.png'"
+                          :alt="attachment.fileName || 'file'"
+                          aspect-ratio="1"
+                          max-height="24"
+                          max-width="24"
+                          class="me-2"
+                        />
+                        <span class="text-body-1 text-high-emphasis">{{ attachment.fileName || 'Attachment' }}</span>
+                      </a>
                     </div>
                   </VCardText>
                 </template>

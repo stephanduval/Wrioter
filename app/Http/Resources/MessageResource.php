@@ -5,6 +5,7 @@ namespace App\Http\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use App\Models\User; // Import User model if not already imported
+use Illuminate\Support\Facades\URL; // Add this import for URL facade
 
 class MessageResource extends JsonResource
 {
@@ -60,10 +61,16 @@ class MessageResource extends JsonResource
                 return $this->attachments->map(function ($attachment) {
                     // Basic mapping, adjust thumbnail/url logic as needed based on your Attachment model/storage
                     return [
+                        'id' => $attachment->id,
                         'fileName' => $attachment->filename,
                         'thumbnail' => '/images/icons/file-icons/doc.png', // Placeholder, adjust logic
                         'url' => $attachment->path, // Assuming path is the URL or can derive it
                         'size' => $attachment->size . ' bytes', // Format size as needed
+                        'download_url' => URL::temporarySignedRoute(
+                            'attachments.download',
+                            now()->addMinutes(60), // URL valid for 60 minutes
+                            ['attachment' => $attachment->id]
+                        ),
                     ];
                 })->toArray() ?? [];
             }),

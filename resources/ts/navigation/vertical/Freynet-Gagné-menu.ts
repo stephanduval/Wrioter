@@ -12,14 +12,14 @@ export default [
     to: 'apps-companies-list'
       
   },
-  {
-    title: 'Project List',
-    icon: { icon: 'bx-check-double' },
-    children: [
-      { title: 'Dashboard', to: 'apps-logistics-dashboard' },
-      { title: 'Fleet', to: 'apps-logistics-fleet' },
-    ],
-  },
+  // {
+  //   title: 'Project List',
+  //   icon: { icon: 'bx-check-double' },
+  //   children: [
+  //     { title: 'Dashboard', to: 'apps-logistics-dashboard' },
+  //     { title: 'Fleet', to: 'apps-logistics-fleet' },
+  //   ],
+  // },
   {
     title: 'Messages',
     icon: { icon: 'bx-envelope' },

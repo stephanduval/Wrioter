@@ -1,167 +1,101 @@
 <script setup lang="ts">
-import AnalyticsActivityTimeline from '@/views/dashboards/analytics/AnalyticsActivityTimeline.vue'
-import AnalyticsCongratulations from '@/views/dashboards/analytics/AnalyticsCongratulations.vue'
-import AnalyticsFinanceTabs from '@/views/dashboards/analytics/AnalyticsFinanceTabs.vue'
-import AnalyticsOrder from '@/views/dashboards/analytics/AnalyticsOrder.vue'
-import AnalyticsOrderStatistics from '@/views/dashboards/analytics/AnalyticsOrderStatistics.vue'
-import AnalyticsProfitReport from '@/views/dashboards/analytics/AnalyticsProfitReport.vue'
-import AnalyticsRevenue from '@/views/dashboards/analytics/AnalyticsRevenue.vue'
-import AnalyticsSystemTabs from '@/views/dashboards/analytics/AnalyticsSystemTabs.vue'
-import AnalyticsTotalRevenue from '@/views/dashboards/analytics/AnalyticsTotalRevenue.vue'
-import AnalyticsTransactions from '@/views/dashboards/analytics/AnalyticsTransactions.vue'
+import { onMounted, ref } from 'vue';
+import { RouterLink } from 'vue-router';
+import { VBtn, VCard, VCardText, VCol, VDivider, VRow } from 'vuetify/components'; // Explicit imports
 
-// 👉 Images
-import paypal from '@images/cards/paypal-error.png'
-import wallet from '@images/cards/wallet-info.png'
+// Placeholder refs for request counts
+const requestsDueTodayCount = ref<number>(0)
+const newRequestsCount = ref<number>(0)
 
-const statisticsVertical = [
-  {
-    title: 'Sales',
-    color: 'info',
-    image: wallet,
-    stats: '$4,679',
-    change: 28.14,
-  },
-  {
-    title: 'Payments',
-    color: 'error',
-    image: paypal,
-    stats: '$2,468',
-    change: -14.82,
-  },
-]
+// Placeholder function to fetch data
+// TODO: Implement actual API call to fetch summary data
+const fetchRequestSummary = async () => {
+  console.log("Fetching request summary data...");
+  // Replace with actual API call, e.g.:
+  // try {
+  //   const response = await $api('/api/requests/summary'); // Example endpoint
+  //   requestsDueTodayCount.value = response.dueTodayCount;
+  //   newRequestsCount.value = response.newRequestsCount;
+  // } catch (error) {
+  //   console.error("Error fetching request summary:", error);
+  // }
+  // Using placeholder values for now:
+  requestsDueTodayCount.value = 3; // Placeholder
+  newRequestsCount.value = 5; // Placeholder
+}
+
+onMounted(() => {
+  fetchRequestSummary();
+})
 </script>
 
 <template>
-  <VRow class="match-height">
-    <!-- 👉 congratulations -->
-    <VCol
-      cols="12"
-      md="8"
-    >
-      <AnalyticsCongratulations />
-    </VCol>
+  <div>
+    <!-- Main Title -->
+    <h1 class="mb-4 text-h4">Freynet-Gagné Client Portal</h1>
 
-    <VCol
-      cols="12"
-      sm="4"
-    >
-      <VRow>
-        <!-- 👉 Sales -->
-        <VCol
-          cols="12"
-          md="6"
-        >
-          <AnalyticsOrder />
-        </VCol>
+    <!-- Requests Section -->
+    <h2 class="mb-3 text-h5">Requests</h2>
+    <VRow class="mb-4">
+      <VCol cols="12" md="6">
+        <VCard>
+          <VCardText class="text-center">
+            <div class="text-subtitle-1">Requests Due Today</div>
+            <div class="text-h4">{{ requestsDueTodayCount }}</div>
+          </VCardText>
+        </VCard>
+      </VCol>
+      <VCol cols="12" md="6">
+        <VCard>
+          <VCardText class="text-center">
+            <div class="text-subtitle-1">New Requests</div>
+            <div class="text-h4">{{ newRequestsCount }}</div>
+          </VCardText>
+        </VCard>
+      </VCol>
+    </VRow>
 
-        <!-- 👉 Orders -->
-        <VCol
-          cols="12"
-          md="6"
-        >
-          <CardStatisticsVertical v-bind="statisticsVertical[0]" />
-        </VCol>
-      </VRow>
-    </VCol>
+    <VDivider class="my-6" />
 
-    <!-- 👉 Total Revenue -->
-    <VCol
-      cols="12"
-      md="8"
-      order="2"
-      order-md="1"
-    >
-      <AnalyticsTotalRevenue />
-    </VCol>
-
-    <VCol
-      cols="12"
-      sm="8"
-      md="4"
-      order="1"
-      order-md="2"
-    >
-      <VRow>
-        <!-- 👉 Payments -->
-        <VCol
-          cols="12"
-          sm="6"
-        >
-          <CardStatisticsVertical v-bind="statisticsVertical[1]" />
-        </VCol>
-
-        <!-- 👉 Revenue -->
-        <VCol
-          cols="12"
-          sm="6"
-        >
-          <AnalyticsRevenue />
-        </VCol>
-      </VRow>
-
-      <VRow>
-        <!-- 👉 Profit Report -->
-        <VCol
-          cols="12"
-          sm="12"
-        >
-          <AnalyticsProfitReport />
-        </VCol>
-      </VRow>
-    </VCol>
-
-    <!-- 👉 Order Statistics -->
-    <VCol
-      cols="12"
-      md="4"
-      sm="6"
-      order="3"
-    >
-      <AnalyticsOrderStatistics />
-    </VCol>
-
-    <!-- 👉 Tabs chart -->
-    <VCol
-      cols="12"
-      md="4"
-      sm="6"
-      order="3"
-    >
-      <AnalyticsFinanceTabs />
-    </VCol>
-
-    <!-- 👉 Transactions -->
-    <VCol
-      cols="12"
-      md="4"
-      sm="6"
-      order="3"
-    >
-      <AnalyticsTransactions />
-    </VCol>
-
-    <!-- 👉 Activity Timeline -->
-    <VCol
-      cols="12"
-      order-md="3"
-      order="4"
-      md="6"
-    >
-      <AnalyticsActivityTimeline />
-    </VCol>
-
-    <!-- 👉 Tabs -->
-    <VCol
-      cols="12"
-      order="3"
-      sm="6"
-    >
-      <AnalyticsSystemTabs />
-    </VCol>
-  </VRow>
+    <!-- Action Cards Section -->
+    <VRow>
+      <VCol cols="12" md="4">
+        <VCard class="text-center" height="100%">
+          <VCardText class="d-flex flex-column justify-center align-center fill-height">
+            <div class="text-h6 mb-2">New Company</div>
+            <RouterLink :to="{ path: '/apps/companies/list', query: { tab: 'new' } }" v-slot="{ navigate }">
+              <VBtn @click="navigate">Go to Company Page</VBtn>
+            </RouterLink>
+          </VCardText>
+        </VCard>
+      </VCol>
+      <VCol cols="12" md="4">
+        <VCard class="text-center" height="100%">
+          <VCardText class="d-flex flex-column justify-center align-center fill-height">
+            <div class="text-h6 mb-2">New User</div>
+            <RouterLink :to="{ path: '/apps/user/list', query: { tab: 'new-client' } }" v-slot="{ navigate }">
+              <VBtn @click="navigate">Go to User List</VBtn>
+            </RouterLink>
+          </VCardText>
+        </VCard>
+      </VCol>
+       <VCol cols="12" md="4">
+        <VCard class="text-center" height="100%">
+          <VCardText class="d-flex flex-column justify-center align-center fill-height">
+            <div class="text-h6 mb-2">New Project Request</div>
+            <RouterLink :to="{ path: '/apps/email', query: { compose: 'true' } }" v-slot="{ navigate }">
+               <VBtn @click="navigate">Start New Request</VBtn>
+            </RouterLink>
+          </VCardText>
+        </VCard>
+      </VCol>
+    </VRow>
+  </div>
 </template>
 
 <style lang="scss">
-@use "@core-scss/template/libs/apex-chart.scss";
+/* Add any specific styles if needed */
+.fill-height {
+  block-size: 100%;
+}
 </style>

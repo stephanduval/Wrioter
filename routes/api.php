@@ -9,6 +9,8 @@ use App\Http\Controllers\RolesController;
 use App\Http\Controllers\EmailController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\LabelController;
+use App\Http\Controllers\AttachmentController;
+use App\Http\Controllers\SystemController;
 
 /*
 |--------------------------------------------------------------------------
@@ -84,6 +86,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/labels/{id}', [LabelController::class, 'destroy']); // Delete label
     // Add other label routes if needed (index, update, destroy)
 });
+
+// Attachment Download Route
+// Use 'signed' middleware ONLY. Assumes the signed URL itself provides sufficient temporary authorization.
+Route::middleware('signed')->get('/attachments/{attachment}/download', [AttachmentController::class, 'download'])->name('attachments.download');
+
+// System Info Route
+Route::middleware('auth:sanctum')->get('/system/disk-usage', [SystemController::class, 'diskUsage'])->name('system.diskUsage');
 
 Route::get('/test', function () {
     return response()->json(['message' => 'API is working']);
