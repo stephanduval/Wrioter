@@ -1,0 +1,28 @@
+console.log('Document.cookie from login.vue', document.cookie)
+
+// REMOVE or COMMENT OUT the role-based targetRoute logic again:
+/*
+const userRole = userData.role?.toLowerCase() || 'User'
+let targetRoute: RouteLocationRaw;
+if (userRole === 'admin') {
+  targetRoute = { name: 'dashboards-crm' };
+} else if (userRole === 'client') {
+  targetRoute = { name: 'apps-email' };
+} else if (userRole === 'manager' || userRole === 'user') {
+  targetRoute = { path: '/messages/list' };
+} else {
+  targetRoute = { name: 'dashboards-crm' };
+}
+console.log(`Login redirecting role "${userRole}" to:`, targetRoute);
+router.replace(targetRoute);
+*/
+
+// ALWAYS redirect to the root path after successful login
+console.log('[DEBUG] Login successful, redirecting to /');
+router.replace('/');
+
+}
+catch (err) {
+  console.error('login error', err)
+  errors.value.general = 'An error occurred. Please try again.'
+} 

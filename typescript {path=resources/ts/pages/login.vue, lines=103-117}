@@ -1,0 +1,17 @@
+console.log('Document.cookie from login.vue', document.cookie)
+
+// Redirect user
+const userRole = userData.role?.toLowerCase() || 'User'
+
+// THIS LOGIC IS REDUNDANT AND CAUSING THE ERROR
+const targetRoute = userRole === 'admin'
+  ? { name: 'dashboards-crm' }
+  : userRole === 'client'
+    ? { name: 'messages-list' } // Tries to use name: 'messages-list'
+    : userRole === 'user'
+      ? { name: 'messages-list' } // Tries to use name: 'messages-list'
+      : userRole === 'manager'
+        ? { name: 'messages-list' } // Tries to use name: 'messages-list'
+        : { name: 'messages-list' } // Tries to use name: 'messages-list'
+
+router.replace(targetRoute as RouteLocationRaw) // Error occurs here because 'messages-list' name isn't found reliably at this point 

@@ -43,7 +43,7 @@ export const redirects: RouteRecordRaw[] = [
 ]
 
 export const routes: RouteRecordRaw[] = [
-  // Email filter
+  // Email filter - Revert Subject
   {
     path: '/apps/email/filter/:filter',
     name: 'apps-email-filter',
@@ -51,20 +51,40 @@ export const routes: RouteRecordRaw[] = [
     meta: {
       navActiveLink: 'apps-email',
       layoutWrapperClasses: 'layout-content-height-fixed',
+      action: 'read',        
+      subject: 'client',   // <<< Revert subject back to 'client'
+      requiresAuth: true, 
     },
   },
 
-  // Email label
+  // Email label - Revert Subject
   {
     path: '/apps/email/label/:label',
     name: 'apps-email-label',
     component: emailRouteComponent,
     meta: {
-      // contentClass: 'email-application',
       navActiveLink: 'apps-email',
       layoutWrapperClasses: 'layout-content-height-fixed',
+      action: 'read',        
+      subject: 'client',   // <<< Revert subject back to 'client'
+      requiresAuth: true, 
     },
   },
+
+  // RE-ADD Messages List Route for Manager/User
+  {
+    path: '/messages/list', 
+    name: 'messages-list', 
+    component: emailRouteComponent, // Points to the same email component
+    meta: {
+      navActiveLink: 'apps-email', 
+      layoutWrapperClasses: 'layout-content-height-fixed', 
+      action: 'read',        
+      subject: 'user',       // Use 'user' subject (manager & user have this)
+      requiresAuth: true,    
+    },
+  },
+  // END RE-ADD
 
   {
     path: '/dashboards/logistics',

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import notAuthorizedIllustration from '@images/pages/auth-v2-register-illustration.png'
+import notAuthorizedIllustration from '@images/pages/auth-v2-register-illustration.png';
 
 definePage({
   alias: '/pages/misc/not-authorized',
@@ -20,7 +20,7 @@ definePage({
 
     <VBtn
       class="mb-6"
-      to="/"
+      to="/login"
     >
       Back To Home
     </VBtn>
@@ -38,5 +38,5 @@ definePage({
 </template>
 
 <style lang="scss">
-@use "@core-scss/template/pages/misc.scss";
+@use "@core-scss/template/pages/misc";
 </style>

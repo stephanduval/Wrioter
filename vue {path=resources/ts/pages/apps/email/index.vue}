@@ -1,0 +1,23 @@
+<route lang="yaml">
+meta:
+  action: read
+  subject: client
+  layoutWrapperClasses: layout-content-height-fixed
+  requiresAuth: true # Assuming authentication is needed
+</route>
+
+<script setup lang="ts">
+// ... existing script setup code ...
+
+definePage({
+  // meta: {  <-- Remove or comment out this old meta block if it exists
+  //   layoutWrapperClasses: 'layout-content-height-fixed',
+  // },
+})
+
+// ... rest of existing script setup code ...
+</script>
+
+// ... existing template code ...
+
+// ... existing style code ... 

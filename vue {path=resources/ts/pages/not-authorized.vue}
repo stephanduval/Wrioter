@@ -1,0 +1,6 @@
+<VBtn
+  class="mb-6"
+  to="/"
+>
+  Back To Home
+</VBtn> 

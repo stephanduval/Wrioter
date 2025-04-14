@@ -3,8 +3,7 @@ import AuthProvider from '@/views/pages/authentication/AuthProvider.vue'
 import authV2LoginIllustration from '@images/pages/auth-v2-login-illustration.png'
 import { VNodeRenderer } from '@layouts/components/VNodeRenderer'
 import { themeConfig } from '@themeConfig'
-import type { RouteLocationRaw } from 'vue-router'
-import { useRouter } from 'vue-router'
+import { RouteLocationRaw, useRouter } from 'vue-router'
 import { VForm } from 'vuetify/components/VForm'
 
 definePage({
@@ -78,7 +77,7 @@ const login = async () => {
 
     console.log('User Data:', userData) // Add this line to check the user data
     // Update ability
-    ability.update(abilityRules.map(rule => ({
+    ability.update(abilityRules.map((rule: { action: string; subject: string }) => ({
       action: rule.action.toLowerCase(),
       subject: rule.subject.toLowerCase(),
     })))
@@ -100,20 +99,30 @@ const login = async () => {
 
     console.log('Document.cookie from login.vue', document.cookie)
 
-    // Redirect user
-    const userRole = userData.role?.toLowerCase() || 'User'
+    // --- Direct Role-Based Redirect (Reverted Logic) ---
+    const userRole = userData.role?.toLowerCase() || 'User';
+    let targetRoute: RouteLocationRaw;
 
-    const targetRoute = userRole === 'admin'
-      ? { name: 'dashboards-analytics' }
-      : userRole === 'client'
-        ? { name: 'dashboards-analytics' }
-        : userRole === 'user'
-          ? { name: 'dashboards-analytics' }
-          : userRole === 'manager'
-            ? { name: 'dashboards-analytics' }
-            : { name: 'dashboards-analytics' }
+    console.log(`[DEBUG] Determining redirect target for role: ${userRole}`);
 
-    router.replace(targetRoute as RouteLocationRaw)
+    if (userRole === 'admin' || userRole === 'auth') {
+        targetRoute = { name: 'dashboards-crm' };
+        console.log(`[DEBUG] Target set for admin/auth:`, targetRoute);
+    } else if (userRole === 'client') {
+        targetRoute = { name: 'apps-email' }; // Client goes to apps-email by name
+        console.log(`[DEBUG] Target set for client:`, targetRoute);
+    } else if (userRole === 'manager' || userRole === 'user') {
+        targetRoute = { path: '/messages/list' }; // Manager/User go to /messages/list by path
+        console.log(`[DEBUG] Target set for manager/user:`, targetRoute);
+    } else {
+        // Fallback if role is unexpected
+        console.warn(`[DEBUG] Unexpected role "${userRole}", defaulting to dashboards-crm`);
+        targetRoute = { name: 'dashboards-crm' };
+    }
+
+    console.log(`[DEBUG] Attempting router.replace directly from login with:`, targetRoute);
+    router.replace(targetRoute); 
+
   }
   catch (err) {
     console.error('login error', err)

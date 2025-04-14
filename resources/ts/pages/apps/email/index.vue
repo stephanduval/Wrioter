@@ -13,7 +13,10 @@ import { PerfectScrollbar } from 'vue3-perfect-scrollbar'
 
 definePage({
   meta: {
+    action: 'read',
+    subject: 'client',
     layoutWrapperClasses: 'layout-content-height-fixed',
+    requiresAuth: true,
   },
 })
 
