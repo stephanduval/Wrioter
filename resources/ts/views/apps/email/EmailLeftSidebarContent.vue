@@ -181,82 +181,82 @@ const confirmLabelDelete = async () => {
         </li>
       </ul>
 
-      <div v-if="userLabels.length > 0 || showAddLabelForm">
-        <div class="text-caption text-disabled d-flex align-center justify-space-between px-6">
-          <span>LABELS</span>
-          <IconBtn size="small" @click="showAddLabelForm = !showAddLabelForm">
-            <VIcon :icon="showAddLabelForm ? 'bx-chevron-up' : 'bx-plus'" />
-          </IconBtn>
-        </div>
-
-        <!-- Add Label Form -->
-        <VExpandTransition>
-          <div v-show="showAddLabelForm" class="px-6 pb-4">
-            <VTextField
-              v-model="newLabelName"
-              label="New Label Name"
-              density="compact"
-              hide-details="auto"
-              class="mb-2"
-            />
-            <div class="d-flex gap-1 mb-2">
-              <span class="text-caption align-self-center">Colour:</span>
-              <VChip
-                v-for="colour in availableColours"
-                :key="colour"
-                :color="colour"
-                size="small"
-                :value="colour"
-                @click="selectedColour = colour"
-                class="cursor-pointer"
-                :style="selectedColour === colour ? 'border: 2px solid grey;' : ''"
-              >
-                &nbsp;
-              </VChip>
-            </div>
-            <VBtn size="small" block @click="handleAddLabel">Add</VBtn>
-          </div>
-        </VExpandTransition>
-
-        <!-- Label List -->
-        <ul class="email-labels mt-4" v-if="userLabels.length > 0">
-          <li
-            v-for="label in userLabels"
-            :key="label.id"
-          >
-            <RouterLink
-              v-slot="{ isActive, navigate }"
-              :to="{ name: 'apps-email-label', params: { label: label.title.toLowerCase() } } as any"
-              custom
-            >
-              <div
-                class="d-flex align-center justify-space-between email-label-item"
-                :class="{ 'email-label-active': isActive }"
-                @click="navigate"
-              >
-                <div class="d-flex align-center">
-                  <VIcon
-                    icon="bx-bxs-circle"
-                    :color="resolveLabelColor(label.title)"
-                    size="20"
-                    class="me-2"
-                  />
-                  <span class="text-body-11">{{ label.title }}</span>
-                </div>
-                <IconBtn
-                  size="x-small"
-                  variant="text"
-                  color="disabled"
-                  class="delete-label-btn"
-                  @click.stop="initiateLabelDelete(label)"
-                >
-                  <VIcon icon="bx-trash" size="25"/>
-                </IconBtn>
-              </div>
-            </RouterLink>
-          </li>
-        </ul>
+      <!-- Always show LABELS header and Add button -->
+      <div class="text-caption text-disabled d-flex align-center justify-space-between px-6">
+        <span>LABELS</span>
+        <IconBtn size="small" @click="showAddLabelForm = !showAddLabelForm">
+          <VIcon :icon="showAddLabelForm ? 'bx-chevron-up' : 'bx-plus'" />
+        </IconBtn>
       </div>
+
+      <!-- Conditionally show Add Label Form -->
+      <VExpandTransition>
+        <div v-show="showAddLabelForm" class="px-6 pb-4">
+          <VTextField
+            v-model="newLabelName"
+            label="New Label Name"
+            density="compact"
+            hide-details="auto"
+            class="mb-2"
+          />
+          <div class="d-flex gap-1 mb-2">
+            <span class="text-caption align-self-center">Colour:</span>
+            <VChip
+              v-for="colour in availableColours"
+              :key="colour"
+              :color="colour"
+              size="small"
+              :value="colour"
+              @click="selectedColour = colour"
+              class="cursor-pointer"
+              :style="selectedColour === colour ? 'border: 2px solid grey;' : ''"
+            >
+              &nbsp;
+            </VChip>
+          </div>
+          <VBtn size="small" block @click="handleAddLabel">Add</VBtn>
+        </div>
+      </VExpandTransition>
+
+      <!-- Conditionally show Label List -->
+      <ul class="email-labels mt-4" v-if="userLabels.length > 0">
+        <li
+          v-for="label in userLabels"
+          :key="label.id"
+        >
+          <RouterLink
+            v-slot="{ isActive, navigate }"
+            :to="{ name: 'apps-email-label', params: { label: label.title.toLowerCase() } } as any"
+            custom
+          >
+            <div
+              class="d-flex align-center justify-space-between email-label-item"
+              :class="{ 'email-label-active': isActive }"
+              @click="navigate"
+            >
+              <div class="d-flex align-center">
+                <VIcon
+                  icon="bx-bxs-circle"
+                  :color="resolveLabelColor(label.title)"
+                  size="20"
+                  class="me-2"
+                />
+                <span class="text-body-11">{{ label.title }}</span>
+              </div>
+              <IconBtn
+                size="x-small"
+                variant="text"
+                color="disabled"
+                class="delete-label-btn"
+                @click.stop="initiateLabelDelete(label)"
+              >
+                <VIcon icon="bx-trash" size="25"/>
+              </IconBtn>
+            </div>
+          </RouterLink>
+        </li>
+      </ul>
+
     </PerfectScrollbar>
 
     <!-- Delete Confirmation Dialog -->
