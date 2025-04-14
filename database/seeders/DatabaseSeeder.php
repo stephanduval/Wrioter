@@ -12,7 +12,6 @@ class DatabaseSeeder extends Seeder
             RolePermissionActionSubjectSeeder::class,
             CompanySeeder::class,
             UserSeeder::class,
-            MessageSeeder::class,
             // ... other seeders
         ]);
     }
