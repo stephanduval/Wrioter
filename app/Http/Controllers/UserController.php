@@ -3,62 +3,101 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\Role;
 use App\Models\UserCompany;
 use App\Models\UserRole;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 
 class UserController extends Controller
 {
     public function index(Request $request)
-{
-   
+    {
+        // Validate general query parameters first
+        $request->validate([
+            'page' => 'sometimes|integer|min:1',
+            'itemsPerPage' => 'required|integer|min:-1|max:100|not_in:0',
+            'q' => 'nullable|string',
+            'role' => 'nullable|string|max:50',
+        ]);
 
-    $validated = $request->validate([
-        'page' => 'integer|min:1',
-        'itemsPerPage' => 'integer|min:1|max:100', // Limit items per page to prevent abuse
-        'q' => 'nullable|string',
-    ]);
-    $page = $request->get('page', 1); // Default to page 1 if not provided
-    $itemsPerPage = $request->get('itemsPerPage', 10); // Default to 10 items per page
-    \Log::info('Pagination Request Parameters:', [
-        'page' => $page,
-        'itemsPerPage' => $itemsPerPage,
-        'q' => $request->get('q'),
-    ]);
-    $users = User::query()
-    ->when($request->get('q'), function ($query, $search) {
-        $query->where('name', 'like', "%{$search}%")
-              ->orWhere('email', 'like', "%{$search}%");
-    })
-    ->paginate($itemsPerPage, ['*'], 'page', $page);
-    
+        $page = $request->integer('page', 1);
+        $itemsPerPage = $request->integer('itemsPerPage', 10);
+        $searchQuery = $request->input('q');
+        $filterRole = $request->input('role');
 
-// Transform users data only if there are results
-$transformedUsers = $users->getCollection()->map(function ($user) {
-    return [
-        'id' => $user->id,
-        'fullName' => $user->name,
-        'email' => $user->email,
-        'role' => 'user',
-        'status' => 'active',
-        'currentPlan' => 'basic',
-        'avatar' => null,
-        'billing' => 'auto',
-        'user' => [
-            'fullName' => $user->name,
-            'email' => $user->email,
-        ],
-    ];
-});
+        \Log::info('User List Request Parameters:', [
+            'page' => $page,
+            'itemsPerPage' => $itemsPerPage,
+            'q' => $searchQuery,
+            'role' => $filterRole,
+        ]);
 
-$paginatedResponse = $users->toArray();
-$paginatedResponse['data'] = $transformedUsers->toArray(); // Ensure transformation
+        // Eager load companies and roles to optimize queries
+        $query = User::with(['companies', 'roles'])
+            ->when($searchQuery, function ($query, $search) {
+                $query->where(function($q) use ($search) {
+                    $q->where('users.name', 'like', "%{$search}%")
+                      ->orWhere('users.email', 'like', "%{$search}%");
+                });
+            })
+            ->when($filterRole, function ($query, $roleName) {
+                $query->whereHas('roles', function ($q) use ($roleName) {
+                    $q->where('name', $roleName);
+                });
+            });
 
-    return response()->json($paginatedResponse);
-}
+        // Define the transformation closure to reuse it
+        $transformUser = function ($user) {
+            return [
+                'id' => $user->id,
+                'fullName' => $user->name,
+                'email' => $user->email,
+                'role' => $user->roles->first()?->name ?? 'N/A',
+                'company' => $user->companies->first()?->company_name ?? 'N/A',
+                'status' => 'active',
+                'currentPlan' => 'basic',
+                'avatar' => null,
+                'user' => [
+                    'fullName' => $user->name,
+                    'email' => $user->email,
+                    'company' => $user->companies->first()?->company_name ?? 'N/A',
+                    'role' => $user->roles->first()?->name ?? 'N/A',
+                ],
+            ];
+        };
 
+        // Get all unique role names for the filter dropdown
+        $allRoles = Role::distinct()->pluck('name')->toArray();
 
+        // Decide whether to paginate or get all results
+        if ($itemsPerPage === -1) {
+            $users = $query->get();
+            $totalUsers = $users->count();
+            $transformedUsers = $users->map($transformUser);
+
+            $response = [
+                'data' => $transformedUsers->toArray(),
+                'total' => $totalUsers,
+                'current_page' => 1,
+                'per_page' => $totalUsers,
+                'last_page' => 1,
+                'from' => $totalUsers > 0 ? 1 : 0,
+                'to' => $totalUsers,
+                'all_roles' => $allRoles,
+            ];
+        } else {
+            $paginatedUsers = $query->paginate($itemsPerPage, ['*'], 'page', $page);
+            $transformedUsers = $paginatedUsers->getCollection()->map($transformUser);
+
+            $response = $paginatedUsers->toArray();
+            $response['data'] = $transformedUsers->toArray();
+            $response['all_roles'] = $allRoles;
+        }
+
+        return response()->json($response);
+    }
 
     public function addUser(Request $request)
     {
@@ -133,8 +172,8 @@ public function showUser($id)
             'id' => $user->id,
             'name' => $user->name,
             'email' => $user->email,
-            'company_id' => $user->companies->first()?->id, // Assuming one company per user
-            'role_id' => $user->roles->first()?->id, // Assuming one role per user
+            'company_id' => $user->companies->first()?->id,
+            'role_id' => $user->roles->first()?->id,
         ]);
     } catch (\Exception $e) {
         \Log::error('Error fetching user details: ', ['message' => $e->getMessage()]);

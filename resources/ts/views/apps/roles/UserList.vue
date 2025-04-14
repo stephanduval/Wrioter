@@ -5,8 +5,8 @@ import type { UserProperties } from '@db/apps/users/types'
 // 👉 Store
 const searchQuery = ref('')
 const selectedRole = ref()
-const selectedPlan = ref()
-const selectedStatus = ref()
+// const selectedPlan = ref() // Removed
+// const selectedStatus = ref() // Removed
 
 // Data table options
 const itemsPerPage = ref(10)
@@ -21,23 +21,25 @@ const updateOptions = (options: any) => {
   orderBy.value = options.sortBy[0]?.order
 }
 
-// Headers
+// Headers (Assuming you uncommented and fixed this, otherwise the table won't show headers)
+/*
 const headers = [
   { title: 'User', key: 'user' },
+  { title: 'Company', key: 'company' },
   { title: 'Role', key: 'role' },
-  { title: 'Plan', key: 'plan' },
-  { title: 'Billing', key: 'billing' },
-  { title: 'Status', key: 'status' },
   { title: 'Actions', key: 'actions', sortable: false },
 ]
+*/
+// If you prefer no headers, keep the above commented out.
 
 // 👉 Fetching users
-const { data: usersData, execute: fetchUsers } = await useApi<any>(createUrl('/apps/users', {
+// Update API call to remove plan and status query parameters
+const { data: usersData, execute: fetchUsers } = await useApi<any>(createUrl('/api/users', { // Ensure API path is correct
   query: {
     q: searchQuery,
-    status: selectedStatus,
-    plan: selectedPlan,
-    role: selectedRole,
+    // status: selectedStatus, // Removed
+    // plan: selectedPlan, // Removed
+    role: selectedRole, // Keep role filter
     itemsPerPage,
     page,
     sortBy,
@@ -45,56 +47,53 @@ const { data: usersData, execute: fetchUsers } = await useApi<any>(createUrl('/a
   },
 }))
 
-const users = computed((): UserProperties[] => usersData.value.users)
+// Derive users from the 'data' property of the response
+const users = computed((): UserProperties[] => usersData.value?.data || [])
 const totalUsers = computed(() => usersData.value?.total || 0)
 
-console.log(users.value)
-console.log(totalUsers.value)
+// 👉 Dynamic roles for filter dropdown
+// NOTE: This derives roles from the *currently fetched* users.
+// For a complete list, ideally fetch all roles from a dedicated API endpoint.
+const availableRoles = computed(() => {
+  if (!usersData.value?.all_roles) { // Check if backend provides a dedicated list first
+     // Fallback: derive from fetched user data
+     const rolesFromUsers = users.value.map(user => user.role).filter(role => role && role !== 'N/A');
+     const uniqueRoles = [...new Set(rolesFromUsers)];
+     return uniqueRoles.map(role => ({ title: role, value: role }));
+  }
+  // If backend provides `all_roles` (e.g., ['Admin', 'Manager', ...])
+  return usersData.value.all_roles.map((role: string) => ({ title: role, value: role }));
+})
 
-// 👉 search filters for roles
-const roles = [
-  { title: 'Admin', value: 'admin' },
-  { title: 'Author', value: 'author' },
-  { title: 'Editor', value: 'editor' },
-  { title: 'Maintainer', value: 'maintainer' },
-  { title: 'Subscriber', value: 'subscriber' },
-]
 
-// 👉 search filters for plans
-const plans = [
-  { title: 'Company', value: 'company' },
-  { title: 'Team', value: 'team' },
-  { title: 'Basic', value: 'basic' },
-  { title: 'Enterprise', value: 'enterprise' },
-]
+// 👉 search filters for roles (Static list removed, using availableRoles now)
+// const roles = [ ... ] // Removed
+
+// 👉 search filters for plans (Removed)
+// const plans = [ ... ] // Removed
 
 const resolveUserRoleVariant = (role: string) => {
-  const roleLowerCase = role.toLowerCase()
+  const roleString = String(role || '');
+  const roleLowerCase = roleString.toLowerCase();
 
   if (roleLowerCase === 'subscriber')
     return { color: 'success', icon: 'bx-user' }
   if (roleLowerCase === 'admin')
     return { color: 'primary', icon: 'bx-crown' }
-  if (roleLowerCase === 'maintainer')
+  if (roleLowerCase === 'manager')
     return { color: 'info', icon: 'bx-pie-chart-alt' }
   if (roleLowerCase === 'editor')
     return { color: 'warning', icon: 'bx-edit' }
   if (roleLowerCase === 'author')
     return { color: 'error', icon: 'bx-desktop' }
+  if (roleLowerCase === 'client')
+    return { color: 'secondary', icon: 'bx-briefcase' }
+  if (roleLowerCase === 'user')
+    return { color: 'light', icon: 'bx-user-circle' }
+  if (roleLowerCase === 'auth')
+    return { color: 'dark', icon: 'bx-shield-quarter'}
 
-  return { color: 'success', icon: 'bx-user' }
-}
-
-const resolveUserStatusVariant = (stat: string) => {
-  const statLowerCase = stat.toLowerCase()
-  if (statLowerCase === 'pending')
-    return 'warning'
-  if (statLowerCase === 'active')
-    return 'success'
-  if (statLowerCase === 'inactive')
-    return 'secondary'
-
-  return 'primary'
+  return { color: 'grey', icon: 'bx-help-circle' }
 }
 
 const isAddNewUserDrawerVisible = ref(false)
@@ -158,13 +157,14 @@ const deleteUser = async (id: number) => {
             <AppSelect
               v-model="selectedRole"
               placeholder="Select Role"
-              :items="roles"
+              :items="availableRoles" <!-- Use dynamic roles -->
               clearable
               clear-icon="bx-x"
             />
           </div>
 
-          <!-- 👉 Select Plan -->
+          <!-- 👉 Select Plan (Removed) -->
+          <!--
           <div style="inline-size: 9.375rem;">
             <AppSelect
               v-model="selectedPlan"
@@ -174,6 +174,8 @@ const deleteUser = async (id: number) => {
               clear-icon="bx-x"
             />
           </div>
+           -->
+           <!-- Select Status filter was likely implicit via the API param, no UI element to remove unless added previously -->
         </div>
       </VCardText>
 
@@ -192,7 +194,7 @@ const deleteUser = async (id: number) => {
         ]"
         :items="users"
         :items-length="totalUsers"
-        :headers="headers"
+        :headers="headers" <!-- This will use the headers defined (or commented out) above -->
         class="text-no-wrap"
         show-select
         @update:options="updateOptions"
@@ -227,6 +229,13 @@ const deleteUser = async (id: number) => {
           </div>
         </template>
 
+        <!-- 👉 Company -->
+        <template #item.company="{ item }">
+          <div class="text-body-1 text-high-emphasis text-capitalize">
+            {{ item.company }}
+          </div>
+        </template>
+
         <!-- 👉 Role -->
         <template #item.role="{ item }">
           <div class="d-flex align-center gap-x-2">
@@ -240,25 +249,6 @@ const deleteUser = async (id: number) => {
               {{ item.role }}
             </div>
           </div>
-        </template>
-
-        <!-- Plan -->
-        <template #item.plan="{ item }">
-          <div class="text-body-1 text-high-emphasis text-capitalize">
-            {{ item.currentPlan }}
-          </div>
-        </template>
-
-        <!-- Status -->
-        <template #item.status="{ item }">
-          <VChip
-            :color="resolveUserStatusVariant(item.status)"
-            size="small"
-            label
-            class="text-capitalize"
-          >
-            {{ item.status }}
-          </VChip>
         </template>
 
         <!-- Actions -->
