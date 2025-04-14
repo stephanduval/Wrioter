@@ -213,12 +213,12 @@ const deleteUser = async (id: number) => {
   }
 }
 
-const widgetData = ref([
-  { title: 'Session', value: '21,459', change: 29, desc: 'Total Users', icon: 'bx-group', iconColor: 'primary' },
-  { title: 'Paid Users', value: '4,567', change: 18, desc: 'Last Week Analytics', icon: 'bx-user-plus', iconColor: 'error' },
-  { title: 'Active Users', value: '19,860', change: -14, desc: 'Last Week Analytics', icon: 'bx-user-check', iconColor: 'success' },
-  { title: 'Pending Users', value: '237', change: 42, desc: 'Last Week Analytics', icon: 'bx-user-voice', iconColor: 'warning' },
-])
+// const widgetData = ref([
+//   { title: 'Session', value: '21,459', change: 29, desc: 'Total Users', icon: 'bx-group', iconColor: 'primary' },
+//   { title: 'Paid Users', value: '4,567', change: 18, desc: 'Last Week Analytics', icon: 'bx-user-plus', iconColor: 'error' },
+//   { title: 'Active Users', value: '19,860', change: -14, desc: 'Last Week Analytics', icon: 'bx-user-check', iconColor: 'success' },
+//   { title: 'Pending Users', value: '237', change: 42, desc: 'Last Week Analytics', icon: 'bx-user-voice', iconColor: 'warning' },
+// ])
 
 // Add this near your other useApi calls
 const { data: testData, execute: testApiCall } = useApi('/users?page=2&itemsPerPage=10', {
@@ -275,57 +275,57 @@ const openEditUserDrawer = (userId: number) => {
 <template>
   <section>
     <!-- 👉 Widgets -->
-    <div class="d-flex mb-6">
-      <VRow>
-        <template
-          v-for="(data, id) in widgetData"
-          :key="id"
-        >
-          <VCol
-            cols="12"
-            md="3"
-            sm="6"
+      <!-- <div class="d-flex mb-6">
+        <VRow>
+          <template
+            v-for="(data, id) in widgetData"
+            :key="id"
           >
-            <VCard>
-              <VCardText>
-                <div class="d-flex justify-space-between">
-                  <div class="d-flex flex-column gap-y-1">
-                    <div class="text-body-1 text-high-emphasis">
-                      {{ data.title }}
-                    </div>
-                    <div class="d-flex gap-x-2 align-center">
-                      <h4 class="text-h4">
-                        {{ data.value }}
-                      </h4>
-                      <div
-                        class="text-base"
-                        :class="data.change > 0 ? 'text-success' : 'text-error'"
-                      >
-                        ({{ prefixWithPlus(data.change) }}%)
+            <VCol
+              cols="12"
+              md="3"
+              sm="6"
+            >
+              <VCard>
+                <VCardText>
+                  <div class="d-flex justify-space-between">
+                    <div class="d-flex flex-column gap-y-1">
+                      <div class="text-body-1 text-high-emphasis">
+                        {{ data.title }}
+                      </div>
+                      <div class="d-flex gap-x-2 align-center">
+                        <h4 class="text-h4">
+                          {{ data.value }}
+                        </h4>
+                        <div
+                          class="text-base"
+                          :class="data.change > 0 ? 'text-success' : 'text-error'"
+                        >
+                          ({{ prefixWithPlus(data.change) }}%)
+                        </div>
+                      </div>
+                      <div class="text-sm">
+                        {{ data.desc }}
                       </div>
                     </div>
-                    <div class="text-sm">
-                      {{ data.desc }}
-                    </div>
+                    <VAvatar
+                      :color="data.iconColor"
+                      variant="tonal"
+                      rounded
+                      size="40"
+                    >
+                      <VIcon
+                        :icon="data.icon"
+                        size="24"
+                      />
+                    </VAvatar>
                   </div>
-                  <VAvatar
-                    :color="data.iconColor"
-                    variant="tonal"
-                    rounded
-                    size="40"
-                  >
-                    <VIcon
-                      :icon="data.icon"
-                      size="24"
-                    />
-                  </VAvatar>
-                </div>
-              </VCardText>
-            </VCard>
-          </VCol>
-        </template>
-      </VRow>
-    </div>
+                </VCardText>
+              </VCard>
+            </VCol>
+          </template>
+        </VRow>
+      </div> -->
 
     <VCard class="mb-6">
       <VCardItem class="pb-4">

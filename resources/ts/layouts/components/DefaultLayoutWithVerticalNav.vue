@@ -4,7 +4,6 @@ import { themeConfig } from '@themeConfig'
 
 // Components
 import Footer from '@/layouts/components/Footer.vue'
-import NavBarNotifications from '@/layouts/components/NavBarNotifications.vue'
 import NavSearchBar from '@/layouts/components/NavSearchBar.vue'
 import NavbarShortcuts from '@/layouts/components/NavbarShortcuts.vue'
 import NavbarThemeSwitcher from '@/layouts/components/NavbarThemeSwitcher.vue'
@@ -59,7 +58,7 @@ const actionArrowInitialRotation = configStore.isVerticalNavCollapsed ? '180deg'
         />
         <NavbarThemeSwitcher />
         <NavbarShortcuts />
-        <NavBarNotifications class="me-1" />
+        <!-- <NavBarNotifications class="me-1" /> -->
         <UserProfile />
       </div>
     </template>
