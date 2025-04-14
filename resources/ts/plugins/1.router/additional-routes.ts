@@ -16,18 +16,35 @@ export const redirects: RouteRecordRaw[] = [
 
       const userRole = userData?.role?.toLowerCase() // Normalize role to lowercase
 
-      console.log('Redirecting based on role:', userRole)
+      console.log('[Redirect] Checking role:', userRole); 
 
-      if (userRole === 'admin')
-        return { name: 'dashboards-crm' }
-      if (userRole === 'client')
-        return { name: 'dashboards-crm' }
-      if (userRole === 'manager')
-        return { name: 'messages-list' }
-      if (userRole === 'user')
-        return { name: 'messages-list' }
+      // Change target for admin/auth
+      if (userRole === 'admin' || userRole === 'auth') { 
+         console.log('[Redirect] Routing admin/auth to dashboards-analytics'); // <<< Update log
+         return { name: 'dashboards-analytics' }; // <<< CHANGE HERE
+      }
       
-      return { name: 'dashboards-crm', query: to.query }
+      // Targets for other roles remain the same
+      if (userRole === 'client') {
+          console.log('[Redirect] Routing client to apps-email');
+          return { name: 'apps-email' }; 
+      }
+
+      if (userRole === 'manager' || userRole === 'user') {
+          console.log('[Redirect] Routing manager/user to /messages/list');
+          return { path: '/messages/list' }; 
+      }
+
+      // Fallback logic - update default target
+      console.log('[Redirect] Role undefined or unexpected, determining fallback...');
+      const isLoggedIn = !!(useCookie('userData').value && useCookie('accessToken').value)
+      if(!isLoggedIn) {
+         console.log('[Redirect] Fallback: Not logged in, routing to login');
+         return { name: 'login' }; 
+      } else {
+         console.log('[Redirect] Fallback: Logged in, role unexpected. Defaulting to dashboards-analytics.'); // <<< Update log
+         return { name: 'dashboards-analytics' }; // <<< CHANGE HERE
+      }
     },
   },
   {

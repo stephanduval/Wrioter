@@ -99,25 +99,25 @@ const login = async () => {
 
     console.log('Document.cookie from login.vue', document.cookie)
 
-    // --- Direct Role-Based Redirect (Reverted Logic) ---
+    // --- Direct Role-Based Redirect ---
     const userRole = userData.role?.toLowerCase() || 'User';
     let targetRoute: RouteLocationRaw;
 
     console.log(`[DEBUG] Determining redirect target for role: ${userRole}`);
 
     if (userRole === 'admin' || userRole === 'auth') {
-        targetRoute = { name: 'dashboards-crm' };
+        targetRoute = { name: 'dashboards-analytics' };
         console.log(`[DEBUG] Target set for admin/auth:`, targetRoute);
     } else if (userRole === 'client') {
-        targetRoute = { name: 'apps-email' }; // Client goes to apps-email by name
+        targetRoute = { name: 'apps-email' };
         console.log(`[DEBUG] Target set for client:`, targetRoute);
     } else if (userRole === 'manager' || userRole === 'user') {
-        targetRoute = { path: '/messages/list' }; // Manager/User go to /messages/list by path
+        targetRoute = { path: '/messages/list' };
         console.log(`[DEBUG] Target set for manager/user:`, targetRoute);
     } else {
         // Fallback if role is unexpected
-        console.warn(`[DEBUG] Unexpected role "${userRole}", defaulting to dashboards-crm`);
-        targetRoute = { name: 'dashboards-crm' };
+        console.warn(`[DEBUG] Unexpected role "${userRole}", defaulting to dashboards-analytics`);
+        targetRoute = { name: 'dashboards-analytics' };
     }
 
     console.log(`[DEBUG] Attempting router.replace directly from login with:`, targetRoute);
