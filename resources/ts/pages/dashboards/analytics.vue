@@ -1,31 +1,63 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { isToday, parseISO } from 'date-fns';
+import { computed, onMounted, ref } from 'vue';
 import { RouterLink } from 'vue-router';
 import { VBtn, VCard, VCardText, VCol, VDivider, VRow } from 'vuetify/components'; // Explicit imports
 
-// Placeholder refs for request counts
-const requestsDueTodayCount = ref<number>(0)
-const newRequestsCount = ref<number>(0)
-
-// Placeholder function to fetch data
-// TODO: Implement actual API call to fetch summary data
-const fetchRequestSummary = async () => {
-  console.log("Fetching request summary data...");
-  // Replace with actual API call, e.g.:
-  // try {
-  //   const response = await $api('/api/requests/summary'); // Example endpoint
-  //   requestsDueTodayCount.value = response.dueTodayCount;
-  //   newRequestsCount.value = response.newRequestsCount;
-  // } catch (error) {
-  //   console.error("Error fetching request summary:", error);
-  // }
-  // Using placeholder values for now:
-  requestsDueTodayCount.value = 3; // Placeholder
-  newRequestsCount.value = 5; // Placeholder
+// Define interface for message summary data (same as in email index.vue)
+interface MessageSummary {
+  id: number;
+  due_date: string | null;
+  task_status: 'new' | 'in_process' | 'completed' | null;
 }
 
-onMounted(() => {
-  fetchRequestSummary();
+// Ref for storing summary data of ALL user messages
+const allUserMessagesSummary = ref<MessageSummary[]>([]);
+
+// Fetch summary data for ALL user messages (same API as email index.vue)
+const fetchAllUserMessagesSummary = async () => {
+  try {
+    console.log("🔥 Fetching summary data for ALL user messages in dashboard...");
+    const response = await $api('/messages/summary'); 
+    console.log("✅ Summary Data:", response);
+    if (response && Array.isArray(response)) {
+      allUserMessagesSummary.value = response;
+    } else {
+      console.error("❌ Invalid API response format for summary data:", response);
+      allUserMessagesSummary.value = [];
+    }
+  } catch (error) {
+    console.error("❌ Error fetching summary data:", error);
+    allUserMessagesSummary.value = [];
+  }
+};
+
+// Computed Properties for Summary Boxes (same as in email index.vue)
+const dueTodayCount = computed(() => {
+  // Count based on ALL user messages summary
+  const count = allUserMessagesSummary.value.filter(m => {
+    if (!m.due_date) return false; // Skip if no due date
+
+    try {
+      const dueDateObj = parseISO(m.due_date);
+      const isDueToday = isToday(dueDateObj);
+      return isDueToday;
+    } catch (e) {
+      console.error(`Error processing due_date ${m.due_date} for message ${m.id}:`, e);
+      return false;
+    }
+  }).length;
+
+  return count;
+});
+
+const newTasksCount = computed(() => {
+  // Count based on ALL user messages summary with task_status === 'new'
+  return allUserMessagesSummary.value.filter(m => m.task_status === 'new').length;
+});
+
+onMounted(async () => {
+  await fetchAllUserMessagesSummary();
 })
 </script>
 
@@ -41,15 +73,15 @@ onMounted(() => {
         <VCard>
           <VCardText class="text-center">
             <div class="text-subtitle-1">Requests Due Today</div>
-            <div class="text-h4">{{ requestsDueTodayCount }}</div>
+            <div class="text-h4">{{ dueTodayCount }}</div>
           </VCardText>
         </VCard>
       </VCol>
       <VCol cols="12" md="6">
         <VCard>
           <VCardText class="text-center">
-            <div class="text-subtitle-1">New Requests</div>
-            <div class="text-h4">{{ newRequestsCount }}</div>
+            <div class="text-subtitle-1">New Tasks</div>
+            <div class="text-h4">{{ newTasksCount }}</div>
           </VCardText>
         </VCard>
       </VCol>
