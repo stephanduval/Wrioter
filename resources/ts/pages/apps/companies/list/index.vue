@@ -5,9 +5,10 @@ import { computed, onMounted, ref, watch } from 'vue';
 
 // 👉 Store
 const searchQuery = ref('');
-const selectedRole = ref();
-const selectedPlan = ref();
-const selectedStatus = ref();
+// Removing filter variables
+// const selectedRole = ref();
+// const selectedPlan = ref();
+// const selectedStatus = ref();
 
 // Data table options
 const itemsPerPage = ref(10);
@@ -69,6 +70,11 @@ const handleCompanyData = (data: any) => {
   }
 }
 
+// Add handleCompanyUpdated function to fix linter error
+const handleCompanyUpdated = () => {
+  fetchCompanies();
+}
+
 onMounted(async () => {
   try {
     await fetchCompanies();
@@ -78,7 +84,8 @@ onMounted(async () => {
 });
 
 watch(
-  [searchQuery, selectedRole, selectedPlan, selectedStatus, itemsPerPage, page, sortBy, orderBy],
+  // Removed selectedRole, selectedPlan, selectedStatus from the watch array
+  [searchQuery, itemsPerPage, page, sortBy, orderBy],
   () => {
     fetchCompanies();
   }
@@ -105,14 +112,6 @@ const deleteCompany = async (id: number) => {
     console.error('Error deleting company:', error)
   }
 }
-// 👉 Handle table actions
-// const deleteCompany = async (id: number) => {
-//   await $api(`/companies/${id}`, {
-//     method: 'DELETE',
-//   });
-
-//   fetchCompanies();
-// };
 
 // 👉 Update options
 const updateOptions = (options: any) => {
@@ -130,49 +129,10 @@ const updateOptions = (options: any) => {
 
 <template>
   <section>
-    <!-- 👉 Filters and Actions -->
+    <!-- Removed the Filters Card -->
+    
     <VCard class="mb-6">
-      <VCardItem class="pb-4">
-        <VCardTitle>Filters</VCardTitle>
-      </VCardItem>
-
-      <VCardText>
-        <VRow>
-          <!-- 👉 Select Role -->
-          <VCol cols="12" sm="4">
-            <AppSelect
-              v-model="selectedRole"
-              placeholder="Select Role"
-              :items="roles"
-              clearable
-              clear-icon="bx-x"
-            />
-          </VCol>
-          <!-- 👉 Select Plan -->
-          <VCol cols="12" sm="4">
-            <AppSelect
-              v-model="selectedPlan"
-              placeholder="Select Plan"
-              :items="plans"
-              clearable
-              clear-icon="bx-x"
-            />
-          </VCol>
-          <!-- 👉 Select Status -->
-          <VCol cols="12" sm="4">
-            <AppSelect
-              v-model="selectedStatus"
-              placeholder="Select Status"
-              :items="status"
-              clearable
-              clear-icon="bx-x"
-            />
-          </VCol>
-        </VRow>
-      </VCardText>
-
-      <VDivider />
-
+      <!-- Keeping just the search and actions section -->
       <VCardText class="d-flex flex-wrap gap-4">
         <div class="me-3 d-flex gap-3">
           <AppSelect

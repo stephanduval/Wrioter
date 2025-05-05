@@ -6,9 +6,10 @@ import type { UserProperties } from '@db/apps/users/types'
 
 // 👉 Store
 const searchQuery = ref('')
-const selectedRole = ref()
-const selectedPlan = ref()
-const selectedStatus = ref()
+// Removing filter variables
+// const selectedRole = ref()
+// const selectedPlan = ref()
+// const selectedStatus = ref()
 
 // Data table options
 const itemsPerPage = ref(10)
@@ -106,7 +107,8 @@ watch(usersData, data => {
 }, { immediate: true })
 
 watch(
-  [searchQuery, selectedRole, selectedPlan, selectedStatus, itemsPerPage, page, sortBy, orderBy],
+  // Removed filter variables from watch array
+  [searchQuery, itemsPerPage, page, sortBy, orderBy],
   () => {
     fetchUsers()
   },
@@ -127,6 +129,7 @@ onMounted(async () => {
 })
 
 // 👉 search filters
+// Keeping these variables for reference in case they're used elsewhere
 const roles = [
   { title: 'Admin', value: 'admin' },
   { title: 'Author', value: 'author' },
@@ -328,56 +331,7 @@ const openEditUserDrawer = (userId: number) => {
       </div> -->
 
     <VCard class="mb-6">
-      <VCardItem class="pb-4">
-        <VCardTitle>Filters</VCardTitle>
-      </VCardItem>
-
-      <VCardText>
-        <VRow>
-          <!-- 👉 Select Role -->
-          <VCol
-            cols="12"
-            sm="4"
-          >
-            <AppSelect
-              v-model="selectedRole"
-              placeholder="Select Role"
-              :items="roles"
-              clearable
-              clear-icon="bx-x"
-            />
-          </VCol>
-          <!-- 👉 Select Plan -->
-          <VCol
-            cols="12"
-            sm="4"
-          >
-            <AppSelect
-              v-model="selectedPlan"
-              placeholder="Select Plan"
-              :items="plans"
-              clearable
-              clear-icon="bx-x"
-            />
-          </VCol>
-          <!-- 👉 Select Status -->
-          <VCol
-            cols="12"
-            sm="4"
-          >
-            <AppSelect
-              v-model="selectedStatus"
-              placeholder="Select Status"
-              :items="status"
-              clearable
-              clear-icon="bx-x"
-            />
-          </VCol>
-        </VRow>
-      </VCardText>
-
-      <VDivider />
-
+      <!-- Removing the Filter title and filter options -->
       <VCardText class="d-flex flex-wrap gap-4">
         <div class="me-3 d-flex gap-3">
           <AppSelect
