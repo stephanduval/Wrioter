@@ -46,7 +46,6 @@ const headers = [
   { title: 'User', key: 'user' },
   { title: 'Role', key: 'role' },
   { title: 'Company', key: 'company' },
-  // { title: 'Billing', key: 'billing' },
   // { title: 'Status', key: 'status' },
   { title: 'Actions', key: 'actions', sortable: false },
 ]
