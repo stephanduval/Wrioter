@@ -24,39 +24,19 @@ class UserSeeder extends Seeder
                 'password' => Hash::make('password123'), // Use a secure password
             ],
             [
-                'name' => 'Jean-Paul',
-                'email' => 'Jean-paul@freynet-gagne.com',
+                'name' => 'Administrator',
+                'email' => 'info@freynet-gagne.com',
                 'password' => Hash::make('password123'), // Use a secure password
             ],
             [
-                'name' => 'Maya',
-                'email' => 'maya@freynet-gagne.com',
-                'password' => Hash::make('password123'), // Use a secure password
-            ],
-            [
-                'name' => 'admin',
+                'name' => 'Admin User',
                 'email' => 'admin@admin.com',
-                'password' => Hash::make('password123'), // Use a secure password
+                'password' => Hash::make('password123'),
             ],
             [
-                'name' => 'auth',
-                'email' => 'auth@auth.com',
-                'password' => Hash::make('password123'), // Use a secure password
-            ],
-            [
-                'name' => 'manager',
-                'email' => 'manager@manager.com',
-                'password' => Hash::make('password123'), // Use a secure password
-            ],
-            [
-                'name' => 'client',
+                'name' => 'Client User',
                 'email' => 'client@client.com',
-                'password' => Hash::make('password123'), // Use a secure password
-            ],
-            [
-                'name' => 'user',
-                'email' => 'user@user.com',
-                'password' => Hash::make('password123'), // Use a secure password
+                'password' => Hash::make('password123'),
             ],
         ];
 
@@ -66,17 +46,16 @@ class UserSeeder extends Seeder
         // Define roles for specific users
         $userRoles = [
             'admin@admin.com' => 1,   // Admin role
-            'auth@auth.com' => 2,    // Auth role
-            'manager@manager.com' => 3, // Manager role
             'client@client.com' => 4,  // Client role
-            'user@user.com' => 5,    // User role
+            'sophie@freynet-gagne.com' => 4, // Client role
+            'info@freynet-gagne.com' => 1, // Admin role
         ];
 
         foreach ($users as $userData) {
             $user = User::firstOrCreate(['email' => $userData['email']], $userData);
 
-            // Assign specific roles if email matches, else assign manager role (role_id = 3)
-            $roleId = $userRoles[$userData['email']] ?? 3;
+            // Assign specific roles if email matches, else assign client role (role_id = 4)
+            $roleId = $userRoles[$userData['email']] ?? 4;
 
             DB::table('user_roles')->updateOrInsert(
                 ['user_id' => $user->id, 'role_id' => $roleId],

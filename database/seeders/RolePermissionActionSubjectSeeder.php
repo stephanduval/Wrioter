@@ -23,7 +23,7 @@ class RolePermissionActionSubjectSeeder extends Seeder
         DB::statement('SET FOREIGN_KEY_CHECKS=1;');
 
         // Define subjects and actions
-        $subjects = ['admin', 'auth', 'manager', 'client', 'user', 'all'];
+        $subjects = ['admin', 'client', 'all'];
         $actions = ['create', 'read', 'update', 'delete', 'manage'];
 
         // Create permissions
@@ -42,22 +42,18 @@ class RolePermissionActionSubjectSeeder extends Seeder
             }
         }
 
-        // Create roles
-        $roles = ['admin', 'auth', 'manager', 'client', 'user'];
+        // Create roles - Reduced to only admin and client
+        $roles = ['admin', 'client'];
         foreach ($roles as $roleName) {
             Role::firstOrCreate(
                 ['name' => ucfirst($roleName)]
             );
         }
 
-        // Define role hierarchy and permissions
+        // Define role hierarchy and permissions - Simplified to only admin and client
         $roleHierarchy = [
-            'auth' => ['admin', 'manager', 'user', 'client', 'auth', 'all'],
-            'admin' => ['admin', 'manager', 'user', 'client', 'all'], // Admin gets everything
-            'manager' => ['manager', 'user', 'client'],  // Manager gets their permissions plus user and client
+            'admin' => ['admin', 'client', 'all'], // Admin gets everything
             'client' => ['client'],  // Client only gets client permissions
-            'user' => ['user'],  // User only gets user permissions
-            
         ];
 
         // Assign permissions based on hierarchy
