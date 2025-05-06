@@ -55,4 +55,9 @@ class Message extends Model
     {
         return $this->hasMany(Attachment::class);
     }
+
+    public function project(): BelongsTo
+    {
+        return $this->belongsTo(Project::class);
+    }
 }

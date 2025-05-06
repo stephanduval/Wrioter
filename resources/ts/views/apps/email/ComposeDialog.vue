@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { useEmail } from '@/views/apps/email/useEmail';
-import { onMounted, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 
 const emit = defineEmits<{
   (e: 'close'): void
@@ -15,6 +15,29 @@ const to = ref('')
 const subject = ref('')
 const message = ref('')
 const dueDate = ref<string | null>(null);
+
+// Project information fields
+const projectTitle = ref('')
+const property = ref('')
+const timePreference = ref('anytime')
+const serviceType = ref('')
+const serviceDescription = ref('')
+
+// Get current user role
+const userData = computed(() => {
+  try {
+    return localStorage.getItem('userData') ? JSON.parse(localStorage.getItem('userData') || '{}') : {}
+  } catch (e) {
+    console.error('Error parsing userData from localStorage:', e)
+    return {}
+  }
+})
+
+const userRole = computed(() => userData.value?.role || '')
+const isClient = computed(() => userRole.value === 'client')
+
+// Admin recipient ID (info@freynet-gagne.com)
+const ADMIN_ID = 2 // ID for info@freynet-gagne.com from UserSeeder
 
 // Ref for attachments
 const attachmentsRef = ref<File[]>([]); // Use VFileInput's multiple capability
@@ -35,6 +58,27 @@ const filteredToUsers = ref<Array<{ id: number, fullName: string, email: string 
 const filteredCcUsers = ref<Array<{ id: number, fullName: string, email: string }>>([])
 const filteredBccUsers = ref<Array<{ id: number, fullName: string, email: string }>>([])
 
+// Define project data interface
+interface ProjectData {
+  title: string
+  property: string | null
+  time_preference: string
+  service_type: string | null
+  service_description: string | null
+  deadline: string | null
+}
+
+// Define message payload interface
+interface MessagePayload {
+  receiver_id: number | null
+  company_id: number
+  subject: string
+  message: string
+  due_date: string | null
+  attachments: File[]
+  project_data?: ProjectData
+}
+
 // Fetch users on component mount
 onMounted(async () => {
   try {
@@ -51,7 +95,38 @@ onMounted(async () => {
       throw new Error('Failed to fetch users')
 
     const result = await response.json()
-    users.value = result.data
+    
+    // If user is client, filter out other clients and only show admin recipients
+    if (isClient.value) {
+      // Only include admin users for clients
+      users.value = result.data.filter((user: any) => 
+        user.email === 'info@freynet-gagne.com' || 
+        user.email === 'admin@admin.com' ||
+        user.roles?.some((role: any) => role.name === 'admin')
+      )
+      
+      // Auto-select admin recipient (info@freynet-gagne.com)
+      const adminUser = users.value.find(user => user.id === ADMIN_ID)
+      if (adminUser) {
+        to.value = `${adminUser.fullName} <${adminUser.email}>`
+      }
+      
+      // Initialize project form with defaults for client users
+      if (!projectTitle.value) projectTitle.value = '';
+      if (!property.value) property.value = '';
+      if (!timePreference.value) timePreference.value = 'anytime';
+      if (!serviceType.value) serviceType.value = '';
+      
+      // Set a default due date if none provided (7 days from now)
+      if (!dueDate.value) {
+        const defaultDueDate = new Date();
+        defaultDueDate.setDate(defaultDueDate.getDate() + 7);
+        dueDate.value = defaultDueDate.toISOString().split('T')[0]; // Format as YYYY-MM-DD
+      }
+    } else {
+      users.value = result.data
+    }
+    
     loading.value = false
   }
   catch (error) {
@@ -145,41 +220,75 @@ watch(attachmentsRef, (newFiles) => {
 const sendMessage = async () => {
   console.log("ComposeDialog: sendMessage called");
   // Basic validation
-  if (!to.value || !subject.value || !content.value) {
-    console.error('To, Subject, and Message fields are required');
-    // TODO: Add user feedback (e.g., toast notification)
+  if (!subject.value || !content.value) {
+    console.error('Subject and Message fields are required');
     return;
+  }
+  
+  // For client role, also validate project fields
+  if (isClient.value) {
+    if (!projectTitle.value) {
+      console.error('Project title is required for client messages');
+      return;
+    }
+    if (!property.value) {
+      console.error('Property is required for client messages');
+      return;
+    }
+    if (!serviceType.value) {
+      console.error('Service type is required for client messages');
+      return;
+    }
+    if (!dueDate.value) {
+      console.error('Due date is required for client messages');
+      return;
+    }
   }
   
   // --- Attachment Validation Check ---
   if (attachmentErrors.value.length > 0) {
     console.error('Cannot send: Attachment validation errors exist.', attachmentErrors.value);
-    // TODO: Show user-friendly error (e.g., toast)
     return;
   }
   
-  // Extract email and find receiver ID (keep existing logic)
-  const receiverEmail = to.value.match(/<(.+)>/)?.[1] || to.value;
-  const receiver = users.value.find(user => user.email === receiverEmail);
-  const receiverId = receiver ? receiver.id : null; // Get ID or null
-
-  if (!receiver && to.value.trim() !== '') { // Allow sending without recipient? If so, receiverId should be null. Adjust logic if recipient is mandatory.
+  // Determine receiver ID - Always send to admin for clients
+  let receiverId = null;
+  
+  if (isClient.value) {
+    // Clients always send to admin
+    receiverId = ADMIN_ID;
+  } else {
+    // Extract email and find receiver ID for non-clients
+    const receiverEmail = to.value.match(/<(.+)>/)?.[1] || to.value;
+    const receiver = users.value.find(user => user.email === receiverEmail);
+    receiverId = receiver ? receiver.id : null;
+    
+    if (!receiver && to.value.trim() !== '') {
       console.warn('Recipient not found in user list, sending without specific receiver_id');
-      // If recipient email *must* match a user, add error handling here:
-      // console.error('Recipient not found');
-      // return;
+    }
   }
   
-  // Prepare payload for the composable function
-  const payload = {
+  // Prepare payload
+  const payload: MessagePayload = {
     receiver_id: receiverId, 
     company_id: 1, // Adjust as needed
     subject: subject.value,
-    message: content.value, // Use 'content' which is bound to TiptapEditor
-    due_date: dueDate.value || null, // Pass due date (or null)
-    attachments: attachmentsRef.value // Pass the validated files
-    // attachments: [] // Add attachment handling if needed later
+    message: content.value,
+    due_date: dueDate.value || null,
+    attachments: attachmentsRef.value
   };
+  
+  // Add project data for client role
+  if (isClient.value) {
+    payload.project_data = {
+      title: projectTitle.value,
+      property: property.value || null,
+      time_preference: timePreference.value,
+      service_type: serviceType.value || null,
+      service_description: serviceDescription.value || null,
+      deadline: dueDate.value || null
+    };
+  }
 
   console.log("ComposeDialog: Sending payload:", payload);
 
@@ -203,7 +312,7 @@ const sendMessage = async () => {
   }
 }
 
-// Update resetValues to include dueDate
+// Update resetValues to include project fields
 const resetValues = () => {
   to.value = subject.value = '';
   content.value = ''; // Ensure Tiptap content is also reset
@@ -212,6 +321,13 @@ const resetValues = () => {
   dueDate.value = null; // Reset due date
   attachmentsRef.value = []; // Clear attachments
   attachmentErrors.value = []; // Clear errors
+  
+  // Reset project fields
+  projectTitle.value = '';
+  property.value = '';
+  timePreference.value = 'anytime';
+  serviceType.value = '';
+  serviceDescription.value = '';
 }
 </script>
 
@@ -246,28 +362,32 @@ const resetValues = () => {
     </VCardText>
 
     <div class="px-1 pe-6 py-1 position-relative">
-      <VTextField
-        v-model="to"
-        density="compact"
-        @input="onInputChange(to, 'to')"
-      >
-        <template #prepend-inner>
-          <div class="text-base font-weight-medium text-disabled">
-            To:
-          </div>
-        </template>
-        <template #append>
-          <span class="cursor-pointer text-body-1">
-            <span @click="isEmailCc = !isEmailCc">Cc</span>
-            <span> | </span>
-            <span @click="isEmailBcc = !isEmailBcc">Bcc</span>
-          </span>
-        </template>
-      </VTextField>
+      <VCardText>
+        <VRow>
+          <VCol cols="12">
+            <VTextField
+              v-model="to"
+              label="To"
+              autofocus
+              :rules="[(value: string) => !!value || 'This field is required']"
+              :disabled="isClient"
+              v-if="!isClient"
+            />
+            <VTextField
+              v-model="to"
+              label="To"
+              autofocus
+              :rules="[(value: string) => !!value || 'This field is required']"
+              disabled
+              v-if="isClient"
+            />
+          </VCol>
+        </VRow>
+      </VCardText>
       
       <!-- To field autocomplete dropdown -->
       <VCard
-        v-if="filteredToUsers.length > 0"
+        v-if="filteredToUsers.length > 0 && !isClient"
         class="autocomplete-dropdown"
         elevation="4"
       >
@@ -285,7 +405,7 @@ const resetValues = () => {
     </div>
 
     <VExpandTransition>
-      <div v-if="isEmailCc" class="position-relative">
+      <div v-if="isEmailCc && !isClient" class="position-relative">
         <VDivider />
 
         <div class="px-1 pe-6 py-1">
@@ -323,7 +443,7 @@ const resetValues = () => {
     </VExpandTransition>
 
     <VExpandTransition>
-      <div v-if="isEmailBcc" class="position-relative">
+      <div v-if="isEmailBcc && !isClient" class="position-relative">
         <VDivider />
 
         <div class="px-1 pe-6 py-1">
@@ -360,7 +480,110 @@ const resetValues = () => {
       </div>
     </VExpandTransition>
 
-    <VDivider />
+    <!-- Project Fields - Only for clients -->
+    <div v-if="isClient">
+      <div class="px-1 pe-6 py-1">
+        <VTextField
+          v-model="projectTitle"
+          density="compact"
+          label="Project Title"
+          placeholder="Enter project title"
+          :rules="[(v: string) => !!v || 'Project title is required']"
+        >
+          <template #prepend-inner>
+            <div class="text-base font-weight-medium text-disabled">
+              Project Title:
+            </div>
+          </template>
+        </VTextField>
+      </div>
+
+      <VDivider />
+
+      <div class="px-1 pe-6 py-1">
+        <VTextField
+          v-model="property"
+          density="compact"
+          label="Property"
+          placeholder="Enter property details"
+          :rules="[(v: string) => !!v || 'Property is required']"
+        >
+          <template #prepend-inner>
+            <div class="text-base font-weight-medium text-disabled">
+              Property:
+            </div>
+          </template>
+        </VTextField>
+      </div>
+
+      <VDivider />
+
+      <div class="px-1 pe-6 py-1">
+        <VSelect
+          v-model="serviceType"
+          density="compact"
+          label="Service Type"
+          :rules="[(v: string) => !!v || 'Service type is required']"
+          :items="[
+            { title: 'Translation', value: 'translation' },
+            { title: 'Revision', value: 'revision' },
+            { title: 'Modifications', value: 'modifications' },
+            { title: 'Transcription', value: 'transcription' },
+            { title: 'Voice Over', value: 'voice_over' },
+            { title: 'Other', value: 'other' }
+          ]"
+        >
+          <template #prepend-inner>
+            <div class="text-base font-weight-medium text-disabled">
+              Service Type:
+            </div>
+          </template>
+        </VSelect>
+      </div>
+
+      <VDivider />
+
+      <div class="px-1 pe-6 py-1">
+        <VSelect
+          v-model="timePreference"
+          density="compact"
+          label="Time Preference"
+          :items="[
+            { title: 'Before Noon', value: 'before_noon' },
+            { title: 'Before 4pm', value: 'before_4pm' },
+            { title: 'Anytime', value: 'anytime' }
+          ]"
+        >
+          <template #prepend-inner>
+            <div class="text-base font-weight-medium text-disabled">
+              Time Preference:
+            </div>
+          </template>
+        </VSelect>
+      </div>
+
+      <VDivider />
+
+      <div class="px-1 pe-6 py-1">
+        <VTextarea
+          v-model="serviceDescription"
+          density="compact"
+          label="Service Description"
+          placeholder="Describe the service you need"
+          rows="2"
+          auto-grow
+        >
+          <template #prepend-inner>
+            <div class="text-base font-weight-medium text-disabled pt-2">
+              Description:
+            </div>
+          </template>
+        </VTextarea>
+      </div>
+
+      <VDivider />
+    </div>
+
     <div class="px-1 pe-6 py-1">
       <VTextField
         v-model="subject"
@@ -381,6 +604,7 @@ const resetValues = () => {
         density="compact" 
         type="date"  
         placeholder="YYYY-MM-DD"
+        :rules="[(v: string) => (isClient ? !!v || 'Due date is required' : true)]"
         clearable 
       >
         <template #prepend-inner>
@@ -440,7 +664,7 @@ const resetValues = () => {
         color="primary"
         class="me-4"
         append-icon="bx-paper-plane"
-        :disabled="!subject || !content || attachmentErrors.length > 0"
+        :disabled="(isClient && (!projectTitle || !property || !serviceType || !dueDate)) || !subject || !content || attachmentErrors.length > 0"
         @click="sendMessage"
       >
         send

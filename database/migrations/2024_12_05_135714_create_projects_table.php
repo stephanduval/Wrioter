@@ -15,8 +15,16 @@ class CreateProjectsTable extends Migration
     {
         Schema::create('projects', function (Blueprint $table) {
             $table->id();
-            $table->string('name', 255);
-            $table->text('description')->nullable();
+            $table->foreignId('client_id')->constrained('users');
+            $table->string('title');
+            $table->string('property')->nullable();
+            $table->string('contact_email')->nullable();
+            $table->timestamp('date_requested')->useCurrent();
+            $table->enum('status', ['received', 'in_progress', 'delivered'])->default('received');
+            $table->enum('time_preference', ['before_noon', 'before_4pm', 'anytime'])->default('anytime');
+            $table->date('deadline')->nullable();
+            $table->enum('service_type', ['translation', 'revision', 'modifications', 'transcription', 'voice_over', 'other'])->nullable();
+            $table->text('service_description')->nullable();
             $table->timestamps();
         });
     }

@@ -11,6 +11,7 @@ use App\Http\Controllers\MessageController;
 use App\Http\Controllers\LabelController;
 use App\Http\Controllers\AttachmentController;
 use App\Http\Controllers\SystemController;
+use App\Http\Controllers\ProjectController;
 
 /*
 |--------------------------------------------------------------------------
@@ -100,4 +101,10 @@ Route::get('/test', function () {
 
 Route::middleware('auth:sanctum')->get('/test-middleware', function (Request $request) {
     return response()->json(['user' => $request->user()]);
+});
+
+// Project Routes
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/projects/summary', [ProjectController::class, 'summary']);
+    Route::apiResource('/projects', ProjectController::class);
 });

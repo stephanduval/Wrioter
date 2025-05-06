@@ -723,18 +723,18 @@ const confirmPermanentDeleteMessages = async () => {
               <IconBtn
                 class="me-2"
                 @click="openedMessage = null; showReplyForm = false; replyMessage = ''"
-              >
-                <VIcon
-                  size="22"
+        >
+          <VIcon
+            size="22"
                   icon="bx-chevron-left"
                   class="flip-in-rtl text-medium-emphasis"
-                />
-              </IconBtn>
+          />
+        </IconBtn>
 
               <div class="d-flex align-center flex-wrap flex-grow-1 overflow-hidden gap-2">
                 <div class="text-body-1 text-high-emphasis text-truncate">
                   {{ openedMessage.subject || 'No Subject' }}
-                </div>
+        </div>
 
                 <div v-if="openedMessage.labels && openedMessage.labels.length" class="d-flex flex-wrap gap-2">
                   <VChip
@@ -746,8 +746,8 @@ const confirmPermanentDeleteMessages = async () => {
                   >
                     {{ label }}
                   </VChip>
-                </div>
-              </div>
+      </div>
+    </div>
 
               <div>
                 <div class="d-flex align-center gap-1">

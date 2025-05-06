@@ -126,6 +126,7 @@ class MessageController extends Controller
             'company_id' => 'required|exists:companies,id',
             'subject' => 'required|string|max:255',
             'due_date' => 'nullable|date_format:Y-m-d', // Validate due_date
+            'project_data' => 'nullable|array', // Add validation for project_data
         ];
 
         if ($isReply) {
@@ -139,6 +140,16 @@ class MessageController extends Controller
             $rules['receiver_id'] = 'nullable|exists:users,id'; // Receiver is optional/nullable for new
         }
         
+        // Project data validation rules
+        if ($request->has('project_data')) {
+            $rules['project_data.title'] = 'required|string|max:255';
+            $rules['project_data.property'] = 'required|string|max:255';
+            $rules['project_data.time_preference'] = 'required|in:before_noon,before_4pm,anytime';
+            $rules['project_data.service_type'] = 'required|in:translation,revision,modifications,transcription,voice_over,other';
+            $rules['project_data.service_description'] = 'nullable|string';
+            $rules['project_data.deadline'] = 'required|date_format:Y-m-d';
+        }
+        
         // Add validation for attachments (optional array, each file max 10MB)
         $rules['attachments'] = 'sometimes|array';
         $rules['attachments.*'] = 'file|max:25600'; // Max 25MB (25 * 1024) per file
@@ -147,6 +158,38 @@ class MessageController extends Controller
         // --- End Dynamic Validation ---
 
         Log::info('MessageController::store - Validation passed. Validated data:', $validated); 
+
+        // Project creation logic for client users
+        $project_id = null;
+        $user = Auth::user();
+        $userRole = $user->roles->first()?->name;
+        
+        if ($userRole === 'client' && isset($validated['project_data'])) {
+            try {
+                $projectData = [
+                    'client_id' => $user->id,
+                    'title' => $validated['project_data']['title'],
+                    'property' => $validated['project_data']['property'],
+                    'contact_email' => $user->email,
+                    'date_requested' => now(),
+                    'status' => 'received',
+                    'time_preference' => $validated['project_data']['time_preference'],
+                    'deadline' => $validated['project_data']['deadline'] ?? $validated['due_date'],
+                    'service_type' => $validated['project_data']['service_type'],
+                    'service_description' => $validated['project_data']['service_description'] ?? null,
+                ];
+                
+                Log::info('MessageController::store - Creating project with data:', $projectData);
+                
+                $project = \App\Models\Project::create($projectData);
+                $project_id = $project->id;
+                
+                Log::info('MessageController::store - Project created successfully with ID: ' . $project_id);
+            } catch (\Exception $e) {
+                Log::error('MessageController::store - Error creating project: ' . $e->getMessage());
+                // Continue with message creation even if project creation fails
+            }
+        }
 
         $createData = [
             'sender_id' => Auth::id(),
@@ -160,6 +203,7 @@ class MessageController extends Controller
             'task_status' => 'new',     // Default task status
             'due_date' => $validated['due_date'] ?? null, // Add due date
             'is_archived' => false,    // Default archive status
+            'project_id' => $project_id, // Assign the project ID if a project was created
         ];
 
         Log::info('MessageController::store - Attempting to create message with:', $createData); 
@@ -200,7 +244,7 @@ class MessageController extends Controller
             // Return full resource on success
             return response()->json([
                 'message' => 'Message sent successfully', 
-                'data' => new MessageResource($message->load(['sender', 'receiver', 'labels', 'attachments']))
+                'data' => new MessageResource($message->load(['sender', 'receiver', 'labels', 'attachments', 'project']))
             ], 201);
         } catch (\Exception $e) {
             Log::error('MessageController::store - Error creating message:', [

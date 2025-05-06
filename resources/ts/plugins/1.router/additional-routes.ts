@@ -1,6 +1,8 @@
 import type { RouteRecordRaw } from 'vue-router/auto'
 
 const emailRouteComponent = () => import('@/pages/apps/email/index.vue')
+const projectsListComponent = () => import('@/pages/apps/projects/list/index.vue')
+const projectDetailsComponent = () => import('@/pages/apps/projects/view/[id].vue')
 
 // 👉 Redirects
 export const redirects: RouteRecordRaw[] = [
@@ -60,6 +62,30 @@ export const redirects: RouteRecordRaw[] = [
 ]
 
 export const routes: RouteRecordRaw[] = [
+  // Project routes
+  {
+    path: '/apps/projects/list',
+    name: 'apps-projects-list',
+    component: projectsListComponent,
+    meta: {
+      layoutWrapperClasses: 'layout-content-height-fixed',
+      action: 'read',
+      subject: 'project',
+      requiresAuth: true,
+    },
+  },
+  {
+    path: '/apps/projects/view/:id',
+    name: 'apps-projects-view',
+    component: projectDetailsComponent,
+    meta: {
+      layoutWrapperClasses: 'layout-content-height-fixed',
+      action: 'read',
+      subject: 'project',
+      requiresAuth: true,
+    },
+  },
+  
   // Email filter - Revert Subject
   {
     path: '/apps/email/filter/:filter',
