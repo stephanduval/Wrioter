@@ -70,18 +70,28 @@ onMounted(async () => {
     <h2 class="mb-3 text-h5">Requests</h2>
     <VRow class="mb-4">
       <VCol cols="12" md="6">
-        <VCard>
+        <VCard class="cursor-pointer" @click="$router.push('/apps/email/filter/due-today')">
           <VCardText class="text-center">
             <div class="text-subtitle-1">Requests Due Today</div>
             <div class="text-h4">{{ dueTodayCount }}</div>
+            <div class="mt-3">
+              <RouterLink :to="{ path: '/apps/email/filter/due-today' }" v-slot="{ navigate }">
+                <VBtn color="warning" @click="navigate">View Due Today</VBtn>
+              </RouterLink>
+            </div>
           </VCardText>
         </VCard>
       </VCol>
       <VCol cols="12" md="6">
-        <VCard>
+        <VCard class="cursor-pointer" @click="$router.push('/apps/email')">
           <VCardText class="text-center">
             <div class="text-subtitle-1">New Tasks</div>
             <div class="text-h4">{{ newTasksCount }}</div>
+            <div class="mt-3">
+              <RouterLink :to="{ path: '/apps/email' }" v-slot="{ navigate }">
+                <VBtn color="primary" @click="navigate">View Messages</VBtn>
+              </RouterLink>
+            </div>
           </VCardText>
         </VCard>
       </VCol>
@@ -129,5 +139,15 @@ onMounted(async () => {
 /* Add any specific styles if needed */
 .fill-height {
   block-size: 100%;
+}
+
+.cursor-pointer {
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+
+  &:hover {
+    box-shadow: 0 4px 12px rgba(var(--v-theme-on-surface), 0.12);
+    transform: translateY(-4px);
+  }
 }
 </style>
