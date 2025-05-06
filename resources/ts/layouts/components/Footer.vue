@@ -1,5 +1,5 @@
 <template>
-  <div class="h-100 d-flex align-center justify-md-space-between justify-center">
+  <div class="h-100 d-flex align-center justify-end">
     <!-- 👉 Footer: left content is commented out -->
     <span class="d-flex align-center d-inline-block text-body-1 text-medium-emphasis">
       &copy;

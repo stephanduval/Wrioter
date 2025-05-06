@@ -25,6 +25,7 @@ interface EmailsMeta {
   draft: number
   spam: number
   star: number
+  dueToday?: number
 }
 
 interface Props {
@@ -43,6 +44,7 @@ const inboxEmails = ref(0)
 const draftEmails = ref(0)
 const spamEmails = ref(0)
 const starredEmails = ref(0)
+const dueTodayEmails = ref(0)
 
 // Watch props and update counts
 watch(
@@ -52,6 +54,7 @@ watch(
     draftEmails.value = emailsMeta?.draft ?? 0
     spamEmails.value = emailsMeta?.spam ?? 0
     starredEmails.value = emailsMeta?.star ?? 0
+    dueTodayEmails.value = emailsMeta?.dueToday ?? 0
   },
   { immediate: true, deep: true },
 )
@@ -63,6 +66,12 @@ const folders = computed(() => [
     prependIcon: 'bx-envelope',
     to: { name: 'apps-email' } as RouteLocationRaw,
     badge: { content: inboxEmails.value, color: 'primary' },
+  },
+  {
+    title: 'Due Today',
+    prependIcon: 'bx-calendar-exclamation',
+    to: { name: 'apps-email-filter', params: { filter: 'due-today' } } as RouteLocationRaw,
+    badge: { content: dueTodayEmails.value, color: 'warning' },
   },
   {
     title: 'Sent',

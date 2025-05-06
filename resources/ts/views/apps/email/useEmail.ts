@@ -1,4 +1,5 @@
 import type { Email, EmailLabel, MoveEmailToAction } from '@/views/apps/email/types';
+import { isToday, parseISO } from 'date-fns';
 import type { PartialDeep } from 'type-fest';
 import { onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
@@ -102,6 +103,15 @@ export const useEmail = () => {
       if (currentFilter) {
         queryParams.append('filter', currentFilter);
         console.log(`🔍 Fetching with filter: ${currentFilter}`);
+        
+        // Special handling for due-today filter
+        if (currentFilter === 'due-today') {
+          // Let the server know this is a due-today filter
+          // The actual filtering will happen client-side after getting all messages
+          queryParams.set('filter', 'all');
+          queryParams.append('due_today', 'true');
+          console.log('🔍 Due Today filter: Modified to fetch all messages and filter client-side');
+        }
       } else if (currentLabel) {
         queryParams.append('label', currentLabel);
         console.log(`🔍 Fetching with label: ${currentLabel}`);
@@ -113,10 +123,27 @@ export const useEmail = () => {
       console.log(`📞 Calling API: ${apiUrl}`);
 
       const response = await $api(apiUrl, { method: 'GET' });
-
       console.log("✅ Raw API Response:", response);
+      
+      let messages = (response?.data || []) as Email[];
+      
+      // Apply client-side filtering for due-today
+      if (currentFilter === 'due-today') {
+        console.log('🔍 Applying client-side filtering for due-today');
+        messages = messages.filter(message => {
+          if (!message.dueDate) return false;
+          try {
+            const dueDateObj = parseISO(message.dueDate);
+            return isToday(dueDateObj);
+          } catch (e) {
+            console.error(`Error processing due date ${message.dueDate} for message ${message.id}:`, e);
+            return false;
+          }
+        });
+        console.log(`🔍 Due Today filter found ${messages.length} messages`);
+      }
 
-      return (response?.data || []) as Email[]; // API returns { data: [...] }
+      return messages;
     } catch (error) {
       console.error("❌ Error fetching messages:", error);
       return [];

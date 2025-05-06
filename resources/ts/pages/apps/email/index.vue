@@ -86,6 +86,7 @@ const messagesMeta = computed(() => ({
   archive: messages.value.filter(m => m.isArchived).length,
   trash: messages.value.filter(m => m.status === 'deleted').length,
   starred: messages.value.filter(m => m.isStarred).length,
+  dueToday: dueTodayCount.value
 }));
 
 onMounted(async () => {  

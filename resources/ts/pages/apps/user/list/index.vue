@@ -357,14 +357,14 @@ const openEditUserDrawer = (userId: number) => {
             />
           </div>
 
-          <!-- 👉 Export button -->
+          <!-- 👉 Export button
           <VBtn
             variant="tonal"
             color="secondary"
             prepend-icon="bx-export"
           >
             Export
-          </VBtn>
+          </VBtn> -->
 
           <!-- 👉 Add user button -->
           <VBtn
