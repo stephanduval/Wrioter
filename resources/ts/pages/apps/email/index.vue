@@ -477,31 +477,37 @@ const confirmTrashMessages = async () => {
   messageIdsToConfirmTrash.value = [];
 };
 
-const initiatePermanentDeleteConfirmation = (ids: number[] | Ref<number[]>) => {
-  const actualIds = isRef(ids) ? ids.value : ids;
-  if (!actualIds || actualIds.length === 0) return;
-  console.log('Initiating permanent delete confirmation for IDs:', actualIds);
-  messageIdsToConfirmPermanentDelete.value = [...actualIds];
-  isPermanentDeleteConfirmDialogVisible.value = true;
-};
-
 const confirmPermanentDeleteMessages = async () => {
   if (!messageIdsToConfirmPermanentDelete.value.length) return;
 
-  console.log('Confirming permanent delete for IDs:', messageIdsToConfirmPermanentDelete.value);
   try {
+    let allSuccess = true;
     for (const id of messageIdsToConfirmPermanentDelete.value) {
-      await deleteMessage(id);
+      const success = await deleteMessage(id);
+      if (!success) {
+        allSuccess = false;
+        console.error(`Failed to delete message ${id}`);
+      }
     }
-    if (openedMessage.value && messageIdsToConfirmPermanentDelete.value.includes(openedMessage.value.id)) {
-      openedMessage.value = null;
+
+    if (allSuccess) {
+      // Clear selection if all messages were selected
+      if (selectedMessages.value.length > 0 && 
+          messageIdsToConfirmPermanentDelete.value.every(id => selectedMessages.value.includes(id))) {
+        selectedMessages.value = [];
+      }
+      
+      // Clear opened message if it was deleted
+      if (openedMessage.value && 
+          messageIdsToConfirmPermanentDelete.value.includes(openedMessage.value.id)) {
+        openedMessage.value = null;
+      }
+
+      // Refresh the messages list
+      await fetchAllMessages();
     }
-    if (selectedMessages.value.length > 0 && messageIdsToConfirmPermanentDelete.value.every(id => selectedMessages.value.includes(id)) && messageIdsToConfirmPermanentDelete.value.length === selectedMessages.value.length) {
-      selectedMessages.value = [];
-    }
-    await fetchAllMessages();
   } catch (error) {
-    console.error('Error permanently deleting messages:', error);
+    console.error('Error during permanent deletion:', error);
   } finally {
     isPermanentDeleteConfirmDialogVisible.value = false;
     messageIdsToConfirmPermanentDelete.value = [];
@@ -958,31 +964,64 @@ const confirmPermanentDeleteMessages = async () => {
       
       <VDialog v-model="isTrashConfirmDialogVisible" max-width="500px">
         <VCard>
-          <VCardTitle>Confirm Move to Trash</VCardTitle>
+          <VCardTitle class="text-h5">Move to Trash</VCardTitle>
           <VCardText>
-            Are you sure you want to move the selected message(s) to the trash?
+            Are you sure you want to move {{ messageIdsToConfirmTrash.value.length > 1 ? 'these messages' : 'this message' }} to trash?
           </VCardText>
           <VCardActions>
             <VSpacer />
-            <VBtn color="secondary" @click="isTrashConfirmDialogVisible = false">Cancel</VBtn>
-            <VBtn color="error" @click="confirmTrashMessages">Move to Trash</VBtn>
+            <VBtn
+              color="secondary"
+              variant="text"
+              @click="isTrashConfirmDialogVisible = false"
+            >
+              Cancel
+            </VBtn>
+            <VBtn
+              color="error"
+              variant="flat"
+              @click="confirmTrashMessages"
+            >
+              Move to Trash
+            </VBtn>
           </VCardActions>
         </VCard>
       </VDialog>
 
       <VDialog v-model="isPermanentDeleteConfirmDialogVisible" max-width="500px">
         <VCard>
-          <VCardTitle class="text-h5 error--text">Confirm Permanent Deletion</VCardTitle>
+          <VCardTitle class="text-h5">Delete Forever</VCardTitle>
           <VCardText>
-            <VAlert type="warning" dense outlined class="mb-3">
-              This action cannot be undone.
+            <VAlert
+              type="warning"
+              variant="tonal"
+              class="mb-4"
+            >
+              <VIcon
+                icon="bx-error-circle"
+                start
+                color="warning"
+              />
+              Warning: This action cannot be undone!
             </VAlert>
-            Are you sure you want to permanently delete the selected message(s)?
+            Are you sure you want to permanently delete {{ messageIdsToConfirmPermanentDelete.value.length > 1 ? 'these messages' : 'this message' }}?
           </VCardText>
           <VCardActions>
             <VSpacer />
-            <VBtn color="secondary" @click="isPermanentDeleteConfirmDialogVisible = false">Cancel</VBtn>
-            <VBtn color="error" @click="confirmPermanentDeleteMessages">Delete Forever</VBtn>
+            <VBtn
+              color="secondary"
+              variant="text"
+              @click="isPermanentDeleteConfirmDialogVisible = false"
+            >
+              Cancel
+            </VBtn>
+            <VBtn
+              color="error"
+              variant="flat"
+              @click="confirmPermanentDeleteMessages"
+            >
+              Delete Forever
+            </VBtn>
           </VCardActions>
         </VCard>
       </VDialog>

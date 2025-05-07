@@ -202,29 +202,28 @@ class ProjectController extends Controller
     {
         Log::info("ProjectController::destroy - Deleting project {$id}");
         
-        $project = Project::findOrFail($id);
-        
-        // Only admins can delete projects
-        $user = Auth::user();
-        $userRole = $user->roles->first()?->name;
-        
-        if ($userRole !== 'admin') {
-            return response()->json(['message' => 'Unauthorized to delete projects'], 403);
-        }
-        
-        // Check if project has messages
-        $messagesCount = $project->messages()->count();
-        if ($messagesCount > 0) {
-            // Option 1: Prevent deletion
-            // return response()->json(['message' => 'Cannot delete project with associated messages'], 422);
+        try {
+            $project = Project::findOrFail($id);
             
-            // Option 2: Delete anyway and set project_id to null in messages (due to foreign key constraints)
-            $project->messages()->update(['project_id' => null]);
+            // Use policy authorization
+            if (!auth()->user()->can('delete', $project)) {
+                return response()->json(['message' => 'Unauthorized to delete projects'], 403);
+            }
+            
+            // Check if project has messages
+            $messagesCount = $project->messages()->count();
+            if ($messagesCount > 0) {
+                // Update messages to remove project association
+                $project->messages()->update(['project_id' => null]);
+            }
+            
+            $project->delete();
+            
+            return response()->json(['message' => 'Project deleted successfully']);
+        } catch (\Exception $e) {
+            Log::error("Error deleting project: " . $e->getMessage());
+            return response()->json(['message' => 'Failed to delete project'], 500);
         }
-        
-        $project->delete();
-        
-        return response()->json(['message' => 'Project deleted successfully']);
     }
     
     /**

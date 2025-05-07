@@ -49,6 +49,13 @@ const statusColorMap: Record<string, string> = {
   cancelled: 'error',
 }
 
+// Add status options
+const statusOptions = [
+  { title: 'Received', value: 'received' },
+  { title: 'In Progress', value: 'in_progress' },
+  { title: 'Delivered', value: 'delivered' },
+]
+
 // 👉 Fetching projects
 const { data: projectsData, execute: fetchProjects } = useApi<ProjectsResponse>(() => {
   const params = new URLSearchParams({
@@ -100,15 +107,40 @@ const deleteProject = async (id: number) => {
   if (!confirm('Are you sure you want to delete this project?')) return
   
   try {
-    await $api(`/projects/${id}`, {
+    const response = await fetch(`/api/projects/${id}`, {
       method: 'DELETE',
       headers: {
+        'Content-Type': 'application/json',
         'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
       },
     })
+
+    if (!response.ok) throw new Error('Failed to delete project.')
+
+    console.log(`Project ${id} deleted successfully.`)
+
+    // Refetch projects after deletion
     fetchProjects()
   } catch (error) {
     console.error('Error deleting project:', error)
+  }
+}
+
+// Add function to update project status
+const updateProjectStatus = async (projectId: number, newStatus: string) => {
+  try {
+    await $api(`/projects/${projectId}`, {
+      method: 'PUT',
+      body: JSON.stringify({ status: newStatus }),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+      },
+    })
+    // Refresh the projects list
+    fetchProjects()
+  } catch (error) {
+    console.error('Error updating project status:', error)
   }
 }
 
@@ -194,13 +226,26 @@ onMounted(() => {
         </template>
 
         <template #item.status="{ item }">
-          <VChip
+          <VSelect
+            v-model="item.status"
+            :items="statusOptions"
+            density="compact"
+            variant="plain"
+            hide-details
+            class="status-select"
             :color="statusColorMap[item.status]"
-            size="small"
-            class="text-capitalize"
+            @update:model-value="updateProjectStatus(item.id, $event)"
           >
-            {{ item.status }}
-          </VChip>
+            <template #selection="{ item }">
+              <VChip
+                :color="statusColorMap[item.value]"
+                size="small"
+                class="text-capitalize"
+              >
+                {{ item.title }}
+              </VChip>
+            </template>
+          </VSelect>
         </template>
 
         <template #item.actions="{ item }">
@@ -230,5 +275,18 @@ onMounted(() => {
 
 .min-w-150 {
   min-inline-size: 150px;
+}
+
+.status-select {
+  max-inline-size: 150px;
+}
+
+:deep(.v-select .v-field__input) {
+  padding: 0;
+  min-block-size: unset;
+}
+
+:deep(.v-select .v-field) {
+  background: transparent !important;
 }
 </style> 

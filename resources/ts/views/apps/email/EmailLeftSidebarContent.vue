@@ -271,15 +271,26 @@ const confirmLabelDelete = async () => {
     <!-- Delete Confirmation Dialog -->
     <VDialog v-model="isDeleteDialogOpen" max-width="500px">
       <VCard>
-        <VCardTitle>Confirm Delete Label</VCardTitle>
+        <VCardTitle class="text-h5">Delete Label</VCardTitle>
         <VCardText>
-          Are you sure you want to delete the label "<strong>{{ labelToDelete?.title }}</strong>"?
-          This will remove the label from all associated messages. This action cannot be undone.
+          Are you sure you want to delete label "{{ labelToDelete?.title }}"? This action cannot be undone.
         </VCardText>
         <VCardActions>
           <VSpacer />
-          <VBtn color="secondary" @click="isDeleteDialogOpen = false">Cancel</VBtn>
-          <VBtn color="error" @click="confirmLabelDelete">Delete</VBtn>
+          <VBtn
+            color="secondary"
+            variant="text"
+            @click="isDeleteDialogOpen = false"
+          >
+            Cancel
+          </VBtn>
+          <VBtn
+            color="error"
+            variant="flat"
+            @click="confirmLabelDelete"
+          >
+            Delete
+          </VBtn>
         </VCardActions>
       </VCard>
     </VDialog>

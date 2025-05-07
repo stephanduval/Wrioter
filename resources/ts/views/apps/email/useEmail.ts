@@ -309,15 +309,22 @@ export const useEmail = () => {
 
   // ✅ Delete a message
   const deleteMessage = async (id: number) => {
-    console.log(`useEmail: Attempting permanent delete for message ID: ${id}`);
     try {
-      await $api(`/messages/${id}`, { method: 'DELETE' });
-      console.log(`useEmail: Successfully permanently deleted message ID: ${id}`);
-      // Optimistically remove from local state if needed, or rely on refresh
-      messages.value = messages.value.filter(message => message.id !== id);
+      const response = await $api(`/messages/${id}`, {
+        method: 'DELETE',
+      });
+
+      // Check if the response indicates success
+      if (response && response.message === 'Message permanently deleted successfully') {
+        console.log(`Message ${id} deleted successfully`);
+        return true;
+      } else {
+        console.error(`Unexpected response when deleting message ${id}:`, response);
+        return false;
+      }
     } catch (error) {
-      console.error(`useEmail: Error permanently deleting message ${id}:`, error);
-      throw error; // Re-throw to signal failure
+      console.error(`Error deleting message ${id}:`, error);
+      return false;
     }
   };
 
@@ -392,17 +399,23 @@ export const useEmail = () => {
 
   // ✅ Delete a label
   const deleteLabel = async (id: number) => {
-    console.log(`useEmail: Attempting to delete label ID: ${id}`);
     try {
-      await $api(`/labels/${id}`, { method: 'DELETE' });
-      console.log(`useEmail: Successfully deleted label ID: ${id}`);
-      // Refresh labels after deletion
-      await fetchUserLabels();
-      return true; // Indicate success
+      const response = await $api(`/labels/${id}`, {
+        method: 'DELETE',
+      });
+
+      // Check if the response indicates success
+      if (response) {
+        console.log(`Label ${id} deleted successfully`);
+        await fetchUserLabels(); // Refresh labels list
+        return true;
+      } else {
+        console.error(`Unexpected response when deleting label ${id}:`, response);
+        return false;
+      }
     } catch (error) {
-      console.error(`useEmail: Error deleting label ${id}:`, error);
-      // Add user feedback (e.g., toast) if desired
-      return false; // Indicate failure
+      console.error(`Error deleting label ${id}:`, error);
+      return false;
     }
   };
 

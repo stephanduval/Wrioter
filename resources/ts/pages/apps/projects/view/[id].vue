@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import axios from 'axios'
 import { format } from 'date-fns'
 import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -14,6 +13,7 @@ const project = ref<Project | null>(null)
 const messages = ref<any[]>([])
 const isLoading = ref(true)
 const error = ref<string | null>(null)
+const isDeleteDialogOpen = ref(false)
 
 interface Project {
   id: number
@@ -55,17 +55,17 @@ const fetchProject = async () => {
   error.value = null
   
   try {
-    const response = await axios.get(`${apiBaseUrl}/projects/${projectId}`)
-    project.value = response.data.data
+    const response = await $api(`/projects/${projectId}`)
+    project.value = response.data
     
     // Fetch messages related to this project
-    const messagesResponse = await axios.get(`${apiBaseUrl}/messages`, {
-      params: {
+    const messagesResponse = await $api('/messages', {
+      query: {
         project_id: projectId,
       },
     })
     
-    messages.value = messagesResponse.data.data
+    messages.value = messagesResponse.data
   } catch (err: any) {
     console.error('Error fetching project details:', err)
     error.value = err.response?.data?.message || 'Failed to load project details'
@@ -83,6 +83,41 @@ const composeMessage = () => {
     name: 'apps-email-compose', 
     query: { project_id: projectId } 
   })
+}
+
+const deleteProject = async () => {
+  try {
+    const response = await fetch(`/api/projects/${projectId}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+      },
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.message || 'Failed to delete project.')
+    }
+
+    console.log(`Project ${projectId} deleted successfully.`)
+    
+    // Close the dialog
+    isDeleteDialogOpen.value = false
+    
+    // Navigate back to projects list after successful deletion
+    router.push({ name: 'apps-projects-list' })
+  } catch (err: any) {
+    console.error('Error deleting project:', err)
+    // Show error message to user
+    if (err.response?.status === 403) {
+      error.value = 'You do not have permission to delete this project.'
+    } else {
+      error.value = err.message || 'Failed to delete project. Please try again.'
+    }
+    // Close the dialog
+    isDeleteDialogOpen.value = false
+  }
 }
 
 onMounted(() => {
@@ -113,12 +148,21 @@ onMounted(() => {
       </VCardTitle>
       
       <template #append>
-        <VBtn
-          color="primary"
-          @click="composeMessage"
-        >
-          Send Message
-        </VBtn>
+        <div class="d-flex gap-2">
+          <VBtn
+            color="error"
+            variant="outlined"
+            @click="isDeleteDialogOpen = true"
+          >
+            Delete Project
+          </VBtn>
+          <VBtn
+            color="primary"
+            @click="composeMessage"
+          >
+            Send Message
+          </VBtn>
+        </div>
       </template>
     </VCardItem>
   </VCard>
@@ -359,6 +403,40 @@ onMounted(() => {
       </VCard>
     </VCol>
   </VRow>
+  
+  <!-- Delete Confirmation Dialog -->
+  <VDialog
+    v-model="isDeleteDialogOpen"
+    max-width="500"
+  >
+    <VCard>
+      <VCardTitle class="text-h5">
+        Delete Project
+      </VCardTitle>
+      
+      <VCardText>
+        Are you sure you want to delete this project? This action cannot be undone.
+        All associated messages and data will be permanently deleted.
+      </VCardText>
+      
+      <VCardActions>
+        <VSpacer />
+        <VBtn
+          color="default"
+          variant="text"
+          @click="isDeleteDialogOpen = false"
+        >
+          Cancel
+        </VBtn>
+        <VBtn
+          color="error"
+          @click="deleteProject"
+        >
+          Delete
+        </VBtn>
+      </VCardActions>
+    </VCard>
+  </VDialog>
 </template>
 
 <style lang="scss">
