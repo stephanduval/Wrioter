@@ -1,13 +1,22 @@
-import type { App } from 'vue'
-import { createI18n } from 'vue-i18n'
 import { cookieRef } from '@layouts/stores/config'
 import { themeConfig } from '@themeConfig'
+import type { App } from 'vue'
+import { createI18n } from 'vue-i18n'
+import vuetifyMessages from './messages/en'
 
-const messages = Object.fromEntries(
+const localeMessages = Object.fromEntries(
   Object.entries(
     import.meta.glob<{ default: any }>('./locales/*.json', { eager: true }))
     .map(([key, value]) => [key.slice(10, -5), value.default]),
 )
+
+// Merge Vuetify messages with locale messages
+const messages = {
+  en: {
+    ...localeMessages.en,
+    ...vuetifyMessages,
+  },
+}
 
 let _i18n: any = null
 

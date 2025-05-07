@@ -166,6 +166,7 @@ export const useEmail = () => {
       service_type: string | null;
       service_description: string | null;
       deadline: string | null;
+      latest_completion_date: string | null;
     };
   }) => {
     console.log(">>> EXECUTING createMessage <<<", payload); 
@@ -201,19 +202,38 @@ export const useEmail = () => {
         if (payload.project_data.deadline) {
           formData.append('project_data[deadline]', payload.project_data.deadline);
         }
+        if (payload.project_data.latest_completion_date) {
+          formData.append('project_data[latest_completion_date]', payload.project_data.latest_completion_date);
+        }
       }
 
-      const response = await $api('/messages', { 
-        method: 'POST', 
-        body: formData 
-      });
-      console.log(">>> createMessage response:", response);
-      if(response && response.message === 'Message sent successfully') { 
-        return response;
-      } else {
-        console.error("createMessage failed:", response);
+      // Get access token
+      const accessToken = localStorage.getItem('accessToken');
+      if (!accessToken) {
+        console.error('No access token found');
         return undefined;
       }
+
+      // Use fetch directly like in sendReplyMessage
+      const response = await fetch('/api/messages', {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Accept': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Failed to parse error response.' }));
+        console.error(`Error creating message: ${response.status} ${response.statusText}`, errorData);
+        return undefined;
+      }
+
+      const responseData = await response.json();
+      console.log(">>> createMessage response:", responseData);
+      return responseData;
+
     } catch (error) {
       console.error('Error creating message:', error);
       return undefined;

@@ -19,12 +19,14 @@ class Project extends Model
         'time_preference',
         'deadline',
         'service_type',
-        'service_description'
+        'service_description',
+        'latest_completion_date'
     ];
 
     protected $casts = [
         'deadline' => 'date',
         'date_requested' => 'datetime',
+        'latest_completion_date' => 'date'
     ];
 
     /**

@@ -148,6 +148,7 @@ class MessageController extends Controller
             $rules['project_data.service_type'] = 'required|in:translation,revision,modifications,transcription,voice_over,other';
             $rules['project_data.service_description'] = 'nullable|string';
             $rules['project_data.deadline'] = 'required|date_format:Y-m-d';
+            $rules['project_data.latest_completion_date'] = 'required|date_format:Y-m-d';
         }
         
         // Add validation for attachments (optional array, each file max 10MB)
@@ -164,7 +165,11 @@ class MessageController extends Controller
         $user = Auth::user();
         $userRole = $user->roles->first()?->name;
         
-        if ($userRole === 'client' && isset($validated['project_data'])) {
+        Log::info('MessageController::store - User role:', ['role' => $userRole]);
+        Log::info('MessageController::store - Project data:', ['project_data' => $validated['project_data'] ?? null]);
+
+        // Create project if project data is provided (regardless of role)
+        if (isset($validated['project_data'])) {
             try {
                 $projectData = [
                     'client_id' => $user->id,
@@ -177,6 +182,7 @@ class MessageController extends Controller
                     'deadline' => $validated['project_data']['deadline'] ?? $validated['due_date'],
                     'service_type' => $validated['project_data']['service_type'],
                     'service_description' => $validated['project_data']['service_description'] ?? null,
+                    'latest_completion_date' => $validated['project_data']['latest_completion_date'],
                 ];
                 
                 Log::info('MessageController::store - Creating project with data:', $projectData);
@@ -186,9 +192,14 @@ class MessageController extends Controller
                 
                 Log::info('MessageController::store - Project created successfully with ID: ' . $project_id);
             } catch (\Exception $e) {
-                Log::error('MessageController::store - Error creating project: ' . $e->getMessage());
+                Log::error('MessageController::store - Error creating project:', [
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
                 // Continue with message creation even if project creation fails
             }
+        } else {
+            Log::info('MessageController::store - No project data provided');
         }
 
         $createData = [

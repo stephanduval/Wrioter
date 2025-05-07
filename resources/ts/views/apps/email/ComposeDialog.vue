@@ -14,6 +14,7 @@ const to = ref('')
 const subject = ref('')
 const message = ref('')
 const dueDate = ref<string | null>(null);
+const latestCompletionDate = ref<string | null>(null);
 
 // Project information fields
 const projectTitle = ref('')
@@ -66,6 +67,7 @@ interface ProjectData {
   service_type: string | null
   service_description: string | null
   deadline: string | null
+  latest_completion_date: string | null
 }
 
 // Define message payload interface
@@ -74,9 +76,17 @@ interface MessagePayload {
   company_id: number
   subject: string
   message: string
-  due_date: string | null
+  due_date?: string | null
   attachments: File[]
-  project_data?: ProjectData
+  project_data?: {
+    title: string
+    property: string | null
+    time_preference: string
+    service_type: string | null
+    service_description: string | null
+    deadline: string | null
+    latest_completion_date: string | null
+  }
 }
 
 // Fetch users on component mount
@@ -94,11 +104,18 @@ onMounted(async () => {
       if (!timePreference.value) timePreference.value = 'anytime';
       if (!serviceType.value) serviceType.value = '';
       
-      // Set a default due date if none provided (7 days from now)
+      // Set a default due date if none provided (14 days from now)
       if (!dueDate.value) {
         const defaultDueDate = new Date();
-        defaultDueDate.setDate(defaultDueDate.getDate() + 7);
+        defaultDueDate.setDate(defaultDueDate.getDate() + 14);
         dueDate.value = defaultDueDate.toISOString().split('T')[0]; // Format as YYYY-MM-DD
+      }
+
+      // Set a default latest completion date if none provided (21 days from now)
+      if (!latestCompletionDate.value) {
+        const defaultLatestCompletion = new Date();
+        defaultLatestCompletion.setDate(defaultLatestCompletion.getDate() + 21);
+        latestCompletionDate.value = defaultLatestCompletion.toISOString().split('T')[0]; // Format as YYYY-MM-DD
       }
     }
     
@@ -183,6 +200,10 @@ const sendMessage = async () => {
       console.error('Due date is required for client messages');
       return;
     }
+    if (!latestCompletionDate.value) {
+      console.error('Latest completion date is required for client messages');
+      return;
+    }
     if (!timePreference.value) {
       console.error('Time preference is required for client messages');
       return;
@@ -209,14 +230,15 @@ const sendMessage = async () => {
   };
   
   // Add project data if any project fields are filled out
-  if (projectTitle.value || property.value || serviceType.value || timePreference.value || serviceDescription.value || dueDate.value) {
+  if (projectTitle.value || property.value || serviceType.value || timePreference.value || serviceDescription.value || dueDate.value || latestCompletionDate.value) {
     payload.project_data = {
       title: projectTitle.value || '',
       property: property.value || '',
       time_preference: timePreference.value || 'anytime',
       service_type: serviceType.value || '',
       service_description: serviceDescription.value || null,
-      deadline: dueDate.value || null
+      deadline: dueDate.value || null,
+      latest_completion_date: latestCompletionDate.value || null
     };
   }
 
@@ -239,13 +261,14 @@ const sendMessage = async () => {
   }
 }
 
-// Update resetValues to include project fields
+// Update resetValues to remove deadline
 const resetValues = () => {
   to.value = subject.value = '';
   content.value = ''; // Ensure Tiptap content is also reset
   cc.value = bcc.value = '';
   filteredToUsers.value = filteredCcUsers.value = filteredBccUsers.value = [];
   dueDate.value = null; // Reset due date
+  latestCompletionDate.value = null; // Reset latest completion date
   attachmentsRef.value = []; // Clear attachments
   attachmentErrors.value = []; // Clear errors
   
@@ -409,6 +432,25 @@ const resetValues = () => {
       <VDivider />
 
       <div class="px-1 pe-6 py-1">
+        <VTextarea
+          v-model="serviceDescription"
+          density="compact"
+          label="Service Description"
+          placeholder="Describe the service you need"
+          rows="2"
+          auto-grow
+        >
+          <template #prepend-inner>
+            <div class="text-base font-weight-medium text-disabled pt-2">
+              Description:
+            </div>
+          </template>
+        </VTextarea>
+      </div>
+
+      <VDivider />
+
+      <div class="px-1 pe-6 py-1">
         <VSelect
           v-model="timePreference"
           density="compact"
@@ -431,25 +473,6 @@ const resetValues = () => {
       <VDivider />
 
       <div class="px-1 pe-6 py-1">
-        <VTextarea
-          v-model="serviceDescription"
-          density="compact"
-          label="Service Description"
-          placeholder="Describe the service you need"
-          rows="2"
-          auto-grow
-        >
-          <template #prepend-inner>
-            <div class="text-base font-weight-medium text-disabled pt-2">
-              Description:
-            </div>
-          </template>
-        </VTextarea>
-      </div>
-
-      <VDivider />
-
-      <div class="px-1 pe-6 py-1">
         <VTextField 
           v-model="dueDate" 
           density="compact" 
@@ -462,6 +485,26 @@ const resetValues = () => {
           <template #prepend-inner>
             <div class="text-base font-weight-medium text-disabled">
               Due Date:
+            </div>
+          </template>
+        </VTextField>
+      </div>
+
+      <VDivider />
+
+      <div class="px-1 pe-6 py-1">
+        <VTextField 
+          v-model="latestCompletionDate" 
+          density="compact" 
+          type="date"  
+          placeholder="YYYY-MM-DD"
+          :rules="isClient ? [(v: string) => !!v || 'Latest completion date is required'] : undefined"
+          :required="isClient"
+          clearable 
+        >
+          <template #prepend-inner>
+            <div class="text-base font-weight-medium text-disabled">
+              Latest Project Completion Date:
             </div>
           </template>
         </VTextField>
