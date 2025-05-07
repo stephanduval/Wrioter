@@ -153,12 +153,20 @@ export const useEmail = () => {
   // ✅ Restore original createMessage (Assuming it used $api and 'message' key)
   //    Verify this matches how ComposeDialog was calling it when it worked.
   const createMessage = async (payload: {
-    receiver_id: number | null; // ID looked up by ComposeDialog
+    receiver_id: number | null;
     company_id: number;
     subject: string;
-    message: string; // Original key expected by backend for non-replies
+    message: string;
     attachments?: File[];
-    due_date?: string | null; // Optional due date YYYY-MM-DD
+    due_date?: string | null;
+    project_data?: {
+      title: string;
+      property: string | null;
+      time_preference: string;
+      service_type: string | null;
+      service_description: string | null;
+      deadline: string | null;
+    };
   }) => {
     console.log(">>> EXECUTING createMessage <<<", payload); 
     try {
@@ -175,6 +183,24 @@ export const useEmail = () => {
       }
       if (payload.attachments) {
         payload.attachments.forEach(file => formData.append('attachments[]', file));
+      }
+
+      // Add project data if provided
+      if (payload.project_data) {
+        formData.append('project_data[title]', payload.project_data.title);
+        if (payload.project_data.property) {
+          formData.append('project_data[property]', payload.project_data.property);
+        }
+        formData.append('project_data[time_preference]', payload.project_data.time_preference);
+        if (payload.project_data.service_type) {
+          formData.append('project_data[service_type]', payload.project_data.service_type);
+        }
+        if (payload.project_data.service_description) {
+          formData.append('project_data[service_description]', payload.project_data.service_description);
+        }
+        if (payload.project_data.deadline) {
+          formData.append('project_data[deadline]', payload.project_data.deadline);
+        }
       }
 
       const response = await $api('/messages', { 

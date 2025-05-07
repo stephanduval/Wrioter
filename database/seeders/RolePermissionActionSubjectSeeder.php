@@ -42,15 +42,13 @@ class RolePermissionActionSubjectSeeder extends Seeder
             }
         }
 
-        // Create roles - Reduced to only admin and client
-        $roles = ['admin', 'client'];
+        // Create roles
+        $roles = ['Admin', 'Client'];
         foreach ($roles as $roleName) {
-            Role::firstOrCreate(
-                ['name' => ucfirst($roleName)]
-            );
+            Role::firstOrCreate(['name' => $roleName]);
         }
 
-        // Define role hierarchy and permissions - Simplified to only admin and client
+        // Define role hierarchy and permissions
         $roleHierarchy = [
             'admin' => ['admin', 'client', 'all'], // Admin gets everything
             'client' => ['client'],  // Client only gets client permissions

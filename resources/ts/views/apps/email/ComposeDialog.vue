@@ -10,7 +10,6 @@ const emit = defineEmits<{
 const { createMessage } = useEmail();
 
 const content = ref('')
-
 const to = ref('')
 const subject = ref('')
 const message = ref('')
@@ -22,6 +21,10 @@ const property = ref('')
 const timePreference = ref('anytime')
 const serviceType = ref('')
 const serviceDescription = ref('')
+
+// Admin recipient ID (info@freynet-gagne.com)
+const ADMIN_EMAIL = 'info@freynet-gagne.com';
+const ADMIN_NAME = 'Administrator';
 
 // Get current user role
 const userData = computed(() => {
@@ -35,9 +38,6 @@ const userData = computed(() => {
 
 const userRole = computed(() => userData.value?.role || '')
 const isClient = computed(() => userRole.value === 'client')
-
-// Admin recipient ID (info@freynet-gagne.com)
-const ADMIN_ID = 2 // ID for info@freynet-gagne.com from UserSeeder
 
 // Ref for attachments
 const attachmentsRef = ref<File[]>([]); // Use VFileInput's multiple capability
@@ -83,35 +83,12 @@ interface MessagePayload {
 onMounted(async () => {
   try {
     loading.value = true
-    const response = await fetch('/api/users?itemsPerPage=100', {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-      },
-    })
-
-    if (!response.ok)
-      throw new Error('Failed to fetch users')
-
-    const result = await response.json()
     
-    // If user is client, filter out other clients and only show admin recipients
+    // Set default recipient for all users
+    to.value = `${ADMIN_NAME} <${ADMIN_EMAIL}>`
+    
+    // Initialize project form with defaults for client users
     if (isClient.value) {
-      // Only include admin users for clients
-      users.value = result.data.filter((user: any) => 
-        user.email === 'info@freynet-gagne.com' || 
-        user.email === 'admin@admin.com' ||
-        user.roles?.some((role: any) => role.name === 'admin')
-      )
-      
-      // Auto-select admin recipient (info@freynet-gagne.com)
-      const adminUser = users.value.find(user => user.id === ADMIN_ID)
-      if (adminUser) {
-        to.value = `${adminUser.fullName} <${adminUser.email}>`
-      }
-      
-      // Initialize project form with defaults for client users
       if (!projectTitle.value) projectTitle.value = '';
       if (!property.value) property.value = '';
       if (!timePreference.value) timePreference.value = 'anytime';
@@ -123,56 +100,19 @@ onMounted(async () => {
         defaultDueDate.setDate(defaultDueDate.getDate() + 7);
         dueDate.value = defaultDueDate.toISOString().split('T')[0]; // Format as YYYY-MM-DD
       }
-    } else {
-      users.value = result.data
     }
     
     loading.value = false
   }
   catch (error) {
-    console.error('Error fetching users:', error)
+    console.error('Error in onMounted:', error)
     loading.value = false
   }
 })
 
-// Filter users based on input
-const filterUsers = (query: string, field: 'to' | 'cc' | 'bcc') => {
-  if (!query) {
-    if (field === 'to') filteredToUsers.value = []
-    else if (field === 'cc') filteredCcUsers.value = []
-    else filteredBccUsers.value = []
-    return
-  }
-
-  const filtered = users.value.filter(user => 
-    user.fullName.toLowerCase().includes(query.toLowerCase()) || 
-    user.email.toLowerCase().includes(query.toLowerCase())
-  )
-
-  if (field === 'to') filteredToUsers.value = filtered
-  else if (field === 'cc') filteredCcUsers.value = filtered
-  else filteredBccUsers.value = filtered
-}
-
-// Handle user selection
-const selectUser = (user: { id: number, fullName: string, email: string }, field: 'to' | 'cc' | 'bcc') => {
-  const formattedEmail = `${user.fullName} <${user.email}>`
-  
-  if (field === 'to') {
-    to.value = formattedEmail
-    filteredToUsers.value = []
-  } else if (field === 'cc') {
-    cc.value = formattedEmail
-    filteredCcUsers.value = []
-  } else {
-    bcc.value = formattedEmail
-    filteredBccUsers.value = []
-  }
-}
-
 // Watch for input changes
 const onInputChange = (value: string, field: 'to' | 'cc' | 'bcc') => {
-  filterUsers(value, field)
+  // Remove unused functions since we're not allowing recipient selection anymore
 }
 
 // --- Attachment Handling & Validation ---
@@ -216,7 +156,7 @@ watch(attachmentsRef, (newFiles) => {
   // }
 }, { deep: true });
 
-// Update sendMessage to use composable and include due date
+// Update sendMessage to handle project data for all users
 const sendMessage = async () => {
   console.log("ComposeDialog: sendMessage called");
   // Basic validation
@@ -225,7 +165,7 @@ const sendMessage = async () => {
     return;
   }
   
-  // For client role, also validate project fields
+  // For client role, validate required project fields
   if (isClient.value) {
     if (!projectTitle.value) {
       console.error('Project title is required for client messages');
@@ -243,6 +183,10 @@ const sendMessage = async () => {
       console.error('Due date is required for client messages');
       return;
     }
+    if (!timePreference.value) {
+      console.error('Time preference is required for client messages');
+      return;
+    }
   }
   
   // --- Attachment Validation Check ---
@@ -251,40 +195,26 @@ const sendMessage = async () => {
     return;
   }
   
-  // Determine receiver ID - Always send to admin for clients
-  let receiverId = null;
-  
-  if (isClient.value) {
-    // Clients always send to admin
-    receiverId = ADMIN_ID;
-  } else {
-    // Extract email and find receiver ID for non-clients
-    const receiverEmail = to.value.match(/<(.+)>/)?.[1] || to.value;
-    const receiver = users.value.find(user => user.email === receiverEmail);
-    receiverId = receiver ? receiver.id : null;
-    
-    if (!receiver && to.value.trim() !== '') {
-      console.warn('Recipient not found in user list, sending without specific receiver_id');
-    }
-  }
+  // Always send to admin
+  const receiverId = 1; // ID for info@freynet-gagne.com from UserSeeder (first user created)
   
   // Prepare payload
   const payload: MessagePayload = {
-    receiver_id: receiverId, 
+    receiver_id: receiverId,
     company_id: 1, // Adjust as needed
     subject: subject.value,
     message: content.value,
-    due_date: dueDate.value || null,
+    due_date: dueDate.value,
     attachments: attachmentsRef.value
   };
   
-  // Add project data for client role
-  if (isClient.value) {
+  // Add project data if any project fields are filled out
+  if (projectTitle.value || property.value || serviceType.value || timePreference.value || serviceDescription.value || dueDate.value) {
     payload.project_data = {
-      title: projectTitle.value,
-      property: property.value || null,
-      time_preference: timePreference.value,
-      service_type: serviceType.value || null,
+      title: projectTitle.value || '',
+      property: property.value || '',
+      time_preference: timePreference.value || 'anytime',
+      service_type: serviceType.value || '',
       service_description: serviceDescription.value || null,
       deadline: dueDate.value || null
     };
@@ -293,22 +223,19 @@ const sendMessage = async () => {
   console.log("ComposeDialog: Sending payload:", payload);
 
   try {
-    // Call the composable's createMessage function
-    const result = await createMessage(payload); 
+    const result = await createMessage(payload);
 
     if (result && result.message === 'Message sent successfully') {
       console.log('ComposeDialog: Message sent successfully');
-      resetValues(); // Reset form fields
-      content.value = ''; // Clear editor content specifically
+      resetValues();
+      content.value = '';
       emit('close');
       emit('refresh');
     } else {
       console.error('ComposeDialog: Failed to send message, API returned error or unexpected response:', result);
-      // TODO: Show error feedback
     }
   } catch (error) {
     console.error('ComposeDialog: Error sending message:', error);
-     // TODO: Show error feedback
   }
 }
 
@@ -370,125 +297,61 @@ const resetValues = () => {
               label="To"
               autofocus
               :rules="[(value: string) => !!value || 'This field is required']"
-              :disabled="isClient"
-              v-if="!isClient"
-            />
-            <VTextField
-              v-model="to"
-              label="To"
-              autofocus
-              :rules="[(value: string) => !!value || 'This field is required']"
               disabled
-              v-if="isClient"
             />
           </VCol>
         </VRow>
       </VCardText>
       
-      <!-- To field autocomplete dropdown -->
-      <VCard
-        v-if="filteredToUsers.length > 0 && !isClient"
-        class="autocomplete-dropdown"
-        elevation="4"
-      >
-        <VList density="compact">
-          <VListItem
-            v-for="user in filteredToUsers"
-            :key="user.id"
-            @click="selectUser(user, 'to')"
-          >
-            <VListItemTitle>{{ user.fullName }}</VListItemTitle>
-            <VListItemSubtitle>{{ user.email }}</VListItemSubtitle>
-          </VListItem>
-        </VList>
-      </VCard>
+      <VExpandTransition>
+        <div v-if="isEmailCc && !isClient" class="position-relative">
+          <VDivider />
+
+          <div class="px-1 pe-6 py-1">
+            <VTextField
+              v-model="cc"
+              density="compact"
+            >
+              <template #prepend-inner>
+                <div class="text-disabled font-weight-medium">
+                  Cc:
+                </div>
+              </template>
+            </VTextField>
+          </div>
+        </div>
+      </VExpandTransition>
+
+      <VExpandTransition>
+        <div v-if="isEmailBcc && !isClient" class="position-relative">
+          <VDivider />
+
+          <div class="px-1 pe-6 py-1">
+            <VTextField
+              v-model="bcc"
+              density="compact"
+            >
+              <template #prepend-inner>
+                <div class="text-disabled font-weight-medium">
+                  Bcc:
+                </div>
+              </template>
+            </VTextField>
+          </div>
+        </div>
+      </VExpandTransition>
     </div>
 
-    <VExpandTransition>
-      <div v-if="isEmailCc && !isClient" class="position-relative">
-        <VDivider />
-
-        <div class="px-1 pe-6 py-1">
-          <VTextField
-            v-model="cc"
-            density="compact"
-            @input="onInputChange(cc, 'cc')"
-          >
-            <template #prepend-inner>
-              <div class="text-disabled font-weight-medium">
-                Cc:
-              </div>
-            </template>
-          </VTextField>
-          
-          <!-- Cc field autocomplete dropdown -->
-          <VCard
-            v-if="filteredCcUsers.length > 0"
-            class="autocomplete-dropdown"
-            elevation="4"
-          >
-            <VList density="compact">
-              <VListItem
-                v-for="user in filteredCcUsers"
-                :key="user.id"
-                @click="selectUser(user, 'cc')"
-              >
-                <VListItemTitle>{{ user.fullName }}</VListItemTitle>
-                <VListItemSubtitle>{{ user.email }}</VListItemSubtitle>
-              </VListItem>
-            </VList>
-          </VCard>
-        </div>
-      </div>
-    </VExpandTransition>
-
-    <VExpandTransition>
-      <div v-if="isEmailBcc && !isClient" class="position-relative">
-        <VDivider />
-
-        <div class="px-1 pe-6 py-1">
-          <VTextField
-            v-model="bcc"
-            density="compact"
-            @input="onInputChange(bcc, 'bcc')"
-          >
-            <template #prepend-inner>
-              <div class="text-disabled font-weight-medium">
-                Bcc:
-              </div>
-            </template>
-          </VTextField>
-          
-          <!-- Bcc field autocomplete dropdown -->
-          <VCard
-            v-if="filteredBccUsers.length > 0"
-            class="autocomplete-dropdown"
-            elevation="4"
-          >
-            <VList density="compact">
-              <VListItem
-                v-for="user in filteredBccUsers"
-                :key="user.id"
-                @click="selectUser(user, 'bcc')"
-              >
-                <VListItemTitle>{{ user.fullName }}</VListItemTitle>
-                <VListItemSubtitle>{{ user.email }}</VListItemSubtitle>
-              </VListItem>
-            </VList>
-          </VCard>
-        </div>
-      </div>
-    </VExpandTransition>
-
-    <!-- Project Fields - Only for clients -->
-    <div v-if="isClient">
+    <!-- Project Fields - For all users, but required only for clients -->
+    <div>
       <div class="px-1 pe-6 py-1">
         <VTextField
           v-model="projectTitle"
           density="compact"
           label="Project Title"
           placeholder="Enter project title"
-          :rules="[(v: string) => !!v || 'Project title is required']"
+          :rules="isClient ? [(v: string) => !!v || 'Project title is required'] : undefined"
+          :required="isClient"
         >
           <template #prepend-inner>
             <div class="text-base font-weight-medium text-disabled">
@@ -506,7 +369,8 @@ const resetValues = () => {
           density="compact"
           label="Property"
           placeholder="Enter property details"
-          :rules="[(v: string) => !!v || 'Property is required']"
+          :rules="isClient ? [(v: string) => !!v || 'Property is required'] : undefined"
+          :required="isClient"
         >
           <template #prepend-inner>
             <div class="text-base font-weight-medium text-disabled">
@@ -523,7 +387,8 @@ const resetValues = () => {
           v-model="serviceType"
           density="compact"
           label="Service Type"
-          :rules="[(v: string) => !!v || 'Service type is required']"
+          :rules="isClient ? [(v: string) => !!v || 'Service type is required'] : undefined"
+          :required="isClient"
           :items="[
             { title: 'Translation', value: 'translation' },
             { title: 'Revision', value: 'revision' },
@@ -548,6 +413,7 @@ const resetValues = () => {
           v-model="timePreference"
           density="compact"
           label="Time Preference"
+          :required="isClient"
           :items="[
             { title: 'Before Noon', value: 'before_noon' },
             { title: 'Before 4pm', value: 'before_4pm' },
@@ -582,6 +448,26 @@ const resetValues = () => {
       </div>
 
       <VDivider />
+
+      <div class="px-1 pe-6 py-1">
+        <VTextField 
+          v-model="dueDate" 
+          density="compact" 
+          type="date"  
+          placeholder="YYYY-MM-DD"
+          :rules="isClient ? [(v: string) => !!v || 'Due date is required'] : undefined"
+          :required="isClient"
+          clearable 
+        >
+          <template #prepend-inner>
+            <div class="text-base font-weight-medium text-disabled">
+              Due Date:
+            </div>
+          </template>
+        </VTextField>
+      </div>
+
+      <VDivider />
     </div>
 
     <div class="px-1 pe-6 py-1">
@@ -592,24 +478,6 @@ const resetValues = () => {
         <template #prepend-inner>
           <div class="text-base font-weight-medium text-disabled">
             Subject:
-          </div>
-        </template>
-      </VTextField>
-    </div>
-
-    <VDivider />
-    <div class="px-1 pe-6 py-1">
-      <VTextField 
-        v-model="dueDate" 
-        density="compact" 
-        type="date"  
-        placeholder="YYYY-MM-DD"
-        :rules="[(v: string) => (isClient ? !!v || 'Due date is required' : true)]"
-        clearable 
-      >
-        <template #prepend-inner>
-          <div class="text-base font-weight-medium text-disabled">
-            Due Date:
           </div>
         </template>
       </VTextField>

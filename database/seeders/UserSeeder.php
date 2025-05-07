@@ -19,15 +19,16 @@ class UserSeeder extends Seeder
     {
         $users = [
             [
-                'name' => 'Sophie',
-                'email' => 'sophie@freynet-gagne.com',
-                'password' => Hash::make('password123'), // Use a secure password
-            ],
-            [
                 'name' => 'Administrator',
                 'email' => 'info@freynet-gagne.com',
                 'password' => Hash::make('password123'), // Use a secure password
             ],
+            [
+                'name' => 'Sophie',
+                'email' => 'sophie@freynet-gagne.com',
+                'password' => Hash::make('password123'), // Use a secure password
+            ],
+            
             [
                 'name' => 'Admin User',
                 'email' => 'admin@admin.com',
@@ -45,17 +46,17 @@ class UserSeeder extends Seeder
 
         // Define roles for specific users
         $userRoles = [
-            'admin@admin.com' => 1,   // Admin role
-            'client@client.com' => 4,  // Client role
-            'sophie@freynet-gagne.com' => 4, // Client role
-            'info@freynet-gagne.com' => 1, // Admin role
+            'sophie@freynet-gagne.com' => 2, // Client role (ID: 2)
+            'info@freynet-gagne.com' => 1, // Admin role (ID: 1)
+            'admin@admin.com' => 1, // Admin role (ID: 1)
+            'client@client.com' => 2, // Client role (ID: 2)
         ];
 
         foreach ($users as $userData) {
             $user = User::firstOrCreate(['email' => $userData['email']], $userData);
 
-            // Assign specific roles if email matches, else assign client role (role_id = 4)
-            $roleId = $userRoles[$userData['email']] ?? 4;
+            // Assign role based on email, default to client role (ID: 2)
+            $roleId = $userRoles[$userData['email']] ?? 2;
 
             DB::table('user_roles')->updateOrInsert(
                 ['user_id' => $user->id, 'role_id' => $roleId],
