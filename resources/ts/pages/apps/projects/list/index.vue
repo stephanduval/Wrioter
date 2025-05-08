@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import axios from '@/../js/axios'
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 
@@ -12,93 +13,125 @@ interface Project {
   status: string
   client?: {
     name: string
+    email: string
   }
 }
 
-interface ProjectsResponse {
+interface ApiResponse {
   data: Project[]
   total: number
+  current_page: number
+  per_page: number
+  last_page: number
+  from: number
+  to: number
 }
 
 const router = useRouter()
 
 // Data table options
 const searchQuery = ref('')
+const selectedStatus = ref('')
+const selectedServiceType = ref('')
 const itemsPerPage = ref(10)
 const page = ref(1)
-const sortBy = ref('')
-const orderBy = ref('')
-const selectedRows = ref([])
+const sortBy = ref('created_at')
+const sortDesc = ref(true)
+const isLoading = ref(true)
+const projectsData = ref<ApiResponse | null>(null)
+const clients = ref<{ id: number; name: string }[]>([])
 
 // Headers
 const headers = [
-  { title: 'Title', key: 'title' },
-  { title: 'Client', key: 'client' },
-  { title: 'Service Type', key: 'service_type' },
-  { title: 'Deadline', key: 'deadline' },
-  { title: 'Latest Completion Date', key: 'latest_completion_date' },
-  { title: 'Status', key: 'status' },
+  { title: 'Project', key: 'project', sortable: true },
+  { title: 'Client', key: 'client', sortable: true },
+  { title: 'Service Type', key: 'service_type', sortable: true },
+  { title: 'Deadline', key: 'deadline', sortable: true },
+  { title: 'Status', key: 'status', sortable: true },
   { title: 'Actions', key: 'actions', sortable: false },
 ]
 
-// Status color mapping
-const statusColorMap: Record<string, string> = {
-  pending: 'warning',
-  active: 'success',
-  completed: 'secondary',
-  cancelled: 'error',
-}
-
-// Add status options
+// Status options
 const statusOptions = [
+  { title: 'All', value: '' },
   { title: 'Received', value: 'received' },
   { title: 'In Progress', value: 'in_progress' },
   { title: 'Delivered', value: 'delivered' },
 ]
 
-// 👉 Fetching projects
-const { data: projectsData, execute: fetchProjects } = useApi<ProjectsResponse>(() => {
-  const params = new URLSearchParams({
-    page: String(page.value),
-    itemsPerPage: String(itemsPerPage.value),
-    sortBy: sortBy.value || '',
-    sortDesc: orderBy.value === 'desc' ? '1' : '0',
-    search: searchQuery.value,
-  }).toString()
+// Service type options
+const serviceTypeOptions = [
+  { title: 'All', value: '' },
+  { title: 'Translation', value: 'translation' },
+  { title: 'Revision', value: 'revision' },
+  { title: 'Modifications', value: 'modifications' },
+  { title: 'Transcription', value: 'transcription' },
+  { title: 'Voice Over', value: 'voice_over' },
+  { title: 'Other', value: 'other' },
+]
 
-  return `/projects?${params}`
-}, {
-  method: 'GET',
-  headers: {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-  },
-  credentials: 'include',
-})
-
-const projects = computed(() => projectsData.value?.data || [])
-const totalProjects = computed(() => projectsData.value?.total || 0)
-
-// Update options
-const updateOptions = (options: any) => {
-  if (options.sortBy?.length) {
-    sortBy.value = options.sortBy[0]?.key
-    orderBy.value = options.sortBy[0]?.order
+// Methods
+const fetchProjects = async () => {
+  isLoading.value = true
+  
+  try {
+    const params = new URLSearchParams()
+    
+    if (searchQuery.value) params.append('search', searchQuery.value)
+    if (selectedStatus.value) params.append('status', selectedStatus.value)
+    if (selectedServiceType.value) params.append('service_type', selectedServiceType.value)
+    
+    params.append('page', page.value.toString())
+    params.append('per_page', itemsPerPage.value.toString())
+    params.append('sort_by', sortBy.value)
+    params.append('sort_desc', sortDesc.value ? '1' : '0')
+    
+    const response = await axios.get('/projects', { params })
+    projectsData.value = response.data
+  } catch (error) {
+    console.error('Error fetching projects:', error)
+  } finally {
+    isLoading.value = false
   }
-
-  page.value = options.page || 1
-  itemsPerPage.value = options.itemsPerPage || 10
-
-  fetchProjects()
 }
 
-// Format date helper
+const fetchClients = async () => {
+  try {
+    const response = await axios.get('/users')
+    clients.value = response.data.data || []
+  } catch (error) {
+    console.error('Error fetching clients:', error)
+  }
+}
+
 const formatDate = (date: string) => {
   if (!date) return 'N/A'
   return new Date(date).toLocaleDateString()
 }
 
-// Actions
+const resolveStatusVariant = (status: string) => {
+  if (status === 'received') return 'warning'
+  if (status === 'in_progress') return 'info'
+  if (status === 'delivered') return 'success'
+  return 'secondary'
+}
+
+const handleOptionsUpdate = (options: any) => {
+  console.log('Options received:', options)
+
+  // Update sorting
+  if (options.sortBy?.length) {
+    sortBy.value = options.sortBy[0].key
+    sortDesc.value = options.sortBy[0].order === 'desc'
+  }
+
+  // Update pagination
+  page.value = options.page
+  itemsPerPage.value = options.itemsPerPage
+
+  fetchProjects()
+}
+
 const viewProject = (id: number) => {
   router.push(`/apps/projects/view/${id}`)
 }
@@ -107,59 +140,36 @@ const deleteProject = async (id: number) => {
   if (!confirm('Are you sure you want to delete this project?')) return
   
   try {
-    const response = await fetch(`/api/projects/${id}`, {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-      },
-    })
-
-    if (!response.ok) throw new Error('Failed to delete project.')
-
-    console.log(`Project ${id} deleted successfully.`)
-
-    // Refetch projects after deletion
+    await axios.delete(`/projects/${id}`)
     fetchProjects()
   } catch (error) {
     console.error('Error deleting project:', error)
   }
 }
 
-// Add function to update project status
-const updateProjectStatus = async (projectId: number, newStatus: string) => {
-  try {
-    await $api(`/projects/${projectId}`, {
-      method: 'PUT',
-      body: JSON.stringify({ status: newStatus }),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-      },
-    })
-    // Refresh the projects list
-    fetchProjects()
-  } catch (error) {
-    console.error('Error updating project status:', error)
-  }
-}
+// Computed
+const projects = computed(() => projectsData.value?.data || [])
+const totalProjects = computed(() => projectsData.value?.total || 0)
 
-// Watch for changes
+// Watch for filter changes
 watch(
-  [searchQuery, itemsPerPage, page, sortBy, orderBy],
+  [searchQuery, selectedStatus, selectedServiceType],
   () => {
+    page.value = 1 // Reset to first page on filter change
     fetchProjects()
   },
 )
 
+// Initialize
 onMounted(() => {
   fetchProjects()
+  fetchClients()
 })
 </script>
 
 <template>
   <section>
-    <VCard class="mb-6">
+    <VCard>
       <VCardText class="d-flex flex-wrap gap-4">
         <div class="me-3 d-flex gap-3">
           <AppSelect
@@ -169,6 +179,7 @@ onMounted(() => {
               { value: 25, title: '25' },
               { value: 50, title: '50' },
               { value: 100, title: '100' },
+              { value: -1, title: 'All' },
             ]"
             style="inline-size: 6.25rem;"
             @update:model-value="itemsPerPage = parseInt($event, 10)"
@@ -176,117 +187,147 @@ onMounted(() => {
         </div>
         <VSpacer />
 
-        <div class="d-flex align-center flex-wrap gap-4">
+        <div class="app-user-search-filter d-flex align-center flex-wrap gap-4">
+          <!-- 👉 Search -->
           <div style="inline-size: 15.625rem;">
-            <AppTextField v-model="searchQuery" placeholder="Search Project" />
+            <AppTextField
+              v-model="searchQuery"
+              placeholder="Search Project"
+            />
           </div>
 
+          <!-- 👉 Status Select -->
+          <div style="inline-size: 9.375rem;">
+            <AppSelect
+              v-model="selectedStatus"
+              :items="statusOptions"
+              placeholder="Select Status"
+              clearable
+              clear-icon="bx-x"
+            />
+          </div>
+
+          <!-- 👉 Service Type Select -->
+          <div style="inline-size: 9.375rem;">
+            <AppSelect
+              v-model="selectedServiceType"
+              :items="serviceTypeOptions"
+              placeholder="Service Type"
+              clearable
+              clear-icon="bx-x"
+            />
+          </div>
+
+          <!-- 👉 Add project button -->
           <VBtn
             prepend-icon="bx-plus"
             to="/apps/projects/add"
           >
-            Add Project
+            Add New Project
           </VBtn>
         </div>
       </VCardText>
-    </VCard>
 
-    <VCard>
+      <VDivider />
+
+      <!-- SECTION datatable -->
       <VDataTableServer
         v-model:items-per-page="itemsPerPage"
         v-model:page="page"
-        :items="projects"
         :headers="headers"
+        :items="projects"
         :items-length="totalProjects"
+        :loading="isLoading"
         class="text-no-wrap"
-        @update:options="updateOptions"
+        @update:options="handleOptionsUpdate"
       >
-        <template #item.client="{ item }">
-          <div class="text-body-1">
-            {{ item.client?.name || 'N/A' }}
+        <!-- Project -->
+        <template #item.project="{ item }">
+          <div class="d-flex align-center">
+            <div class="d-flex flex-column">
+              <h6 class="text-base">
+                <RouterLink
+                  :to="`/apps/projects/view/${item.id}`"
+                  class="font-weight-medium text-link"
+                >
+                  {{ item.title }}
+                </RouterLink>
+              </h6>
+              <div class="text-sm text-disabled">
+                {{ item.property || 'No property specified' }}
+              </div>
+            </div>
           </div>
         </template>
 
+        <!-- Client -->
+        <template #item.client="{ item }">
+          <div class="d-flex align-center">
+            <div class="d-flex flex-column">
+              <h6 class="text-base">
+                {{ item.client?.name || 'N/A' }}
+              </h6>
+              <div class="text-sm text-disabled">
+                {{ item.client?.email || '' }}
+              </div>
+            </div>
+          </div>
+        </template>
+
+        <!-- Service Type -->
         <template #item.service_type="{ item }">
-          <div class="text-body-1 text-capitalize">
+          <div class="text-capitalize">
             {{ item.service_type || 'N/A' }}
           </div>
         </template>
 
+        <!-- Deadline -->
         <template #item.deadline="{ item }">
-          <div class="text-body-1">
-            {{ formatDate(item.deadline) }}
-          </div>
+          <div>{{ formatDate(item.deadline) }}</div>
         </template>
 
-        <template #item.latest_completion_date="{ item }">
-          <div class="text-body-1">
-            {{ formatDate(item.latest_completion_date) }}
-          </div>
-        </template>
-
+        <!-- Status -->
         <template #item.status="{ item }">
-          <VSelect
-            v-model="item.status"
-            :items="statusOptions"
-            density="compact"
-            variant="plain"
-            hide-details
-            class="status-select"
-            :color="statusColorMap[item.status]"
-            @update:model-value="updateProjectStatus(item.id, $event)"
+          <VChip
+            :color="resolveStatusVariant(item.status)"
+            size="small"
+            class="text-capitalize"
           >
-            <template #selection="{ item }">
-              <VChip
-                :color="statusColorMap[item.value]"
-                size="small"
-                class="text-capitalize"
-              >
-                {{ item.title }}
-              </VChip>
-            </template>
-          </VSelect>
+            {{ item.status }}
+          </VChip>
         </template>
 
+        <!-- Actions -->
         <template #item.actions="{ item }">
-          <VBtn
-            icon
-            variant="text"
-            size="small"
-            color="medium-emphasis"
-            @click="viewProject(item.id)"
-          >
+          <IconBtn @click="viewProject(item.id)">
             <VIcon icon="bx-show" />
-          </VBtn>
+          </IconBtn>
 
           <IconBtn @click="deleteProject(item.id)">
             <VIcon icon="bx-trash" />
           </IconBtn>
+        </template>
+
+        <!-- Loading -->
+        <template #loading>
+          <div class="d-flex justify-center align-center pa-4">
+            <VProgressCircular indeterminate />
+          </div>
+        </template>
+
+        <!-- No Data -->
+        <template #no-data>
+          <div class="d-flex justify-center align-center pa-4">
+            No projects found
+          </div>
         </template>
       </VDataTableServer>
     </VCard>
   </section>
 </template>
 
-<style scoped>
-.w-auto {
-  inline-size: auto !important;
-}
-
-.min-w-150 {
-  min-inline-size: 150px;
-}
-
-.status-select {
-  max-inline-size: 150px;
-}
-
-:deep(.v-select .v-field__input) {
-  padding: 0;
-  min-block-size: unset;
-}
-
-:deep(.v-select .v-field) {
-  background: transparent !important;
+<style lang="scss">
+.text-capitalize {
+  text-transform: capitalize;
 }
 </style> 

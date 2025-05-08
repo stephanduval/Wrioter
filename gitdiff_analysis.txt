@@ -1,0 +1,2283 @@
+diff --git a/app/Http/Controllers/MessageController.php b/app/Http/Controllers/MessageController.php
+index c95c7de..f5b0015 100644
+--- a/app/Http/Controllers/MessageController.php
++++ b/app/Http/Controllers/MessageController.php
+@@ -148,6 +148,7 @@ public function store(Request $request)
+             $rules['project_data.service_type'] = 'required|in:translation,revision,modifications,transcription,voice_over,other';
+             $rules['project_data.service_description'] = 'nullable|string';
+             $rules['project_data.deadline'] = 'required|date_format:Y-m-d';
++            $rules['project_data.latest_completion_date'] = 'required|date_format:Y-m-d';
+         }
+         
+         // Add validation for attachments (optional array, each file max 10MB)
+@@ -164,7 +165,11 @@ public function store(Request $request)
+         $user = Auth::user();
+         $userRole = $user->roles->first()?->name;
+         
+-        if ($userRole === 'client' && isset($validated['project_data'])) {
++        Log::info('MessageController::store - User role:', ['role' => $userRole]);
++        Log::info('MessageController::store - Project data:', ['project_data' => $validated['project_data'] ?? null]);
++
++        // Create project if project data is provided (regardless of role)
++        if (isset($validated['project_data'])) {
+             try {
+                 $projectData = [
+                     'client_id' => $user->id,
+@@ -177,6 +182,7 @@ public function store(Request $request)
+                     'deadline' => $validated['project_data']['deadline'] ?? $validated['due_date'],
+                     'service_type' => $validated['project_data']['service_type'],
+                     'service_description' => $validated['project_data']['service_description'] ?? null,
++                    'latest_completion_date' => $validated['project_data']['latest_completion_date'],
+                 ];
+                 
+                 Log::info('MessageController::store - Creating project with data:', $projectData);
+@@ -186,9 +192,14 @@ public function store(Request $request)
+                 
+                 Log::info('MessageController::store - Project created successfully with ID: ' . $project_id);
+             } catch (\Exception $e) {
+-                Log::error('MessageController::store - Error creating project: ' . $e->getMessage());
++                Log::error('MessageController::store - Error creating project:', [
++                    'error' => $e->getMessage(),
++                    'trace' => $e->getTraceAsString()
++                ]);
+                 // Continue with message creation even if project creation fails
+             }
++        } else {
++            Log::info('MessageController::store - No project data provided');
+         }
+ 
+         $createData = [
+diff --git a/app/Http/Controllers/ProjectController.php b/app/Http/Controllers/ProjectController.php
+index bf19114..c6efd94 100644
+--- a/app/Http/Controllers/ProjectController.php
++++ b/app/Http/Controllers/ProjectController.php
+@@ -202,29 +202,28 @@ public function destroy(string $id)
+     {
+         Log::info("ProjectController::destroy - Deleting project {$id}");
+         
+-        $project = Project::findOrFail($id);
+-        
+-        // Only admins can delete projects
+-        $user = Auth::user();
+-        $userRole = $user->roles->first()?->name;
+-        
+-        if ($userRole !== 'admin') {
+-            return response()->json(['message' => 'Unauthorized to delete projects'], 403);
+-        }
+-        
+-        // Check if project has messages
+-        $messagesCount = $project->messages()->count();
+-        if ($messagesCount > 0) {
+-            // Option 1: Prevent deletion
+-            // return response()->json(['message' => 'Cannot delete project with associated messages'], 422);
++        try {
++            $project = Project::findOrFail($id);
++            
++            // Use policy authorization
++            if (!auth()->user()->can('delete', $project)) {
++                return response()->json(['message' => 'Unauthorized to delete projects'], 403);
++            }
++            
++            // Check if project has messages
++            $messagesCount = $project->messages()->count();
++            if ($messagesCount > 0) {
++                // Update messages to remove project association
++                $project->messages()->update(['project_id' => null]);
++            }
+             
+-            // Option 2: Delete anyway and set project_id to null in messages (due to foreign key constraints)
+-            $project->messages()->update(['project_id' => null]);
++            $project->delete();
++            
++            return response()->json(['message' => 'Project deleted successfully']);
++        } catch (\Exception $e) {
++            Log::error("Error deleting project: " . $e->getMessage());
++            return response()->json(['message' => 'Failed to delete project'], 500);
+         }
+-        
+-        $project->delete();
+-        
+-        return response()->json(['message' => 'Project deleted successfully']);
+     }
+     
+     /**
+diff --git a/app/Models/Project.php b/app/Models/Project.php
+index 4d65000..39438f9 100644
+--- a/app/Models/Project.php
++++ b/app/Models/Project.php
+@@ -19,12 +19,14 @@ class Project extends Model
+         'time_preference',
+         'deadline',
+         'service_type',
+-        'service_description'
++        'service_description',
++        'latest_completion_date'
+     ];
+ 
+     protected $casts = [
+         'deadline' => 'date',
+         'date_requested' => 'datetime',
++        'latest_completion_date' => 'date'
+     ];
+ 
+     /**
+diff --git a/app/Policies/ProjectPolicy.php b/app/Policies/ProjectPolicy.php
+new file mode 100644
+index 0000000..7f65f53
+--- /dev/null
++++ b/app/Policies/ProjectPolicy.php
+@@ -0,0 +1,39 @@
++<?php
++
++namespace App\Policies;
++
++use App\Models\User;
++use App\Models\Project;
++use Illuminate\Auth\Access\HandlesAuthorization;
++
++class ProjectPolicy
++{
++    use HandlesAuthorization;
++
++    /**
++     * Determine whether the user can delete the project.
++     */
++    public function delete(User $user, Project $project)
++    {
++        // Only admin can delete projects
++        return $user->roles()->where('name', 'admin')->exists();
++    }
++
++    /**
++     * Determine whether the user can view the project.
++     */
++    public function view(User $user, Project $project)
++    {
++        return $user->roles()->where('name', 'admin')->exists() || 
++               $user->id === $project->client_id;
++    }
++
++    /**
++     * Determine whether the user can update the project.
++     */
++    public function update(User $user, Project $project)
++    {
++        return $user->roles()->where('name', 'admin')->exists() || 
++               $user->id === $project->client_id;
++    }
++} 
+diff --git a/app/Providers/AuthServiceProvider.php b/app/Providers/AuthServiceProvider.php
+index 4698c35..cc1e83a 100755
+--- a/app/Providers/AuthServiceProvider.php
++++ b/app/Providers/AuthServiceProvider.php
+@@ -5,16 +5,18 @@
+ use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
+ use Illuminate\Support\Facades\Gate;
+ use Laravel\Passport\Passport;
++use App\Models\Project;
++use App\Policies\ProjectPolicy;
+ 
+ class AuthServiceProvider extends ServiceProvider
+ {
+     /**
+-     * The policy mappings for the application.
++     * The model to policy mappings for the application.
+      *
+-     * @var array
++     * @var array<class-string, class-string>
+      */
+     protected $policies = [
+-        // 'App\Models\Model' => 'App\Policies\ModelPolicy',
++        Project::class => ProjectPolicy::class,
+     ];
+ 
+     /**
+@@ -22,9 +24,8 @@ class AuthServiceProvider extends ServiceProvider
+      *
+      * @return void
+      */
+-    public function boot()
++    public function boot(): void
+     {
+         $this->registerPolicies();
+-
+     }
+ }
+diff --git a/config/cors.php b/config/cors.php
+index 0e2a992..9104651 100755
+--- a/config/cors.php
++++ b/config/cors.php
+@@ -3,7 +3,7 @@
+ return [
+     'paths' => ['api/*', 'sanctum/csrf-cookie'],
+     'allowed_methods' => ['*'],
+-    'allowed_origins' => ['*'],
++    'allowed_origins' => ['http://localhost:5173', 'http://localhost:8000', 'http://127.0.0.1:5173', 'http://127.0.0.1:8000'],
+     'allowed_origins_patterns' => [],
+     'allowed_headers' => ['*'],
+     'exposed_headers' => [],
+diff --git a/config/sanctum.php b/config/sanctum.php
+index 9b7d5ff..c8b51c6 100755
+--- a/config/sanctum.php
++++ b/config/sanctum.php
+@@ -15,7 +15,11 @@
+     |
+     */
+ 
+-    'stateful' => explode(',', env('SANCTUM_STATEFUL_DOMAINS', '')),
++    'stateful' => explode(',', env('SANCTUM_STATEFUL_DOMAINS', sprintf(
++        '%s%s',
++        'localhost:5173,localhost:8000,127.0.0.1:5173,127.0.0.1:8000',
++        Sanctum::currentApplicationUrlWithPort()
++    ))),
+ 
+ 
+     /*
+@@ -72,9 +76,8 @@
+     */
+ 
+     'middleware' => [
+-        'authenticate_session' => Laravel\Sanctum\Http\Middleware\AuthenticateSession::class,
+-        'encrypt_cookies' => Illuminate\Cookie\Middleware\EncryptCookies::class,
+-        'validate_csrf_token' => Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class,
++        'verify_csrf_token' => App\Http\Middleware\VerifyCsrfToken::class,
++        'encrypt_cookies' => App\Http\Middleware\EncryptCookies::class,
+     ],
+ 
+ ];
+diff --git a/database/migrations/2025_05_07_212051_add_latest_completion_date_to_projects_table.php b/database/migrations/2025_05_07_212051_add_latest_completion_date_to_projects_table.php
+new file mode 100644
+index 0000000..abdfcca
+--- /dev/null
++++ b/database/migrations/2025_05_07_212051_add_latest_completion_date_to_projects_table.php
+@@ -0,0 +1,28 @@
++<?php
++
++use Illuminate\Database\Migrations\Migration;
++use Illuminate\Database\Schema\Blueprint;
++use Illuminate\Support\Facades\Schema;
++
++return new class extends Migration
++{
++    /**
++     * Run the migrations.
++     */
++    public function up(): void
++    {
++        Schema::table('projects', function (Blueprint $table) {
++            $table->date('latest_completion_date')->nullable()->after('deadline');
++        });
++    }
++
++    /**
++     * Reverse the migrations.
++     */
++    public function down(): void
++    {
++        Schema::table('projects', function (Blueprint $table) {
++            $table->dropColumn('latest_completion_date');
++        });
++    }
++};
+diff --git a/resources/js/axios.ts b/resources/js/axios.ts
+index 6a2f522..3a09cae 100755
+--- a/resources/js/axios.ts
++++ b/resources/js/axios.ts
+@@ -6,4 +6,36 @@ axios.defaults.baseURL = import.meta.env.MODE === 'development'
+   ? 'http://127.0.0.1:8000/api'
+   : 'https://stephandouglasduval.com/api'
+ 
++// Add request interceptor to include auth token
++axios.interceptors.request.use(
++  (config) => {
++    // Get token from localStorage
++    const token = localStorage.getItem('accessToken')
++    if (token) {
++      config.headers.Authorization = `Bearer ${token}`
++    }
++    return config
++  },
++  (error) => {
++    return Promise.reject(error)
++  }
++)
++
++// Add response interceptor to handle 401 errors
++axios.interceptors.response.use(
++  (response) => response,
++  async (error) => {
++    if (error.response?.status === 401) {
++      // Clear auth data and redirect to login
++      localStorage.removeItem('accessToken')
++      localStorage.removeItem('userData')
++      window.location.href = '/login'
++    }
++    return Promise.reject(error)
++  }
++)
++
++// Enable credentials (cookies) for cross-origin requests
++axios.defaults.withCredentials = true
++
+ export default axios
+diff --git a/resources/ts/pages/apps/email/index.vue b/resources/ts/pages/apps/email/index.vue
+index d41fd76..92ee118 100755
+--- a/resources/ts/pages/apps/email/index.vue
++++ b/resources/ts/pages/apps/email/index.vue
+@@ -477,31 +477,37 @@ const confirmTrashMessages = async () => {
+   messageIdsToConfirmTrash.value = [];
+ };
+ 
+-const initiatePermanentDeleteConfirmation = (ids: number[] | Ref<number[]>) => {
+-  const actualIds = isRef(ids) ? ids.value : ids;
+-  if (!actualIds || actualIds.length === 0) return;
+-  console.log('Initiating permanent delete confirmation for IDs:', actualIds);
+-  messageIdsToConfirmPermanentDelete.value = [...actualIds];
+-  isPermanentDeleteConfirmDialogVisible.value = true;
+-};
+-
+ const confirmPermanentDeleteMessages = async () => {
+   if (!messageIdsToConfirmPermanentDelete.value.length) return;
+ 
+-  console.log('Confirming permanent delete for IDs:', messageIdsToConfirmPermanentDelete.value);
+   try {
++    let allSuccess = true;
+     for (const id of messageIdsToConfirmPermanentDelete.value) {
+-      await deleteMessage(id);
+-    }
+-    if (openedMessage.value && messageIdsToConfirmPermanentDelete.value.includes(openedMessage.value.id)) {
+-      openedMessage.value = null;
++      const success = await deleteMessage(id);
++      if (!success) {
++        allSuccess = false;
++        console.error(`Failed to delete message ${id}`);
++      }
+     }
+-    if (selectedMessages.value.length > 0 && messageIdsToConfirmPermanentDelete.value.every(id => selectedMessages.value.includes(id)) && messageIdsToConfirmPermanentDelete.value.length === selectedMessages.value.length) {
+-      selectedMessages.value = [];
++
++    if (allSuccess) {
++      // Clear selection if all messages were selected
++      if (selectedMessages.value.length > 0 && 
++          messageIdsToConfirmPermanentDelete.value.every(id => selectedMessages.value.includes(id))) {
++        selectedMessages.value = [];
++      }
++      
++      // Clear opened message if it was deleted
++      if (openedMessage.value && 
++          messageIdsToConfirmPermanentDelete.value.includes(openedMessage.value.id)) {
++        openedMessage.value = null;
++      }
++
++      // Refresh the messages list
++      await fetchAllMessages();
+     }
+-    await fetchAllMessages();
+   } catch (error) {
+-    console.error('Error permanently deleting messages:', error);
++    console.error('Error during permanent deletion:', error);
+   } finally {
+     isPermanentDeleteConfirmDialogVisible.value = false;
+     messageIdsToConfirmPermanentDelete.value = [];
+@@ -958,31 +964,64 @@ const confirmPermanentDeleteMessages = async () => {
+       
+       <VDialog v-model="isTrashConfirmDialogVisible" max-width="500px">
+         <VCard>
+-          <VCardTitle>Confirm Move to Trash</VCardTitle>
++          <VCardTitle class="text-h5">Move to Trash</VCardTitle>
+           <VCardText>
+-            Are you sure you want to move the selected message(s) to the trash?
++            Are you sure you want to move {{ messageIdsToConfirmTrash.value.length > 1 ? 'these messages' : 'this message' }} to trash?
+           </VCardText>
+           <VCardActions>
+             <VSpacer />
+-            <VBtn color="secondary" @click="isTrashConfirmDialogVisible = false">Cancel</VBtn>
+-            <VBtn color="error" @click="confirmTrashMessages">Move to Trash</VBtn>
++            <VBtn
++              color="secondary"
++              variant="text"
++              @click="isTrashConfirmDialogVisible = false"
++            >
++              Cancel
++            </VBtn>
++            <VBtn
++              color="error"
++              variant="flat"
++              @click="confirmTrashMessages"
++            >
++              Move to Trash
++            </VBtn>
+           </VCardActions>
+         </VCard>
+       </VDialog>
+ 
+       <VDialog v-model="isPermanentDeleteConfirmDialogVisible" max-width="500px">
+         <VCard>
+-          <VCardTitle class="text-h5 error--text">Confirm Permanent Deletion</VCardTitle>
++          <VCardTitle class="text-h5">Delete Forever</VCardTitle>
+           <VCardText>
+-            <VAlert type="warning" dense outlined class="mb-3">
+-              This action cannot be undone.
++            <VAlert
++              type="warning"
++              variant="tonal"
++              class="mb-4"
++            >
++              <VIcon
++                icon="bx-error-circle"
++                start
++                color="warning"
++              />
++              Warning: This action cannot be undone!
+             </VAlert>
+-            Are you sure you want to permanently delete the selected message(s)?
++            Are you sure you want to permanently delete {{ messageIdsToConfirmPermanentDelete.value.length > 1 ? 'these messages' : 'this message' }}?
+           </VCardText>
+           <VCardActions>
+             <VSpacer />
+-            <VBtn color="secondary" @click="isPermanentDeleteConfirmDialogVisible = false">Cancel</VBtn>
+-            <VBtn color="error" @click="confirmPermanentDeleteMessages">Delete Forever</VBtn>
++            <VBtn
++              color="secondary"
++              variant="text"
++              @click="isPermanentDeleteConfirmDialogVisible = false"
++            >
++              Cancel
++            </VBtn>
++            <VBtn
++              color="error"
++              variant="flat"
++              @click="confirmPermanentDeleteMessages"
++            >
++              Delete Forever
++            </VBtn>
+           </VCardActions>
+         </VCard>
+       </VDialog>
+diff --git a/resources/ts/pages/apps/projects/list/index.vue b/resources/ts/pages/apps/projects/list/index.vue
+index 895b3e1..7930ba7 100644
+--- a/resources/ts/pages/apps/projects/list/index.vue
++++ b/resources/ts/pages/apps/projects/list/index.vue
+@@ -1,97 +1,46 @@
+ <script setup lang="ts">
+-import axios from 'axios'
+-import { format, isBefore, isToday } from 'date-fns'
+ import { computed, onMounted, ref, watch } from 'vue'
+ import { useRouter } from 'vue-router'
+ 
+-// Configure axios
+-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '/api'
+-
+-const router = useRouter()
+-
+ interface Project {
+   id: number
+   title: string
+   property?: string
+-  time_preference?: string
+   service_type?: string
+-  service_description?: string
+   deadline?: string
++  latest_completion_date?: string
+   status: string
+-  created_at: string
+-  updated_at: string
+-  client_id?: number
+   client?: {
+-    id: number
+-    name: string
+-    email: string
+-  }
+-  company?: {
+-    id: number
+     name: string
+   }
+ }
+ 
+ interface ProjectsResponse {
+   data: Project[]
+-  meta: {
+-    current_page: number
+-    from: number
+-    last_page: number
+-    per_page: number
+-    to: number
+-    total: number
+-  }
++  total: number
+ }
+ 
+-// Data
++const router = useRouter()
++
++// Data table options
+ const searchQuery = ref('')
+-const statusFilter = ref('all')
+-const serviceTypeFilter = ref('all')
+-const clientFilter = ref('')
+-const deadlineFilter = ref('all')
++const itemsPerPage = ref(10)
+ const page = ref(1)
+-const perPage = ref(10)
+-const sortBy = ref('created_at')
+-const sortDesc = ref(true)
+-const isLoading = ref(true)
+-const projectsData = ref<ProjectsResponse | null>(null)
+-const clients = ref<{ id: number, name: string }[]>([])
+-const serviceTypes = ref<string[]>([])
+-
+-// Computed
+-const projects = computed(() => projectsData.value?.data || [])
+-const totalProjects = computed(() => projectsData.value?.meta?.total || 0)
++const sortBy = ref('')
++const orderBy = ref('')
++const selectedRows = ref([])
+ 
+-// Table headers
++// Headers
+ const headers = [
+-  { title: 'ID', key: 'id', sortable: true },
+-  { title: 'Title', key: 'title', sortable: true },
+-  { title: 'Client', key: 'client.name', sortable: true },
+-  { title: 'Service Type', key: 'service_type', sortable: true },
+-  { title: 'Deadline', key: 'deadline', sortable: true },
+-  { title: 'Status', key: 'status', sortable: true },
+-  { title: 'Created', key: 'created_at', sortable: true },
++  { title: 'Title', key: 'title' },
++  { title: 'Client', key: 'client' },
++  { title: 'Service Type', key: 'service_type' },
++  { title: 'Deadline', key: 'deadline' },
++  { title: 'Latest Completion Date', key: 'latest_completion_date' },
++  { title: 'Status', key: 'status' },
+   { title: 'Actions', key: 'actions', sortable: false },
+ ]
+ 
+-// Status options
+-const statusOptions = [
+-  { title: 'All', value: 'all' },
+-  { title: 'Pending', value: 'pending' },
+-  { title: 'Active', value: 'active' },
+-  { title: 'Completed', value: 'completed' },
+-  { title: 'Cancelled', value: 'cancelled' },
+-]
+-
+-// Deadline filter options
+-const deadlineOptions = [
+-  { title: 'All', value: 'all' },
+-  { title: 'Today', value: 'today' },
+-  { title: 'Upcoming', value: 'upcoming' },
+-  { title: 'Past Due', value: 'past' },
+-]
+-
+ // Status color mapping
+ const statusColorMap: Record<string, string> = {
+   pending: 'warning',
+@@ -100,361 +49,221 @@ const statusColorMap: Record<string, string> = {
+   cancelled: 'error',
+ }
+ 
+-// Methods
+-const fetchProjects = async () => {
+-  isLoading.value = true
+-  
+-  try {
+-    const params = new URLSearchParams()
+-    
+-    if (searchQuery.value) params.append('search', searchQuery.value)
+-    if (statusFilter.value !== 'all') params.append('status', statusFilter.value)
+-    if (serviceTypeFilter.value !== 'all') params.append('service_type', serviceTypeFilter.value)
+-    if (clientFilter.value) params.append('client_id', clientFilter.value)
+-    if (deadlineFilter.value !== 'all') params.append('deadline', deadlineFilter.value)
+-    
+-    params.append('page', page.value.toString())
+-    params.append('per_page', perPage.value.toString())
+-    params.append('sort_by', sortBy.value)
+-    params.append('sort_desc', sortDesc.value ? '1' : '0')
+-    
+-    const response = await axios.get(`${apiBaseUrl}/projects`, { params })
+-    projectsData.value = response.data
+-    
+-    // Extract unique service types for filter
+-    if (projects.value.length && !serviceTypes.value.length) {
+-      const uniqueTypes = new Set<string>()
+-      projects.value.forEach(project => {
+-        if (project.service_type) uniqueTypes.add(project.service_type)
+-      })
+-      serviceTypes.value = Array.from(uniqueTypes)
+-    }
+-  } catch (error) {
+-    console.error('Error fetching projects:', error)
+-  } finally {
+-    isLoading.value = false
+-  }
+-}
++// Add status options
++const statusOptions = [
++  { title: 'Received', value: 'received' },
++  { title: 'In Progress', value: 'in_progress' },
++  { title: 'Delivered', value: 'delivered' },
++]
+ 
+-const fetchClients = async () => {
+-  try {
+-    const response = await axios.get(`${apiBaseUrl}/clients`)
+-    clients.value = response.data.data
+-  } catch (error) {
+-    console.error('Error fetching clients:', error)
++// 👉 Fetching projects
++const { data: projectsData, execute: fetchProjects } = useApi<ProjectsResponse>(() => {
++  const params = new URLSearchParams({
++    page: String(page.value),
++    itemsPerPage: String(itemsPerPage.value),
++    sortBy: sortBy.value || '',
++    sortDesc: orderBy.value === 'desc' ? '1' : '0',
++    search: searchQuery.value,
++  }).toString()
++
++  return `/projects?${params}`
++}, {
++  method: 'GET',
++  headers: {
++    'Content-Type': 'application/json',
++    'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
++  },
++  credentials: 'include',
++})
++
++const projects = computed(() => projectsData.value?.data || [])
++const totalProjects = computed(() => projectsData.value?.total || 0)
++
++// Update options
++const updateOptions = (options: any) => {
++  if (options.sortBy?.length) {
++    sortBy.value = options.sortBy[0]?.key
++    orderBy.value = options.sortBy[0]?.order
+   }
+-}
+ 
+-const formatDate = (date: string) => {
+-  if (!date) return 'N/A'
+-  return format(new Date(date), 'MMM dd, yyyy')
+-}
++  page.value = options.page || 1
++  itemsPerPage.value = options.itemsPerPage || 10
+ 
+-const handlePageChange = (newPage: number) => {
+-  page.value = newPage
+   fetchProjects()
+ }
+ 
+-const handleSort = ({ key, order }: { key: string, order: boolean | 'asc' | 'desc' }) => {
+-  sortBy.value = key
+-  sortDesc.value = order === 'desc'
+-  fetchProjects()
++// Format date helper
++const formatDate = (date: string) => {
++  if (!date) return 'N/A'
++  return new Date(date).toLocaleDateString()
+ }
+ 
++// Actions
+ const viewProject = (id: number) => {
+   router.push(`/apps/projects/view/${id}`)
+ }
+ 
+-const editProject = (id: number) => {
+-  router.push(`/apps/projects/edit/${id}`)
+-}
+-
+ const deleteProject = async (id: number) => {
+   if (!confirm('Are you sure you want to delete this project?')) return
+   
+   try {
+-    await axios.delete(`${apiBaseUrl}/projects/${id}`)
++    const response = await fetch(`/api/projects/${id}`, {
++      method: 'DELETE',
++      headers: {
++        'Content-Type': 'application/json',
++        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
++      },
++    })
++
++    if (!response.ok) throw new Error('Failed to delete project.')
++
++    console.log(`Project ${id} deleted successfully.`)
++
++    // Refetch projects after deletion
+     fetchProjects()
+   } catch (error) {
+     console.error('Error deleting project:', error)
+   }
+ }
+ 
+-// Custom debounce function
+-function debounce<T extends (...args: any[]) => any>(
+-  fn: T,
+-  wait: number
+-): (...args: Parameters<T>) => void {
+-  let timeout: ReturnType<typeof setTimeout> | null = null
+-  
+-  return function(this: any, ...args: Parameters<T>): void {
+-    if (timeout !== null) {
+-      clearTimeout(timeout)
+-    }
+-    
+-    timeout = setTimeout(() => {
+-      fn.apply(this, args)
+-      timeout = null
+-    }, wait)
++// Add function to update project status
++const updateProjectStatus = async (projectId: number, newStatus: string) => {
++  try {
++    await $api(`/projects/${projectId}`, {
++      method: 'PUT',
++      body: JSON.stringify({ status: newStatus }),
++      headers: {
++        'Content-Type': 'application/json',
++        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
++      },
++    })
++    // Refresh the projects list
++    fetchProjects()
++  } catch (error) {
++    console.error('Error updating project status:', error)
+   }
+ }
+ 
+-// Create debounced search
+-const debouncedFetchProjects = debounce(fetchProjects, 500)
+-
+-// Watch for filter changes
+-watch([searchQuery, statusFilter, serviceTypeFilter, clientFilter, deadlineFilter], () => {
+-  page.value = 1 // Reset to first page on filter change
+-  debouncedFetchProjects()
+-})
++// Watch for changes
++watch(
++  [searchQuery, itemsPerPage, page, sortBy, orderBy],
++  () => {
++    fetchProjects()
++  },
++)
+ 
+-// Initialize
+ onMounted(() => {
+   fetchProjects()
+-  fetchClients()
+ })
+ </script>
+ 
+ <template>
+   <section>
+-    <!-- Header -->
+     <VCard class="mb-6">
+-      <VCardItem>
+-        <VCardTitle class="text-h5">
+-          Projects
+-        </VCardTitle>
+-        <template #append>
++      <VCardText class="d-flex flex-wrap gap-4">
++        <div class="me-3 d-flex gap-3">
++          <AppSelect
++            :model-value="itemsPerPage"
++            :items="[
++              { value: 10, title: '10' },
++              { value: 25, title: '25' },
++              { value: 50, title: '50' },
++              { value: 100, title: '100' },
++            ]"
++            style="inline-size: 6.25rem;"
++            @update:model-value="itemsPerPage = parseInt($event, 10)"
++          />
++        </div>
++        <VSpacer />
++
++        <div class="d-flex align-center flex-wrap gap-4">
++          <div style="inline-size: 15.625rem;">
++            <AppTextField v-model="searchQuery" placeholder="Search Project" />
++          </div>
++
+           <VBtn
+-            color="primary"
+-            prepend-icon="mdi-plus"
++            prepend-icon="bx-plus"
+             to="/apps/projects/add"
+           >
+             Add Project
+           </VBtn>
+-        </template>
+-      </VCardItem>
+-    </VCard>
+-
+-    <!-- Filters -->
+-    <VCard class="mb-6">
+-      <VCardText>
+-        <VRow>
+-          <VCol
+-            cols="12"
+-            sm="6"
+-            md="4"
+-            lg="3"
+-          >
+-            <VTextField
+-              v-model="searchQuery"
+-              density="compact"
+-              label="Search"
+-              placeholder="Search by title or property"
+-              prepend-inner-icon="mdi-magnify"
+-              single-line
+-              hide-details
+-            />
+-          </VCol>
+-
+-          <VCol
+-            cols="12"
+-            sm="6"
+-            md="4"
+-            lg="3"
+-          >
+-            <VSelect
+-              v-model="statusFilter"
+-              :items="statusOptions"
+-              item-title="title"
+-              item-value="value"
+-              label="Status"
+-              density="compact"
+-              hide-details
+-            />
+-          </VCol>
+-
+-          <VCol
+-            cols="12"
+-            sm="6"
+-            md="4"
+-            lg="3"
+-          >
+-            <VSelect
+-              v-model="serviceTypeFilter"
+-              :items="[
+-                { title: 'All', value: 'all' },
+-                ...serviceTypes.map(type => ({ title: type, value: type }))
+-              ]"
+-              item-title="title"
+-              item-value="value"
+-              label="Service Type"
+-              density="compact"
+-              hide-details
+-            />
+-          </VCol>
+-
+-          <VCol
+-            cols="12"
+-            sm="6"
+-            md="4"
+-            lg="3"
+-          >
+-            <VSelect
+-              v-model="deadlineFilter"
+-              :items="deadlineOptions"
+-              item-title="title"
+-              item-value="value"
+-              label="Deadline"
+-              density="compact"
+-              hide-details
+-            />
+-          </VCol>
+-
+-          <VCol
+-            v-if="clients.length"
+-            cols="12"
+-            sm="6"
+-            md="4"
+-            lg="3"
+-          >
+-            <VSelect
+-              v-model="clientFilter"
+-              :items="[
+-                { title: 'All Clients', value: '' },
+-                ...clients.map(client => ({ title: client.name, value: client.id }))
+-              ]"
+-              item-title="title"
+-              item-value="value"
+-              label="Client"
+-              density="compact"
+-              hide-details
+-            />
+-          </VCol>
+-        </VRow>
++        </div>
+       </VCardText>
+     </VCard>
+ 
+-    <!-- Projects Table -->
+     <VCard>
+-      <VCardText>
+-        <VDataTableServer
+-          v-model:items-per-page="perPage"
+-          v-model:page="page"
+-          :headers="headers"
+-          :items="projects"
+-          :items-length="totalProjects"
+-          :loading="isLoading"
+-          density="comfortable"
+-          @update:options="handleSort"
+-        >
+-          <!-- Client Column -->
+-          <template #item.client.name="{ item }">
++      <VDataTableServer
++        v-model:items-per-page="itemsPerPage"
++        v-model:page="page"
++        :items="projects"
++        :headers="headers"
++        :items-length="totalProjects"
++        class="text-no-wrap"
++        @update:options="updateOptions"
++      >
++        <template #item.client="{ item }">
++          <div class="text-body-1">
+             {{ item.client?.name || 'N/A' }}
+-          </template>
+-
+-          <!-- Service Type Column -->
+-          <template #item.service_type="{ item }">
+-            <span v-if="item.service_type">
+-              {{ item.service_type }}
+-            </span>
+-            <span v-else class="text-disabled">
+-              N/A
+-            </span>
+-          </template>
+-
+-          <!-- Deadline Column -->
+-          <template #item.deadline="{ item }">
+-            <div
+-              v-if="item.deadline"
+-              :class="{
+-                'text-error': item.deadline && isBefore(new Date(item.deadline), new Date()) && !isToday(new Date(item.deadline)),
+-                'text-warning': item.deadline && isToday(new Date(item.deadline))
+-              }"
+-            >
+-              {{ formatDate(item.deadline) }}
+-            </div>
+-            <span v-else class="text-disabled">
+-              N/A
+-            </span>
+-          </template>
+-
+-          <!-- Status Column -->
+-          <template #item.status="{ item }">
+-            <VChip
+-              :color="statusColorMap[item.status]"
+-              size="small"
+-              class="text-capitalize"
+-            >
+-              {{ item.status }}
+-            </VChip>
+-          </template>
+-
+-          <!-- Created At Column -->
+-          <template #item.created_at="{ item }">
+-            {{ formatDate(item.created_at) }}
+-          </template>
+-
+-          <!-- Actions Column -->
+-          <template #item.actions="{ item }">
+-            <VBtn
+-              icon
+-              variant="text"
+-              size="small"
+-              color="default"
+-              @click="viewProject(item.id)"
+-            >
+-              <VIcon icon="mdi-eye" />
+-            </VBtn>
+-
+-            <VBtn
+-              icon
+-              variant="text"
+-              size="small"
+-              color="info"
+-              @click="editProject(item.id)"
+-            >
+-              <VIcon icon="mdi-pencil" />
+-            </VBtn>
+-
+-            <VBtn
+-              icon
+-              variant="text"
+-              size="small"
+-              color="error"
+-              @click="deleteProject(item.id)"
+-            >
+-              <VIcon icon="mdi-delete" />
+-            </VBtn>
+-          </template>
+-
+-          <!-- No Items Slot -->
+-          <template #no-data>
+-            <div class="text-center py-6">
+-              <VIcon
+-                icon="mdi-clipboard-text-outline"
+-                size="large"
+-                class="mb-2"
+-              />
+-              <p class="text-body-1">No projects found</p>
+-              <VBtn
+-                color="primary"
+-                @click="fetchProjects"
++          </div>
++        </template>
++
++        <template #item.service_type="{ item }">
++          <div class="text-body-1 text-capitalize">
++            {{ item.service_type || 'N/A' }}
++          </div>
++        </template>
++
++        <template #item.deadline="{ item }">
++          <div class="text-body-1">
++            {{ formatDate(item.deadline) }}
++          </div>
++        </template>
++
++        <template #item.latest_completion_date="{ item }">
++          <div class="text-body-1">
++            {{ formatDate(item.latest_completion_date) }}
++          </div>
++        </template>
++
++        <template #item.status="{ item }">
++          <VSelect
++            v-model="item.status"
++            :items="statusOptions"
++            density="compact"
++            variant="plain"
++            hide-details
++            class="status-select"
++            :color="statusColorMap[item.status]"
++            @update:model-value="updateProjectStatus(item.id, $event)"
++          >
++            <template #selection="{ item }">
++              <VChip
++                :color="statusColorMap[item.value]"
++                size="small"
++                class="text-capitalize"
+               >
+-                Reset Filters
+-              </VBtn>
+-            </div>
+-          </template>
+-        </VDataTableServer>
+-
+-        <!-- Pagination -->
+-        <div class="d-flex justify-end mt-4">
+-          <VPagination
+-            v-model="page"
+-            :length="projectsData?.meta?.last_page || 1"
+-            @update:model-value="handlePageChange"
+-          />
+-        </div>
+-      </VCardText>
++                {{ item.title }}
++              </VChip>
++            </template>
++          </VSelect>
++        </template>
++
++        <template #item.actions="{ item }">
++          <VBtn
++            icon
++            variant="text"
++            size="small"
++            color="medium-emphasis"
++            @click="viewProject(item.id)"
++          >
++            <VIcon icon="bx-show" />
++          </VBtn>
++
++          <IconBtn @click="deleteProject(item.id)">
++            <VIcon icon="bx-trash" />
++          </IconBtn>
++        </template>
++      </VDataTableServer>
+     </VCard>
+   </section>
+ </template>
+@@ -467,4 +276,17 @@ onMounted(() => {
+ .min-w-150 {
+   min-inline-size: 150px;
+ }
++
++.status-select {
++  max-inline-size: 150px;
++}
++
++:deep(.v-select .v-field__input) {
++  padding: 0;
++  min-block-size: unset;
++}
++
++:deep(.v-select .v-field) {
++  background: transparent !important;
++}
+ </style> 
+diff --git a/resources/ts/pages/apps/projects/view/[id].vue b/resources/ts/pages/apps/projects/view/[id].vue
+index 320cc17..4e0939d 100644
+--- a/resources/ts/pages/apps/projects/view/[id].vue
++++ b/resources/ts/pages/apps/projects/view/[id].vue
+@@ -1,76 +1,117 @@
+ <script setup lang="ts">
+-import axios from 'axios'
+ import { format } from 'date-fns'
+-import { onMounted, ref } from 'vue'
++import { computed, onMounted, ref } from 'vue'
+ import { useRoute, useRouter } from 'vue-router'
+ 
+-// Configure axios
+-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '/api'
++definePage({
++  meta: {
++    action: 'read',
++    subject: 'project',
++    layoutWrapperClasses: 'layout-content-height-fixed',
++    requiresAuth: true,
++  },
++})
+ 
+ const route = useRoute()
+ const router = useRouter()
+ const projectId = route.params.id as string
+-const project = ref<Project | null>(null)
+-const messages = ref<any[]>([])
+ const isLoading = ref(true)
+ const error = ref<string | null>(null)
++const isDeleteDialogOpen = ref(false)
++const isEditMode = ref(false)
++const editedProject = ref<Project | null>(null)
+ 
+ interface Project {
+   id: number
++  client_id: number
+   title: string
+-  property?: string
+-  time_preference?: string
+-  service_type?: string
+-  service_description?: string
+-  deadline?: string
+-  status: string
++  property: string | null
++  contact_email: string | null
++  date_requested: string
++  status: 'received' | 'in_progress' | 'delivered'
++  time_preference: 'before_noon' | 'before_4pm' | 'anytime'
++  deadline: string | null
++  service_type: 'translation' | 'revision' | 'modifications' | 'transcription' | 'voice_over' | 'other' | null
++  service_description: string | null
++  latest_completion_date: string | null
+   created_at: string
+   updated_at: string
+-  client_id?: number
+   client?: {
+     id: number
+     name: string
+     email: string
+   }
+-  company?: {
+-    id: number
+-    name: string
+-  }
+ }
+ 
++// 👉 Fetch project data
++const { data: projectData, execute: fetchProject } = await useApi<{ data: Project }>(`/api/projects/${projectId}`)
++
++// 👉 Fetch messages
++const { data: messagesData, execute: fetchMessages } = await useApi<any>(`/api/messages?project_id=${projectId}`)
++
++// Computed properties
++const project = computed(() => projectData.value?.data)
++const messages = computed(() => messagesData.value?.data || [])
++
++const statusOptions = [
++  { title: 'Received', value: 'received' },
++  { title: 'In Progress', value: 'in_progress' },
++  { title: 'Delivered', value: 'delivered' },
++]
++
++const timePreferenceOptions = [
++  { title: 'Before Noon', value: 'before_noon' },
++  { title: 'Before 4pm', value: 'before_4pm' },
++  { title: 'Anytime', value: 'anytime' },
++]
++
++const serviceTypeOptions = [
++  { title: 'Translation', value: 'translation' },
++  { title: 'Revision', value: 'revision' },
++  { title: 'Modifications', value: 'modifications' },
++  { title: 'Transcription', value: 'transcription' },
++  { title: 'Voice Over', value: 'voice_over' },
++  { title: 'Other', value: 'other' },
++]
++
+ const statusColorMap: Record<string, string> = {
+-  pending: 'warning',
+-  active: 'success',
+-  completed: 'secondary',
+-  cancelled: 'error',
++  received: 'warning',
++  in_progress: 'info',
++  delivered: 'success',
+ }
+ 
+-const formattedDate = (date: string) => {
++const formattedDate = (date: string | null) => {
+   if (!date) return 'N/A'
+   return format(new Date(date), 'MMM dd, yyyy')
+ }
+ 
+-const fetchProject = async () => {
+-  isLoading.value = true
+-  error.value = null
+-  
++const startEditing = () => {
++  editedProject.value = { ...project.value! }
++  isEditMode.value = true
++}
++
++const cancelEditing = () => {
++  editedProject.value = null
++  isEditMode.value = false
++}
++
++const saveProject = async () => {
++  if (!editedProject.value) return
++
+   try {
+-    const response = await axios.get(`${apiBaseUrl}/projects/${projectId}`)
+-    project.value = response.data.data
+-    
+-    // Fetch messages related to this project
+-    const messagesResponse = await axios.get(`${apiBaseUrl}/messages`, {
+-      params: {
+-        project_id: projectId,
+-      },
++    const response = await $api(`/api/projects/${projectId}`, {
++      method: 'PUT',
++      body: editedProject.value,
+     })
++
++    // Refresh data
++    await fetchProject()
+     
+-    messages.value = messagesResponse.data.data
++    isEditMode.value = false
++    editedProject.value = null
+   } catch (err: any) {
+-    console.error('Error fetching project details:', err)
+-    error.value = err.response?.data?.message || 'Failed to load project details'
+-  } finally {
+-    isLoading.value = false
++    console.error('Error updating project:', err)
++    error.value = err.response?.data?.message || 'Failed to update project'
+   }
+ }
+ 
+@@ -85,8 +126,40 @@ const composeMessage = () => {
+   })
+ }
+ 
+-onMounted(() => {
+-  fetchProject()
++const deleteProject = async () => {
++  try {
++    await $api(`/api/projects/${projectId}`, {
++      method: 'DELETE',
++    })
++
++    // Close the dialog and navigate back
++    isDeleteDialogOpen.value = false
++    router.push({ name: 'apps-projects-list' })
++  } catch (err: any) {
++    console.error('Error deleting project:', err)
++    if (err.response?.status === 403) {
++      error.value = 'You do not have permission to delete this project.'
++    } else {
++      error.value = 'Failed to delete project. Please try again.'
++    }
++    isDeleteDialogOpen.value = false
++  }
++}
++
++// Initial data fetch
++onMounted(async () => {
++  try {
++    isLoading.value = true
++    await Promise.all([
++      fetchProject(),
++      fetchMessages(),
++    ])
++  } catch (err: any) {
++    console.error('Error loading data:', err)
++    error.value = err.response?.data?.message || 'Failed to load data'
++  } finally {
++    isLoading.value = false
++  }
+ })
+ </script>
+ 
+@@ -113,12 +186,29 @@ onMounted(() => {
+       </VCardTitle>
+       
+       <template #append>
+-        <VBtn
+-          color="primary"
+-          @click="composeMessage"
+-        >
+-          Send Message
+-        </VBtn>
++        <div class="d-flex gap-2">
++          <VBtn
++            v-if="!isEditMode"
++            color="warning"
++            variant="outlined"
++            @click="startEditing"
++          >
++            Edit Project
++          </VBtn>
++          <VBtn
++            color="error"
++            variant="outlined"
++            @click="isDeleteDialogOpen = true"
++          >
++            Delete Project
++          </VBtn>
++          <VBtn
++            color="primary"
++            @click="composeMessage"
++          >
++            Send Message
++          </VBtn>
++        </div>
+       </template>
+     </VCardItem>
+   </VCard>
+@@ -157,72 +247,186 @@ onMounted(() => {
+       <VCard>
+         <VCardItem>
+           <VCardTitle>Project Information</VCardTitle>
++          <template #append v-if="isEditMode">
++            <div class="d-flex gap-2">
++              <VBtn
++                color="secondary"
++                variant="text"
++                @click="cancelEditing"
++              >
++                Cancel
++              </VBtn>
++              <VBtn
++                color="primary"
++                @click="saveProject"
++              >
++                Save
++              </VBtn>
++            </div>
++          </template>
+         </VCardItem>
+ 
+         <VDivider />
+ 
+         <VCardText>
+-          <VList>
+-            <VListItem>
++          <VForm v-if="isEditMode && editedProject" @submit.prevent="saveProject">
++            <VRow>
++              <VCol cols="12">
++                <VTextField
++                  v-model="editedProject.title"
++                  label="Project Title"
++                  required
++                />
++              </VCol>
++
++              <VCol cols="12">
++                <VTextField
++                  v-model="editedProject.property"
++                  label="Property"
++                  required
++                />
++              </VCol>
++
++              <VCol cols="12">
++                <VTextField
++                  v-model="editedProject.contact_email"
++                  label="Contact Email"
++                  type="email"
++                  required
++                />
++              </VCol>
++
++              <VCol cols="12">
++                <VTextField
++                  v-model="editedProject.date_requested"
++                  label="Date Requested"
++                  type="date"
++                  required
++                />
++              </VCol>
++
++              <VCol cols="12">
++                <VSelect
++                  v-model="editedProject.status"
++                  :items="statusOptions"
++                  label="Status"
++                  required
++                />
++              </VCol>
++
++              <VCol cols="12">
++                <VSelect
++                  v-model="editedProject.time_preference"
++                  :items="timePreferenceOptions"
++                  label="Time Preference"
++                  required
++                />
++              </VCol>
++
++              <VCol cols="12">
++                <VTextField
++                  v-model="editedProject.deadline"
++                  label="Deadline"
++                  type="date"
++                  required
++                />
++              </VCol>
++
++              <VCol cols="12">
++                <VTextField
++                  v-model="editedProject.latest_completion_date"
++                  label="Latest Completion Date"
++                  type="date"
++                  required
++                />
++              </VCol>
++
++              <VCol cols="12">
++                <VSelect
++                  v-model="editedProject.service_type"
++                  :items="serviceTypeOptions"
++                  label="Service Type"
++                  required
++                />
++              </VCol>
++
++              <VCol cols="12">
++                <VTextarea
++                  v-model="editedProject.service_description"
++                  label="Service Description"
++                  rows="4"
++                />
++              </VCol>
++            </VRow>
++          </VForm>
++          
++          <VList v-else>
++            <!-- Client Information -->
++            <VListItem v-if="project.client">
+               <template #prepend>
+                 <VIcon
+                   color="primary"
+-                  icon="mdi-format-title"
++                  icon="mdi-account"
+                   class="me-3"
+                 />
+               </template>
+-              <VListItemTitle>Title</VListItemTitle>
+-              <VListItemSubtitle>{{ project.title }}</VListItemSubtitle>
++              <VListItemTitle>Client Name</VListItemTitle>
++              <VListItemSubtitle>{{ project.client.name }}</VListItemSubtitle>
+             </VListItem>
+-            
+-            <VListItem v-if="project.property">
++
++            <!-- Project Title -->
++            <VListItem>
+               <template #prepend>
+                 <VIcon
+                   color="primary"
+-                  icon="mdi-home"
++                  icon="mdi-format-title"
+                   class="me-3"
+                 />
+               </template>
+-              <VListItemTitle>Property</VListItemTitle>
+-              <VListItemSubtitle>{{ project.property }}</VListItemSubtitle>
++              <VListItemTitle>Project Title</VListItemTitle>
++              <VListItemSubtitle>{{ project.title }}</VListItemSubtitle>
+             </VListItem>
+-            
+-            <VListItem v-if="project.time_preference">
++
++            <!-- Property -->
++            <VListItem v-if="project.property">
+               <template #prepend>
+                 <VIcon
+                   color="primary"
+-                  icon="mdi-clock"
++                  icon="mdi-home"
+                   class="me-3"
+                 />
+               </template>
+-              <VListItemTitle>Time Preference</VListItemTitle>
+-              <VListItemSubtitle>{{ project.time_preference }}</VListItemSubtitle>
++              <VListItemTitle>Property</VListItemTitle>
++              <VListItemSubtitle>{{ project.property }}</VListItemSubtitle>
+             </VListItem>
+-            
+-            <VListItem v-if="project.service_type">
++
++            <!-- Contact Email -->
++            <VListItem v-if="project.contact_email">
+               <template #prepend>
+                 <VIcon
+                   color="primary"
+-                  icon="mdi-briefcase"
++                  icon="mdi-email"
+                   class="me-3"
+                 />
+               </template>
+-              <VListItemTitle>Service Type</VListItemTitle>
+-              <VListItemSubtitle>{{ project.service_type }}</VListItemSubtitle>
++              <VListItemTitle>Contact Email</VListItemTitle>
++              <VListItemSubtitle>{{ project.contact_email }}</VListItemSubtitle>
+             </VListItem>
+-            
+-            <VListItem v-if="project.deadline">
++
++            <!-- Date Requested -->
++            <VListItem>
+               <template #prepend>
+                 <VIcon
+                   color="primary"
+-                  icon="mdi-calendar"
++                  icon="mdi-calendar-start"
+                   class="me-3"
+                 />
+               </template>
+-              <VListItemTitle>Deadline</VListItemTitle>
+-              <VListItemSubtitle>{{ formattedDate(project.deadline) }}</VListItemSubtitle>
++              <VListItemTitle>Date Requested</VListItemTitle>
++              <VListItemSubtitle>{{ formattedDate(project.date_requested) }}</VListItemSubtitle>
+             </VListItem>
+-            
++
++            <!-- Status -->
+             <VListItem>
+               <template #prepend>
+                 <VIcon
+@@ -238,35 +442,77 @@ onMounted(() => {
+                   size="small"
+                   class="text-capitalize"
+                 >
+-                  {{ project.status }}
++                  {{ project.status.replace('_', ' ') }}
+                 </VChip>
+               </VListItemSubtitle>
+             </VListItem>
+-            
+-            <VListItem v-if="project.client">
++
++            <!-- Time Preference -->
++            <VListItem>
+               <template #prepend>
+                 <VIcon
+                   color="primary"
+-                  icon="mdi-account"
++                  icon="mdi-clock"
+                   class="me-3"
+                 />
+               </template>
+-              <VListItemTitle>Client</VListItemTitle>
+-              <VListItemSubtitle>{{ project.client.name }}</VListItemSubtitle>
++              <VListItemTitle>Time Preference</VListItemTitle>
++              <VListItemSubtitle class="text-capitalize">{{ project.time_preference.replace('_', ' ') }}</VListItemSubtitle>
+             </VListItem>
+-            
+-            <VListItem v-if="project.company">
++
++            <!-- Deadline -->
++            <VListItem v-if="project.deadline">
+               <template #prepend>
+                 <VIcon
+                   color="primary"
+-                  icon="mdi-office-building"
++                  icon="mdi-calendar"
+                   class="me-3"
+                 />
+               </template>
+-              <VListItemTitle>Company</VListItemTitle>
+-              <VListItemSubtitle>{{ project.company.name }}</VListItemSubtitle>
++              <VListItemTitle>Deadline</VListItemTitle>
++              <VListItemSubtitle>{{ formattedDate(project.deadline) }}</VListItemSubtitle>
+             </VListItem>
+-            
++
++            <!-- Latest Completion Date -->
++            <VListItem v-if="project.latest_completion_date">
++              <template #prepend>
++                <VIcon
++                  color="primary"
++                  icon="mdi-calendar-end"
++                  class="me-3"
++                />
++              </template>
++              <VListItemTitle>Latest Completion Date</VListItemTitle>
++              <VListItemSubtitle>{{ formattedDate(project.latest_completion_date) }}</VListItemSubtitle>
++            </VListItem>
++
++            <!-- Service Type -->
++            <VListItem v-if="project.service_type">
++              <template #prepend>
++                <VIcon
++                  color="primary"
++                  icon="mdi-briefcase"
++                  class="me-3"
++                />
++              </template>
++              <VListItemTitle>Service Type</VListItemTitle>
++              <VListItemSubtitle class="text-capitalize">{{ project.service_type.replace('_', ' ') }}</VListItemSubtitle>
++            </VListItem>
++
++            <!-- Service Description -->
++            <VListItem v-if="project.service_description">
++              <template #prepend>
++                <VIcon
++                  color="primary"
++                  icon="mdi-text"
++                  class="me-3"
++                />
++              </template>
++              <VListItemTitle>Service Description</VListItemTitle>
++              <VListItemSubtitle>{{ project.service_description }}</VListItemSubtitle>
++            </VListItem>
++
++            <!-- Created At -->
+             <VListItem>
+               <template #prepend>
+                 <VIcon
+@@ -278,12 +524,25 @@ onMounted(() => {
+               <VListItemTitle>Created At</VListItemTitle>
+               <VListItemSubtitle>{{ formattedDate(project.created_at) }}</VListItemSubtitle>
+             </VListItem>
++
++            <!-- Updated At -->
++            <VListItem>
++              <template #prepend>
++                <VIcon
++                  color="primary"
++                  icon="mdi-calendar-clock"
++                  class="me-3"
++                />
++              </template>
++              <VListItemTitle>Last Updated</VListItemTitle>
++              <VListItemSubtitle>{{ formattedDate(project.updated_at) }}</VListItemSubtitle>
++            </VListItem>
+           </VList>
+         </VCardText>
+       </VCard>
+       
+       <VCard
+-        v-if="project.service_description"
++        v-if="project.service_description && !isEditMode"
+         class="mt-6"
+       >
+         <VCardItem>
+@@ -293,7 +552,7 @@ onMounted(() => {
+         <VDivider />
+         
+         <VCardText>
+-          <p>{{ project.service_description }}</p>
++          <p class="whitespace-pre-wrap">{{ project.service_description }}</p>
+         </VCardText>
+       </VCard>
+     </VCol>
+@@ -359,10 +618,60 @@ onMounted(() => {
+       </VCard>
+     </VCol>
+   </VRow>
++  
++  <!-- Delete Confirmation Dialog -->
++  <VDialog
++    v-model="isDeleteDialogOpen"
++    max-width="500"
++  >
++    <VCard>
++      <VCardTitle class="text-h5">
++        Delete Project
++      </VCardTitle>
++      
++      <VCardText>
++        <VAlert
++          type="warning"
++          variant="tonal"
++          class="mb-4"
++        >
++          <VIcon
++            icon="mdi-alert"
++            start
++            color="warning"
++          />
++          Warning: This action cannot be undone.
++        </VAlert>
++        Are you sure you want to delete this project?
++        All associated messages will be unlinked from this project.
++      </VCardText>
++      
++      <VCardActions>
++        <VSpacer />
++        <VBtn
++          color="secondary"
++          variant="text"
++          @click="isDeleteDialogOpen = false"
++        >
++          Cancel
++        </VBtn>
++        <VBtn
++          color="error"
++          @click="deleteProject"
++        >
++          Delete
++        </VBtn>
++      </VCardActions>
++    </VCard>
++  </VDialog>
+ </template>
+ 
+ <style lang="scss">
+ .project-status {
+   text-transform: capitalize;
+ }
++
++.whitespace-pre-wrap {
++  white-space: pre-wrap;
++}
+ </style> 
+diff --git a/resources/ts/pages/login.vue b/resources/ts/pages/login.vue
+index 5c0ca87..be70b52 100755
+--- a/resources/ts/pages/login.vue
++++ b/resources/ts/pages/login.vue
+@@ -3,7 +3,7 @@ import AuthProvider from '@/views/pages/authentication/AuthProvider.vue'
+ import authV2LoginIllustration from '@images/pages/auth-v2-login-illustration.png'
+ import { VNodeRenderer } from '@layouts/components/VNodeRenderer'
+ import { themeConfig } from '@themeConfig'
+-import { RouteLocationRaw, useRouter } from 'vue-router'
++import { useRouter } from 'vue-router'
+ import { VForm } from 'vuetify/components/VForm'
+ 
+ definePage({
+@@ -55,7 +55,7 @@ const login = async () => {
+       headers: {
+         'Content-Type': 'application/json',
+       },
+-      credentials: 'include', // Ensure credentials are included
++      credentials: 'include',
+       body: JSON.stringify({
+         email: credentials.value.email,
+         password: credentials.value.password,
+@@ -65,68 +65,37 @@ const login = async () => {
+ 
+     if (!res.ok) {
+       const error = await res.json()
+-
+       errors.value.general = error.message || 'Login failed. Please try again.'
+-
+       return
+     }
+ 
+     const { accessToken, userData, abilityRules } = await res.json()
+ 
+-    console.log('Ability Rules received:', abilityRules)
++    // Store auth data
++    localStorage.setItem('accessToken', accessToken)
++    localStorage.setItem('userData', JSON.stringify(userData))
++    localStorage.setItem('abilityRules', JSON.stringify(abilityRules))
+ 
+-    console.log('User Data:', userData) // Add this line to check the user data
+     // Update ability
+     ability.update(abilityRules.map((rule: { action: string; subject: string }) => ({
+       action: rule.action.toLowerCase(),
+       subject: rule.subject.toLowerCase(),
+     })))
+ 
+-    // Set cookies BEFORE navigation
+-    const userDataCookie = useCookie('userData')
+-    const abilityCookie = useCookie('userAbilityRules')
+-    const tokenCookie = useCookie('accessToken')
+-
+-    // Set localStorage BEFORE navigation
+-    localStorage.setItem('userData', JSON.stringify(userData))
+-    localStorage.setItem('abilityRules', JSON.stringify(abilityRules))
+-    localStorage.setItem('accessToken', accessToken.toString())
++    // Redirect based on role
++    const userRole = userData.role?.toLowerCase() || 'user'
++    let targetRoute = '/'
+ 
+-    // Ensure the values are strings or serialized properly
+-    userDataCookie.value = JSON.stringify(userData)
+-    abilityCookie.value = JSON.stringify(abilityRules)
+-    tokenCookie.value = accessToken.toString()
+-
+-    console.log('Document.cookie from login.vue', document.cookie)
+-
+-    // --- Direct Role-Based Redirect ---
+-    const userRole = userData.role?.toLowerCase() || 'User';
+-    let targetRoute: RouteLocationRaw;
+-
+-    console.log(`[DEBUG] Determining redirect target for role: ${userRole}`);
+-
+-    if (userRole === 'admin' || userRole === 'auth') {
+-        targetRoute = { name: 'dashboards-analytics' };
+-        console.log(`[DEBUG] Target set for admin/auth:`, targetRoute);
++    if (userRole === 'admin') {
++      targetRoute = '/apps/projects/list'
+     } else if (userRole === 'client') {
+-        targetRoute = { name: 'apps-email' };
+-        console.log(`[DEBUG] Target set for client:`, targetRoute);
+-    } else if (userRole === 'manager' || userRole === 'user') {
+-        targetRoute = { path: '/messages/list' };
+-        console.log(`[DEBUG] Target set for manager/user:`, targetRoute);
+-    } else {
+-        // Fallback if role is unexpected
+-        console.warn(`[DEBUG] Unexpected role "${userRole}", defaulting to dashboards-analytics`);
+-        targetRoute = { name: 'dashboards-analytics' };
++      targetRoute = '/apps/email'
+     }
+ 
+-    console.log(`[DEBUG] Attempting router.replace directly from login with:`, targetRoute);
+-    router.replace(targetRoute); 
+-
+-  }
+-  catch (err) {
+-    console.error('login error', err)
+-    errors.value.general = 'An error occurred. Please try again.'
++    router.push(targetRoute)
++  } catch (error) {
++    console.error('Login error:', error)
++    errors.value.general = 'An error occurred during login. Please try again.'
+   }
+ }
+ 
+diff --git a/resources/ts/plugins/i18n/index.ts b/resources/ts/plugins/i18n/index.ts
+index 45aa73b..3b52a2d 100755
+--- a/resources/ts/plugins/i18n/index.ts
++++ b/resources/ts/plugins/i18n/index.ts
+@@ -1,14 +1,23 @@
+-import type { App } from 'vue'
+-import { createI18n } from 'vue-i18n'
+ import { cookieRef } from '@layouts/stores/config'
+ import { themeConfig } from '@themeConfig'
++import type { App } from 'vue'
++import { createI18n } from 'vue-i18n'
++import vuetifyMessages from './messages/en'
+ 
+-const messages = Object.fromEntries(
++const localeMessages = Object.fromEntries(
+   Object.entries(
+     import.meta.glob<{ default: any }>('./locales/*.json', { eager: true }))
+     .map(([key, value]) => [key.slice(10, -5), value.default]),
+ )
+ 
++// Merge Vuetify messages with locale messages
++const messages = {
++  en: {
++    ...localeMessages.en,
++    ...vuetifyMessages,
++  },
++}
++
+ let _i18n: any = null
+ 
+ export const getI18n = () => {
+diff --git a/resources/ts/plugins/i18n/messages/en.ts b/resources/ts/plugins/i18n/messages/en.ts
+new file mode 100644
+index 0000000..ff2497b
+--- /dev/null
++++ b/resources/ts/plugins/i18n/messages/en.ts
+@@ -0,0 +1,22 @@
++export default {
++  $vuetify: {
++    badge: {
++      content: '{0}'
++    },
++    dataIterator: {
++      loadingText: 'Loading items...',
++      noResultsText: 'No matching records found',
++      noDataText: 'No data available',
++    },
++    dataFooter: {
++      itemsPerPageText: 'Items per page:',
++      itemsPerPageAll: 'All',
++      nextPage: 'Next page',
++      prevPage: 'Previous page',
++      firstPage: 'First page',
++      lastPage: 'Last page',
++      pageText: '{0}-{1} of {2}',
++    },
++  },
++  // ... existing translations ...
++} 
+diff --git a/resources/ts/views/apps/email/ComposeDialog.vue b/resources/ts/views/apps/email/ComposeDialog.vue
+index 0185dfc..e82a633 100755
+--- a/resources/ts/views/apps/email/ComposeDialog.vue
++++ b/resources/ts/views/apps/email/ComposeDialog.vue
+@@ -14,6 +14,7 @@ const to = ref('')
+ const subject = ref('')
+ const message = ref('')
+ const dueDate = ref<string | null>(null);
++const latestCompletionDate = ref<string | null>(null);
+ 
+ // Project information fields
+ const projectTitle = ref('')
+@@ -66,6 +67,7 @@ interface ProjectData {
+   service_type: string | null
+   service_description: string | null
+   deadline: string | null
++  latest_completion_date: string | null
+ }
+ 
+ // Define message payload interface
+@@ -74,9 +76,17 @@ interface MessagePayload {
+   company_id: number
+   subject: string
+   message: string
+-  due_date: string | null
++  due_date?: string | null
+   attachments: File[]
+-  project_data?: ProjectData
++  project_data?: {
++    title: string
++    property: string | null
++    time_preference: string
++    service_type: string | null
++    service_description: string | null
++    deadline: string | null
++    latest_completion_date: string | null
++  }
+ }
+ 
+ // Fetch users on component mount
+@@ -94,12 +104,19 @@ onMounted(async () => {
+       if (!timePreference.value) timePreference.value = 'anytime';
+       if (!serviceType.value) serviceType.value = '';
+       
+-      // Set a default due date if none provided (7 days from now)
++      // Set a default due date if none provided (14 days from now)
+       if (!dueDate.value) {
+         const defaultDueDate = new Date();
+-        defaultDueDate.setDate(defaultDueDate.getDate() + 7);
++        defaultDueDate.setDate(defaultDueDate.getDate() + 14);
+         dueDate.value = defaultDueDate.toISOString().split('T')[0]; // Format as YYYY-MM-DD
+       }
++
++      // Set a default latest completion date if none provided (21 days from now)
++      if (!latestCompletionDate.value) {
++        const defaultLatestCompletion = new Date();
++        defaultLatestCompletion.setDate(defaultLatestCompletion.getDate() + 21);
++        latestCompletionDate.value = defaultLatestCompletion.toISOString().split('T')[0]; // Format as YYYY-MM-DD
++      }
+     }
+     
+     loading.value = false
+@@ -183,6 +200,10 @@ const sendMessage = async () => {
+       console.error('Due date is required for client messages');
+       return;
+     }
++    if (!latestCompletionDate.value) {
++      console.error('Latest completion date is required for client messages');
++      return;
++    }
+     if (!timePreference.value) {
+       console.error('Time preference is required for client messages');
+       return;
+@@ -209,14 +230,15 @@ const sendMessage = async () => {
+   };
+   
+   // Add project data if any project fields are filled out
+-  if (projectTitle.value || property.value || serviceType.value || timePreference.value || serviceDescription.value || dueDate.value) {
++  if (projectTitle.value || property.value || serviceType.value || timePreference.value || serviceDescription.value || dueDate.value || latestCompletionDate.value) {
+     payload.project_data = {
+       title: projectTitle.value || '',
+       property: property.value || '',
+       time_preference: timePreference.value || 'anytime',
+       service_type: serviceType.value || '',
+       service_description: serviceDescription.value || null,
+-      deadline: dueDate.value || null
++      deadline: dueDate.value || null,
++      latest_completion_date: latestCompletionDate.value || null
+     };
+   }
+ 
+@@ -239,13 +261,14 @@ const sendMessage = async () => {
+   }
+ }
+ 
+-// Update resetValues to include project fields
++// Update resetValues to remove deadline
+ const resetValues = () => {
+   to.value = subject.value = '';
+   content.value = ''; // Ensure Tiptap content is also reset
+   cc.value = bcc.value = '';
+   filteredToUsers.value = filteredCcUsers.value = filteredBccUsers.value = [];
+   dueDate.value = null; // Reset due date
++  latestCompletionDate.value = null; // Reset latest completion date
+   attachmentsRef.value = []; // Clear attachments
+   attachmentErrors.value = []; // Clear errors
+   
+@@ -408,6 +431,25 @@ const resetValues = () => {
+ 
+       <VDivider />
+ 
++      <div class="px-1 pe-6 py-1">
++        <VTextarea
++          v-model="serviceDescription"
++          density="compact"
++          label="Service Description"
++          placeholder="Describe the service you need"
++          rows="2"
++          auto-grow
++        >
++          <template #prepend-inner>
++            <div class="text-base font-weight-medium text-disabled pt-2">
++              Description:
++            </div>
++          </template>
++        </VTextarea>
++      </div>
++
++      <VDivider />
++
+       <div class="px-1 pe-6 py-1">
+         <VSelect
+           v-model="timePreference"
+@@ -431,37 +473,38 @@ const resetValues = () => {
+       <VDivider />
+ 
+       <div class="px-1 pe-6 py-1">
+-        <VTextarea
+-          v-model="serviceDescription"
+-          density="compact"
+-          label="Service Description"
+-          placeholder="Describe the service you need"
+-          rows="2"
+-          auto-grow
++        <VTextField 
++          v-model="dueDate" 
++          density="compact" 
++          type="date"  
++          placeholder="YYYY-MM-DD"
++          :rules="isClient ? [(v: string) => !!v || 'Due date is required'] : undefined"
++          :required="isClient"
++          clearable 
+         >
+           <template #prepend-inner>
+-            <div class="text-base font-weight-medium text-disabled pt-2">
+-              Description:
++            <div class="text-base font-weight-medium text-disabled">
++              Due Date:
+             </div>
+           </template>
+-        </VTextarea>
++        </VTextField>
+       </div>
+ 
+       <VDivider />
+ 
+       <div class="px-1 pe-6 py-1">
+         <VTextField 
+-          v-model="dueDate" 
++          v-model="latestCompletionDate" 
+           density="compact" 
+           type="date"  
+           placeholder="YYYY-MM-DD"
+-          :rules="isClient ? [(v: string) => !!v || 'Due date is required'] : undefined"
++          :rules="isClient ? [(v: string) => !!v || 'Latest completion date is required'] : undefined"
+           :required="isClient"
+           clearable 
+         >
+           <template #prepend-inner>
+             <div class="text-base font-weight-medium text-disabled">
+-              Due Date:
++              Latest Project Completion Date:
+             </div>
+           </template>
+         </VTextField>
+diff --git a/resources/ts/views/apps/email/EmailLeftSidebarContent.vue b/resources/ts/views/apps/email/EmailLeftSidebarContent.vue
+index 6dd9861..13f29a4 100755
+--- a/resources/ts/views/apps/email/EmailLeftSidebarContent.vue
++++ b/resources/ts/views/apps/email/EmailLeftSidebarContent.vue
+@@ -271,15 +271,26 @@ const confirmLabelDelete = async () => {
+     <!-- Delete Confirmation Dialog -->
+     <VDialog v-model="isDeleteDialogOpen" max-width="500px">
+       <VCard>
+-        <VCardTitle>Confirm Delete Label</VCardTitle>
++        <VCardTitle class="text-h5">Delete Label</VCardTitle>
+         <VCardText>
+-          Are you sure you want to delete the label "<strong>{{ labelToDelete?.title }}</strong>"?
+-          This will remove the label from all associated messages. This action cannot be undone.
++          Are you sure you want to delete label "{{ labelToDelete?.title }}"? This action cannot be undone.
+         </VCardText>
+         <VCardActions>
+           <VSpacer />
+-          <VBtn color="secondary" @click="isDeleteDialogOpen = false">Cancel</VBtn>
+-          <VBtn color="error" @click="confirmLabelDelete">Delete</VBtn>
++          <VBtn
++            color="secondary"
++            variant="text"
++            @click="isDeleteDialogOpen = false"
++          >
++            Cancel
++          </VBtn>
++          <VBtn
++            color="error"
++            variant="flat"
++            @click="confirmLabelDelete"
++          >
++            Delete
++          </VBtn>
+         </VCardActions>
+       </VCard>
+     </VDialog>
+diff --git a/resources/ts/views/apps/email/useEmail.ts b/resources/ts/views/apps/email/useEmail.ts
+index 54b29ce..ded70d4 100755
+--- a/resources/ts/views/apps/email/useEmail.ts
++++ b/resources/ts/views/apps/email/useEmail.ts
+@@ -166,6 +166,7 @@ export const useEmail = () => {
+       service_type: string | null;
+       service_description: string | null;
+       deadline: string | null;
++      latest_completion_date: string | null;
+     };
+   }) => {
+     console.log(">>> EXECUTING createMessage <<<", payload); 
+@@ -201,19 +202,38 @@ export const useEmail = () => {
+         if (payload.project_data.deadline) {
+           formData.append('project_data[deadline]', payload.project_data.deadline);
+         }
++        if (payload.project_data.latest_completion_date) {
++          formData.append('project_data[latest_completion_date]', payload.project_data.latest_completion_date);
++        }
++      }
++
++      // Get access token
++      const accessToken = localStorage.getItem('accessToken');
++      if (!accessToken) {
++        console.error('No access token found');
++        return undefined;
+       }
+ 
+-      const response = await $api('/messages', { 
+-        method: 'POST', 
+-        body: formData 
++      // Use fetch directly like in sendReplyMessage
++      const response = await fetch('/api/messages', {
++        method: 'POST',
++        body: formData,
++        headers: {
++          'Authorization': `Bearer ${accessToken}`,
++          'Accept': 'application/json',
++        },
+       });
+-      console.log(">>> createMessage response:", response);
+-      if(response && response.message === 'Message sent successfully') { 
+-        return response;
+-      } else {
+-        console.error("createMessage failed:", response);
++
++      if (!response.ok) {
++        const errorData = await response.json().catch(() => ({ message: 'Failed to parse error response.' }));
++        console.error(`Error creating message: ${response.status} ${response.statusText}`, errorData);
+         return undefined;
+       }
++
++      const responseData = await response.json();
++      console.log(">>> createMessage response:", responseData);
++      return responseData;
++
+     } catch (error) {
+       console.error('Error creating message:', error);
+       return undefined;
+@@ -289,15 +309,22 @@ export const useEmail = () => {
+ 
+   // ✅ Delete a message
+   const deleteMessage = async (id: number) => {
+-    console.log(`useEmail: Attempting permanent delete for message ID: ${id}`);
+     try {
+-      await $api(`/messages/${id}`, { method: 'DELETE' });
+-      console.log(`useEmail: Successfully permanently deleted message ID: ${id}`);
+-      // Optimistically remove from local state if needed, or rely on refresh
+-      messages.value = messages.value.filter(message => message.id !== id);
++      const response = await $api(`/messages/${id}`, {
++        method: 'DELETE',
++      });
++
++      // Check if the response indicates success
++      if (response && response.message === 'Message permanently deleted successfully') {
++        console.log(`Message ${id} deleted successfully`);
++        return true;
++      } else {
++        console.error(`Unexpected response when deleting message ${id}:`, response);
++        return false;
++      }
+     } catch (error) {
+-      console.error(`useEmail: Error permanently deleting message ${id}:`, error);
+-      throw error; // Re-throw to signal failure
++      console.error(`Error deleting message ${id}:`, error);
++      return false;
+     }
+   };
+ 
+@@ -372,17 +399,23 @@ export const useEmail = () => {
+ 
+   // ✅ Delete a label
+   const deleteLabel = async (id: number) => {
+-    console.log(`useEmail: Attempting to delete label ID: ${id}`);
+     try {
+-      await $api(`/labels/${id}`, { method: 'DELETE' });
+-      console.log(`useEmail: Successfully deleted label ID: ${id}`);
+-      // Refresh labels after deletion
+-      await fetchUserLabels();
+-      return true; // Indicate success
++      const response = await $api(`/labels/${id}`, {
++        method: 'DELETE',
++      });
++
++      // Check if the response indicates success
++      if (response) {
++        console.log(`Label ${id} deleted successfully`);
++        await fetchUserLabels(); // Refresh labels list
++        return true;
++      } else {
++        console.error(`Unexpected response when deleting label ${id}:`, response);
++        return false;
++      }
+     } catch (error) {
+-      console.error(`useEmail: Error deleting label ${id}:`, error);
+-      // Add user feedback (e.g., toast) if desired
+-      return false; // Indicate failure
++      console.error(`Error deleting label ${id}:`, error);
++      return false;
+     }
+   };
+ 
+diff --git a/routes/api.php b/routes/api.php
+index 84054e9..2b800db 100755
+--- a/routes/api.php
++++ b/routes/api.php
+@@ -105,6 +105,6 @@
+ 
+ // Project Routes
+ Route::middleware('auth:sanctum')->group(function () {
+-    Route::get('/projects/summary', [ProjectController::class, 'summary']);
+-    Route::apiResource('/projects', ProjectController::class);
++    Route::apiResource('projects', ProjectController::class);
++    Route::get('projects/summary', [ProjectController::class, 'summary']);
+ });

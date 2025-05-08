@@ -148,7 +148,7 @@ class MessageController extends Controller
             $rules['project_data.service_type'] = 'required|in:translation,revision,modifications,transcription,voice_over,other';
             $rules['project_data.service_description'] = 'nullable|string';
             $rules['project_data.deadline'] = 'required|date_format:Y-m-d';
-            $rules['project_data.latest_completion_date'] = 'required|date_format:Y-m-d';
+            $rules['project_data.latest_completion_date'] = 'required|date_format:Y-m-d|after:project_data.deadline';
         }
         
         // Add validation for attachments (optional array, each file max 10MB)
@@ -165,11 +165,7 @@ class MessageController extends Controller
         $user = Auth::user();
         $userRole = $user->roles->first()?->name;
         
-        Log::info('MessageController::store - User role:', ['role' => $userRole]);
-        Log::info('MessageController::store - Project data:', ['project_data' => $validated['project_data'] ?? null]);
-
-        // Create project if project data is provided (regardless of role)
-        if (isset($validated['project_data'])) {
+        if ($userRole === 'client' && isset($validated['project_data'])) {
             try {
                 $projectData = [
                     'client_id' => $user->id,

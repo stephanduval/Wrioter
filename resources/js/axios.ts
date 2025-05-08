@@ -1,10 +1,12 @@
 // resources/js/axios.ts
 import axios from 'axios'
 
-// Set base URL for Axios requests based on environment
-axios.defaults.baseURL = import.meta.env.MODE === 'development'
-  ? 'http://127.0.0.1:8000/api'
+// Set base URL for Axios requests
+const baseURL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ? 'http://localhost:8000/api'
   : 'https://stephandouglasduval.com/api'
+
+axios.defaults.baseURL = baseURL
 
 // Add request interceptor to include auth token
 axios.interceptors.request.use(
@@ -34,8 +36,5 @@ axios.interceptors.response.use(
     return Promise.reject(error)
   }
 )
-
-// Enable credentials (cookies) for cross-origin requests
-axios.defaults.withCredentials = true
 
 export default axios
