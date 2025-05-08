@@ -157,7 +157,7 @@ const deleteUser = async (id: number) => {
             <AppSelect
               v-model="selectedRole"
               placeholder="Select Role"
-              :items="availableRoles" <!-- Use dynamic roles -->
+              :items="availableRoles"
               clearable
               clear-icon="bx-x"
             />
