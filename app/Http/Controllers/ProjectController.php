@@ -127,17 +127,19 @@ class ProjectController extends Controller
     {
         Log::info("ProjectController::show - Fetching project {$id}");
         
-        $project = Project::with('client:id,name,email', 'messages')->findOrFail($id);
-        
-        // Check authorization
-        $user = Auth::user();
-        $userRole = $user->roles->first()?->name;
-        
-        if ($userRole !== 'admin' && $project->client_id !== $user->id) {
-            return response()->json(['message' => 'Unauthorized to view this project'], 403);
+        try {
+            $project = Project::with('client:id,name,email', 'messages')->findOrFail($id);
+            
+            // Use policy authorization
+            if (!auth()->user()->can('view', $project)) {
+                return response()->json(['message' => 'Unauthorized to view this project'], 403);
+            }
+            
+            return response()->json($project);
+        } catch (\Exception $e) {
+            Log::error("Error fetching project: " . $e->getMessage());
+            return response()->json(['message' => 'Failed to fetch project'], 500);
         }
-        
-        return response()->json($project);
     }
 
     /**
@@ -155,44 +157,50 @@ class ProjectController extends Controller
     {
         Log::info("ProjectController::update - Updating project {$id}");
         
-        $project = Project::findOrFail($id);
-        
-        // Check authorization
-        $user = Auth::user();
-        $userRole = $user->roles->first()?->name;
-        
-        if ($userRole !== 'admin' && $project->client_id !== $user->id) {
-            return response()->json(['message' => 'Unauthorized to update this project'], 403);
-        }
-        
-        // Clients can only update certain fields
-        if ($userRole === 'client') {
-            $validated = $request->validate([
-                'property' => 'nullable|string|max:255',
-                'time_preference' => 'nullable|in:before_noon,before_4pm,anytime',
-                'service_description' => 'nullable|string',
+        try {
+            $project = Project::findOrFail($id);
+            
+            // Use policy authorization
+            if (!auth()->user()->can('update', $project)) {
+                return response()->json(['message' => 'Unauthorized to update this project'], 403);
+            }
+            
+            // Validate based on user role
+            $user = auth()->user();
+            $userRole = $user->roles->first()?->name;
+            
+            if ($userRole === 'client') {
+                $validated = $request->validate([
+                    'property' => 'nullable|string|max:255',
+                    'time_preference' => 'nullable|in:before_noon,before_4pm,anytime',
+                    'service_description' => 'nullable|string',
+                    'latest_completion_date' => 'nullable|date|after:deadline',
+                ]);
+            } else {
+                $validated = $request->validate([
+                    'client_id' => 'sometimes|exists:users,id',
+                    'title' => 'sometimes|string|max:255',
+                    'property' => 'nullable|string|max:255',
+                    'contact_email' => 'nullable|email|max:255',
+                    'status' => 'nullable|in:received,in_progress,delivered',
+                    'time_preference' => 'nullable|in:before_noon,before_4pm,anytime',
+                    'deadline' => 'nullable|date',
+                    'service_type' => 'nullable|in:translation,revision,modifications,transcription,voice_over,other',
+                    'service_description' => 'nullable|string',
+                    'latest_completion_date' => 'nullable|date|after:deadline',
+                ]);
+            }
+            
+            $project->update($validated);
+            
+            return response()->json([
+                'message' => 'Project updated successfully',
+                'data' => $project
             ]);
-        } else {
-            // Admin validation
-            $validated = $request->validate([
-                'client_id' => 'sometimes|exists:users,id',
-                'title' => 'sometimes|string|max:255',
-                'property' => 'nullable|string|max:255',
-                'contact_email' => 'nullable|email|max:255',
-                'status' => 'nullable|in:received,in_progress,delivered',
-                'time_preference' => 'nullable|in:before_noon,before_4pm,anytime',
-                'deadline' => 'nullable|date',
-                'service_type' => 'nullable|in:translation,revision,modifications,transcription,voice_over,other',
-                'service_description' => 'nullable|string',
-            ]);
+        } catch (\Exception $e) {
+            Log::error("Error updating project: " . $e->getMessage());
+            return response()->json(['message' => 'Failed to update project'], 500);
         }
-        
-        $project->update($validated);
-        
-        return response()->json([
-            'message' => 'Project updated successfully',
-            'data' => $project
-        ]);
     }
 
     /**
@@ -202,29 +210,28 @@ class ProjectController extends Controller
     {
         Log::info("ProjectController::destroy - Deleting project {$id}");
         
-        $project = Project::findOrFail($id);
-        
-        // Only admins can delete projects
-        $user = Auth::user();
-        $userRole = $user->roles->first()?->name;
-        
-        if ($userRole !== 'admin') {
-            return response()->json(['message' => 'Unauthorized to delete projects'], 403);
-        }
-        
-        // Check if project has messages
-        $messagesCount = $project->messages()->count();
-        if ($messagesCount > 0) {
-            // Option 1: Prevent deletion
-            // return response()->json(['message' => 'Cannot delete project with associated messages'], 422);
+        try {
+            $project = Project::findOrFail($id);
             
-            // Option 2: Delete anyway and set project_id to null in messages (due to foreign key constraints)
-            $project->messages()->update(['project_id' => null]);
+            // Use policy authorization
+            if (!auth()->user()->can('delete', $project)) {
+                return response()->json(['message' => 'Unauthorized to delete projects'], 403);
+            }
+            
+            // Check if project has messages
+            $messagesCount = $project->messages()->count();
+            if ($messagesCount > 0) {
+                // Update messages to remove project association
+                $project->messages()->update(['project_id' => null]);
+            }
+            
+            $project->delete();
+            
+            return response()->json(['message' => 'Project deleted successfully']);
+        } catch (\Exception $e) {
+            Log::error("Error deleting project: " . $e->getMessage());
+            return response()->json(['message' => 'Failed to delete project'], 500);
         }
-        
-        $project->delete();
-        
-        return response()->json(['message' => 'Project deleted successfully']);
     }
     
     /**
