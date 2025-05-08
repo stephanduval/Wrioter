@@ -211,5 +211,12 @@
         "item": "Objet"
       }
     }
+  },
+  "menu": {
+    "heading": "Freynet-Gagné",
+    "userManagement": "Gestion des utilisateurs",
+    "companyList": "Liste des entreprises",
+    "projects": "Projets",
+    "messages": "Messages"
   }
 }

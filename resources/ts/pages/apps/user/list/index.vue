@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import AddNewUserDrawer from '@/views/apps/user/list/AddNewUserDrawer.vue'
 import EditUserDrawer from '@/views/apps/user/list/EditUserDrawer.vue'
+import { useI18n } from 'vue-i18n'
 
 import type { UserProperties } from '@db/apps/users/types'
 
@@ -41,13 +42,15 @@ const updateOptions = (options: any) => {
   fetchUsers()
 }
 
+const { t } = useI18n()
+
 // Headers
 const headers = [
-  { title: 'User', key: 'user' },
-  { title: 'Role', key: 'role' },
-  { title: 'Company', key: 'company' },
-  // { title: 'Status', key: 'status' },
-  { title: 'Actions', key: 'actions', sortable: false },
+  { title: t('headers.users.name'), key: 'name' },
+  { title: t('headers.users.email'), key: 'email' },
+  { title: t('headers.users.role'), key: 'role' },
+  { title: t('headers.users.status'), key: 'status' },
+  { title: t('headers.users.actions'), key: 'actions', sortable: false },
 ]
 
 

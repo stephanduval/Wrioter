@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import axios from '@/../js/axios'
 import { computed, onMounted, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
 interface Project {
@@ -28,6 +29,7 @@ interface ApiResponse {
 }
 
 const router = useRouter()
+const { t } = useI18n()
 
 // Data table options
 const searchQuery = ref('')
@@ -43,12 +45,12 @@ const clients = ref<{ id: number; name: string }[]>([])
 
 // Headers
 const headers = [
-  { title: 'Project', key: 'project', sortable: true },
-  { title: 'Client', key: 'client', sortable: true },
-  { title: 'Service Type', key: 'service_type', sortable: true },
-  { title: 'Deadline', key: 'deadline', sortable: true },
-  { title: 'Status', key: 'status', sortable: true },
-  { title: 'Actions', key: 'actions', sortable: false },
+  { title: t('headers.projects.project'), key: 'project', sortable: true },
+  { title: t('headers.projects.client'), key: 'client', sortable: true },
+  { title: t('headers.projects.serviceType'), key: 'service_type', sortable: true },
+  { title: t('headers.projects.deadline'), key: 'deadline', sortable: true },
+  { title: t('headers.projects.status'), key: 'status', sortable: true },
+  { title: t('headers.projects.actions'), key: 'actions', sortable: false },
 ]
 
 // Status options

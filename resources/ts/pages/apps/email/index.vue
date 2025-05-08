@@ -8,6 +8,7 @@ import { format, isToday, parseISO } from 'date-fns'
 import type { PartialDeep } from 'type-fest'
 import type { Ref } from 'vue'
 import { computed, isRef, onMounted, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 import { PerfectScrollbar } from 'vue3-perfect-scrollbar'
 
@@ -507,6 +508,17 @@ const confirmPermanentDeleteMessages = async () => {
     messageIdsToConfirmPermanentDelete.value = [];
   }
 };
+
+const { t } = useI18n();
+
+// Headers
+const headers = [
+  { title: t('headers.emails.subject'), key: 'subject' },
+  { title: t('headers.emails.from'), key: 'from' },
+  { title: t('headers.emails.date'), key: 'date' },
+  { title: t('headers.emails.status'), key: 'status' },
+  { title: t('headers.emails.actions'), key: 'actions', sortable: false },
+];
 
 </script>
 

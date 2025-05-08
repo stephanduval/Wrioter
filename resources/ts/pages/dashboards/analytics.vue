@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import { isToday, parseISO } from 'date-fns';
 import { computed, onMounted, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { RouterLink } from 'vue-router';
 import { VBtn, VCard, VCardText, VCol, VDivider, VRow } from 'vuetify/components'; // Explicit imports
+
+const { t } = useI18n();
 
 // Define interface for message summary data (same as in email index.vue)
 interface MessageSummary {
@@ -64,19 +67,19 @@ onMounted(async () => {
 <template>
   <div>
     <!-- Main Title -->
-    <h1 class="mb-4 text-h4">Freynet-Gagné Client Portal</h1>
+    <h1 class="mb-4 text-h4">{{ t('dashboard.title') }}</h1>
 
     <!-- Requests Section -->
-    <h2 class="mb-3 text-h5">Requests</h2>
+    <h2 class="mb-3 text-h5">{{ t('dashboard.requests') }}</h2>
     <VRow class="mb-4">
       <VCol cols="12" md="6">
         <VCard class="cursor-pointer" @click="$router.push('/apps/email/filter/due-today')">
           <VCardText class="text-center">
-            <div class="text-subtitle-1">Requests Due Today</div>
+            <div class="text-subtitle-1">{{ t('dashboard.dueToday') }}</div>
             <div class="text-h4">{{ dueTodayCount }}</div>
             <div class="mt-3">
               <RouterLink :to="{ path: '/apps/email/filter/due-today' }" v-slot="{ navigate }">
-                <VBtn color="warning" @click="navigate">View Due Today</VBtn>
+                <VBtn color="warning" @click="navigate">{{ t('dashboard.viewDueToday') }}</VBtn>
               </RouterLink>
             </div>
           </VCardText>
@@ -85,11 +88,11 @@ onMounted(async () => {
       <VCol cols="12" md="6">
         <VCard class="cursor-pointer" @click="$router.push('/apps/email')">
           <VCardText class="text-center">
-            <div class="text-subtitle-1">New Tasks</div>
+            <div class="text-subtitle-1">{{ t('dashboard.newTasks') }}</div>
             <div class="text-h4">{{ newTasksCount }}</div>
             <div class="mt-3">
               <RouterLink :to="{ path: '/apps/email' }" v-slot="{ navigate }">
-                <VBtn color="primary" @click="navigate">View Messages</VBtn>
+                <VBtn color="primary" @click="navigate">{{ t('dashboard.viewMessages') }}</VBtn>
               </RouterLink>
             </div>
           </VCardText>
@@ -104,9 +107,9 @@ onMounted(async () => {
       <VCol cols="12" md="4">
         <VCard class="text-center" height="100%">
           <VCardText class="d-flex flex-column justify-center align-center fill-height">
-            <div class="text-h6 mb-2">New Company</div>
+            <div class="text-h6 mb-2">{{ t('dashboard.newCompany') }}</div>
             <RouterLink :to="{ path: '/apps/companies/list', query: { tab: 'new' } }" v-slot="{ navigate }">
-              <VBtn @click="navigate">Go to Company Page</VBtn>
+              <VBtn @click="navigate">{{ t('dashboard.goToCompanyPage') }}</VBtn>
             </RouterLink>
           </VCardText>
         </VCard>
@@ -114,9 +117,9 @@ onMounted(async () => {
       <VCol cols="12" md="4">
         <VCard class="text-center" height="100%">
           <VCardText class="d-flex flex-column justify-center align-center fill-height">
-            <div class="text-h6 mb-2">New User</div>
+            <div class="text-h6 mb-2">{{ t('dashboard.newUser') }}</div>
             <RouterLink :to="{ path: '/apps/user/list', query: { tab: 'new-client' } }" v-slot="{ navigate }">
-              <VBtn @click="navigate">Go to User List</VBtn>
+              <VBtn @click="navigate">{{ t('dashboard.goToUserList') }}</VBtn>
             </RouterLink>
           </VCardText>
         </VCard>
@@ -124,9 +127,9 @@ onMounted(async () => {
        <VCol cols="12" md="4">
         <VCard class="text-center" height="100%">
           <VCardText class="d-flex flex-column justify-center align-center fill-height">
-            <div class="text-h6 mb-2">New Project Request</div>
+            <div class="text-h6 mb-2">{{ t('dashboard.newProjectRequest') }}</div>
             <RouterLink :to="{ path: '/apps/email', query: { compose: 'true' } }" v-slot="{ navigate }">
-               <VBtn @click="navigate">Start New Request</VBtn>
+               <VBtn @click="navigate">{{ t('dashboard.startNewRequest') }}</VBtn>
             </RouterLink>
           </VCardText>
         </VCard>

@@ -2,6 +2,9 @@
 import AddNewCompanyDrawer from '@/views/apps/companies/list/AddNewCompanyDrawer.vue';
 import EditCompanyDrawer from '@/views/apps/companies/list/EditCompanyDrawer.vue';
 import { computed, onMounted, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
 
 // 👉 Store
 const searchQuery = ref('');
@@ -25,9 +28,9 @@ const isAddNewCompanyDrawerVisible = ref(false);
 
 // Headers
 const headers = [
-  { title: 'Company Name', key: 'companyName' },
-  { title: 'Status', key: 'status' },
-  { title: 'Actions', key: 'actions', sortable: false, align: 'end' },
+  { title: t('headers.companies.name'), key: 'companyName' },
+  { title: t('headers.companies.status'), key: 'status' },
+  { title: t('headers.companies.actions'), key: 'actions', sortable: false, align: 'end' },
 ];
 
 // 👉 Open edit drawer

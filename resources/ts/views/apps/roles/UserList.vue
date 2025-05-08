@@ -21,31 +21,51 @@ const updateOptions = (options: any) => {
   orderBy.value = options.sortBy[0]?.order
 }
 
-// Headers (Assuming you uncommented and fixed this, otherwise the table won't show headers)
-/*
+interface UserResponse {
+  data: UserProperties[]
+  total: number
+  current_page: number
+  per_page: number
+  last_page: number
+  from: number
+  to: number
+  all_roles: string[]
+}
+
+// Headers
 const headers = [
   { title: 'User', key: 'user' },
   { title: 'Company', key: 'company' },
   { title: 'Role', key: 'role' },
   { title: 'Actions', key: 'actions', sortable: false },
 ]
-*/
-// If you prefer no headers, keep the above commented out.
 
 // 👉 Fetching users
 // Update API call to remove plan and status query parameters
-const { data: usersData, execute: fetchUsers } = await useApi<any>(createUrl('/api/users', { // Ensure API path is correct
-  query: {
-    q: searchQuery,
-    // status: selectedStatus, // Removed
-    // plan: selectedPlan, // Removed
-    role: selectedRole, // Keep role filter
-    itemsPerPage,
-    page,
-    sortBy,
-    orderBy,
+const { data: usersData, execute: fetchUsers } = useApi<UserResponse>(() => {
+  const params = new URLSearchParams({
+    page: String(page.value),
+    itemsPerPage: String(itemsPerPage.value),
+    q: searchQuery.value || '',
+    role: selectedRole.value || '',
+  }).toString()
+
+  return `/api/users?${params}`
+}, {
+  method: 'GET',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
   },
-}))
+  credentials: 'include',
+})
+
+// Add error handling
+watch(usersData, (newData) => {
+  if (!newData) {
+    console.error('Error fetching users: No data received')
+  }
+}, { immediate: true })
 
 // Derive users from the 'data' property of the response
 const users = computed((): UserProperties[] => usersData.value?.data || [])
@@ -111,18 +131,29 @@ const addNewUser = async (userData: UserProperties) => {
 
 // 👉 Delete user
 const deleteUser = async (id: number) => {
-  await $api(`/apps/users/${id}`, {
-    method: 'DELETE',
-  })
+  try {
+    const response = await fetch(`/api/users/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+      },
+    })
 
-  // Delete from selectedRows
-  const index = selectedRows.value.findIndex(row => row === id)
-  if (index !== -1)
-    selectedRows.value.splice(index, 1)
+    if (!response.ok)
+      throw new Error('Failed to delete user')
 
-  // refetch User
-  // TODO: Make this async
-  fetchUsers()
+    // Delete from selectedRows
+    const index = selectedRows.value.findIndex(row => row === id)
+    if (index !== -1)
+      selectedRows.value.splice(index, 1)
+
+    // Refetch users
+    fetchUsers()
+  }
+  catch (error) {
+    console.error('Error deleting user:', error)
+  }
 }
 </script>
 
@@ -194,7 +225,7 @@ const deleteUser = async (id: number) => {
         ]"
         :items="users"
         :items-length="totalUsers"
-        :headers="headers" <!-- This will use the headers defined (or commented out) above -->
+        :headers="headers"
         class="text-no-wrap"
         show-select
         @update:options="updateOptions"
@@ -238,54 +269,32 @@ const deleteUser = async (id: number) => {
 
         <!-- 👉 Role -->
         <template #item.role="{ item }">
-          <div class="d-flex align-center gap-x-2">
-            <VIcon
-              :size="20"
-              :icon="resolveUserRoleVariant(item.role).icon"
+          <div class="d-flex align-center">
+            <VChip
               :color="resolveUserRoleVariant(item.role).color"
-            />
-
-            <div class="text-capitalize text-high-emphasis text-body-1">
+              size="small"
+              class="text-capitalize"
+            >
               {{ item.role }}
-            </div>
+            </VChip>
           </div>
         </template>
 
-        <!-- Actions -->
+        <!-- 👉 Actions -->
         <template #item.actions="{ item }">
-          <IconBtn @click="deleteUser(item.id)">
-            <VIcon icon="bx-trash" />
-          </IconBtn>
+          <div class="d-flex gap-1">
+            <IconBtn
+              :to="{ name: 'apps-user-view-id', params: { id: item.id } }"
+            >
+              <VIcon icon="bx-show" />
+            </IconBtn>
 
-          <IconBtn>
-            <VIcon icon="bx-show" />
-          </IconBtn>
-
-          <VBtn
-            icon
-            variant="text"
-            color="medium-emphasis"
-          >
-            <VIcon icon="bx-dots-vertical-rounded" />
-            <VMenu activator="parent">
-              <VList>
-                <VListItem :to="{ name: 'apps-user-view-id', params: { id: item.id } }">
-                  <template #prepend>
-                    <VIcon icon="bx-show" />
-                  </template>
-
-                  <VListItemTitle>View</VListItemTitle>
-                </VListItem>
-
-                <VListItem link>
-                  <template #prepend>
-                    <VIcon icon="bx-pencil" />
-                  </template>
-                  <VListItemTitle>Edit</VListItemTitle>
-                </VListItem>
-              </VList>
-            </VMenu>
-          </VBtn>
+            <IconBtn
+              @click="deleteUser(item.id)"
+            >
+              <VIcon icon="bx-trash" />
+            </IconBtn>
+          </div>
         </template>
 
         <template #bottom>
@@ -301,7 +310,7 @@ const deleteUser = async (id: number) => {
 
     <!-- 👉 Add New User -->
     <AddNewUserDrawer
-      v-model:isDrawerOpen="isAddNewUserDrawerVisible"
+      v-model:is-drawer-open="isAddNewUserDrawerVisible"
       @user-data="addNewUser"
     />
   </section>

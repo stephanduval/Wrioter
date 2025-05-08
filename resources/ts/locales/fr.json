@@ -1,0 +1,76 @@
+{
+    "nav": {
+        "dashboard": "Tableau de bord",
+        "account": "Compte",
+        "settings": "Paramètres",
+        "users": "Utilisateurs",
+        "roles": "Gestion des rôles",
+        "language": "Langue"
+    },
+    "settings": {
+        "title": "Paramètres",
+        "language": {
+            "title": "Paramètres de langue",
+            "current": "Langue actuelle",
+            "english": "Anglais",
+            "french": "Français"
+        }
+    },
+    "menu": {
+        "heading": "Freynet-Gagné",
+        "userManagement": "Gestion des utilisateurs",
+        "companyList": "Liste des entreprises",
+        "projects": "Projets",
+        "messages": "Messages"
+    },
+    "language": {
+        "name": "Français"
+    },
+    "dashboard": {
+        "title": "Portail Client Freynet-Gagné",
+        "requests": "Demandes",
+        "dueToday": "Demandes dues aujourd'hui",
+        "newTasks": "Nouvelles tâches",
+        "viewDueToday": "Voir les demandes dues aujourd'hui",
+        "viewMessages": "Voir les messages",
+        "newCompany": "Nouvelle entreprise",
+        "newUser": "Nouvel utilisateur",
+        "newProjectRequest": "Nouvelle demande de projet",
+        "goToCompanyPage": "Aller à la page des entreprises",
+        "goToUserList": "Aller à la liste des utilisateurs",
+        "startNewRequest": "Démarrer une nouvelle demande"
+    },
+    "headers": {
+        "users": {
+            "title": "Utilisateurs",
+            "name": "Nom",
+            "email": "Email",
+            "role": "Rôle",
+            "status": "Statut",
+            "actions": "Actions"
+        },
+        "projects": {
+            "title": "Projets",
+            "project": "Projet",
+            "client": "Client",
+            "serviceType": "Type de service",
+            "deadline": "Date limite",
+            "status": "Statut",
+            "actions": "Actions"
+        },
+        "companies": {
+            "title": "Entreprises",
+            "name": "Nom de l'entreprise",
+            "status": "Statut",
+            "actions": "Actions"
+        },
+        "emails": {
+            "title": "Messages",
+            "subject": "Sujet",
+            "from": "De",
+            "date": "Date",
+            "status": "Statut",
+            "actions": "Actions"
+        }
+    }
+}

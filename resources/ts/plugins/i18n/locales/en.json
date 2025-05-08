@@ -210,5 +210,12 @@
         "item": "item"
       }
     }
+  },
+  "menu": {
+    "heading": "Freynet-Gagné",
+    "userManagement": "User Management",
+    "companyList": "Company List",
+    "projects": "Projects",
+    "messages": "Messages"
   }
 }

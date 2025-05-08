@@ -16,6 +16,10 @@ const messages = {
     ...localeMessages.en,
     ...vuetifyMessages,
   },
+  fr: {
+    ...localeMessages.fr,
+    ...vuetifyMessages,
+  },
 }
 
 let _i18n: any = null
