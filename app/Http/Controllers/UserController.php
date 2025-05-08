@@ -172,8 +172,15 @@ public function showUser($id)
             'id' => $user->id,
             'name' => $user->name,
             'email' => $user->email,
-            'company_id' => $user->companies->first()?->id,
-            'role_id' => $user->roles->first()?->id,
+            'role' => $user->roles->first()?->name ?? 'N/A',
+            'companies' => $user->companies->map(function($company) {
+                return [
+                    'id' => $company->id,
+                    'company_name' => $company->company_name
+                ];
+            }),
+            'created_at' => $user->created_at,
+            'updated_at' => $user->updated_at
         ]);
     } catch (\Exception $e) {
         \Log::error('Error fetching user details: ', ['message' => $e->getMessage()]);

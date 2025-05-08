@@ -1,7 +1,8 @@
 <script setup lang="ts">
+import EmailView from '@/views/apps/email/EmailView.vue'
 import axios from 'axios'
 import { format } from 'date-fns'
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 // Configure axios
@@ -14,6 +15,13 @@ const project = ref<Project | null>(null)
 const messages = ref<any[]>([])
 const isLoading = ref(true)
 const error = ref<string | null>(null)
+const isEditing = ref(false)
+const editedProject = ref<Partial<Project>>({})
+const selectedEmail = ref<any>(null)
+const emailMeta = ref({
+  hasPreviousEmail: false,
+  hasNextEmail: false,
+})
 
 interface Project {
   id: number
@@ -23,6 +31,7 @@ interface Project {
   service_type?: string
   service_description?: string
   deadline?: string
+  latest_completion_date?: string
   status: string
   created_at: string
   updated_at: string
@@ -36,6 +45,8 @@ interface Project {
     id: number
     name: string
   }
+  contact_email?: string
+  date_requested?: string
 }
 
 const statusColorMap: Record<string, string> = {
@@ -45,34 +56,78 @@ const statusColorMap: Record<string, string> = {
   cancelled: 'error',
 }
 
-const formattedDate = (date: string) => {
+const formattedDate = (date: string | undefined) => {
   if (!date) return 'N/A'
   return format(new Date(date), 'MMM dd, yyyy')
 }
+
+// Add status options
+const statusOptions = [
+  { title: 'Received', value: 'received' },
+  { title: 'In Progress', value: 'in_progress' },
+  { title: 'Delivered', value: 'delivered' },
+]
+
+// Add time preference options
+const timePreferenceOptions = [
+  { title: 'Before Noon', value: 'before_noon' },
+  { title: 'Before 4pm', value: 'before_4pm' },
+  { title: 'Anytime', value: 'anytime' },
+]
+
+// Add service type options
+const serviceTypeOptions = [
+  { title: 'Translation', value: 'translation' },
+  { title: 'Revision', value: 'revision' },
+  { title: 'Modifications', value: 'modifications' },
+  { title: 'Transcription', value: 'transcription' },
+  { title: 'Voice Over', value: 'voice_over' },
+  { title: 'Other', value: 'other' },
+]
 
 const fetchProject = async () => {
   isLoading.value = true
   error.value = null
   
   try {
+    console.log('Fetching project with ID:', projectId)
     const response = await axios.get(`${apiBaseUrl}/projects/${projectId}`)
-    project.value = response.data.data
+    console.log('API Response:', response.data)
+    
+    if (!response.data) {
+      throw new Error('No data received from API')
+    }
+    
+    project.value = response.data
     
     // Fetch messages related to this project
+    console.log('Fetching messages for project:', projectId)
     const messagesResponse = await axios.get(`${apiBaseUrl}/messages`, {
       params: {
         project_id: projectId,
       },
     })
+    console.log('Messages Response:', messagesResponse.data)
     
-    messages.value = messagesResponse.data.data
+    messages.value = messagesResponse.data.data || []
   } catch (err: any) {
     console.error('Error fetching project details:', err)
+    console.error('Error response:', err.response)
     error.value = err.response?.data?.message || 'Failed to load project details'
   } finally {
     isLoading.value = false
   }
 }
+
+// Add a watch to log when project data changes
+watch(project, (newVal) => {
+  console.log('Project data updated:', newVal)
+}, { deep: true })
+
+// Add a watch to log when messages data changes
+watch(messages, (newVal) => {
+  console.log('Messages data updated:', newVal)
+}, { deep: true })
 
 const navigateBack = () => {
   router.push({ name: 'apps-projects-list' })
@@ -85,7 +140,52 @@ const composeMessage = () => {
   })
 }
 
+const startEditing = () => {
+  if (project.value) {
+    // Format dates to YYYY-MM-DD for the date inputs
+    editedProject.value = {
+      ...project.value,
+      deadline: project.value.deadline ? format(new Date(project.value.deadline), 'yyyy-MM-dd') : undefined,
+      latest_completion_date: project.value.latest_completion_date ? format(new Date(project.value.latest_completion_date), 'yyyy-MM-dd') : undefined,
+    }
+    isEditing.value = true
+  }
+}
+
+const cancelEditing = () => {
+  isEditing.value = false
+  editedProject.value = {}
+}
+
+const saveProject = async () => {
+  try {
+    isLoading.value = true
+    const response = await axios.put(`${apiBaseUrl}/projects/${projectId}`, editedProject.value)
+    project.value = response.data.data
+    isEditing.value = false
+    editedProject.value = {}
+  } catch (err: any) {
+    console.error('Error updating project:', err)
+    error.value = err.response?.data?.message || 'Failed to update project'
+  } finally {
+    isLoading.value = false
+  }
+}
+
+const handleEmailClick = (email: any) => {
+  selectedEmail.value = email
+}
+
+const handleEmailClose = () => {
+  selectedEmail.value = null
+}
+
+const handleEmailRefresh = () => {
+  fetchProject()
+}
+
 onMounted(() => {
+  console.log('Component mounted, fetching project...')
   fetchProject()
 })
 </script>
@@ -157,6 +257,32 @@ onMounted(() => {
       <VCard>
         <VCardItem>
           <VCardTitle>Project Information</VCardTitle>
+          <template #append>
+            <template v-if="isEditing">
+              <VBtn
+                color="error"
+                variant="outlined"
+                class="me-4"
+                @click="cancelEditing"
+              >
+                Cancel
+              </VBtn>
+              <VBtn
+                color="success"
+                @click="saveProject"
+                :loading="isLoading"
+              >
+                Save Changes
+              </VBtn>
+            </template>
+            <VBtn
+              v-else
+              color="primary"
+              @click="startEditing"
+            >
+              Edit Project
+            </VBtn>
+          </template>
         </VCardItem>
 
         <VDivider />
@@ -172,10 +298,20 @@ onMounted(() => {
                 />
               </template>
               <VListItemTitle>Title</VListItemTitle>
-              <VListItemSubtitle>{{ project.title }}</VListItemSubtitle>
+              <VListItemSubtitle>
+                <VTextField
+                  v-if="isEditing"
+                  v-model="editedProject.title"
+                  density="compact"
+                  hide-details
+                />
+                <template v-else>
+                  {{ project?.title }}
+                </template>
+              </VListItemSubtitle>
             </VListItem>
             
-            <VListItem v-if="project.property">
+            <VListItem>
               <template #prepend>
                 <VIcon
                   color="primary"
@@ -184,10 +320,20 @@ onMounted(() => {
                 />
               </template>
               <VListItemTitle>Property</VListItemTitle>
-              <VListItemSubtitle>{{ project.property }}</VListItemSubtitle>
+              <VListItemSubtitle>
+                <VTextField
+                  v-if="isEditing"
+                  v-model="editedProject.property"
+                  density="compact"
+                  hide-details
+                />
+                <template v-else>
+                  {{ project?.property }}
+                </template>
+              </VListItemSubtitle>
             </VListItem>
             
-            <VListItem v-if="project.time_preference">
+            <VListItem>
               <template #prepend>
                 <VIcon
                   color="primary"
@@ -196,10 +342,21 @@ onMounted(() => {
                 />
               </template>
               <VListItemTitle>Time Preference</VListItemTitle>
-              <VListItemSubtitle>{{ project.time_preference }}</VListItemSubtitle>
+              <VListItemSubtitle>
+                <VSelect
+                  v-if="isEditing"
+                  v-model="editedProject.time_preference"
+                  :items="timePreferenceOptions"
+                  density="compact"
+                  hide-details
+                />
+                <template v-else>
+                  {{ project?.time_preference }}
+                </template>
+              </VListItemSubtitle>
             </VListItem>
             
-            <VListItem v-if="project.service_type">
+            <VListItem>
               <template #prepend>
                 <VIcon
                   color="primary"
@@ -208,10 +365,21 @@ onMounted(() => {
                 />
               </template>
               <VListItemTitle>Service Type</VListItemTitle>
-              <VListItemSubtitle>{{ project.service_type }}</VListItemSubtitle>
+              <VListItemSubtitle>
+                <VSelect
+                  v-if="isEditing"
+                  v-model="editedProject.service_type"
+                  :items="serviceTypeOptions"
+                  density="compact"
+                  hide-details
+                />
+                <template v-else>
+                  {{ project?.service_type }}
+                </template>
+              </VListItemSubtitle>
             </VListItem>
             
-            <VListItem v-if="project.deadline">
+            <VListItem>
               <template #prepend>
                 <VIcon
                   color="primary"
@@ -220,7 +388,41 @@ onMounted(() => {
                 />
               </template>
               <VListItemTitle>Deadline</VListItemTitle>
-              <VListItemSubtitle>{{ formattedDate(project.deadline) }}</VListItemSubtitle>
+              <VListItemSubtitle>
+                <VTextField
+                  v-if="isEditing"
+                  v-model="editedProject.deadline"
+                  type="date"
+                  density="compact"
+                  hide-details
+                />
+                <template v-else>
+                  {{ formattedDate(project?.deadline) }}
+                </template>
+              </VListItemSubtitle>
+            </VListItem>
+
+            <VListItem>
+              <template #prepend>
+                <VIcon
+                  color="primary"
+                  icon="mdi-calendar-check"
+                  class="me-3"
+                />
+              </template>
+              <VListItemTitle>Latest Completion Date</VListItemTitle>
+              <VListItemSubtitle>
+                <VTextField
+                  v-if="isEditing"
+                  v-model="editedProject.latest_completion_date"
+                  type="date"
+                  density="compact"
+                  hide-details
+                />
+                <template v-else>
+                  {{ formattedDate(project?.latest_completion_date) }}
+                </template>
+              </VListItemSubtitle>
             </VListItem>
             
             <VListItem>
@@ -233,17 +435,26 @@ onMounted(() => {
               </template>
               <VListItemTitle>Status</VListItemTitle>
               <VListItemSubtitle>
-                <VChip
-                  :color="statusColorMap[project.status]"
-                  size="small"
-                  class="text-capitalize"
-                >
-                  {{ project.status }}
-                </VChip>
+                <VSelect
+                  v-if="isEditing"
+                  v-model="editedProject.status"
+                  :items="statusOptions"
+                  density="compact"
+                  hide-details
+                />
+                <template v-else>
+                  <VChip
+                    :color="statusColorMap[project?.status || '']"
+                    size="small"
+                    class="text-capitalize"
+                  >
+                    {{ project?.status }}
+                  </VChip>
+                </template>
               </VListItemSubtitle>
             </VListItem>
             
-            <VListItem v-if="project.client">
+            <VListItem v-if="project?.client">
               <template #prepend>
                 <VIcon
                   color="primary"
@@ -255,7 +466,41 @@ onMounted(() => {
               <VListItemSubtitle>{{ project.client.name }}</VListItemSubtitle>
             </VListItem>
             
-            <VListItem v-if="project.company">
+            <VListItem>
+              <template #prepend>
+                <VIcon
+                  color="primary"
+                  icon="mdi-email"
+                  class="me-3"
+                />
+              </template>
+              <VListItemTitle>Contact Email</VListItemTitle>
+              <VListItemSubtitle>
+                <VTextField
+                  v-if="isEditing"
+                  v-model="editedProject.contact_email"
+                  density="compact"
+                  hide-details
+                />
+                <template v-else>
+                  {{ project?.contact_email }}
+                </template>
+              </VListItemSubtitle>
+            </VListItem>
+            
+            <VListItem>
+              <template #prepend>
+                <VIcon
+                  color="primary"
+                  icon="mdi-calendar-plus"
+                  class="me-3"
+                />
+              </template>
+              <VListItemTitle>Date Requested</VListItemTitle>
+              <VListItemSubtitle>{{ formattedDate(project?.date_requested) }}</VListItemSubtitle>
+            </VListItem>
+            
+            <VListItem v-if="project?.company">
               <template #prepend>
                 <VIcon
                   color="primary"
@@ -276,7 +521,43 @@ onMounted(() => {
                 />
               </template>
               <VListItemTitle>Created At</VListItemTitle>
-              <VListItemSubtitle>{{ formattedDate(project.created_at) }}</VListItemSubtitle>
+              <VListItemSubtitle>{{ formattedDate(project?.created_at) }}</VListItemSubtitle>
+            </VListItem>
+
+            <VListItem>
+              <template #prepend>
+                <VIcon
+                  color="primary"
+                  icon="mdi-calendar-edit"
+                  class="me-3"
+                />
+              </template>
+              <VListItemTitle>Last Updated</VListItemTitle>
+              <VListItemSubtitle>{{ formattedDate(project?.updated_at) }}</VListItemSubtitle>
+            </VListItem>
+
+            <VListItem>
+              <template #prepend>
+                <VIcon
+                  color="primary"
+                  icon="mdi-text-box"
+                  class="me-3"
+                />
+              </template>
+              <VListItemTitle>Service Description</VListItemTitle>
+              <VListItemSubtitle>
+                <VTextarea
+                  v-if="isEditing"
+                  v-model="editedProject.service_description"
+                  density="compact"
+                  hide-details
+                  rows="3"
+                  auto-grow
+                />
+                <template v-else>
+                  {{ project?.service_description || 'No description provided' }}
+                </template>
+              </VListItemSubtitle>
             </VListItem>
           </VList>
         </VCardText>
@@ -333,7 +614,7 @@ onMounted(() => {
           <VListItem
             v-for="message in messages"
             :key="message.id"
-            :to="`/apps/email/${message.id}`"
+            @click="handleEmailClick(message)"
           >
             <template #prepend>
               <VAvatar
@@ -359,6 +640,13 @@ onMounted(() => {
       </VCard>
     </VCol>
   </VRow>
+
+  <EmailView
+    :email="selectedEmail"
+    :email-meta="emailMeta"
+    @close="handleEmailClose"
+    @refresh="handleEmailRefresh"
+  />
 </template>
 
 <style lang="scss">
