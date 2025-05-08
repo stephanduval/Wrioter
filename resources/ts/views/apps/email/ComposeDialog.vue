@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { useEmail } from '@/views/apps/email/useEmail';
 import { computed, onMounted, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 
 const emit = defineEmits<{
   (e: 'close'): void
@@ -8,6 +9,7 @@ const emit = defineEmits<{
 }>()
 
 const { createMessage } = useEmail();
+const { t } = useI18n()
 
 const content = ref('')
 const to = ref('')
@@ -320,7 +322,7 @@ const resetValues = () => {
     >
       <div class="d-flex align-center">
         <h5 class="text-h5 text-medium-emphasis">
-          Compose Mail
+          {{ t('emails.compose.title') }}
         </h5>
         <VSpacer />
 
@@ -345,9 +347,9 @@ const resetValues = () => {
           <VCol cols="12">
             <VTextField
               v-model="to"
-              label="To"
+              :label="t('emails.compose.to')"
               autofocus
-              :rules="[(value: string) => !!value || 'This field is required']"
+              :rules="[(value: string) => !!value || t('emails.compose.project.validation.titleRequired')]"
               disabled
             />
           </VCol>
@@ -399,14 +401,14 @@ const resetValues = () => {
         <VTextField
           v-model="projectTitle"
           density="compact"
-          label="Project Title"
-          placeholder="Enter project title"
-          :rules="isClient ? [(v: string) => !!v || 'Project title is required'] : undefined"
+          :label="t('emails.compose.project.title')"
+          :placeholder="t('emails.compose.project.titlePlaceholder')"
+          :rules="isClient ? [(v: string) => !!v || t('emails.compose.project.validation.titleRequired')] : undefined"
           :required="isClient"
         >
           <template #prepend-inner>
-            <div class="text-base font-weight-medium text-disabled">
-              Project Title:
+            <div class="text-base font-weight-medium text-disabled prepend-label">
+              {{ t('emails.compose.project.title') }}:
             </div>
           </template>
         </VTextField>
@@ -418,14 +420,14 @@ const resetValues = () => {
         <VTextField
           v-model="property"
           density="compact"
-          label="Property"
-          placeholder="Enter property details"
-          :rules="isClient ? [(v: string) => !!v || 'Property is required'] : undefined"
+          :label="t('emails.compose.project.property')"
+          :placeholder="t('emails.compose.project.propertyPlaceholder')"
+          :rules="isClient ? [(v: string) => !!v || t('emails.compose.project.validation.propertyRequired')] : undefined"
           :required="isClient"
         >
           <template #prepend-inner>
-            <div class="text-base font-weight-medium text-disabled">
-              Property:
+            <div class="text-base font-weight-medium text-disabled prepend-label">
+              {{ t('emails.compose.project.property') }}:
             </div>
           </template>
         </VTextField>
@@ -437,21 +439,21 @@ const resetValues = () => {
         <VSelect
           v-model="serviceType"
           density="compact"
-          label="Service Type"
-          :rules="isClient ? [(v: string) => !!v || 'Service type is required'] : undefined"
+          :label="t('emails.compose.project.serviceType')"
+          :rules="isClient ? [(v: string) => !!v || t('emails.compose.project.validation.serviceTypeRequired')] : undefined"
           :required="isClient"
           :items="[
-            { title: 'Translation', value: 'translation' },
-            { title: 'Revision', value: 'revision' },
-            { title: 'Modifications', value: 'modifications' },
-            { title: 'Transcription', value: 'transcription' },
-            { title: 'Voice Over', value: 'voice_over' },
-            { title: 'Other', value: 'other' }
+            { title: t('emails.compose.serviceTypes.translation'), value: 'translation' },
+            { title: t('emails.compose.serviceTypes.revision'), value: 'revision' },
+            { title: t('emails.compose.serviceTypes.modifications'), value: 'modifications' },
+            { title: t('emails.compose.serviceTypes.transcription'), value: 'transcription' },
+            { title: t('emails.compose.serviceTypes.voiceOver'), value: 'voice_over' },
+            { title: t('emails.compose.serviceTypes.other'), value: 'other' }
           ]"
         >
           <template #prepend-inner>
-            <div class="text-base font-weight-medium text-disabled">
-              Service Type:
+            <div class="text-base font-weight-medium text-disabled prepend-label">
+              {{ t('emails.compose.project.serviceType') }}:
             </div>
           </template>
         </VSelect>
@@ -463,14 +465,14 @@ const resetValues = () => {
         <VTextarea
           v-model="serviceDescription"
           density="compact"
-          label="Service Description"
-          placeholder="Describe the service you need"
+          :label="t('emails.compose.project.serviceDescription')"
+          :placeholder="t('emails.compose.project.descriptionPlaceholder')"
           rows="2"
           auto-grow
         >
           <template #prepend-inner>
-            <div class="text-base font-weight-medium text-disabled pt-2">
-              Description:
+            <div class="text-base font-weight-medium text-disabled prepend-label pt-2">
+              {{ t('emails.compose.project.serviceDescription') }}:
             </div>
           </template>
         </VTextarea>
@@ -482,17 +484,17 @@ const resetValues = () => {
         <VSelect
           v-model="timePreference"
           density="compact"
-          label="Time Preference"
+          :label="t('emails.compose.project.timePreference')"
           :required="isClient"
           :items="[
-            { title: 'Before Noon', value: 'before_noon' },
-            { title: 'Before 4pm', value: 'before_4pm' },
-            { title: 'Anytime', value: 'anytime' }
+            { title: t('emails.compose.timePreferences.beforeNoon'), value: 'before_noon' },
+            { title: t('emails.compose.timePreferences.before4pm'), value: 'before_4pm' },
+            { title: t('emails.compose.timePreferences.anytime'), value: 'anytime' }
           ]"
         >
           <template #prepend-inner>
-            <div class="text-base font-weight-medium text-disabled">
-              Time Preference:
+            <div class="text-base font-weight-medium text-disabled prepend-label">
+              {{ t('emails.compose.project.timePreference') }}:
             </div>
           </template>
         </VSelect>
@@ -505,18 +507,18 @@ const resetValues = () => {
           v-model="dueDate" 
           density="compact" 
           type="date"  
-          placeholder="YYYY-MM-DD"
+          :placeholder="t('emails.compose.project.datePlaceholder')"
           :rules="[
-            (v: string | null) => !!v || 'Due date is required',
-            (v: string | null) => isDeadlineValid || 'Due date must be today or later'
+            (v: string | null) => !!v || t('emails.compose.project.validation.dueDateRequired'),
+            (v: string | null) => isDeadlineValid || t('emails.compose.project.validation.dueDateFuture')
           ]"
-          :error-messages="!isDeadlineValid ? ['Due date must be today or later'] : []"
+          :error-messages="!isDeadlineValid ? [t('emails.compose.project.validation.dueDateFuture')] : []"
           :required="isClient"
           clearable 
         >
           <template #prepend-inner>
-            <div class="text-base font-weight-medium text-disabled">
-              Due Date:
+            <div class="text-base font-weight-medium text-disabled prepend-label">
+              {{ t('emails.compose.project.dueDate') }}:
             </div>
           </template>
         </VTextField>
@@ -529,18 +531,18 @@ const resetValues = () => {
           v-model="latestCompletionDate" 
           density="compact" 
           type="date"  
-          placeholder="YYYY-MM-DD"
+          :placeholder="t('emails.compose.project.datePlaceholder')"
           :rules="[
-            (v: string | null) => !!v || 'Latest completion date is required',
-            (v: string | null) => isLatestCompletionDateValid || 'Latest completion date must be after or equal to the due date'
+            (v: string | null) => !!v || t('emails.compose.project.validation.completionDateRequired'),
+            (v: string | null) => isLatestCompletionDateValid || t('emails.compose.project.validation.completionDateAfterDue')
           ]"
-          :error-messages="!isLatestCompletionDateValid ? ['Latest completion date must be after or equal to the due date'] : []"
+          :error-messages="!isLatestCompletionDateValid ? [t('emails.compose.project.validation.completionDateAfterDue')] : []"
           :required="isClient"
           clearable 
         >
           <template #prepend-inner>
-            <div class="text-base font-weight-medium text-disabled">
-              Latest Project Completion Date:
+            <div class="text-base font-weight-medium text-disabled prepend-label">
+              {{ t('emails.compose.project.latestCompletionDate') }}:
             </div>
           </template>
         </VTextField>
@@ -555,8 +557,8 @@ const resetValues = () => {
         density="compact"
       >
         <template #prepend-inner>
-          <div class="text-base font-weight-medium text-disabled">
-            Subject:
+          <div class="text-base font-weight-medium text-disabled prepend-label">
+            {{ t('emails.compose.subject') }}:
           </div>
         </template>
       </VTextField>
@@ -567,7 +569,7 @@ const resetValues = () => {
     <!-- 👉 Tiptap Editor  -->
     <TiptapEditor
       v-model="content"
-      placeholder="Message"
+      :placeholder="t('emails.compose.message')"
     />
 
     <!-- Attachment Section -->
@@ -576,8 +578,8 @@ const resetValues = () => {
       <VFileInput
         :model-value="attachmentsRef"
         multiple
-        label="Attachments"
-        placeholder="Select your files"
+        :label="t('emails.compose.attachments')"
+        :placeholder="t('emails.compose.selectFiles')"
         prepend-icon="bx-paperclip"
         density="compact"
         :error-messages="attachmentErrors"
@@ -614,7 +616,7 @@ const resetValues = () => {
         :disabled="(isClient && (!projectTitle || !property || !serviceType || !dueDate)) || !subject || !content || attachmentErrors.length > 0"
         @click="sendMessage"
       >
-        send
+        {{ t('emails.compose.send') }}
       </VBtn>
 
       <VSpacer />
@@ -651,6 +653,12 @@ const resetValues = () => {
   .v-field__prepend-inner {
     align-items: center;
     padding: 0;
+    min-inline-size: 180px; /* Increased from default to accommodate French text */
+  }
+
+  .prepend-label {
+    min-inline-size: 180px; /* Match the prepend-inner size */
+    padding-inline-end: 8px;
   }
 
   .v-textarea .v-field {

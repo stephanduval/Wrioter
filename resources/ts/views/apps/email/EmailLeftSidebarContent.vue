@@ -65,34 +65,34 @@ watch(
 // Folders list
 const folders = computed(() => [
   {
-    title: 'Inbox',
+    title: t('emails.folders.inbox'),
     prependIcon: 'bx-envelope',
     to: { name: 'apps-email' } as RouteLocationRaw,
     badge: { content: inboxEmails.value, color: 'primary' },
   },
   {
-    title: 'Due Today',
+    title: t('emails.folders.dueToday'),
     prependIcon: 'bx-calendar-exclamation',
     to: { name: 'apps-email-filter', params: { filter: 'due-today' } } as RouteLocationRaw,
     badge: { content: dueTodayEmails.value, color: 'warning' },
   },
   {
-    title: 'Sent',
+    title: t('emails.folders.sent'),
     prependIcon: 'bx-paper-plane',
     to: { name: 'apps-email-filter', params: { filter: 'sent' } } as RouteLocationRaw,
   },
   {
-    title: 'All Mail',
+    title: t('emails.folders.allMail'),
     prependIcon: 'bx-bxs-inbox',
     to: { name: 'apps-email-filter', params: { filter: 'all' } } as RouteLocationRaw,
   },
   {
-    title: 'Archive',
+    title: t('emails.folders.archive'),
     prependIcon: 'bx-archive',
     to: { name: 'apps-email-filter', params: { filter: 'archive' } } as RouteLocationRaw,
   },
   {
-    title: 'Trash',
+    title: t('emails.folders.trash'),
     prependIcon: 'bx-trash',
     to: { name: 'apps-email-filter', params: { filter: 'trash' } } as RouteLocationRaw,
   },
@@ -195,7 +195,7 @@ const confirmLabelDelete = async () => {
 
       <!-- Always show LABELS header and Add button -->
       <div class="text-caption text-disabled d-flex align-center justify-space-between px-6">
-        <span>LABELS</span>
+        <span>{{ t('emails.labels.title') }}</span>
         <IconBtn size="small" @click="showAddLabelForm = !showAddLabelForm">
           <VIcon :icon="showAddLabelForm ? 'bx-chevron-up' : 'bx-plus'" />
         </IconBtn>
@@ -206,13 +206,13 @@ const confirmLabelDelete = async () => {
         <div v-show="showAddLabelForm" class="px-6 pb-4">
           <VTextField
             v-model="newLabelName"
-            label="New Label Name"
+            :label="t('emails.labels.name')"
             density="compact"
             hide-details="auto"
             class="mb-2"
           />
           <div class="d-flex gap-1 mb-2">
-            <span class="text-caption align-self-center">Colour:</span>
+            <span class="text-caption align-self-center">{{ t('emails.labels.color') }}:</span>
             <VChip
               v-for="colour in availableColours"
               :key="colour"
@@ -226,7 +226,7 @@ const confirmLabelDelete = async () => {
               &nbsp;
             </VChip>
           </div>
-          <VBtn size="small" block @click="handleAddLabel">Add</VBtn>
+          <VBtn size="small" block @click="handleAddLabel">{{ t('emails.labels.add') }}</VBtn>
         </div>
       </VExpandTransition>
 
@@ -274,15 +274,14 @@ const confirmLabelDelete = async () => {
     <!-- Delete Confirmation Dialog -->
     <VDialog v-model="isDeleteDialogOpen" max-width="500px">
       <VCard>
-        <VCardTitle>Confirm Delete Label</VCardTitle>
+        <VCardTitle>{{ t('emails.labels.deleteConfirm.title') }}</VCardTitle>
         <VCardText>
-          Are you sure you want to delete the label "<strong>{{ labelToDelete?.title }}</strong>"?
-          This will remove the label from all associated messages. This action cannot be undone.
+          {{ t('emails.labels.deleteConfirm.message', { label: labelToDelete?.title }) }}
         </VCardText>
         <VCardActions>
           <VSpacer />
-          <VBtn color="secondary" @click="isDeleteDialogOpen = false">Cancel</VBtn>
-          <VBtn color="error" @click="confirmLabelDelete">Delete</VBtn>
+          <VBtn color="secondary" @click="isDeleteDialogOpen = false">{{ t('emails.labels.deleteConfirm.cancel') }}</VBtn>
+          <VBtn color="error" @click="confirmLabelDelete">{{ t('emails.labels.deleteConfirm.confirm') }}</VBtn>
         </VCardActions>
       </VCard>
     </VDialog>

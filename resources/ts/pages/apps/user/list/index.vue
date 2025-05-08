@@ -45,13 +45,13 @@ const updateOptions = (options: any) => {
 const { t } = useI18n()
 
 // Headers
-const headers = [
-  { title: t('headers.users.name'), key: 'user' },
+const headers = computed(() => [
+  { title: t('headers.users.user'), key: 'user' },
   { title: t('headers.users.email'), key: 'email' },
   { title: t('headers.users.role'), key: 'role' },
   { title: t('headers.users.status'), key: 'status' },
   { title: t('headers.users.actions'), key: 'actions', sortable: false },
-]
+])
 
 
 //   GPT FETCH USERCODE START
@@ -345,6 +345,7 @@ const openEditUserDrawer = (userId: number) => {
               { value: 100, title: '100' },
               { value: -1, title: 'All' },
             ]"
+            :label="t('itemsPerPage')"
             style="inline-size: 6.25rem;"
             @update:model-value="itemsPerPage = parseInt($event, 10)"
           />
@@ -356,7 +357,7 @@ const openEditUserDrawer = (userId: number) => {
           <div style="inline-size: 15.625rem;">
             <AppTextField
               v-model="searchQuery"
-              placeholder="Search User"
+              :placeholder="t('users.search')"
             />
           </div>
 
@@ -374,7 +375,7 @@ const openEditUserDrawer = (userId: number) => {
             prepend-icon="bx-plus"
             @click="isAddNewUserDrawerVisible = true"
           >
-            Add New User
+            {{ t('users.addNew') }}
           </VBtn>
         </div>
       </VCardText>
@@ -479,6 +480,7 @@ const openEditUserDrawer = (userId: number) => {
             v-model:page="page"
             :items-per-page="itemsPerPage"
             :total-items="totalUsers"
+            :showing-text="t('users.showing', { from: paginationMeta.from, to: paginationMeta.to, total: paginationMeta.total })"
           />
         </template>
       </VDataTableServer>

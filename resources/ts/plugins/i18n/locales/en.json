@@ -255,6 +255,7 @@
   "headers": {
     "users": {
       "title": "Users",
+      "user": "User",
       "name": "Name",
       "email": "Email",
       "role": "Role",
@@ -282,10 +283,221 @@
       "from": "From",
       "date": "Date",
       "status": "Status",
-      "actions": "Actions"
+      "actions": "Actions",
+      "dueDate": "Due Date",
+      "sender": "Sender",
+      "to": "To"
     }
   },
+  "projects": {
+    "title": "Projects",
+    "search": "Search Project",
+    "form": {
+      "serviceType": "Service Type",
+      "voiceOver": "Voice Over",
+      "translation": "Translation",
+      "revision": "Revision",
+      "modifications": "Modifications",
+      "transcription": "Transcription",
+      "other": "Other",
+      "all": "All"
+    },
+    "status": {
+      "received": "Received",
+      "in_progress": "In Progress",
+      "delivered": "Delivered"
+    },
+    "details": {
+      "title": "Project Details",
+      "information": "Information",
+      "projectInformation": "Project Information",
+      "edit": "Edit Project",
+      "client": "Client",
+      "serviceType": "Service Type",
+      "deadline": "Deadline",
+      "status": "Status",
+      "description": "Description",
+      "noDescription": "No description provided",
+      "property": "Property",
+      "timePreference": "Time Preference",
+      "latestCompletionDate": "Latest Completion Date",
+      "contactEmail": "Contact Email",
+      "dateRequested": "Date Requested",
+      "company": "Company",
+      "createdAt": "Created At",
+      "lastUpdated": "Last Updated",
+      "serviceDescription": "Service Description",
+      "messages": "Messages",
+      "newMessage": "New Message",
+      "noMessagesFound": "No messages found for this project.",
+      "from": "From",
+      "unknown": "Unknown",
+      "attachments": "Attachments",
+      "noAttachments": "No attachments found",
+      "comments": "Comments",
+      "noComments": "No comments found",
+      "addComment": "Add Comment",
+      "history": "Project History",
+      "noHistory": "No history found",
+      "cancel": "Cancel",
+      "saveChanges": "Save Changes",
+      "sendMessage": "Send Message"
+    },
+    "showing": "Showing {from} to {to} of {total} entries"
+  },
   "buttons": {
-    "compose": "Compose"
+    "compose": "Compose",
+    "submit": "Submit",
+    "cancel": "Cancel",
+    "save": "Save"
+  },
+  "users": {
+    "addNew": "Add New User",
+    "edit": "Edit User",
+    "search": "Search User",
+    "showing": "Showing {from} to {to} of {total} entries",
+    "form": {
+      "username": "Username",
+      "email": "Email",
+      "selectCompany": "Select Company",
+      "selectRole": "Select Role"
+    },
+    "view": {
+      "title": "User Details",
+      "information": "User Information",
+      "edit": "Edit User",
+      "cancel": "Cancel",
+      "saveChanges": "Save Changes",
+      "name": "Name",
+      "email": "Email",
+      "role": "Role",
+      "company": "Company",
+      "createdAt": "Created At",
+      "lastUpdated": "Last Updated",
+      "messages": "Messages",
+      "noMessages": "No messages found for this user",
+      "from": "From"
+    }
+  },
+  "companies": {
+    "addNew": "Add New Company",
+    "edit": "Edit Company",
+    "search": "Search Company",
+    "form": {
+      "name": "Company Name",
+      "namePlaceholder": "Enter company name"
+    }
+  },
+  "itemsPerPage": "Items per page",
+  "emails": {
+    "compose": {
+      "title": "Compose Message",
+      "to": "To",
+      "subject": "Subject",
+      "message": "Message",
+      "send": "Send",
+      "attachments": "Attachments",
+      "selectFiles": "Select your files",
+      "project": {
+        "title": "Project Title",
+        "titlePlaceholder": "Enter project title",
+        "property": "Property",
+        "propertyPlaceholder": "Enter property details",
+        "serviceType": "Service Type",
+        "serviceDescription": "Service Description",
+        "descriptionPlaceholder": "Describe the service you need",
+        "timePreference": "Time Preference",
+        "dueDate": "Due Date",
+        "latestCompletionDate": "Latest Project Completion Date",
+        "datePlaceholder": "YYYY-MM-DD",
+        "validation": {
+          "titleRequired": "Project title is required",
+          "propertyRequired": "Property is required",
+          "serviceTypeRequired": "Service type is required",
+          "dueDateRequired": "Due date is required",
+          "dueDateFuture": "Due date must be today or later",
+          "completionDateRequired": "Latest completion date is required",
+          "completionDateAfterDue": "Latest completion date must be after or equal to the due date"
+        }
+      },
+      "timePreferences": {
+        "beforeNoon": "Before Noon",
+        "before4pm": "Before 4pm",
+        "anytime": "Anytime"
+      },
+      "serviceTypes": {
+        "translation": "Translation",
+        "revision": "Revision",
+        "modifications": "Modifications",
+        "transcription": "Transcription",
+        "voiceOver": "Voice Over",
+        "other": "Other"
+      }
+    },
+    "labels": {
+      "title": "LABELS",
+      "addNew": "Add New Label",
+      "name": "New Label Name",
+      "color": "Color",
+      "add": "Add",
+      "deleteConfirm": {
+        "title": "Confirm Delete Label",
+        "message": "Are you sure you want to delete the label \"{label}\"? This will remove the label from all associated messages. This action cannot be undone.",
+        "cancel": "Cancel",
+        "confirm": "Delete"
+      }
+    },
+    "folders": {
+      "inbox": "Inbox",
+      "dueToday": "Due Today",
+      "sent": "Sent",
+      "allMail": "All Mail",
+      "archive": "Archive",
+      "trash": "Trash"
+    },
+    "actions": {
+      "reply": "Reply",
+      "forward": "Forward",
+      "delete": "Delete",
+      "archive": "Archive",
+      "moveToInbox": "Move to Inbox",
+      "moveToTrash": "Move to Trash",
+      "deleteForever": "Delete Forever",
+      "markAsUnread": "Mark as Unread",
+      "markAsRead": "Mark as Read",
+      "label": "Label",
+      "search": "Search mail",
+      "refresh": "Refresh",
+      "changeTaskStatus": "Change Task Status"
+    },
+    "status": {
+      "new": "New",
+      "inProgress": "In Progress",
+      "completed": "Completed"
+    },
+    "confirmations": {
+      "trash": {
+        "title": "Confirm Move to Trash",
+        "message": "Are you sure you want to move the selected message(s) to the trash?",
+        "cancel": "Cancel",
+        "confirm": "Move to Trash"
+      },
+      "delete": {
+        "title": "Confirm Permanent Deletion",
+        "message": "Are you sure you want to permanently delete the selected message(s)?",
+        "warning": "This action cannot be undone.",
+        "cancel": "Cancel",
+        "confirm": "Delete Forever"
+      }
+    },
+    "messages": {
+      "noSubject": "No Subject",
+      "attachmentsCount": "{count} Attachments",
+      "replyTo": "Reply to {name}",
+      "clickToReply": "Click here to Reply",
+      "clickToForward": "Forward",
+      "unknown": "Unknown Sender",
+      "noEmail": "no-email@example.com"
+    }
   }
 }

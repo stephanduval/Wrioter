@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { nextTick, onMounted, ref, watch } from 'vue';
+import { defineEmits, defineProps, nextTick, onMounted, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 
 interface Props {
   isDrawerOpen: boolean;
@@ -13,6 +14,7 @@ interface Emit {
 
 const props = defineProps<Props>();
 const emit = defineEmits<Emit>();
+const { t } = useI18n();
 
 const companyName = ref('');
 const refForm = ref(null);
@@ -86,7 +88,10 @@ onMounted(fetchCompanyDetails);
     :model-value="props.isDrawerOpen"
     @update:model-value="closeDrawer"
   >
-    <AppDrawerHeaderSection title="Edit Company" @cancel="closeDrawer" />
+    <AppDrawerHeaderSection
+      :title="t('companies.edit')"
+      @cancel="closeDrawer"
+    />
 
     <VDivider />
 

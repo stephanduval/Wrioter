@@ -3,6 +3,7 @@ import EmailView from '@/views/apps/email/EmailView.vue'
 import axios from 'axios'
 import { format } from 'date-fns'
 import { onMounted, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 
 // Configure axios
@@ -22,6 +23,9 @@ const emailMeta = ref({
   hasPreviousEmail: false,
   hasNextEmail: false,
 })
+const isEditDrawerOpen = ref(false)
+
+const { t } = useI18n()
 
 interface Project {
   id: number
@@ -184,6 +188,10 @@ const handleEmailRefresh = () => {
   fetchProject()
 }
 
+const handleProjectUpdated = () => {
+  fetchProject()
+}
+
 onMounted(() => {
   console.log('Component mounted, fetching project...')
   fetchProject()
@@ -191,462 +199,546 @@ onMounted(() => {
 </script>
 
 <template>
-  <VCard class="mb-6">
-    <VCardItem>
-      <template #prepend>
-        <VBtn
-          icon
-          variant="text"
-          color="default"
-          size="small"
-          @click="navigateBack"
-        >
-          <VIcon
-            size="24"
-            icon="mdi-arrow-left"
-          />
-        </VBtn>
-      </template>
-      
-      <VCardTitle class="text-h5">
-        Project Details
-      </VCardTitle>
-      
-      <template #append>
-        <VBtn
-          color="primary"
-          @click="composeMessage"
-        >
-          Send Message
-        </VBtn>
-      </template>
-    </VCardItem>
-  </VCard>
+  <div>
+    <h1 class="text-h4 mb-4">{{ t('projects.details.title') }}</h1>
 
-  <VRow v-if="isLoading">
-    <VCol cols="12">
-      <VCard>
-        <VCardText class="d-flex justify-center">
-          <VProgressCircular
-            indeterminate
+    <VCard class="mb-6">
+      <VCardItem>
+        <template #prepend>
+          <VBtn
+            icon
+            variant="text"
+            color="default"
+            size="small"
+            @click="navigateBack"
+          >
+            <VIcon
+              size="24"
+              icon="mdi-arrow-left"
+            />
+          </VBtn>
+        </template>
+        
+        <VCardTitle class="text-h5">
+          {{ t('projects.details.information') }}
+        </VCardTitle>
+        
+        <template #append>
+          <VBtn
             color="primary"
-          />
-        </VCardText>
-      </VCard>
-    </VCol>
-  </VRow>
+            @click="composeMessage"
+          >
+            {{ t('projects.details.sendMessage') }}
+          </VBtn>
+        </template>
+      </VCardItem>
+    </VCard>
 
-  <VRow v-else-if="error">
-    <VCol cols="12">
-      <VAlert
-        type="error"
-        variant="tonal"
+    <VRow v-if="isLoading">
+      <VCol cols="12">
+        <VCard>
+          <VCardText class="d-flex justify-center">
+            <VProgressCircular
+              indeterminate
+              color="primary"
+            />
+          </VCardText>
+        </VCard>
+      </VCol>
+    </VRow>
+
+    <VRow v-else-if="error">
+      <VCol cols="12">
+        <VAlert
+          type="error"
+          variant="tonal"
+        >
+          {{ error }}
+        </VAlert>
+      </VCol>
+    </VRow>
+
+    <VRow v-else-if="project">
+      <!-- Project Information -->
+      <VCol
+        cols="12"
+        md="5"
+        lg="4"
       >
-        {{ error }}
-      </VAlert>
-    </VCol>
-  </VRow>
-
-  <VRow v-else-if="project">
-    <!-- Project Information -->
-    <VCol
-      cols="12"
-      md="5"
-      lg="4"
-    >
-      <VCard>
-        <VCardItem>
-          <VCardTitle>Project Information</VCardTitle>
-          <template #append>
-            <template v-if="isEditing">
+        <VCard>
+          <VCardItem>
+            <VCardTitle>
+              {{ t('projects.details.projectInformation') }}
+            </VCardTitle>
+            <template #append>
+              <template v-if="isEditing">
+                <VBtn
+                  color="error"
+                  variant="outlined"
+                  class="me-4"
+                  @click="cancelEditing"
+                >
+                  {{ t('projects.details.cancel') }}
+                </VBtn>
+                <VBtn
+                  color="success"
+                  @click="saveProject"
+                  :loading="isLoading"
+                >
+                  {{ t('projects.details.saveChanges') }}
+                </VBtn>
+              </template>
               <VBtn
-                color="error"
-                variant="outlined"
-                class="me-4"
-                @click="cancelEditing"
+                v-else
+                color="primary"
+                @click="startEditing"
               >
-                Cancel
-              </VBtn>
-              <VBtn
-                color="success"
-                @click="saveProject"
-                :loading="isLoading"
-              >
-                Save Changes
+                {{ t('projects.details.edit') }}
               </VBtn>
             </template>
-            <VBtn
-              v-else
-              color="primary"
-              @click="startEditing"
+          </VCardItem>
+
+          <VDivider />
+
+          <VCardText>
+            <VList>
+              <VListItem>
+                <template #prepend>
+                  <VIcon
+                    color="primary"
+                    icon="mdi-format-title"
+                    class="me-3"
+                  />
+                </template>
+                <VListItemTitle>
+                  {{ t('projects.details.title') }}
+                </VListItemTitle>
+                <VListItemSubtitle>
+                  <VTextField
+                    v-if="isEditing"
+                    v-model="editedProject.title"
+                    density="compact"
+                    hide-details
+                  />
+                  <template v-else>
+                    {{ project?.title }}
+                  </template>
+                </VListItemSubtitle>
+              </VListItem>
+              
+              <VListItem>
+                <template #prepend>
+                  <VIcon
+                    color="primary"
+                    icon="mdi-home"
+                    class="me-3"
+                  />
+                </template>
+                <VListItemTitle>
+                  {{ t('projects.details.property') }}
+                </VListItemTitle>
+                <VListItemSubtitle>
+                  <VTextField
+                    v-if="isEditing"
+                    v-model="editedProject.property"
+                    density="compact"
+                    hide-details
+                  />
+                  <template v-else>
+                    {{ project?.property }}
+                  </template>
+                </VListItemSubtitle>
+              </VListItem>
+              
+              <VListItem>
+                <template #prepend>
+                  <VIcon
+                    color="primary"
+                    icon="mdi-clock"
+                    class="me-3"
+                  />
+                </template>
+                <VListItemTitle>
+                  {{ t('projects.details.timePreference') }}
+                </VListItemTitle>
+                <VListItemSubtitle>
+                  <VSelect
+                    v-if="isEditing"
+                    v-model="editedProject.time_preference"
+                    :items="timePreferenceOptions"
+                    density="compact"
+                    hide-details
+                  />
+                  <template v-else>
+                    {{ project?.time_preference }}
+                  </template>
+                </VListItemSubtitle>
+              </VListItem>
+              
+              <VListItem>
+                <template #prepend>
+                  <VIcon
+                    color="primary"
+                    icon="mdi-briefcase"
+                    class="me-3"
+                  />
+                </template>
+                <VListItemTitle>
+                  {{ t('projects.details.serviceType') }}
+                </VListItemTitle>
+                <VListItemSubtitle>
+                  <VSelect
+                    v-if="isEditing"
+                    v-model="editedProject.service_type"
+                    :items="serviceTypeOptions"
+                    density="compact"
+                    hide-details
+                  />
+                  <template v-else>
+                    {{ project?.service_type }}
+                  </template>
+                </VListItemSubtitle>
+              </VListItem>
+              
+              <VListItem>
+                <template #prepend>
+                  <VIcon
+                    color="primary"
+                    icon="mdi-calendar"
+                    class="me-3"
+                  />
+                </template>
+                <VListItemTitle>
+                  {{ t('projects.details.deadline') }}
+                </VListItemTitle>
+                <VListItemSubtitle>
+                  <VTextField
+                    v-if="isEditing"
+                    v-model="editedProject.deadline"
+                    type="date"
+                    density="compact"
+                    hide-details
+                  />
+                  <template v-else>
+                    {{ formattedDate(project?.deadline) }}
+                  </template>
+                </VListItemSubtitle>
+              </VListItem>
+
+              <VListItem>
+                <template #prepend>
+                  <VIcon
+                    color="primary"
+                    icon="mdi-calendar-check"
+                    class="me-3"
+                  />
+                </template>
+                <VListItemTitle>
+                  {{ t('projects.details.latestCompletionDate') }}
+                </VListItemTitle>
+                <VListItemSubtitle>
+                  <VTextField
+                    v-if="isEditing"
+                    v-model="editedProject.latest_completion_date"
+                    type="date"
+                    density="compact"
+                    hide-details
+                  />
+                  <template v-else>
+                    {{ formattedDate(project?.latest_completion_date) }}
+                  </template>
+                </VListItemSubtitle>
+              </VListItem>
+              
+              <VListItem>
+                <template #prepend>
+                  <VIcon
+                    color="primary"
+                    icon="mdi-information"
+                    class="me-3"
+                  />
+                </template>
+                <VListItemTitle>
+                  {{ t('projects.details.status') }}
+                </VListItemTitle>
+                <VListItemSubtitle>
+                  <VSelect
+                    v-if="isEditing"
+                    v-model="editedProject.status"
+                    :items="statusOptions"
+                    density="compact"
+                    hide-details
+                  />
+                  <template v-else>
+                    <VChip
+                      :color="statusColorMap[project?.status || '']"
+                      size="small"
+                      class="text-capitalize"
+                    >
+                      {{ t(`projects.status.${project?.status}`) }}
+                    </VChip>
+                  </template>
+                </VListItemSubtitle>
+              </VListItem>
+              
+              <VListItem v-if="project?.client">
+                <template #prepend>
+                  <VIcon
+                    color="primary"
+                    icon="mdi-account"
+                    class="me-3"
+                  />
+                </template>
+                <VListItemTitle>
+                  {{ t('projects.details.client') }}
+                </VListItemTitle>
+                <VListItemSubtitle>{{ project.client.name }}</VListItemSubtitle>
+              </VListItem>
+              
+              <VListItem>
+                <template #prepend>
+                  <VIcon
+                    color="primary"
+                    icon="mdi-email"
+                    class="me-3"
+                  />
+                </template>
+                <VListItemTitle>
+                  {{ t('projects.details.contactEmail') }}
+                </VListItemTitle>
+                <VListItemSubtitle>
+                  <VTextField
+                    v-if="isEditing"
+                    v-model="editedProject.contact_email"
+                    density="compact"
+                    hide-details
+                  />
+                  <template v-else>
+                    {{ project?.contact_email }}
+                  </template>
+                </VListItemSubtitle>
+              </VListItem>
+              
+              <VListItem>
+                <template #prepend>
+                  <VIcon
+                    color="primary"
+                    icon="mdi-calendar-plus"
+                    class="me-3"
+                  />
+                </template>
+                <VListItemTitle>
+                  {{ t('projects.details.dateRequested') }}
+                </VListItemTitle>
+                <VListItemSubtitle>{{ formattedDate(project?.date_requested) }}</VListItemSubtitle>
+              </VListItem>
+              
+              <VListItem v-if="project?.company">
+                <template #prepend>
+                  <VIcon
+                    color="primary"
+                    icon="mdi-office-building"
+                    class="me-3"
+                  />
+                </template>
+                <VListItemTitle>
+                  {{ t('projects.details.company') }}
+                </VListItemTitle>
+                <VListItemSubtitle>{{ project.company.name }}</VListItemSubtitle>
+              </VListItem>
+              
+              <VListItem>
+                <template #prepend>
+                  <VIcon
+                    color="primary"
+                    icon="mdi-calendar-plus"
+                    class="me-3"
+                  />
+                </template>
+                <VListItemTitle>
+                  {{ t('projects.details.createdAt') }}
+                </VListItemTitle>
+                <VListItemSubtitle>{{ formattedDate(project?.created_at) }}</VListItemSubtitle>
+              </VListItem>
+
+              <VListItem>
+                <template #prepend>
+                  <VIcon
+                    color="primary"
+                    icon="mdi-calendar-edit"
+                    class="me-3"
+                  />
+                </template>
+                <VListItemTitle>
+                  {{ t('projects.details.lastUpdated') }}
+                </VListItemTitle>
+                <VListItemSubtitle>{{ formattedDate(project?.updated_at) }}</VListItemSubtitle>
+              </VListItem>
+
+              <VListItem>
+                <template #prepend>
+                  <VIcon
+                    color="primary"
+                    icon="mdi-text-box"
+                    class="me-3"
+                  />
+                </template>
+                <VListItemTitle>
+                  {{ t('projects.details.serviceDescription') }}
+                </VListItemTitle>
+                <VListItemSubtitle>
+                  <VTextarea
+                    v-if="isEditing"
+                    v-model="editedProject.service_description"
+                    density="compact"
+                    hide-details
+                    rows="3"
+                    auto-grow
+                  />
+                  <template v-else>
+                    {{ project?.service_description || t('projects.details.noDescription') }}
+                  </template>
+                </VListItemSubtitle>
+              </VListItem>
+            </VList>
+          </VCardText>
+        </VCard>
+        
+        <VCard
+          v-if="project.service_description"
+          class="mt-6"
+        >
+          <VCardItem>
+            <VCardTitle>
+              {{ t('projects.details.serviceDescription') }}
+            </VCardTitle>
+          </VCardItem>
+          
+          <VDivider />
+          
+          <VCardText>
+            <p>{{ project.service_description }}</p>
+          </VCardText>
+        </VCard>
+      </VCol>
+      
+      <!-- Project Messages -->
+      <VCol
+        cols="12"
+        md="7"
+        lg="8"
+      >
+        <VCard>
+          <VCardItem>
+            <VCardTitle>
+              {{ t('projects.details.messages') }}
+            </VCardTitle>
+            <template #append>
+              <VBtn
+                color="primary"
+                variant="text"
+                @click="composeMessage"
+              >
+                {{ t('projects.details.newMessage') }}
+              </VBtn>
+            </template>
+          </VCardItem>
+          
+          <VDivider />
+          
+          <VCardText v-if="!messages.length">
+            <VAlert
+              color="info"
+              variant="tonal"
             >
-              Edit Project
-            </VBtn>
-          </template>
-        </VCardItem>
-
-        <VDivider />
-
-        <VCardText>
-          <VList>
-            <VListItem>
+              {{ t('projects.details.noMessagesFound') }}
+            </VAlert>
+          </VCardText>
+          
+          <VList v-else>
+            <VListItem
+              v-for="message in messages"
+              :key="message.id"
+              @click="handleEmailClick(message)"
+            >
               <template #prepend>
-                <VIcon
+                <VAvatar
                   color="primary"
-                  icon="mdi-format-title"
-                  class="me-3"
-                />
+                  variant="tonal"
+                >
+                  <VIcon icon="mdi-email" />
+                </VAvatar>
               </template>
-              <VListItemTitle>Title</VListItemTitle>
+              
+              <VListItemTitle>{{ message.subject }}</VListItemTitle>
               <VListItemSubtitle>
-                <VTextField
-                  v-if="isEditing"
-                  v-model="editedProject.title"
-                  density="compact"
-                  hide-details
-                />
-                <template v-else>
-                  {{ project?.title }}
-                </template>
+                {{ t('projects.details.from') }}: {{ message.from?.name || message.from?.email || t('projects.details.unknown') }}
               </VListItemSubtitle>
-            </VListItem>
-            
-            <VListItem>
-              <template #prepend>
-                <VIcon
-                  color="primary"
-                  icon="mdi-home"
-                  class="me-3"
-                />
+              
+              <template #append>
+                <div class="d-flex flex-column align-end">
+                  <span class="text-xs text-disabled">{{ formattedDate(message.created_at) }}</span>
+                </div>
               </template>
-              <VListItemTitle>Property</VListItemTitle>
-              <VListItemSubtitle>
-                <VTextField
-                  v-if="isEditing"
-                  v-model="editedProject.property"
-                  density="compact"
-                  hide-details
-                />
-                <template v-else>
-                  {{ project?.property }}
-                </template>
-              </VListItemSubtitle>
-            </VListItem>
-            
-            <VListItem>
-              <template #prepend>
-                <VIcon
-                  color="primary"
-                  icon="mdi-clock"
-                  class="me-3"
-                />
-              </template>
-              <VListItemTitle>Time Preference</VListItemTitle>
-              <VListItemSubtitle>
-                <VSelect
-                  v-if="isEditing"
-                  v-model="editedProject.time_preference"
-                  :items="timePreferenceOptions"
-                  density="compact"
-                  hide-details
-                />
-                <template v-else>
-                  {{ project?.time_preference }}
-                </template>
-              </VListItemSubtitle>
-            </VListItem>
-            
-            <VListItem>
-              <template #prepend>
-                <VIcon
-                  color="primary"
-                  icon="mdi-briefcase"
-                  class="me-3"
-                />
-              </template>
-              <VListItemTitle>Service Type</VListItemTitle>
-              <VListItemSubtitle>
-                <VSelect
-                  v-if="isEditing"
-                  v-model="editedProject.service_type"
-                  :items="serviceTypeOptions"
-                  density="compact"
-                  hide-details
-                />
-                <template v-else>
-                  {{ project?.service_type }}
-                </template>
-              </VListItemSubtitle>
-            </VListItem>
-            
-            <VListItem>
-              <template #prepend>
-                <VIcon
-                  color="primary"
-                  icon="mdi-calendar"
-                  class="me-3"
-                />
-              </template>
-              <VListItemTitle>Deadline</VListItemTitle>
-              <VListItemSubtitle>
-                <VTextField
-                  v-if="isEditing"
-                  v-model="editedProject.deadline"
-                  type="date"
-                  density="compact"
-                  hide-details
-                />
-                <template v-else>
-                  {{ formattedDate(project?.deadline) }}
-                </template>
-              </VListItemSubtitle>
-            </VListItem>
-
-            <VListItem>
-              <template #prepend>
-                <VIcon
-                  color="primary"
-                  icon="mdi-calendar-check"
-                  class="me-3"
-                />
-              </template>
-              <VListItemTitle>Latest Completion Date</VListItemTitle>
-              <VListItemSubtitle>
-                <VTextField
-                  v-if="isEditing"
-                  v-model="editedProject.latest_completion_date"
-                  type="date"
-                  density="compact"
-                  hide-details
-                />
-                <template v-else>
-                  {{ formattedDate(project?.latest_completion_date) }}
-                </template>
-              </VListItemSubtitle>
-            </VListItem>
-            
-            <VListItem>
-              <template #prepend>
-                <VIcon
-                  color="primary"
-                  icon="mdi-information"
-                  class="me-3"
-                />
-              </template>
-              <VListItemTitle>Status</VListItemTitle>
-              <VListItemSubtitle>
-                <VSelect
-                  v-if="isEditing"
-                  v-model="editedProject.status"
-                  :items="statusOptions"
-                  density="compact"
-                  hide-details
-                />
-                <template v-else>
-                  <VChip
-                    :color="statusColorMap[project?.status || '']"
-                    size="small"
-                    class="text-capitalize"
-                  >
-                    {{ project?.status }}
-                  </VChip>
-                </template>
-              </VListItemSubtitle>
-            </VListItem>
-            
-            <VListItem v-if="project?.client">
-              <template #prepend>
-                <VIcon
-                  color="primary"
-                  icon="mdi-account"
-                  class="me-3"
-                />
-              </template>
-              <VListItemTitle>Client</VListItemTitle>
-              <VListItemSubtitle>{{ project.client.name }}</VListItemSubtitle>
-            </VListItem>
-            
-            <VListItem>
-              <template #prepend>
-                <VIcon
-                  color="primary"
-                  icon="mdi-email"
-                  class="me-3"
-                />
-              </template>
-              <VListItemTitle>Contact Email</VListItemTitle>
-              <VListItemSubtitle>
-                <VTextField
-                  v-if="isEditing"
-                  v-model="editedProject.contact_email"
-                  density="compact"
-                  hide-details
-                />
-                <template v-else>
-                  {{ project?.contact_email }}
-                </template>
-              </VListItemSubtitle>
-            </VListItem>
-            
-            <VListItem>
-              <template #prepend>
-                <VIcon
-                  color="primary"
-                  icon="mdi-calendar-plus"
-                  class="me-3"
-                />
-              </template>
-              <VListItemTitle>Date Requested</VListItemTitle>
-              <VListItemSubtitle>{{ formattedDate(project?.date_requested) }}</VListItemSubtitle>
-            </VListItem>
-            
-            <VListItem v-if="project?.company">
-              <template #prepend>
-                <VIcon
-                  color="primary"
-                  icon="mdi-office-building"
-                  class="me-3"
-                />
-              </template>
-              <VListItemTitle>Company</VListItemTitle>
-              <VListItemSubtitle>{{ project.company.name }}</VListItemSubtitle>
-            </VListItem>
-            
-            <VListItem>
-              <template #prepend>
-                <VIcon
-                  color="primary"
-                  icon="mdi-calendar-plus"
-                  class="me-3"
-                />
-              </template>
-              <VListItemTitle>Created At</VListItemTitle>
-              <VListItemSubtitle>{{ formattedDate(project?.created_at) }}</VListItemSubtitle>
-            </VListItem>
-
-            <VListItem>
-              <template #prepend>
-                <VIcon
-                  color="primary"
-                  icon="mdi-calendar-edit"
-                  class="me-3"
-                />
-              </template>
-              <VListItemTitle>Last Updated</VListItemTitle>
-              <VListItemSubtitle>{{ formattedDate(project?.updated_at) }}</VListItemSubtitle>
-            </VListItem>
-
-            <VListItem>
-              <template #prepend>
-                <VIcon
-                  color="primary"
-                  icon="mdi-text-box"
-                  class="me-3"
-                />
-              </template>
-              <VListItemTitle>Service Description</VListItemTitle>
-              <VListItemSubtitle>
-                <VTextarea
-                  v-if="isEditing"
-                  v-model="editedProject.service_description"
-                  density="compact"
-                  hide-details
-                  rows="3"
-                  auto-grow
-                />
-                <template v-else>
-                  {{ project?.service_description || 'No description provided' }}
-                </template>
-              </VListItemSubtitle>
             </VListItem>
           </VList>
-        </VCardText>
-      </VCard>
-      
-      <VCard
-        v-if="project.service_description"
-        class="mt-6"
-      >
-        <VCardItem>
-          <VCardTitle>Service Description</VCardTitle>
-        </VCardItem>
-        
-        <VDivider />
-        
-        <VCardText>
-          <p>{{ project.service_description }}</p>
-        </VCardText>
-      </VCard>
-    </VCol>
-    
-    <!-- Project Messages -->
-    <VCol
-      cols="12"
-      md="7"
-      lg="8"
-    >
-      <VCard>
-        <VCardItem>
-          <VCardTitle>Messages</VCardTitle>
-          <template #append>
-            <VBtn
-              color="primary"
-              variant="text"
-              @click="composeMessage"
-            >
-              New Message
-            </VBtn>
-          </template>
-        </VCardItem>
-        
-        <VDivider />
-        
-        <VCardText v-if="!messages.length">
-          <VAlert
-            color="info"
-            variant="tonal"
-          >
-            No messages found for this project.
-          </VAlert>
-        </VCardText>
-        
-        <VList v-else>
-          <VListItem
-            v-for="message in messages"
-            :key="message.id"
-            @click="handleEmailClick(message)"
-          >
-            <template #prepend>
-              <VAvatar
-                color="primary"
-                variant="tonal"
-              >
-                <VIcon icon="mdi-email" />
-              </VAvatar>
-            </template>
-            
-            <VListItemTitle>{{ message.subject }}</VListItemTitle>
-            <VListItemSubtitle>
-              From: {{ message.from?.name || message.from?.email || 'Unknown' }}
-            </VListItemSubtitle>
-            
-            <template #append>
-              <div class="d-flex flex-column align-end">
-                <span class="text-xs text-disabled">{{ formattedDate(message.created_at) }}</span>
-              </div>
-            </template>
-          </VListItem>
-        </VList>
-      </VCard>
-    </VCol>
-  </VRow>
+        </VCard>
+      </VCol>
+    </VRow>
 
-  <EmailView
-    :email="selectedEmail"
-    :email-meta="emailMeta"
-    @close="handleEmailClose"
-    @refresh="handleEmailRefresh"
-  />
+    <EmailView
+      :email="selectedEmail"
+      :email-meta="emailMeta"
+      @close="handleEmailClose"
+      @refresh="handleEmailRefresh"
+    />
+
+    <!-- Attachments Section -->
+    <VCard class="mb-6">
+      <VCardText>
+        <h3 class="text-h6 mb-4">{{ t('projects.details.attachments') }}</h3>
+        <div v-if="!project?.attachments?.length">
+          {{ t('projects.details.noAttachments') }}
+        </div>
+        <!-- Add attachments list here -->
+      </VCardText>
+    </VCard>
+
+    <!-- Comments Section -->
+    <VCard class="mb-6">
+      <VCardText>
+        <h3 class="text-h6 mb-4">{{ t('projects.details.comments') }}</h3>
+        <div v-if="!project?.comments?.length">
+          {{ t('projects.details.noComments') }}
+        </div>
+        <!-- Add comments list here -->
+        <VBtn
+          prepend-icon="bx-comment-add"
+          class="mt-4"
+        >
+          {{ t('projects.details.addComment') }}
+        </VBtn>
+      </VCardText>
+    </VCard>
+
+    <!-- Project History Section -->
+    <VCard>
+      <VCardText>
+        <h3 class="text-h6 mb-4">{{ t('projects.details.history') }}</h3>
+        <div v-if="!project?.history?.length">
+          {{ t('projects.details.noHistory') }}
+        </div>
+        <!-- Add history list here -->
+      </VCardText>
+    </VCard>
+
+    <!-- Edit Project Drawer -->
+    <EditProjectDrawer
+      v-model:is-drawer-open="isEditDrawerOpen"
+      :project="project"
+      @project-updated="handleProjectUpdated"
+    />
+  </div>
 </template>
 
 <style lang="scss">

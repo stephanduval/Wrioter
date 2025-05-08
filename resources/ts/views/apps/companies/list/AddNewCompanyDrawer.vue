@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { defineEmits, defineProps, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 // Props and Emits
 const props = defineProps({
@@ -9,6 +10,7 @@ const props = defineProps({
   },
 })
 const emit = defineEmits(['update:isDrawerOpen', 'companyData'])
+const { t } = useI18n()
 
 // Form Fields
 const companyName = ref('')
@@ -64,7 +66,7 @@ const onSubmit = async () => {
     border="none"
   >
     <AppDrawerHeaderSection
-      title="Add New Company"
+      :title="t('companies.addNew')"
       @cancel="closeDrawer"
     />
 
@@ -78,15 +80,15 @@ const onSubmit = async () => {
             <AppTextField
               v-model="companyName"
               :rules="[requiredValidator]"
-              label="Company Name"
-              placeholder="Enter company name"
+              :label="t('companies.form.name')"
+              :placeholder="t('companies.form.namePlaceholder')"
             />
           </VCol>
 
           <!-- Submit and Cancel -->
           <VCol cols="12">
-            <VBtn type="submit" class="me-4">Submit</VBtn>
-            <VBtn variant="tonal" color="error" @click="closeDrawer">Cancel</VBtn>
+            <VBtn type="submit" class="me-4">{{ t('buttons.submit') }}</VBtn>
+            <VBtn variant="tonal" color="error" @click="closeDrawer">{{ t('buttons.cancel') }}</VBtn>
           </VCol>
         </VRow>
       </VForm>

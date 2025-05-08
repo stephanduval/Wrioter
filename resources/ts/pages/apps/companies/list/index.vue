@@ -27,11 +27,11 @@ const selectedCompanyId = ref<number | null>(null);
 const isAddNewCompanyDrawerVisible = ref(false);
 
 // Headers
-const headers = [
+const headers = computed(() => [
   { title: t('headers.companies.name'), key: 'companyName' },
   { title: t('headers.companies.status'), key: 'status' },
   { title: t('headers.companies.actions'), key: 'actions', sortable: false, align: 'end' },
-];
+]);
 
 // 👉 Open edit drawer
 const openEditCompanyDrawer = (companyId: number) => {
@@ -147,24 +147,28 @@ const updateOptions = (options: any) => {
               { value: 100, title: '100' },
               { value: -1, title: 'All' },
             ]"
+            :label="t('itemsPerPage')"
             style="inline-size: 6.25rem;"
             @update:model-value="itemsPerPage = parseInt($event, 10)"
           />
         </div>
         <VSpacer />
 
-        <div class="app-user-search-filter d-flex align-center flex-wrap gap-4">
+        <div class="app-company-search-filter d-flex align-center flex-wrap gap-4">
           <!-- 👉 Search  -->
           <div style="inline-size: 15.625rem;">
-            <AppTextField v-model="searchQuery" placeholder="Search Company" />
+            <AppTextField
+              v-model="searchQuery"
+              :placeholder="t('companies.search')"
+            />
           </div>
 
-          <!-- 👉 Add New Company Button -->
+          <!-- 👉 Add company button -->
           <VBtn
             prepend-icon="bx-plus"
             @click="isAddNewCompanyDrawerVisible = true"
           >
-            Add New Company
+            {{ t('companies.addNew') }}
           </VBtn>
         </div>
       </VCardText>

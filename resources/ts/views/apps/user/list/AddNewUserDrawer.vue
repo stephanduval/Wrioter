@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { PerfectScrollbar } from 'vue3-perfect-scrollbar'
 import { VSelect } from 'vuetify/components/VSelect'
 
@@ -26,6 +27,7 @@ interface Role {
 
 const props = defineProps<Props>()
 const emit = defineEmits<Emit>()
+const { t } = useI18n()
 
 const isFormValid = ref(false)
 const refForm = ref<VForm | null>(null)
@@ -166,7 +168,7 @@ const handleDrawerModelValueUpdate = (val: boolean) => {
   >
     <!-- Drawer Title -->
     <AppDrawerHeaderSection
-      title="Add New User"
+      :title="t('users.addNew')"
       @cancel="closeNavigationDrawer"
     />
 
@@ -186,7 +188,7 @@ const handleDrawerModelValueUpdate = (val: boolean) => {
                 <AppTextField
                   v-model="userName"
                   :rules="[requiredValidator]"
-                  label="Username"
+                  :label="t('users.form.username')"
                   placeholder="Johndoe"
                 />
               </VCol>
@@ -196,7 +198,7 @@ const handleDrawerModelValueUpdate = (val: boolean) => {
                 <AppTextField
                   v-model="email"
                   :rules="[requiredValidator, emailValidator]"
-                  label="Email"
+                  :label="t('users.form.email')"
                   placeholder="johndoe@email.com"
                 />
               </VCol>
@@ -206,8 +208,8 @@ const handleDrawerModelValueUpdate = (val: boolean) => {
                 <VSelect
                   v-model="company"
                   :rules="[requiredValidator]"
-                  label="Select Company"
-                  placeholder="Select Company"
+                  :label="t('users.form.selectCompany')"
+                  :placeholder="t('users.form.selectCompany')"
                   :items="companyNames"
                 />
               </VCol>
@@ -217,8 +219,8 @@ const handleDrawerModelValueUpdate = (val: boolean) => {
                 <VSelect
                   v-model="role"
                   :rules="[requiredValidator]"
-                  label="Select Role"
-                  placeholder="Select Role"
+                  :label="t('users.form.selectRole')"
+                  :placeholder="t('users.form.selectRole')"
                   :items="roleNames"
                 />
               </VCol>
@@ -229,7 +231,7 @@ const handleDrawerModelValueUpdate = (val: boolean) => {
                   type="submit"
                   class="me-4"
                 >
-                  Submit
+                  {{ t('buttons.submit') }}
                 </VBtn>
                 <VBtn
                   type="reset"
@@ -237,7 +239,7 @@ const handleDrawerModelValueUpdate = (val: boolean) => {
                   color="error"
                   @click="closeNavigationDrawer"
                 >
-                  Cancel
+                  {{ t('buttons.cancel') }}
                 </VBtn>
               </VCol>
             </VRow>

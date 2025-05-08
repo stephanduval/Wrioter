@@ -3,6 +3,7 @@ import EmailView from '@/views/apps/email/EmailView.vue'
 import axios from 'axios'
 import { format } from 'date-fns'
 import { computed, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { VForm } from 'vuetify/components/VForm'
 import { VSelect } from 'vuetify/components/VSelect'
@@ -211,6 +212,8 @@ const saveChanges = async () => {
   }
 }
 
+const { t } = useI18n()
+
 onMounted(async () => {
   console.log('Component mounted, fetching user...')
   await fetchDropdownData() // Fetch dropdown data first
@@ -237,7 +240,7 @@ onMounted(async () => {
       </template>
       
       <VCardTitle class="text-h5">
-        User Details
+        {{ t('users.view.title') }}
       </VCardTitle>
     </VCardItem>
   </VCard>
@@ -275,7 +278,7 @@ onMounted(async () => {
     >
       <VCard>
         <VCardItem>
-          <VCardTitle>User Information</VCardTitle>
+          <VCardTitle>{{ t('users.view.information') }}</VCardTitle>
           <template #append>
             <template v-if="isEditing">
               <VBtn
@@ -284,14 +287,14 @@ onMounted(async () => {
                 class="me-4"
                 @click="cancelEditing"
               >
-                Cancel
+                {{ t('users.view.cancel') }}
               </VBtn>
               <VBtn
                 color="success"
                 @click="saveChanges"
                 :loading="isLoading"
               >
-                Save Changes
+                {{ t('users.view.saveChanges') }}
               </VBtn>
             </template>
             <VBtn
@@ -299,7 +302,7 @@ onMounted(async () => {
               color="primary"
               @click="startEditing"
             >
-              Edit User
+              {{ t('users.view.edit') }}
             </VBtn>
           </template>
         </VCardItem>
@@ -321,7 +324,7 @@ onMounted(async () => {
                     class="me-3"
                   />
                 </template>
-                <VListItemTitle>Name</VListItemTitle>
+                <VListItemTitle>{{ t('users.view.name') }}</VListItemTitle>
                 <VListItemSubtitle>
                   <VTextField
                     v-if="isEditing"
@@ -344,7 +347,7 @@ onMounted(async () => {
                     class="me-3"
                   />
                 </template>
-                <VListItemTitle>Email</VListItemTitle>
+                <VListItemTitle>{{ t('users.view.email') }}</VListItemTitle>
                 <VListItemSubtitle>
                   <VTextField
                     v-if="isEditing"
@@ -368,7 +371,7 @@ onMounted(async () => {
                     class="me-3"
                   />
                 </template>
-                <VListItemTitle>Role</VListItemTitle>
+                <VListItemTitle>{{ t('users.view.role') }}</VListItemTitle>
                 <VListItemSubtitle>
                   <VSelect
                     v-if="isEditing"
@@ -392,7 +395,7 @@ onMounted(async () => {
                     class="me-3"
                   />
                 </template>
-                <VListItemTitle>Company</VListItemTitle>
+                <VListItemTitle>{{ t('users.view.company') }}</VListItemTitle>
                 <VListItemSubtitle>
                   <VSelect
                     v-if="isEditing"
@@ -416,7 +419,7 @@ onMounted(async () => {
                     class="me-3"
                   />
                 </template>
-                <VListItemTitle>Created At</VListItemTitle>
+                <VListItemTitle>{{ t('users.view.createdAt') }}</VListItemTitle>
                 <VListItemSubtitle>{{ formattedDate(user?.created_at) }}</VListItemSubtitle>
               </VListItem>
 
@@ -428,7 +431,7 @@ onMounted(async () => {
                     class="me-3"
                   />
                 </template>
-                <VListItemTitle>Last Updated</VListItemTitle>
+                <VListItemTitle>{{ t('users.view.lastUpdated') }}</VListItemTitle>
                 <VListItemSubtitle>{{ formattedDate(user?.updated_at) }}</VListItemSubtitle>
               </VListItem>
             </VList>
@@ -445,7 +448,7 @@ onMounted(async () => {
     >
       <VCard>
         <VCardItem>
-          <VCardTitle>Messages</VCardTitle>
+          <VCardTitle>{{ t('users.view.messages') }}</VCardTitle>
         </VCardItem>
         
         <VDivider />
@@ -455,7 +458,7 @@ onMounted(async () => {
             color="info"
             variant="tonal"
           >
-            No messages found for this user.
+            {{ t('users.view.noMessages') }}
           </VAlert>
         </VCardText>
         
@@ -476,7 +479,7 @@ onMounted(async () => {
             
             <VListItemTitle>{{ message.subject }}</VListItemTitle>
             <VListItemSubtitle>
-              From: {{ message.from?.name || message.from?.email || 'Unknown' }}
+              {{ t('users.view.from') }}: {{ message.from?.name || message.from?.email || 'Unknown' }}
             </VListItemSubtitle>
             
             <template #append>

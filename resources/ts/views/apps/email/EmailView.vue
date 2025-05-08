@@ -2,6 +2,7 @@
 import type { MoveEmailToAction } from '@/views/apps/email/useEmail'
 import { useEmail } from '@/views/apps/email/useEmail'
 import type { Email } from '@db/apps/email/types'
+import { useI18n } from 'vue-i18n'
 import { PerfectScrollbar } from 'vue3-perfect-scrollbar'
 
 interface Props {
@@ -31,6 +32,8 @@ const showReplyCard = ref(true)
 const { updateEmailLabels } = useEmail()
 
 const { labels, resolveLabelColor, emailMoveToFolderActions, shallShowMoveToActionFor, moveSelectedEmailTo } = useEmail()
+
+const { t } = useI18n()
 
 const handleMoveMailsTo = async (action: MoveEmailToAction) => {
   await moveSelectedEmailTo(action, [(props.email as Email).id])
@@ -130,7 +133,7 @@ const updateMailLabel = async (label: Email['labels'][number]) => {
             activator="parent"
             location="top"
           >
-            Delete Mail
+            {{ t('emails.actions.delete') }}
           </VTooltip>
         </IconBtn>
 
@@ -144,7 +147,7 @@ const updateMailLabel = async (label: Email['labels'][number]) => {
             activator="parent"
             location="top"
           >
-            Mark as Unread
+            {{ t('emails.actions.markAsUnread') }}
           </VTooltip>
         </IconBtn>
 
@@ -158,7 +161,7 @@ const updateMailLabel = async (label: Email['labels'][number]) => {
             activator="parent"
             location="top"
           >
-            Move to
+            {{ t('emails.actions.moveToInbox') }}
           </VTooltip>
 
           <VMenu activator="parent">
@@ -199,7 +202,7 @@ const updateMailLabel = async (label: Email['labels'][number]) => {
             activator="parent"
             location="top"
           >
-            Label
+            {{ t('emails.actions.label') }}
           </VTooltip>
 
           <VMenu activator="parent">
@@ -303,7 +306,7 @@ const updateMailLabel = async (label: Email['labels'][number]) => {
           <VCardText>
             <!-- eslint-disable vue/no-v-html -->
             <div class="text-body-1 font-weight-medium text-truncate mb-4">
-              {{ props.email.from.name }},
+              {{ props.email.from.name || t('emails.messages.unknown') }},
             </div>
             <div
               class="text-base"
@@ -316,7 +319,7 @@ const updateMailLabel = async (label: Email['labels'][number]) => {
             <VDivider />
 
             <VCardText class="d-flex flex-column gap-y-4 pt-4">
-              <span>2 Attachments</span>
+              <span>{{ t('emails.messages.attachmentsCount', { count: props.email.attachments.length }) }}</span>
               <div
                 v-for="attachment in props.email.attachments"
                 :key="attachment.fileName"
@@ -340,14 +343,12 @@ const updateMailLabel = async (label: Email['labels'][number]) => {
         <VCard v-show="showReplyCard">
           <VCardText class="font-weight-medium text-high-emphasis">
             <div class="text-base">
-              Click here to <span
+              {{ t('emails.messages.clickToReply') }} <span
                 class="text-primary cursor-pointer"
                 @click="showReplyBox = !showReplyBox; showReplyCard = !showReplyCard"
               >
-                Reply
-              </span> or <span class="text-primary cursor-pointer">
-                Forward
-              </span>
+                {{ t('emails.actions.reply') }}
+              </span> {{ t('emails.messages.clickToForward') }}
             </div>
           </VCardText>
         </VCard>
@@ -355,11 +356,11 @@ const updateMailLabel = async (label: Email['labels'][number]) => {
         <VCard v-if="showReplyBox">
           <VCardText>
             <div class="text-body-1 text-high-emphasis mb-6">
-              Reply to {{ email?.from.name }}
+              {{ t('emails.messages.replyTo', { name: email?.from.name || t('emails.messages.unknown') }) }}
             </div>
             <TiptapEditor
               v-model="emailReply"
-              placeholder="Write your message..."
+              :placeholder="t('emails.compose.message')"
               :is-divider="false"
             />
             <div class="d-flex justify-end gap-4 pt-2 flex-wrap">
@@ -378,10 +379,10 @@ const updateMailLabel = async (label: Email['labels'][number]) => {
                     size="16"
                   />
                 </template>
-                Attachments
+                {{ t('emails.compose.attachments') }}
               </VBtn>
               <VBtn append-icon="bx-paper-plane">
-                Send
+                {{ t('emails.compose.send') }}
               </VBtn>
             </div>
           </VCardText>

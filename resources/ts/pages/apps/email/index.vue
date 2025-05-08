@@ -538,7 +538,7 @@ const headers = [
             v-model="q"
             density="default"
             class="email-search px-sm-2 flex-grow-1 py-1"
-            placeholder="Search mail"
+            :placeholder="t('emails.actions.search')"
           >
             <template #prepend-inner>
               <VIcon
@@ -559,27 +559,27 @@ const headers = [
           >
               <IconBtn v-if="shallShowMoveToActionFor('archive')" @click="handleMoveMailsTo('archive')">
                 <VIcon icon="bx-archive" size="22" />
-                <VTooltip activator="parent" location="top">Archive</VTooltip>
+                <VTooltip activator="parent" location="top">{{ t('emails.actions.archive') }}</VTooltip>
             </IconBtn>
               <IconBtn v-if="shallShowMoveToActionFor('inbox')" @click="handleMoveMailsTo('inbox')">
                 <VIcon icon="bx-envelope" size="22" />
-                <VTooltip activator="parent" location="top">Move to Inbox</VTooltip>
+                <VTooltip activator="parent" location="top">{{ t('emails.actions.moveToInbox') }}</VTooltip>
             </IconBtn>
               <IconBtn v-if="shallShowMoveToActionFor('trash')" @click="initiateTrashConfirmation(selectedMessages)">
                 <VIcon icon="bx-trash" size="22" />
-                <VTooltip activator="parent" location="top">Move to Trash</VTooltip>
+                <VTooltip activator="parent" location="top">{{ t('emails.actions.moveToTrash') }}</VTooltip>
               </IconBtn>
               <IconBtn v-if="route.params.filter === 'trash'" color="error" @click="initiatePermanentDeleteConfirmation(selectedMessages)">
                 <VIcon icon="bxs-trash" size="22" />
-                <VTooltip activator="parent" location="top">Delete Forever</VTooltip>
+                <VTooltip activator="parent" location="top">{{ t('emails.actions.deleteForever') }}</VTooltip>
               </IconBtn>
               <IconBtn @click="handleActionClick(isAllMarkRead ? 'unread' : 'read')">
                 <VIcon :icon="isAllMarkRead ? 'bx-envelope' : 'bx-envelope-open'" size="22"/>
-                <VTooltip activator="parent" location="top">{{ isAllMarkRead ? 'Mark as Unread' : 'Mark as Read' }}</VTooltip>
+                <VTooltip activator="parent" location="top">{{ isAllMarkRead ? t('emails.actions.markAsUnread') : t('emails.actions.markAsRead') }}</VTooltip>
               </IconBtn>
               <IconBtn :disabled="!selectedMessages.length">
                 <VIcon icon="bx-comment-check" size="22"/>
-                <VTooltip activator="parent" location="top">Change Task Status</VTooltip>
+                <VTooltip activator="parent" location="top">{{ t('emails.actions.changeTaskStatus') }}</VTooltip>
               <VMenu activator="parent">
                 <VList density="compact">
                     <VListItem
@@ -591,14 +591,14 @@ const headers = [
                       <template #prepend>
                         <VBadge inline :color="resolveStatusColor(statusOption.value)" dot/>
                       </template>
-                      <VListItemTitle class="ms-2">{{ statusOption.title }}</VListItemTitle>
+                      <VListItemTitle class="ms-2">{{ t(`emails.status.${statusOption.value}`) }}</VListItemTitle>
                     </VListItem>
                 </VList>
               </VMenu>
             </IconBtn>
               <IconBtn :disabled="!selectedMessages.length">
                 <VIcon icon="bx-label" size="22"/>
-                <VTooltip activator="parent" location="top">Label</VTooltip>
+                <VTooltip activator="parent" location="top">{{ t('emails.actions.label') }}</VTooltip>
               <VMenu activator="parent">
                 <VList density="compact">
                     <VListItem v-for="label in userLabels" :key="label.title" href="#" @click="handleEmailLabels(label.title)">
@@ -610,7 +610,10 @@ const headers = [
             </IconBtn>
           </div>
           <VSpacer />
-            <IconBtn @click="fetchAllMessages"> <VIcon icon="bx-refresh" size="22" /> </IconBtn>
+            <IconBtn @click="fetchAllMessages">
+              <VIcon icon="bx-refresh" size="22" />
+              <VTooltip activator="parent" location="top">{{ t('emails.actions.refresh') }}</VTooltip>
+            </IconBtn>
         </div>
         <VDivider />
           
@@ -632,11 +635,11 @@ const headers = [
             <span style="max-inline-size: 20px; min-inline-size: 20px;" class="me-1"></span>
             <span style="max-inline-size: 38px; min-inline-size: 38px;"></span> 
             <!-- Headers matching list item styles -->
-            <span class="font-weight-semibold flex-shrink-0 ws-no-wrap text-truncate" style="max-inline-size: 90px; min-inline-size: 90px;">Status</span>
-            <span class="font-weight-semibold flex-shrink-0 ws-no-wrap ms-2" style="min-inline-size: 80px;">Due Date</span>
-            <span class="font-weight-semibold flex-shrink-0 ws-no-wrap text-truncate" style=" max-inline-size: 180px;min-inline-size: 120px;">Sender</span>
-            <span class="font-weight-semibold flex-shrink-0 ws-no-wrap text-truncate" style=" max-inline-size: 180px;min-inline-size: 120px;">To</span>
-            <span class="font-weight-semibold flex-grow-1 ws-no-wrap ms-2">Subject</span>
+            <span class="font-weight-semibold flex-shrink-0 ws-no-wrap text-truncate" style="max-inline-size: 90px; min-inline-size: 90px;">{{ t('headers.emails.status') }}</span>
+            <span class="font-weight-semibold flex-shrink-0 ws-no-wrap ms-2" style="min-inline-size: 80px;">{{ t('headers.emails.dueDate') }}</span>
+            <span class="font-weight-semibold flex-shrink-0 ws-no-wrap text-truncate" style="max-inline-size: 180px;min-inline-size: 120px;">{{ t('headers.emails.from') }}</span>
+            <span class="font-weight-semibold flex-shrink-0 ws-no-wrap text-truncate" style="max-inline-size: 180px;min-inline-size: 120px;">{{ t('headers.emails.to') }}</span>
+            <span class="font-weight-semibold flex-grow-1 ws-no-wrap ms-2">{{ t('headers.emails.subject') }}</span>
           </div>
           <VDivider class="d-none d-md-block"/>
           <!-- END: Column Headers -->
@@ -791,31 +794,31 @@ const headers = [
             <div class="email-view-action-bar d-flex align-center text-medium-emphasis ps-6 pe-4 gap-x-1">
               <IconBtn v-if="!openedMessage.isArchived && openedMessage.status !== 'deleted'" @click="handleMoveMailsTo('archive', [openedMessage.id]); openedMessage = null">
                 <VIcon icon="bx-archive" size="22" />
-                <VTooltip activator="parent" location="top">Archive</VTooltip>
+                <VTooltip activator="parent" location="top">{{ t('emails.actions.archive') }}</VTooltip>
               </IconBtn>
               <IconBtn v-if="openedMessage.isArchived" @click="handleMoveMailsTo('inbox', [openedMessage.id]); openedMessage = null">
                 <VIcon icon="bx-envelope" size="22" />
-                <VTooltip activator="parent" location="top">Move to Inbox</VTooltip>
+                <VTooltip activator="parent" location="top">{{ t('emails.actions.moveToInbox') }}</VTooltip>
               </IconBtn>
               <IconBtn v-if="openedMessage.status !== 'deleted'" @click="initiateTrashConfirmation([openedMessage.id]); openedMessage = null">
                 <VIcon icon="bx-trash" size="22" />
-                <VTooltip activator="parent" location="top">Move to Trash</VTooltip>
+                <VTooltip activator="parent" location="top">{{ t('emails.actions.moveToTrash') }}</VTooltip>
               </IconBtn>
               <IconBtn v-if="openedMessage.status === 'deleted'" color="error" @click="initiatePermanentDeleteConfirmation([openedMessage.id]); openedMessage = null">
                 <VIcon icon="bxs-trash" size="22" />
-                <VTooltip activator="parent" location="top">Delete Forever</VTooltip>
+                <VTooltip activator="parent" location="top">{{ t('emails.actions.deleteForever') }}</VTooltip>
               </IconBtn>
               <IconBtn @click="handleActionClick('unread', [openedMessage.id]); openedMessage = null">
                 <VIcon icon="bx-envelope" size="22" />
-                <VTooltip activator="parent" location="top">Mark as Unread</VTooltip>
+                <VTooltip activator="parent" location="top">{{ t('emails.actions.markAsUnread') }}</VTooltip>
               </IconBtn>
               <IconBtn @click="handleTaskStatusToggle(openedMessage)">
                 <VIcon icon="bx-comment-check" size="22"/>
-                <VTooltip activator="parent" location="top">Cycle Task Status (New -> In Progress -> Completed)</VTooltip>
+                <VTooltip activator="parent" location="top">{{ t('emails.actions.changeTaskStatus') }}</VTooltip>
               </IconBtn>
               <IconBtn>
                 <VIcon icon="bx-label" size="22" />
-                <VTooltip activator="parent" location="top">Label</VTooltip>
+                <VTooltip activator="parent" location="top">{{ t('emails.actions.label') }}</VTooltip>
                 <VMenu activator="parent">
                   <VList density="compact">
                     <VListItem v-for="label in userLabels" :key="label.title" href="#" @click="handleEmailLabels(label.title, [openedMessage.id])">
@@ -970,31 +973,31 @@ const headers = [
       
       <VDialog v-model="isTrashConfirmDialogVisible" max-width="500px">
         <VCard>
-          <VCardTitle>Confirm Move to Trash</VCardTitle>
+          <VCardTitle>{{ t('emails.confirmations.trash.title') }}</VCardTitle>
           <VCardText>
-            Are you sure you want to move the selected message(s) to the trash?
+            {{ t('emails.confirmations.trash.message') }}
           </VCardText>
           <VCardActions>
             <VSpacer />
-            <VBtn color="secondary" @click="isTrashConfirmDialogVisible = false">Cancel</VBtn>
-            <VBtn color="error" @click="confirmTrashMessages">Move to Trash</VBtn>
+            <VBtn color="secondary" @click="isTrashConfirmDialogVisible = false">{{ t('emails.confirmations.trash.cancel') }}</VBtn>
+            <VBtn color="error" @click="confirmTrashMessages">{{ t('emails.confirmations.trash.confirm') }}</VBtn>
           </VCardActions>
         </VCard>
       </VDialog>
 
       <VDialog v-model="isPermanentDeleteConfirmDialogVisible" max-width="500px">
         <VCard>
-          <VCardTitle class="text-h5 error--text">Confirm Permanent Deletion</VCardTitle>
+          <VCardTitle class="text-h5 error--text">{{ t('emails.confirmations.delete.title') }}</VCardTitle>
           <VCardText>
             <VAlert type="warning" dense outlined class="mb-3">
-              This action cannot be undone.
+              {{ t('emails.confirmations.delete.warning') }}
             </VAlert>
-            Are you sure you want to permanently delete the selected message(s)?
+            {{ t('emails.confirmations.delete.message') }}
           </VCardText>
           <VCardActions>
             <VSpacer />
-            <VBtn color="secondary" @click="isPermanentDeleteConfirmDialogVisible = false">Cancel</VBtn>
-            <VBtn color="error" @click="confirmPermanentDeleteMessages">Delete Forever</VBtn>
+            <VBtn color="secondary" @click="isPermanentDeleteConfirmDialogVisible = false">{{ t('emails.confirmations.delete.cancel') }}</VBtn>
+            <VBtn color="error" @click="confirmPermanentDeleteMessages">{{ t('emails.confirmations.delete.confirm') }}</VBtn>
           </VCardActions>
         </VCard>
       </VDialog>

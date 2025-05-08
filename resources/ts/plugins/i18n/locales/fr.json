@@ -256,6 +256,7 @@
   "headers": {
     "users": {
       "title": "Utilisateurs",
+      "user": "Utilisateur",
       "name": "Nom",
       "email": "Email",
       "role": "Rôle",
@@ -283,10 +284,221 @@
       "from": "De",
       "date": "Date",
       "status": "Statut",
-      "actions": "Actions"
+      "actions": "Actions",
+      "dueDate": "Date d'échéance",
+      "sender": "Expéditeur",
+      "to": "À"
     }
   },
+  "projects": {
+    "title": "Projets",
+    "search": "Rechercher un projet",
+    "form": {
+      "serviceType": "Type de service",
+      "voiceOver": "Voice-over",
+      "translation": "Traduction",
+      "revision": "Révision",
+      "modifications": "Modifications",
+      "transcription": "Transcription",
+      "other": "Autre",
+      "all": "Tous"
+    },
+    "status": {
+      "received": "Reçu",
+      "in_progress": "En cours",
+      "delivered": "Livré"
+    },
+    "details": {
+      "title": "Détails du Projet",
+      "information": "Informations",
+      "projectInformation": "Informations du Projet",
+      "edit": "Modifier le Projet",
+      "client": "Client",
+      "serviceType": "Type de Service",
+      "deadline": "Date Limite",
+      "status": "Statut",
+      "description": "Description",
+      "noDescription": "Aucune description fournie",
+      "property": "Propriété",
+      "timePreference": "Préférence de Temps",
+      "latestCompletionDate": "Date de Fin la Plus Récente",
+      "contactEmail": "Email de Contact",
+      "dateRequested": "Date de Demande",
+      "company": "Entreprise",
+      "createdAt": "Créé le",
+      "lastUpdated": "Dernière Mise à Jour",
+      "serviceDescription": "Description du Service",
+      "messages": "Messages",
+      "newMessage": "Nouveau Message",
+      "noMessagesFound": "Aucun message trouvé pour ce projet.",
+      "from": "De",
+      "unknown": "Inconnu",
+      "attachments": "Pièces Jointes",
+      "noAttachments": "Aucune pièce jointe trouvée",
+      "comments": "Commentaires",
+      "noComments": "Aucun commentaire trouvé",
+      "addComment": "Ajouter un Commentaire",
+      "history": "Historique du Projet",
+      "noHistory": "Aucun historique trouvé",
+      "cancel": "Annuler",
+      "saveChanges": "Enregistrer les Modifications",
+      "sendMessage": "Envoyer un Message"
+    },
+    "showing": "Affichage de {from} à {to} sur {total} entrées"
+  },
   "buttons": {
-    "compose": "Composer"
+    "compose": "Composer",
+    "submit": "Soumettre",
+    "cancel": "Annuler",
+    "save": "Enregistrer"
+  },
+  "users": {
+    "addNew": "Ajouter un utilisateur",
+    "edit": "Modifier l'utilisateur",
+    "search": "Rechercher un utilisateur",
+    "showing": "Affichage de {from} à {to} sur {total} entrées",
+    "form": {
+      "username": "Nom d'utilisateur",
+      "email": "Email",
+      "selectCompany": "Sélectionner une entreprise",
+      "selectRole": "Sélectionner un rôle"
+    },
+    "view": {
+      "title": "Détails de l'utilisateur",
+      "information": "Informations",
+      "edit": "Modifier l'utilisateur",
+      "cancel": "Annuler",
+      "saveChanges": "Enregistrer les modifications",
+      "name": "Nom",
+      "email": "Email",
+      "role": "Rôle",
+      "company": "Entreprise",
+      "createdAt": "Créé le",
+      "lastUpdated": "Dernière mise à jour",
+      "messages": "Messages",
+      "noMessages": "Aucun message trouvé pour cet utilisateur",
+      "from": "De"
+    }
+  },
+  "companies": {
+    "addNew": "Ajouter une entreprise",
+    "edit": "Modifier l'entreprise",
+    "search": "Rechercher une entreprise",
+    "form": {
+      "name": "Nom de l'entreprise",
+      "namePlaceholder": "Entrer le nom de l'entreprise"
+    }
+  },
+  "itemsPerPage": "Éléments par page",
+  "emails": {
+    "compose": {
+      "title": "Composer un message",
+      "to": "À",
+      "subject": "Sujet",
+      "message": "Message",
+      "send": "Envoyer",
+      "attachments": "Pièces jointes",
+      "selectFiles": "Sélectionnez vos fichiers",
+      "project": {
+        "title": "Titre du projet",
+        "titlePlaceholder": "Entrez le titre du projet",
+        "property": "Propriété",
+        "propertyPlaceholder": "Entrez les détails de la propriété",
+        "serviceType": "Type de service",
+        "serviceDescription": "Description du service",
+        "descriptionPlaceholder": "Décrivez le service dont vous avez besoin",
+        "timePreference": "Préférence de temps",
+        "dueDate": "Date d'échéance",
+        "latestCompletionDate": "Date limite de réalisation",
+        "datePlaceholder": "AAAA-MM-JJ",
+        "validation": {
+          "titleRequired": "Le titre du projet est requis",
+          "propertyRequired": "La propriété est requise",
+          "serviceTypeRequired": "Le type de service est requis",
+          "dueDateRequired": "La date d'échéance est requise",
+          "dueDateFuture": "La date d'échéance doit être aujourd'hui ou plus tard",
+          "completionDateRequired": "La date limite de réalisation est requise",
+          "completionDateAfterDue": "La date limite de réalisation doit être égale ou postérieure à la date d'échéance"
+        }
+      },
+      "timePreferences": {
+        "beforeNoon": "Avant midi",
+        "before4pm": "Avant 16h",
+        "anytime": "N'importe quand"
+      },
+      "serviceTypes": {
+        "translation": "Traduction",
+        "revision": "Révision",
+        "modifications": "Modifications",
+        "transcription": "Transcription",
+        "voiceOver": "Voice-over",
+        "other": "Autre"
+      }
+    },
+    "labels": {
+      "title": "ÉTIQUETTES",
+      "addNew": "Ajouter une étiquette",
+      "name": "Nom de la nouvelle étiquette",
+      "color": "Couleur",
+      "add": "Ajouter",
+      "deleteConfirm": {
+        "title": "Confirmer la suppression de l'étiquette",
+        "message": "Êtes-vous sûr de vouloir supprimer l'étiquette \"{label}\" ? Cela supprimera l'étiquette de tous les messages associés. Cette action ne peut pas être annulée.",
+        "cancel": "Annuler",
+        "confirm": "Supprimer"
+      }
+    },
+    "folders": {
+      "inbox": "Boîte de réception",
+      "dueToday": "Dû aujourd'hui",
+      "sent": "Envoyés",
+      "allMail": "Tous les messages",
+      "archive": "Archive",
+      "trash": "Corbeille"
+    },
+    "actions": {
+      "reply": "Répondre",
+      "forward": "Transférer",
+      "delete": "Supprimer",
+      "archive": "Archiver",
+      "moveToInbox": "Déplacer vers la boîte de réception",
+      "moveToTrash": "Déplacer vers la corbeille",
+      "deleteForever": "Supprimer définitivement",
+      "markAsUnread": "Marquer comme non lu",
+      "markAsRead": "Marquer comme lu",
+      "label": "Étiquette",
+      "search": "Rechercher un message",
+      "refresh": "Actualiser",
+      "changeTaskStatus": "Changer le statut de la tâche"
+    },
+    "status": {
+      "new": "Nouveau",
+      "inProgress": "En cours",
+      "completed": "Terminé"
+    },
+    "confirmations": {
+      "trash": {
+        "title": "Confirmer le déplacement vers la corbeille",
+        "message": "Êtes-vous sûr de vouloir déplacer le(s) message(s) sélectionné(s) vers la corbeille ?",
+        "cancel": "Annuler",
+        "confirm": "Déplacer vers la corbeille"
+      },
+      "delete": {
+        "title": "Confirmer la suppression permanente",
+        "message": "Êtes-vous sûr de vouloir supprimer définitivement le(s) message(s) sélectionné(s) ?",
+        "warning": "Cette action ne peut pas être annulée.",
+        "cancel": "Annuler",
+        "confirm": "Supprimer définitivement"
+      }
+    },
+    "messages": {
+      "noSubject": "Sans objet",
+      "attachmentsCount": "{count} pièces jointes",
+      "replyTo": "Répondre à {name}",
+      "clickToReply": "Cliquez ici pour répondre",
+      "clickToForward": "Transférer",
+      "unknown": "Expéditeur inconnu",
+      "noEmail": "pas-email@exemple.com"
+    }
   }
 }

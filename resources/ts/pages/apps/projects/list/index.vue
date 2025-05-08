@@ -44,20 +44,20 @@ const projectsData = ref<ApiResponse | null>(null)
 const clients = ref<{ id: number; name: string }[]>([])
 
 // Headers
-const headers = [
+const headers = computed(() => [
   { title: t('headers.projects.project'), key: 'project', sortable: true },
   { title: t('headers.projects.client'), key: 'client', sortable: true },
   { title: t('headers.projects.serviceType'), key: 'service_type', sortable: true },
   { title: t('headers.projects.deadline'), key: 'deadline', sortable: true },
   { title: t('headers.projects.status'), key: 'status', sortable: true },
   { title: t('headers.projects.actions'), key: 'actions', sortable: false },
-]
+])
 
 // Status options
 const statusOptions = [
-  { title: 'Received', value: 'received' },
-  { title: 'In Progress', value: 'in_progress' },
-  { title: 'Delivered', value: 'delivered' },
+  { title: t('projects.status.received'), value: 'received' },
+  { title: t('projects.status.inProgress'), value: 'in_progress' },
+  { title: t('projects.status.delivered'), value: 'delivered' },
 ]
 
 // Status color mapping
@@ -69,13 +69,13 @@ const statusColorMap: Record<string, string> = {
 
 // Service type options
 const serviceTypeOptions = [
-  { title: 'All', value: '' },
-  { title: 'Translation', value: 'translation' },
-  { title: 'Revision', value: 'revision' },
-  { title: 'Modifications', value: 'modifications' },
-  { title: 'Transcription', value: 'transcription' },
-  { title: 'Voice Over', value: 'voice_over' },
-  { title: 'Other', value: 'other' },
+  { title: t('projects.form.all'), value: '' },
+  { title: t('projects.form.translation'), value: 'translation' },
+  { title: t('projects.form.revision'), value: 'revision' },
+  { title: t('projects.form.modifications'), value: 'modifications' },
+  { title: t('projects.form.transcription'), value: 'transcription' },
+  { title: t('projects.form.voiceOver'), value: 'voice_over' },
+  { title: t('projects.form.other'), value: 'other' },
 ]
 
 // Methods
@@ -202,6 +202,7 @@ onMounted(() => {
               { value: 100, title: '100' },
               { value: -1, title: 'All' },
             ]"
+            :label="t('itemsPerPage')"
             style="inline-size: 6.25rem;"
             @update:model-value="itemsPerPage = parseInt($event, 10)"
           />
@@ -213,7 +214,7 @@ onMounted(() => {
           <div style="inline-size: 15.625rem;">
             <AppTextField
               v-model="searchQuery"
-              placeholder="Search Project"
+              :placeholder="t('projects.search')"
             />
           </div>
 
@@ -222,7 +223,7 @@ onMounted(() => {
             <AppSelect
               v-model="selectedStatus"
               :items="statusOptions"
-              placeholder="Select Status"
+              :placeholder="t('headers.projects.status')"
               clearable
               clear-icon="bx-x"
             />
@@ -233,19 +234,11 @@ onMounted(() => {
             <AppSelect
               v-model="selectedServiceType"
               :items="serviceTypeOptions"
-              placeholder="Service Type"
+              :placeholder="t('headers.projects.serviceType')"
               clearable
               clear-icon="bx-x"
             />
           </div>
-
-          <!-- 👉 Add project button -->
-          <VBtn
-            prepend-icon="bx-plus"
-            to="/apps/projects/add"
-          >
-            Add New Project
-          </VBtn>
         </div>
       </VCardText>
 
