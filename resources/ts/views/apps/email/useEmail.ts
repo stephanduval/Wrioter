@@ -166,6 +166,7 @@ export const useEmail = () => {
       service_type: string | null;
       service_description: string | null;
       deadline: string | null;
+      latest_completion_date: string | null;
     };
   }) => {
     console.log(">>> EXECUTING createMessage <<<", payload); 
@@ -174,13 +175,15 @@ export const useEmail = () => {
       formData.append('subject', payload.subject);
       formData.append('message', payload.message); 
       formData.append('company_id', payload.company_id.toString());
+      
       if (payload.receiver_id !== null && payload.receiver_id !== undefined) {
         formData.append('receiver_id', payload.receiver_id.toString());
       }
-      // Append due_date if provided and not null/empty
+      
       if (payload.due_date) { 
-           formData.append('due_date', payload.due_date);
+        formData.append('due_date', payload.due_date);
       }
+      
       if (payload.attachments) {
         payload.attachments.forEach(file => formData.append('attachments[]', file));
       }
@@ -201,24 +204,29 @@ export const useEmail = () => {
         if (payload.project_data.deadline) {
           formData.append('project_data[deadline]', payload.project_data.deadline);
         }
+        if (payload.project_data.latest_completion_date) {
+          formData.append('project_data[latest_completion_date]', payload.project_data.latest_completion_date);
+        }
       }
 
-      const response = await $api('/messages', { 
-        method: 'POST', 
-        body: formData 
+      const response = await $api('/messages', {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'Accept': 'application/json',
+        },
       });
-      console.log(">>> createMessage response:", response);
-      if(response && response.message === 'Message sent successfully') { 
-        return response;
-      } else {
-        console.error("createMessage failed:", response);
-        return undefined;
+
+      if (!response || !response.message) {
+        throw new Error('Invalid response from server');
       }
+
+      return response;
     } catch (error) {
-      console.error('Error creating message:', error);
-      return undefined;
+      console.error('createMessage failed:', error);
+      throw error;
     }
-  };
+  }
 
   // ✅ NEW function specifically for sending replies
   const sendReplyMessage = async (payload: { 

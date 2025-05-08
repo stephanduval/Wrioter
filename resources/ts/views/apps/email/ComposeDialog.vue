@@ -173,9 +173,26 @@ watch(attachmentsRef, (newFiles) => {
   // }
 }, { deep: true });
 
-// Update sendMessage to handle project data for all users
+// Add date validation computed properties
+const isDeadlineValid = computed(() => {
+  if (!dueDate.value) return true
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const deadlineDate = new Date(dueDate.value)
+  return deadlineDate >= today
+})
+
+const isLatestCompletionDateValid = computed(() => {
+  if (!latestCompletionDate.value || !dueDate.value) return true
+  const deadlineDate = new Date(dueDate.value)
+  const completionDate = new Date(latestCompletionDate.value)
+  return completionDate >= deadlineDate
+})
+
+// Update sendMessage to include date validation
 const sendMessage = async () => {
   console.log("ComposeDialog: sendMessage called");
+  
   // Basic validation
   if (!subject.value || !content.value) {
     console.error('Subject and Message fields are required');
@@ -200,8 +217,16 @@ const sendMessage = async () => {
       console.error('Due date is required for client messages');
       return;
     }
+    if (!isDeadlineValid.value) {
+      console.error('Due date must be today or later');
+      return;
+    }
     if (!latestCompletionDate.value) {
       console.error('Latest completion date is required for client messages');
+      return;
+    }
+    if (!isLatestCompletionDateValid.value) {
+      console.error('Latest completion date must be after or equal to the due date');
       return;
     }
     if (!timePreference.value) {
@@ -246,6 +271,7 @@ const sendMessage = async () => {
 
   try {
     const result = await createMessage(payload);
+    console.log('ComposeDialog: API response:', result);
 
     if (result && result.message === 'Message sent successfully') {
       console.log('ComposeDialog: Message sent successfully');
@@ -254,10 +280,12 @@ const sendMessage = async () => {
       emit('close');
       emit('refresh');
     } else {
-      console.error('ComposeDialog: Failed to send message, API returned error or unexpected response:', result);
+      console.error('ComposeDialog: Failed to send message, API returned:', result);
+      throw new Error('Failed to send message');
     }
   } catch (error) {
     console.error('ComposeDialog: Error sending message:', error);
+    // You might want to show this error to the user
   }
 }
 
@@ -478,7 +506,11 @@ const resetValues = () => {
           density="compact" 
           type="date"  
           placeholder="YYYY-MM-DD"
-          :rules="isClient ? [(v: string) => !!v || 'Due date is required'] : undefined"
+          :rules="[
+            (v: string | null) => !!v || 'Due date is required',
+            (v: string | null) => isDeadlineValid || 'Due date must be today or later'
+          ]"
+          :error-messages="!isDeadlineValid ? ['Due date must be today or later'] : []"
           :required="isClient"
           clearable 
         >
@@ -498,7 +530,11 @@ const resetValues = () => {
           density="compact" 
           type="date"  
           placeholder="YYYY-MM-DD"
-          :rules="isClient ? [(v: string) => !!v || 'Latest completion date is required'] : undefined"
+          :rules="[
+            (v: string | null) => !!v || 'Latest completion date is required',
+            (v: string | null) => isLatestCompletionDateValid || 'Latest completion date must be after or equal to the due date'
+          ]"
+          :error-messages="!isLatestCompletionDateValid ? ['Latest completion date must be after or equal to the due date'] : []"
           :required="isClient"
           clearable 
         >
