@@ -3,7 +3,7 @@ import AuthProvider from '@/views/pages/authentication/AuthProvider.vue'
 import authV2LoginIllustration from '@images/pages/auth-v2-login-illustration.png'
 import { VNodeRenderer } from '@layouts/components/VNodeRenderer'
 import { themeConfig } from '@themeConfig'
-import { useRouter } from 'vue-router'
+import { RouteLocationRaw, useRouter } from 'vue-router'
 import { VForm } from 'vuetify/components/VForm'
 
 definePage({
@@ -55,7 +55,7 @@ const login = async () => {
       headers: {
         'Content-Type': 'application/json',
       },
-      credentials: 'include',
+      credentials: 'include', // Ensure credentials are included
       body: JSON.stringify({
         email: credentials.value.email,
         password: credentials.value.password,
@@ -65,37 +65,68 @@ const login = async () => {
 
     if (!res.ok) {
       const error = await res.json()
+
       errors.value.general = error.message || 'Login failed. Please try again.'
+
       return
     }
 
     const { accessToken, userData, abilityRules } = await res.json()
 
-    // Store auth data
-    localStorage.setItem('accessToken', accessToken)
-    localStorage.setItem('userData', JSON.stringify(userData))
-    localStorage.setItem('abilityRules', JSON.stringify(abilityRules))
+    console.log('Ability Rules received:', abilityRules)
 
+    console.log('User Data:', userData) // Add this line to check the user data
     // Update ability
     ability.update(abilityRules.map((rule: { action: string; subject: string }) => ({
       action: rule.action.toLowerCase(),
       subject: rule.subject.toLowerCase(),
     })))
 
-    // Redirect based on role
-    const userRole = userData.role?.toLowerCase() || 'user'
-    let targetRoute = '/'
+    // Set cookies BEFORE navigation
+    const userDataCookie = useCookie('userData')
+    const abilityCookie = useCookie('userAbilityRules')
+    const tokenCookie = useCookie('accessToken')
 
-    if (userRole === 'admin') {
-      targetRoute = '/apps/projects/list'
+    // Set localStorage BEFORE navigation
+    localStorage.setItem('userData', JSON.stringify(userData))
+    localStorage.setItem('abilityRules', JSON.stringify(abilityRules))
+    localStorage.setItem('accessToken', accessToken.toString())
+
+    // Ensure the values are strings or serialized properly
+    userDataCookie.value = JSON.stringify(userData)
+    abilityCookie.value = JSON.stringify(abilityRules)
+    tokenCookie.value = accessToken.toString()
+
+    console.log('Document.cookie from login.vue', document.cookie)
+
+    // --- Direct Role-Based Redirect ---
+    const userRole = userData.role?.toLowerCase() || 'User';
+    let targetRoute: RouteLocationRaw;
+
+    console.log(`[DEBUG] Determining redirect target for role: ${userRole}`);
+
+    if (userRole === 'admin' || userRole === 'auth') {
+        targetRoute = { name: 'dashboards-analytics' };
+        console.log(`[DEBUG] Target set for admin/auth:`, targetRoute);
     } else if (userRole === 'client') {
-      targetRoute = '/apps/email'
+        targetRoute = { name: 'apps-email' };
+        console.log(`[DEBUG] Target set for client:`, targetRoute);
+    } else if (userRole === 'manager' || userRole === 'user') {
+        targetRoute = { path: '/messages/list' };
+        console.log(`[DEBUG] Target set for manager/user:`, targetRoute);
+    } else {
+        // Fallback if role is unexpected
+        console.warn(`[DEBUG] Unexpected role "${userRole}", defaulting to dashboards-analytics`);
+        targetRoute = { name: 'dashboards-analytics' };
     }
 
-    router.push(targetRoute)
-  } catch (error) {
-    console.error('Login error:', error)
-    errors.value.general = 'An error occurred during login. Please try again.'
+    console.log(`[DEBUG] Attempting router.replace directly from login with:`, targetRoute);
+    router.replace(targetRoute); 
+
+  }
+  catch (err) {
+    console.error('login error', err)
+    errors.value.general = 'An error occurred. Please try again.'
   }
 }
 

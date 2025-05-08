@@ -166,7 +166,6 @@ export const useEmail = () => {
       service_type: string | null;
       service_description: string | null;
       deadline: string | null;
-      latest_completion_date: string | null;
     };
   }) => {
     console.log(">>> EXECUTING createMessage <<<", payload); 
@@ -202,38 +201,19 @@ export const useEmail = () => {
         if (payload.project_data.deadline) {
           formData.append('project_data[deadline]', payload.project_data.deadline);
         }
-        if (payload.project_data.latest_completion_date) {
-          formData.append('project_data[latest_completion_date]', payload.project_data.latest_completion_date);
-        }
       }
 
-      // Get access token
-      const accessToken = localStorage.getItem('accessToken');
-      if (!accessToken) {
-        console.error('No access token found');
-        return undefined;
-      }
-
-      // Use fetch directly like in sendReplyMessage
-      const response = await fetch('/api/messages', {
-        method: 'POST',
-        body: formData,
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Accept': 'application/json',
-        },
+      const response = await $api('/messages', { 
+        method: 'POST', 
+        body: formData 
       });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ message: 'Failed to parse error response.' }));
-        console.error(`Error creating message: ${response.status} ${response.statusText}`, errorData);
+      console.log(">>> createMessage response:", response);
+      if(response && response.message === 'Message sent successfully') { 
+        return response;
+      } else {
+        console.error("createMessage failed:", response);
         return undefined;
       }
-
-      const responseData = await response.json();
-      console.log(">>> createMessage response:", responseData);
-      return responseData;
-
     } catch (error) {
       console.error('Error creating message:', error);
       return undefined;
@@ -309,22 +289,15 @@ export const useEmail = () => {
 
   // ✅ Delete a message
   const deleteMessage = async (id: number) => {
+    console.log(`useEmail: Attempting permanent delete for message ID: ${id}`);
     try {
-      const response = await $api(`/messages/${id}`, {
-        method: 'DELETE',
-      });
-
-      // Check if the response indicates success
-      if (response && response.message === 'Message permanently deleted successfully') {
-        console.log(`Message ${id} deleted successfully`);
-        return true;
-      } else {
-        console.error(`Unexpected response when deleting message ${id}:`, response);
-        return false;
-      }
+      await $api(`/messages/${id}`, { method: 'DELETE' });
+      console.log(`useEmail: Successfully permanently deleted message ID: ${id}`);
+      // Optimistically remove from local state if needed, or rely on refresh
+      messages.value = messages.value.filter(message => message.id !== id);
     } catch (error) {
-      console.error(`Error deleting message ${id}:`, error);
-      return false;
+      console.error(`useEmail: Error permanently deleting message ${id}:`, error);
+      throw error; // Re-throw to signal failure
     }
   };
 
@@ -399,23 +372,17 @@ export const useEmail = () => {
 
   // ✅ Delete a label
   const deleteLabel = async (id: number) => {
+    console.log(`useEmail: Attempting to delete label ID: ${id}`);
     try {
-      const response = await $api(`/labels/${id}`, {
-        method: 'DELETE',
-      });
-
-      // Check if the response indicates success
-      if (response) {
-        console.log(`Label ${id} deleted successfully`);
-        await fetchUserLabels(); // Refresh labels list
-        return true;
-      } else {
-        console.error(`Unexpected response when deleting label ${id}:`, response);
-        return false;
-      }
+      await $api(`/labels/${id}`, { method: 'DELETE' });
+      console.log(`useEmail: Successfully deleted label ID: ${id}`);
+      // Refresh labels after deletion
+      await fetchUserLabels();
+      return true; // Indicate success
     } catch (error) {
-      console.error(`Error deleting label ${id}:`, error);
-      return false;
+      console.error(`useEmail: Error deleting label ${id}:`, error);
+      // Add user feedback (e.g., toast) if desired
+      return false; // Indicate failure
     }
   };
 
