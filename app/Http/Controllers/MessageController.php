@@ -163,9 +163,9 @@ class MessageController extends Controller
         // Project creation logic for client users
         $project_id = null;
         $user = Auth::user();
-        $userRole = $user->roles->first()?->name;
         
-        if ($userRole === 'client' && isset($validated['project_data'])) {
+        // Create project if project_data is provided, regardless of user role
+        if (isset($validated['project_data'])) {
             try {
                 $projectData = [
                     'client_id' => $user->id,
@@ -192,7 +192,7 @@ class MessageController extends Controller
                     'error' => $e->getMessage(),
                     'trace' => $e->getTraceAsString()
                 ]);
-                // Continue with message creation even if project creation fails
+                return response()->json(['message' => 'Failed to create project: ' . $e->getMessage()], 500);
             }
         } else {
             Log::info('MessageController::store - No project data provided');
