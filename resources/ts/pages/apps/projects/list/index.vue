@@ -53,11 +53,17 @@ const headers = [
 
 // Status options
 const statusOptions = [
-  { title: 'All', value: '' },
   { title: 'Received', value: 'received' },
   { title: 'In Progress', value: 'in_progress' },
   { title: 'Delivered', value: 'delivered' },
 ]
+
+// Status color mapping
+const statusColorMap: Record<string, string> = {
+  received: 'warning',
+  in_progress: 'info',
+  delivered: 'success',
+}
 
 // Service type options
 const serviceTypeOptions = [
@@ -144,6 +150,19 @@ const deleteProject = async (id: number) => {
     fetchProjects()
   } catch (error) {
     console.error('Error deleting project:', error)
+  }
+}
+
+// Add updateProjectStatus function
+const updateProjectStatus = async (projectId: number, newStatus: string) => {
+  try {
+    await axios.put(`/projects/${projectId}`, {
+      status: newStatus
+    })
+    // Refresh the projects list after successful update
+    await fetchProjects()
+  } catch (error) {
+    console.error('Error updating project status:', error)
   }
 }
 
@@ -288,13 +307,26 @@ onMounted(() => {
 
         <!-- Status -->
         <template #item.status="{ item }">
-          <VChip
-            :color="resolveStatusVariant(item.status)"
-            size="small"
-            class="text-capitalize"
+          <VSelect
+            v-model="item.status"
+            :items="statusOptions"
+            density="compact"
+            variant="plain"
+            hide-details
+            class="status-select"
+            :color="statusColorMap[item.status]"
+            @update:model-value="updateProjectStatus(item.id, $event)"
           >
-            {{ item.status }}
-          </VChip>
+            <template #selection="{ item }">
+              <VChip
+                :color="statusColorMap[item.value]"
+                size="small"
+                class="text-capitalize"
+              >
+                {{ item.title }}
+              </VChip>
+            </template>
+          </VSelect>
         </template>
 
         <!-- Actions -->
