@@ -2,6 +2,7 @@
 import { useConfigStore } from '@core/stores/config'
 import { AppContentLayoutNav } from '@layouts/enums'
 import { switchToVerticalNavOnLtOverlayNavBreakpoint } from '@layouts/utils'
+import { useI18n } from 'vue-i18n'
 
 const DefaultLayoutWithHorizontalNav = defineAsyncComponent(() => import('./components/DefaultLayoutWithHorizontalNav.vue'))
 const DefaultLayoutWithVerticalNav = defineAsyncComponent(() => import('./components/DefaultLayoutWithVerticalNav.vue'))
@@ -29,6 +30,16 @@ watch([isFallbackStateActive, refLoadingIndicator], () => {
     refLoadingIndicator.value.resolveHandle()
 }, { immediate: true })
 // !SECTION
+
+const { t } = useI18n()
+
+const headers = [
+  { title: t('headers.users.name'), key: 'name' },
+  { title: t('headers.users.email'), key: 'email' },
+  { title: t('headers.users.role'), key: 'role' },
+  { title: t('headers.users.status'), key: 'status' },
+  { title: t('headers.users.actions'), key: 'actions', sortable: false },
+]
 </script>
 
 <template>

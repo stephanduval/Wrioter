@@ -72,5 +72,8 @@
             "status": "Statut",
             "actions": "Actions"
         }
+    },
+    "buttons": {
+        "compose": "Composer"
     }
 }

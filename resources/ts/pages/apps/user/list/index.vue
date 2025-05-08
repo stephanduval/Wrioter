@@ -46,7 +46,7 @@ const { t } = useI18n()
 
 // Headers
 const headers = [
-  { title: t('headers.users.name'), key: 'name' },
+  { title: t('headers.users.name'), key: 'user' },
   { title: t('headers.users.email'), key: 'email' },
   { title: t('headers.users.role'), key: 'role' },
   { title: t('headers.users.status'), key: 'status' },

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useEmail } from '@/views/apps/email/useEmail';
 import { computed, defineEmits, defineProps, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import type { RouteLocationRaw } from 'vue-router';
 import { PerfectScrollbar } from 'vue3-perfect-scrollbar';
 
@@ -38,6 +39,8 @@ const {
   resolveLabelColor,
   deleteLabel: deleteApiLabel,
 } = useEmail();
+
+const { t } = useI18n()
 
 // Reactive email counts with defaults
 const inboxEmails = ref(0)
@@ -155,7 +158,7 @@ const confirmLabelDelete = async () => {
         block
         @click="$emit('toggleComposeDialogVisibility')"
       >
-        Compose
+        {{ t('buttons.compose') }}
       </VBtn>
     </div>
 
