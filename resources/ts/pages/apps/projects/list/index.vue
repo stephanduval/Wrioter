@@ -318,7 +318,7 @@ onMounted(() => {
                 size="small"
                 class="text-capitalize"
               >
-                {{ item.title }}
+                {{ t(`projects.status.${item.value}`) }}
               </VChip>
             </template>
           </VSelect>

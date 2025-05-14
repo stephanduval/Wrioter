@@ -29,11 +29,17 @@ const emit = defineEmits<{
 const emailReply = ref('')
 const showReplyBox = ref(false)
 const showReplyCard = ref(true)
-const { updateEmailLabels } = useEmail()
+const { updateEmailLabels, createMessage } = useEmail()
 
 const { labels, resolveLabelColor, emailMoveToFolderActions, shallShowMoveToActionFor, moveSelectedEmailTo } = useEmail()
 
 const { t } = useI18n()
+
+const attachmentsRef = ref<File[]>([])
+const attachmentErrors = ref<string[]>([])
+
+const MAX_FILE_SIZE_MB = 25
+const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024
 
 const handleMoveMailsTo = async (action: MoveEmailToAction) => {
   await moveSelectedEmailTo(action, [(props.email as Email).id])
@@ -46,6 +52,68 @@ const updateMailLabel = async (label: Email['labels'][number]) => {
 
   emit('refresh')
 }
+
+const handleFileChange = (event: Event) => {
+  const target = event.target as HTMLInputElement
+  if (target && target.files) {
+    for (let i = 0; i < target.files.length; i++) {
+      attachmentsRef.value.push(target.files[i])
+    }
+  }
+}
+
+const removeAttachment = (index: number) => {
+  attachmentsRef.value.splice(index, 1)
+}
+
+const sendReply = async () => {
+  if (!emailReply.value.trim()) {
+    console.error('Reply message is required')
+    return
+  }
+
+  if (attachmentErrors.value.length > 0) {
+    console.error('Cannot send: Attachment validation errors exist.', attachmentErrors.value)
+    return
+  }
+
+  const payload = {
+    receiver_id: props.email?.from.id || null,
+    company_id: 1,
+    subject: `Re: ${props.email?.subject || ''}`,
+    message: emailReply.value,
+    reply_to_id: props.email?.id,
+    attachments: attachmentsRef.value,
+    status: 'sent',
+    task_status: 'new',
+    sent_at: new Date().toISOString()
+  }
+
+  try {
+    const result = await createMessage(payload)
+    if (result && result.message === 'Message sent successfully') {
+      emailReply.value = ''
+      attachmentsRef.value = []
+      showReplyBox.value = false
+      showReplyCard.value = true
+      emit('refresh')
+    }
+  } catch (error) {
+    console.error('Error sending reply:', error)
+  }
+}
+
+watch(attachmentsRef, (newFiles) => {
+  attachmentErrors.value = []
+  let totalSize = 0
+
+  newFiles.forEach((file) => {
+    totalSize += file.size
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+      attachmentErrors.value.push(`File "${file.name}" (${(file.size / 1024 / 1024).toFixed(2)} MB) exceeds the ${MAX_FILE_SIZE_MB} MB limit.`)
+    }
+  })
+}, { deep: true })
 </script>
 
 <template>
@@ -260,13 +328,6 @@ const updateMailLabel = async (label: Email['labels'][number]) => {
       >
         <VCard class="mb-4">
           <div class="d-flex align-start align-sm-center pa-6 gap-x-4">
-            <VAvatar size="38">
-              <VImg
-                :src="props.email.from.avatar"
-                :alt="props.email.from.name"
-              />
-            </VAvatar>
-
             <div class="d-flex flex-wrap flex-grow-1 overflow-hidden">
               <div class="text-truncate">
                 <div class="text-body-1 font-weight-medium text-high-emphasis text-truncate">
@@ -356,32 +417,58 @@ const updateMailLabel = async (label: Email['labels'][number]) => {
         <VCard v-if="showReplyBox">
           <VCardText>
             <div class="text-body-1 text-high-emphasis mb-6">
-              {{ t('emails.messages.replyTo', { name: email?.from.name || t('emails.messages.unknown') }) }}
+              {{ t('emails.messages.replyTo', { name: props.email?.from.fullName || t('emails.messages.unknown') }) }}
             </div>
             <TiptapEditor
               v-model="emailReply"
               :placeholder="t('emails.compose.message')"
               :is-divider="false"
             />
-            <div class="d-flex justify-end gap-4 pt-2 flex-wrap">
-              <IconBtn
-                icon="bx-trash"
-                @click="showReplyBox = !showReplyBox; showReplyCard = !showReplyCard; emailReply = ''"
+            
+            <!-- Add Attachment Section -->
+            <div class="mt-4">
+              <VFileInput
+                :model-value="attachmentsRef"
+                multiple
+                :label="t('emails.compose.attachments')"
+                :placeholder="t('emails.compose.selectFiles')"
+                prepend-icon="bx-paperclip"
+                density="compact"
+                :error-messages="attachmentErrors"
+                @change="handleFileChange"
+                @click:clear="attachmentsRef = []"
               />
+
+              <!-- Attachment Chips -->
+              <div v-if="attachmentsRef.length > 0" class="mt-2 d-flex flex-wrap gap-2">
+                <VChip
+                  v-for="(file, index) in attachmentsRef"
+                  :key="index + '-' + file.name"
+                  label
+                  closable
+                  size="small"
+                  color="primary"
+                  @click:close="removeAttachment(index)"
+                >
+                  {{ file.name }} ({{ (file.size / 1024 / 1024).toFixed(2) }} MB)
+                </VChip>
+              </div>
+            </div>
+
+            <div class="d-flex justify-end gap-4 pt-4">
               <VBtn
                 variant="text"
                 color="secondary"
+                @click="showReplyBox = false; showReplyCard = true; emailReply = ''; attachmentsRef = []"
               >
-                <template #prepend>
-                  <VIcon
-                    icon="bx-paperclip"
-                    color="secondary"
-                    size="16"
-                  />
-                </template>
-                {{ t('emails.compose.attachments') }}
+                {{ t('buttons.cancel') }}
               </VBtn>
-              <VBtn append-icon="bx-paper-plane">
+              <VBtn
+                color="primary"
+                append-icon="bx-paper-plane"
+                :disabled="!emailReply.trim() || attachmentErrors.length > 0"
+                @click="sendReply"
+              >
                 {{ t('emails.compose.send') }}
               </VBtn>
             </div>

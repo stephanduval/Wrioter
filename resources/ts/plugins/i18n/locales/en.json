@@ -432,7 +432,8 @@
         "transcription": "Transcription",
         "voiceOver": "Voice Over",
         "other": "Other"
-      }
+      },
+      "cancel": "Cancel"
     },
     "labels": {
       "title": "LABELS",
@@ -472,8 +473,14 @@
     },
     "status": {
       "new": "New",
-      "inProgress": "In Progress",
-      "completed": "Completed"
+      "in_progress": "In Progress",
+      "completed": "Completed",
+      "sent": "Sent",
+      "received": "Received",
+      "read": "Read",
+      "unread": "Unread",
+      "deleted": "Deleted",
+      "draft": "Draft"
     },
     "confirmations": {
       "trash": {

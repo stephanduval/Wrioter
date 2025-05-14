@@ -18,12 +18,12 @@ const shortcuts = [
     subtitle: 'Manage Users',
     to: { name: 'apps-user-list' },
   },
-  {
-    icon: 'bx-group',
-    title: 'Role Management',
-    subtitle: 'Permission',
-    to: { name: 'apps-roles' },
-  },
+  // {
+  //   icon: 'bx-group',
+  //   title: 'Role Management',
+  //   subtitle: 'Permission',
+  //   to: { name: 'apps-roles' },
+  // },
   {
     icon: 'bx-pie-chart-alt-2',
     title: 'Dashboard',

@@ -89,6 +89,13 @@ const serviceTypeOptions = [
   { title: 'Other', value: 'other' },
 ]
 
+// Add function to strip HTML tags
+const stripHtml = (html: string) => {
+  const tmp = document.createElement('DIV')
+  tmp.innerHTML = html
+  return tmp.textContent || tmp.innerText || ''
+}
+
 const fetchProject = async () => {
   isLoading.value = true
   error.value = null
@@ -138,9 +145,17 @@ const navigateBack = () => {
 }
 
 const composeMessage = () => {
+  // Get the latest message if available
+  const latestMessage = messages.value.length > 0 ? messages.value[0] : null
+  
   router.push({ 
     name: 'apps-email-compose', 
-    query: { project_id: projectId } 
+    query: { 
+      project_id: projectId,
+      reply_to_id: latestMessage?.id,
+      subject: latestMessage ? `Re: ${latestMessage.subject}` : undefined,
+      receiver_id: latestMessage?.from?.id
+    } 
   })
 }
 
@@ -671,13 +686,22 @@ onMounted(() => {
               </template>
               
               <VListItemTitle>{{ message.subject }}</VListItemTitle>
-              <VListItemSubtitle>
-                {{ t('projects.details.from') }}: {{ message.from?.name || message.from?.email || t('projects.details.unknown') }}
+              <VListItemSubtitle class="d-flex flex-column">
+                <span>{{ t('projects.details.from') }}: {{ message.from?.fullName || message.from?.email || t('projects.details.unknown') }}</span>
+                <!-- Add message preview with truncation and HTML stripping -->
+                <span class="text-truncate" style="max-inline-size: 300px;">{{ stripHtml(message.message) }}</span>
               </VListItemSubtitle>
               
               <template #append>
-                <div class="d-flex flex-column align-end">
-                  <span class="text-xs text-disabled">{{ formattedDate(message.created_at) }}</span>
+                <div class="d-flex flex-column align-end gap-2">
+                  <span class="text-xs text-disabled">{{ formattedDate(message.sent_at || message.time || message.created_at) }}</span>
+                  <VChip
+                    :color="statusColorMap[message.status]"
+                    size="small"
+                    class="text-capitalize"
+                  >
+                    {{ t(`emails.status.${message.status || 'new'}`) }}
+                  </VChip>
                 </div>
               </template>
             </VListItem>
@@ -700,35 +724,6 @@ onMounted(() => {
         <div v-if="!project?.attachments?.length">
           {{ t('projects.details.noAttachments') }}
         </div>
-        <!-- Add attachments list here -->
-      </VCardText>
-    </VCard>
-
-    <!-- Comments Section -->
-    <VCard class="mb-6">
-      <VCardText>
-        <h3 class="text-h6 mb-4">{{ t('projects.details.comments') }}</h3>
-        <div v-if="!project?.comments?.length">
-          {{ t('projects.details.noComments') }}
-        </div>
-        <!-- Add comments list here -->
-        <VBtn
-          prepend-icon="bx-comment-add"
-          class="mt-4"
-        >
-          {{ t('projects.details.addComment') }}
-        </VBtn>
-      </VCardText>
-    </VCard>
-
-    <!-- Project History Section -->
-    <VCard>
-      <VCardText>
-        <h3 class="text-h6 mb-4">{{ t('projects.details.history') }}</h3>
-        <div v-if="!project?.history?.length">
-          {{ t('projects.details.noHistory') }}
-        </div>
-        <!-- Add history list here -->
       </VCardText>
     </VCard>
 

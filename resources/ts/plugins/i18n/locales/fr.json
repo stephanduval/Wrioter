@@ -433,7 +433,8 @@
         "transcription": "Transcription",
         "voiceOver": "Voice-over",
         "other": "Autre"
-      }
+      },
+      "cancel": "Annuler"
     },
     "labels": {
       "title": "ÉTIQUETTES",
