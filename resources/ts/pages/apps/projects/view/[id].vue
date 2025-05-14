@@ -51,6 +51,7 @@ interface Project {
   }
   contact_email?: string
   date_requested?: string
+  attachments?: any[]
 }
 
 const statusColorMap: Record<string, string> = {
@@ -205,6 +206,33 @@ const handleEmailRefresh = () => {
 
 const handleProjectUpdated = () => {
   fetchProject()
+}
+
+const downloadAttachments = async (attachments: any[]) => {
+  if (!attachments || attachments.length === 0) return
+
+  // If there are multiple attachments, open the email view instead
+  if (attachments.length > 1) {
+    // Find the message that contains these attachments
+    const message = messages.value.find(m => m.attachments?.some(a => attachments.includes(a)))
+    if (message) {
+      handleEmailClick(message)
+    }
+    return
+  }
+
+  // For single attachment, download directly
+  try {
+    window.open(attachments[0].download_url, '_blank')
+  } catch (error) {
+    console.error('Error downloading attachment:', error)
+  }
+}
+
+// Add a function to download a single attachment
+const downloadAttachment = (attachment: any) => {
+  if (!attachment?.download_url) return
+  window.open(attachment.download_url, '_blank')
 }
 
 onMounted(() => {
@@ -694,7 +722,21 @@ onMounted(() => {
               
               <template #append>
                 <div class="d-flex flex-column align-end gap-2">
-                  <span class="text-xs text-disabled">{{ formattedDate(message.sent_at || message.time || message.created_at) }}</span>
+                  <div class="d-flex align-center gap-2">
+                    <!-- Add attachment icon if message has attachments -->
+                    <IconBtn
+                      v-if="message.attachments?.length"
+                      @click.stop="downloadAttachments(message.attachments)"
+                      :title="message.attachments.length > 1 ? `${message.attachments.length} attachments` : '1 attachment'"
+                    >
+                      <VIcon
+                        icon="bx-paperclip"
+                        size="20"
+                        color="primary"
+                      />
+                    </IconBtn>
+                    <span class="text-xs text-disabled">{{ formattedDate(message.sent_at || message.time || message.created_at) }}</span>
+                  </div>
                   <VChip
                     :color="statusColorMap[message.status]"
                     size="small"
@@ -723,6 +765,35 @@ onMounted(() => {
         <h3 class="text-h6 mb-4">{{ t('projects.details.attachments') }}</h3>
         <div v-if="!project?.attachments?.length">
           {{ t('projects.details.noAttachments') }}
+        </div>
+        <div v-else class="d-flex flex-column gap-2">
+          <div
+            v-for="attachment in project.attachments"
+            :key="attachment.id"
+            class="d-flex align-center justify-space-between"
+          >
+            <div class="d-flex align-center gap-2">
+              <VIcon
+                icon="bx-file"
+                size="20"
+                color="primary"
+              />
+              <span>{{ attachment.filename }}</span>
+            </div>
+            <VBtn
+              variant="text"
+              color="primary"
+              size="small"
+              @click="downloadAttachment(attachment)"
+            >
+              <VIcon
+                icon="bx-download"
+                size="20"
+                class="me-1"
+              />
+              {{ t('emails.actions.download') }}
+            </VBtn>
+          </div>
         </div>
       </VCardText>
     </VCard>
