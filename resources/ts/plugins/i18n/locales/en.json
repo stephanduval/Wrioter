@@ -505,9 +505,7 @@
       "clickToReply": "Click here to",
       "clickToForward": "Forward",
       "unknown": "Unknown Sender",
-      "noEmail": "no-email@example.com",
-      "noDownloadUrl": "Download URL not available",
-      "downloadNotAvailable": "Download functionality not available"
+      "noEmail": "no-email@example.com"
     }
   }
 }
