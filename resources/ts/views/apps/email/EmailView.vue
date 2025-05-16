@@ -1,482 +1,98 @@
 <script setup lang="ts">
-import type { MoveEmailToAction } from '@/views/apps/email/useEmail'
-import { useEmail } from '@/views/apps/email/useEmail'
-import type { Email } from '@db/apps/email/types'
-import { useI18n } from 'vue-i18n'
-import { PerfectScrollbar } from 'vue3-perfect-scrollbar'
+import SharedEmailView from '@/components/SharedEmailView.vue';
+import { watch } from 'vue';
+import { useEmail } from './useEmail';
 
-interface Props {
-  email: Email | null
-  emailMeta: {
-    hasPreviousEmail: boolean
-    hasNextEmail: boolean
+const {
+  selectedEmail,
+  previousEmail,
+  nextEmail,
+  handleEmailClose,
+  handleEmailRefresh,
+  handleEmailNavigate,
+  handleSendReply,
+} = useEmail()
+
+// Add downloadAttachment function
+const downloadAttachment = (attachment: any) => {
+  console.log('Download attachment called with:', attachment)
+  
+  // Check if attachment exists and has required properties
+  if (!attachment || typeof attachment !== 'object') {
+    console.error('Invalid attachment object:', attachment)
+    return
+  }
+
+  // Log the full attachment object for debugging
+  console.log('Full attachment object:', JSON.stringify(attachment, null, 2))
+
+  // Check for download_url specifically
+  if (!attachment.download_url) {
+    console.error('No download URL found in attachment:', attachment)
+    return
+  }
+
+  try {
+    // Create a temporary anchor element to handle the download
+    const link = document.createElement('a')
+    link.href = attachment.download_url
+    link.target = '_blank' // Open in new tab
+    link.rel = 'noopener noreferrer' // Security best practice
+    link.click() // Trigger the download
+  } catch (error) {
+    console.error('Error downloading attachment:', error)
   }
 }
 
-const props = defineProps<Props>()
+// Add downloadAttachments function for multiple attachments
+const downloadAttachments = async (attachments: any[]) => {
+  if (!attachments || attachments.length === 0) return
+
+  // If there are multiple attachments, download them sequentially
+  if (attachments.length > 1) {
+    for (const attachment of attachments) {
+      if (attachment?.download_url) {
+        window.open(attachment.download_url, '_blank')
+        // Add a small delay between downloads to prevent browser blocking
+        await new Promise(resolve => setTimeout(resolve, 500))
+      }
+    }
+    return
+  }
+
+  // For single attachment, download directly
+  if (attachments[0]?.download_url) {
+    window.open(attachments[0].download_url, '_blank')
+  }
+}
 
 const emit = defineEmits<{
   (e: 'refresh'): void
   (e: 'navigated', direction: 'previous' | 'next'): void
   (e: 'close'): void
-  (e: 'trash'): void
-  (e: 'unread'): void
-  (e: 'read'): void
-  (e: 'star'): void
-  (e: 'unstar'): void
 }>()
 
-const emailReply = ref('')
-const showReplyBox = ref(false)
-const showReplyCard = ref(true)
-const { updateEmailLabels, createMessage } = useEmail()
-
-const { labels, resolveLabelColor, emailMoveToFolderActions, shallShowMoveToActionFor, moveSelectedEmailTo } = useEmail()
-
-const { t } = useI18n()
-
-const attachmentsRef = ref<File[]>([])
-const attachmentErrors = ref<string[]>([])
-
-const MAX_FILE_SIZE_MB = 25
-const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024
-
-const handleMoveMailsTo = async (action: MoveEmailToAction) => {
-  await moveSelectedEmailTo(action, [(props.email as Email).id])
-  emit('refresh')
-  emit('close')
-}
-
-const updateMailLabel = async (label: Email['labels'][number]) => {
-  await updateEmailLabels([(props.email as Email).id], label)
-
-  emit('refresh')
-}
-
-const handleFileChange = (event: Event) => {
-  const target = event.target as HTMLInputElement
-  if (target && target.files) {
-    for (let i = 0; i < target.files.length; i++) {
-      attachmentsRef.value.push(target.files[i])
-    }
+// Watch for changes in selectedEmail and update navigation state
+watch(() => selectedEmail.value, (newEmail) => {
+  if (newEmail) {
+    console.log('Email attachments:', newEmail.attachments)
   }
-}
-
-const removeAttachment = (index: number) => {
-  attachmentsRef.value.splice(index, 1)
-}
-
-const sendReply = async () => {
-  if (!emailReply.value.trim()) {
-    console.error('Reply message is required')
-    return
-  }
-
-  if (attachmentErrors.value.length > 0) {
-    console.error('Cannot send: Attachment validation errors exist.', attachmentErrors.value)
-    return
-  }
-
-  const payload = {
-    receiver_id: props.email?.from.id || null,
-    company_id: 1,
-    subject: `Re: ${props.email?.subject || ''}`,
-    message: emailReply.value,
-    reply_to_id: props.email?.id,
-    attachments: attachmentsRef.value,
-    status: 'sent',
-    task_status: 'new',
-    sent_at: new Date().toISOString()
-  }
-
-  try {
-    const result = await createMessage(payload)
-    if (result && result.message === 'Message sent successfully') {
-      emailReply.value = ''
-      attachmentsRef.value = []
-      showReplyBox.value = false
-      showReplyCard.value = true
-      emit('refresh')
-    }
-  } catch (error) {
-    console.error('Error sending reply:', error)
-  }
-}
-
-watch(attachmentsRef, (newFiles) => {
-  attachmentErrors.value = []
-  let totalSize = 0
-
-  newFiles.forEach((file) => {
-    totalSize += file.size
-    if (file.size > MAX_FILE_SIZE_BYTES) {
-      attachmentErrors.value.push(`File "${file.name}" (${(file.size / 1024 / 1024).toFixed(2)} MB) exceeds the ${MAX_FILE_SIZE_MB} MB limit.`)
-    }
-  })
-}, { deep: true })
+}, { immediate: true })
 </script>
 
 <template>
-  <!-- ℹ️ calc(100% - 256px) => 265px is left sidebar width -->
-  <VNavigationDrawer
-    temporary
-    :model-value="!!props.email"
-    location="right"
-    :scrim="false"
-    floating
-    class="email-view"
-  >
-    <template v-if="props.email">
-      <!-- 👉 header -->
-
-      <div class="email-view-header d-flex align-center px-6 py-4">
-        <IconBtn
-          class="me-2"
-          @click="$emit('close'); showReplyBox = false; showReplyCard = true; emailReply = ''"
-        >
-          <VIcon
-            size="22"
-            icon="bx-chevron-left"
-            class="flip-in-rtl text-medium-emphasis"
-          />
-        </IconBtn>
-
-        <div class="d-flex align-center flex-wrap flex-grow-1 overflow-hidden gap-2">
-          <div class="text-body-1 text-high-emphasis text-truncate">
-            {{ props.email.subject }}
-          </div>
-
-          <div class="d-flex flex-wrap gap-2">
-            <VChip
-              v-for="label in props.email.labels"
-              :key="label"
-              :color="resolveLabelColor(label)"
-              class="text-capitalize flex-shrink-0"
-              size="small"
-            >
-              {{ label }}
-            </VChip>
-          </div>
-        </div>
-
-        <div>
-          <div class="d-flex align-center gap-1">
-            <IconBtn
-              :disabled="!props.emailMeta.hasPreviousEmail"
-              @click="$emit('navigated', 'previous')"
-            >
-              <VIcon
-                icon="bx-chevron-left"
-                class="flip-in-rtl text-medium-emphasis"
-              />
-            </IconBtn>
-
-            <IconBtn
-              :disabled="!props.emailMeta.hasNextEmail"
-              @click="$emit('navigated', 'next')"
-            >
-              <VIcon
-                icon="bx-chevron-right"
-                class="flip-in-rtl text-medium-emphasis"
-              />
-            </IconBtn>
-          </div>
-        </div>
-      </div>
-
-      <VDivider />
-
-      <!-- 👉 Action bar -->
-      <div class="email-view-action-bar d-flex align-center text-medium-emphasis ps-6 pe-4 gap-x-1">
-        <!-- Trash -->
-        <IconBtn
-          v-show="!props.email.isDeleted"
-          @click="$emit('trash'); $emit('close')"
-        >
-          <VIcon
-            icon="bx-trash"
-            size="22"
-          />
-          <VTooltip
-            activator="parent"
-            location="top"
-          >
-            {{ t('emails.actions.delete') }}
-          </VTooltip>
-        </IconBtn>
-
-        <!-- Read/Unread -->
-        <IconBtn @click.stop="$emit('unread'); $emit('close')">
-          <VIcon
-            icon="bx-envelope"
-            size="22"
-          />
-          <VTooltip
-            activator="parent"
-            location="top"
-          >
-            {{ t('emails.actions.markAsUnread') }}
-          </VTooltip>
-        </IconBtn>
-
-        <!-- Move to folder -->
-        <IconBtn>
-          <VIcon
-            icon="bx-folder"
-            size="22"
-          />
-          <VTooltip
-            activator="parent"
-            location="top"
-          >
-            {{ t('emails.actions.moveToInbox') }}
-          </VTooltip>
-
-          <VMenu activator="parent">
-            <VList density="compact">
-              <template
-                v-for="moveTo in emailMoveToFolderActions"
-                :key="moveTo.title"
-              >
-                <VListItem
-                  :class="shallShowMoveToActionFor(moveTo.action) ? 'd-flex' : 'd-none'"
-                  class="align-center"
-                  href="#"
-                  @click="handleMoveMailsTo(moveTo.action)"
-                >
-                  <template #prepend>
-                    <VIcon
-                      :icon="moveTo.icon"
-                      class="me-2"
-                      size="20"
-                    />
-                  </template>
-                  <VListItemTitle class="text-capitalize">
-                    {{ moveTo.action }}
-                  </VListItemTitle>
-                </VListItem>
-              </template>
-            </VList>
-          </VMenu>
-        </IconBtn>
-
-        <!-- Update labels -->
-        <IconBtn>
-          <VIcon
-            icon="bx-label"
-            size="22"
-          />
-          <VTooltip
-            activator="parent"
-            location="top"
-          >
-            {{ t('emails.actions.label') }}
-          </VTooltip>
-
-          <VMenu activator="parent">
-            <VList density="compact">
-              <VListItem
-                v-for="label in labels"
-                :key="label.title"
-                href="#"
-                @click.stop="updateMailLabel(label.title)"
-              >
-                <template #prepend>
-                  <VBadge
-                    inline
-                    :color="resolveLabelColor(label.title)"
-                    dot
-                  />
-                </template>
-                <VListItemTitle class="ms-2 text-capitalize">
-                  {{ label.title }}
-                </VListItemTitle>
-              </VListItem>
-            </VList>
-          </VMenu>
-        </IconBtn>
-
-        <VSpacer />
-
-        <div class="d-flex align-center gap-x-1">
-          <!-- Star/Unstar -->
-          <IconBtn
-            :color="props.email.isStarred ? 'warning' : 'default'"
-            @click="props.email?.isStarred ? $emit('unstar') : $emit('star'); $emit('refresh')"
-          >
-            <VIcon
-              :icon="props.email.isStarred ? 'bx-bxs-star' : 'bx-star' "
-              size="22"
-            />
-          </IconBtn>
-          <IconBtn>
-            <VIcon
-              icon="bx-dots-vertical-rounded"
-              size="22"
-            />
-          </IconBtn>
-        </div>
-      </div>
-
-      <VDivider />
-
-      <!-- 👉 Mail Content -->
-      <PerfectScrollbar
-        tag="div"
-        class="mail-content-container flex-grow-1 pa-sm-12 pa-6"
-        :options="{ wheelPropagation: false }"
-      >
-        <VCard class="mb-4">
-          <div class="d-flex align-start align-sm-center pa-6 gap-x-4">
-            <div class="d-flex flex-wrap flex-grow-1 overflow-hidden">
-              <div class="text-truncate">
-                <div class="text-body-1 font-weight-medium text-high-emphasis text-truncate">
-                  {{ props.email.from.name }}
-                </div>
-                <div class="text-sm">
-                  {{ props.email.from.email }}
-                </div>
-              </div>
-
-              <VSpacer />
-
-              <div class="d-flex align-center gap-x-4">
-                <div class="text-disabled text-base">
-                  {{ new Date(props.email.time).toDateString() }}
-                </div>
-                <div>
-                  <IconBtn v-show="props.email.attachments.length">
-                    <VIcon
-                      icon="bx-paperclip"
-                      size="22"
-                    />
-                  </IconBtn>
-                  <IconBtn>
-                    <VIcon
-                      icon="bx-dots-vertical-rounded"
-                      size="22"
-                    />
-                  </IconBtn>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <VDivider />
-
-          <VCardText>
-            <!-- eslint-disable vue/no-v-html -->
-            <div class="text-body-1 font-weight-medium text-truncate mb-4">
-              {{ props.email.from.name || t('emails.messages.unknown') }},
-            </div>
-            <div
-              class="text-base"
-              v-html="props.email.message"
-            />
-            <!-- eslint-enable -->
-          </VCardText>
-
-          <template v-if="props.email.attachments.length">
-            <VDivider />
-
-            <VCardText class="d-flex flex-column gap-y-4 pt-4">
-              <span>{{ t('emails.messages.attachmentsCount', { count: props.email.attachments.length }) }}</span>
-              <div
-                v-for="attachment in props.email.attachments"
-                :key="attachment.fileName"
-                class="d-flex align-center"
-              >
-                <VImg
-                  :src="attachment.thumbnail"
-                  :alt="attachment.fileName"
-                  aspect-ratio="1"
-                  max-height="24"
-                  max-width="24"
-                  class="me-2"
-                />
-                <span>{{ attachment.fileName }}</span>
-              </div>
-            </VCardText>
-          </template>
-        </VCard>
-
-        <!-- Reply or Forward -->
-        <VCard v-show="showReplyCard">
-          <VCardText class="font-weight-medium text-high-emphasis">
-            <div class="text-base">
-              {{ t('emails.messages.clickToReply') }} <span
-                class="text-primary cursor-pointer"
-                @click="showReplyBox = !showReplyBox; showReplyCard = !showReplyCard"
-              >
-                {{ t('emails.actions.reply') }}
-              </span> {{ t('emails.messages.clickToForward') }}
-            </div>
-          </VCardText>
-        </VCard>
-
-        <VCard v-if="showReplyBox">
-          <VCardText>
-            <div class="text-body-1 text-high-emphasis mb-6">
-              {{ t('emails.messages.replyTo', { name: props.email?.from.fullName || t('emails.messages.unknown') }) }}
-            </div>
-            <TiptapEditor
-              v-model="emailReply"
-              :placeholder="t('emails.compose.message')"
-              :is-divider="false"
-            />
-            
-            <!-- Add Attachment Section -->
-            <div class="mt-4">
-              <VFileInput
-                :model-value="attachmentsRef"
-                multiple
-                :label="t('emails.compose.attachments')"
-                :placeholder="t('emails.compose.selectFiles')"
-                prepend-icon="bx-paperclip"
-                density="compact"
-                :error-messages="attachmentErrors"
-                @change="handleFileChange"
-                @click:clear="attachmentsRef = []"
-              />
-
-              <!-- Attachment Chips -->
-              <div v-if="attachmentsRef.length > 0" class="mt-2 d-flex flex-wrap gap-2">
-                <VChip
-                  v-for="(file, index) in attachmentsRef"
-                  :key="index + '-' + file.name"
-                  label
-                  closable
-                  size="small"
-                  color="primary"
-                  @click:close="removeAttachment(index)"
-                >
-                  {{ file.name }} ({{ (file.size / 1024 / 1024).toFixed(2) }} MB)
-                </VChip>
-              </div>
-            </div>
-
-            <div class="d-flex justify-end gap-4 pt-4">
-              <VBtn
-                variant="text"
-                color="secondary"
-                @click="showReplyBox = false; showReplyCard = true; emailReply = ''; attachmentsRef = []"
-              >
-                {{ t('buttons.cancel') }}
-              </VBtn>
-              <VBtn
-                color="primary"
-                append-icon="bx-paper-plane"
-                :disabled="!emailReply.trim() || attachmentErrors.length > 0"
-                @click="sendReply"
-              >
-                {{ t('emails.compose.send') }}
-              </VBtn>
-            </div>
-          </VCardText>
-        </VCard>
-      </PerfectScrollbar>
-    </template>
-  </VNavigationDrawer>
+  <SharedEmailView
+    :email="selectedEmail"
+    :email-meta="{
+      hasPreviousEmail: !!previousEmail,
+      hasNextEmail: !!nextEmail
+    }"
+    @close="handleEmailClose"
+    @refresh="handleEmailRefresh"
+    @navigated="handleEmailNavigate"
+    @send-reply="handleSendReply"
+    :download-attachment="downloadAttachment"
+  />
 </template>
 
 <style lang="scss">
@@ -494,31 +110,6 @@ watch(attachmentsRef, (newFiles) => {
   .v-navigation-drawer__content {
     display: flex;
     flex-direction: column;
-  }
-
-  .editor {
-    padding-block-start: 0 !important;
-    padding-inline: 0 !important;
-  }
-
-  .ProseMirror {
-    padding: 0.5rem;
-    block-size: 100px;
-    overflow-y: auto;
-    padding-block: 0.5rem;
-  }
-}
-
-.email-view-action-bar {
-  min-block-size: 54px;
-}
-
-.mail-content-container {
-  background-color: rgb(var(--v-theme-on-surface), var(--v-hover-opacity));
-
-  .mail-header {
-    margin-block: 12px;
-    margin-inline: 24px;
   }
 }
 </style>

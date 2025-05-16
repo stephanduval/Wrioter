@@ -394,6 +394,62 @@ export const useEmail = () => {
     }
   };
 
+  // Add new state for email navigation
+  const selectedEmail = ref<Email | null>(null)
+  const previousEmail = ref<Email | null>(null)
+  const nextEmail = ref<Email | null>(null)
+
+  // Add handlers for email navigation
+  const handleEmailClose = () => {
+    selectedEmail.value = null
+    previousEmail.value = null
+    nextEmail.value = null
+  }
+
+  const handleEmailRefresh = async () => {
+    const refreshedMessages = await fetchMessages()
+    messages.value = refreshedMessages
+  }
+
+  const handleEmailNavigate = (direction: 'previous' | 'next') => {
+    if (!selectedEmail.value) return
+
+    const currentIndex = messages.value.findIndex(email => email.id === selectedEmail.value?.id)
+    if (currentIndex === -1) return
+
+    if (direction === 'previous' && currentIndex > 0) {
+      previousEmail.value = messages.value[currentIndex - 1]
+      selectedEmail.value = previousEmail.value
+      nextEmail.value = messages.value[currentIndex]
+    } else if (direction === 'next' && currentIndex < messages.value.length - 1) {
+      nextEmail.value = messages.value[currentIndex + 1]
+      selectedEmail.value = nextEmail.value
+      previousEmail.value = messages.value[currentIndex]
+    }
+  }
+
+  const handleSendReply = async (data: { message: string, attachments: File[] }) => {
+    if (!selectedEmail.value) return
+
+    try {
+      const response = await sendReplyMessage({
+        receiver_id: selectedEmail.value.from.id,
+        company_id: selectedEmail.value.company_id,
+        subject: `Re: ${selectedEmail.value.subject}`,
+        body: data.message,
+        reply_to_id: selectedEmail.value.id,
+        attachments: data.attachments,
+      })
+
+      if (response) {
+        await handleEmailRefresh()
+        handleEmailClose()
+      }
+    } catch (error) {
+      console.error('Error sending reply:', error)
+    }
+  }
+
   return {
     userLabels, // <-- Export reactive userLabels
     resolveLabelColor, // Export updated function
@@ -410,5 +466,12 @@ export const useEmail = () => {
     sendReplyMessage,
     deleteMessage,
     deleteLabel,
+    selectedEmail,
+    previousEmail,
+    nextEmail,
+    handleEmailClose,
+    handleEmailRefresh,
+    handleEmailNavigate,
+    handleSendReply,
   }
 }

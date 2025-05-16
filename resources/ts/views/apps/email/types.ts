@@ -44,6 +44,7 @@ export interface Email {
   dueDate?: string | null;       // Added Due Date (YYYY-MM-DD or null)
   task_status?: 'new' | 'in_process' | 'completed'; // Added Task Status
   isArchived: boolean;          // Added Archive flag
+  company_id: number;          // Added company_id field
 }
 
 // Add MoveEmailToAction if not present

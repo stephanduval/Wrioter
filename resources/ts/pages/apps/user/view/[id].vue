@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import EmailView from '@/views/apps/email/EmailView.vue'
+import SharedEmailView from '@/components/SharedEmailView.vue'
 import axios from 'axios'
 import { format } from 'date-fns'
 import { computed, onMounted, ref } from 'vue'
@@ -142,10 +142,66 @@ const handleEmailClick = (email: any) => {
 
 const handleEmailClose = () => {
   selectedEmail.value = null
+  emailMeta.value = {
+    hasPreviousEmail: false,
+    hasNextEmail: false,
+  }
 }
 
-const handleEmailRefresh = () => {
-  fetchUser()
+const handleEmailRefresh = async () => {
+  // Refresh the messages list
+  await fetchMessages()
+}
+
+const handleEmailNavigate = (direction: 'previous' | 'next') => {
+  if (!selectedEmail.value) return
+
+  const currentIndex = messages.value.findIndex(email => email.id === selectedEmail.value?.id)
+  if (currentIndex === -1) return
+
+  if (direction === 'previous' && currentIndex > 0) {
+    selectedEmail.value = messages.value[currentIndex - 1]
+    emailMeta.value = {
+      hasPreviousEmail: currentIndex > 1,
+      hasNextEmail: true,
+    }
+  } else if (direction === 'next' && currentIndex < messages.value.length - 1) {
+    selectedEmail.value = messages.value[currentIndex + 1]
+    emailMeta.value = {
+      hasPreviousEmail: true,
+      hasNextEmail: currentIndex < messages.value.length - 2,
+    }
+  }
+}
+
+const handleSendReply = async (data: { message: string, attachments: File[] }) => {
+  if (!selectedEmail.value) return
+
+  try {
+    const formData = new FormData()
+    formData.append('subject', `Re: ${selectedEmail.value.subject}`)
+    formData.append('body', data.message)
+    formData.append('company_id', selectedEmail.value.company_id.toString())
+    formData.append('receiver_id', selectedEmail.value.from.id.toString())
+    formData.append('reply_to_id', selectedEmail.value.id.toString())
+
+    if (data.attachments && data.attachments.length > 0) {
+      data.attachments.forEach(file => formData.append('attachments[]', file))
+    }
+
+    const response = await axiosInstance.post('/messages', formData, {
+      headers: {
+        'Accept': 'application/json',
+      },
+    })
+
+    if (response.data) {
+      await handleEmailRefresh()
+      handleEmailClose()
+    }
+  } catch (error) {
+    console.error('Error sending reply:', error)
+  }
 }
 
 // Add function to fetch dropdown data
@@ -212,12 +268,27 @@ const saveChanges = async () => {
   }
 }
 
+// Add fetchMessages function
+const fetchMessages = async () => {
+  try {
+    const response = await axiosInstance.get(`/messages?user_id=${userId}`)
+    if (response.data && Array.isArray(response.data)) {
+      messages.value = response.data
+    }
+  } catch (error) {
+    console.error('Error fetching messages:', error)
+  }
+}
+
 const { t } = useI18n()
 
 onMounted(async () => {
   console.log('Component mounted, fetching user...')
-  await fetchDropdownData() // Fetch dropdown data first
-  await fetchUser()
+  await Promise.all([
+    fetchUser(),
+    fetchMessages(),
+    fetchDropdownData(),
+  ])
 })
 </script>
 
@@ -494,11 +565,13 @@ onMounted(async () => {
   </VRow>
 
   <!-- Email View Component -->
-  <EmailView
+  <SharedEmailView
     :email="selectedEmail"
     :email-meta="emailMeta"
     @close="handleEmailClose"
     @refresh="handleEmailRefresh"
+    @navigated="handleEmailNavigate"
+    @send-reply="handleSendReply"
   />
 </template>
 

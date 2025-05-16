@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import EmailView from '@/views/apps/email/EmailView.vue'
+import SharedEmailView from '@/components/SharedEmailView.vue'
 import axios from 'axios'
 import { format } from 'date-fns'
 import { onMounted, ref, watch } from 'vue'
@@ -208,13 +208,13 @@ const handleProjectUpdated = () => {
   fetchProject()
 }
 
-const downloadAttachments = async (attachments: any[]) => {
+const downloadAttachments = async (attachments: { id: number; download_url: string }[]) => {
   if (!attachments || attachments.length === 0) return
 
   // If there are multiple attachments, open the email view instead
   if (attachments.length > 1) {
     // Find the message that contains these attachments
-    const message = messages.value.find(m => m.attachments?.some(a => attachments.includes(a)))
+    const message = messages.value.find(m => m.attachments?.some((a: { id: number }) => attachments.some(att => att.id === a.id)))
     if (message) {
       handleEmailClick(message)
     }
@@ -233,6 +233,49 @@ const downloadAttachments = async (attachments: any[]) => {
 const downloadAttachment = (attachment: any) => {
   if (!attachment?.download_url) return
   window.open(attachment.download_url, '_blank')
+}
+
+const handleEmailNavigate = (direction: 'previous' | 'next') => {
+  if (!selectedEmail.value) return
+
+  const currentIndex = messages.value.findIndex(email => email.id === selectedEmail.value?.id)
+  if (currentIndex === -1) return
+
+  if (direction === 'previous' && currentIndex > 0) {
+    selectedEmail.value = messages.value[currentIndex - 1]
+  } else if (direction === 'next' && currentIndex < messages.value.length - 1) {
+    selectedEmail.value = messages.value[currentIndex + 1]
+  }
+}
+
+const handleSendReply = async (data: { message: string, attachments: File[] }) => {
+  if (!selectedEmail.value) return
+
+  try {
+    const formData = new FormData()
+    formData.append('subject', `Re: ${selectedEmail.value.subject}`)
+    formData.append('message', data.message)
+    formData.append('company_id', selectedEmail.value.company_id.toString())
+    formData.append('receiver_id', selectedEmail.value.from.id.toString())
+    formData.append('reply_to_id', selectedEmail.value.id.toString())
+
+    if (data.attachments) {
+      data.attachments.forEach(file => formData.append('attachments[]', file))
+    }
+
+    const response = await axios.post(`${apiBaseUrl}/messages`, formData, {
+      headers: {
+        'Accept': 'application/json',
+      },
+    })
+
+    if (response.data) {
+      await fetchProject()
+      handleEmailClose()
+    }
+  } catch (error) {
+    console.error('Error sending reply:', error)
+  }
 }
 
 onMounted(() => {
@@ -752,11 +795,17 @@ onMounted(() => {
       </VCol>
     </VRow>
 
-    <EmailView
+    <SharedEmailView
       :email="selectedEmail"
-      :email-meta="emailMeta"
+      :email-meta="{
+        hasPreviousEmail: selectedEmail && messages.findIndex(m => m.id === selectedEmail.id) > 0,
+        hasNextEmail: selectedEmail && messages.findIndex(m => m.id === selectedEmail.id) < messages.length - 1
+      }"
+      :download-attachment="downloadAttachment"
       @close="handleEmailClose"
       @refresh="handleEmailRefresh"
+      @navigated="handleEmailNavigate"
+      @send-reply="handleSendReply"
     />
 
     <!-- Attachments Section -->

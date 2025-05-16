@@ -496,7 +496,7 @@
       "noSubject": "Sans objet",
       "attachmentsCount": "{count} pièces jointes",
       "replyTo": "Répondre à {name}",
-      "clickToReply": "Cliquez ici pour répondre",
+      "clickToReply": "Cliquez ici pour",
       "clickToForward": "Transférer",
       "unknown": "Expéditeur inconnu",
       "noEmail": "pas-email@exemple.com"

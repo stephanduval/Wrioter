@@ -469,7 +469,8 @@
       "label": "Label",
       "search": "Search mail",
       "refresh": "Refresh",
-      "changeTaskStatus": "Change Task Status"
+      "changeTaskStatus": "Change Task Status",
+      "download": "Download"
     },
     "status": {
       "new": "New",
@@ -501,10 +502,12 @@
       "noSubject": "No Subject",
       "attachmentsCount": "{count} Attachments",
       "replyTo": "Reply to {name}",
-      "clickToReply": "Click here to Reply",
+      "clickToReply": "Click here to",
       "clickToForward": "Forward",
       "unknown": "Unknown Sender",
-      "noEmail": "no-email@example.com"
+      "noEmail": "no-email@example.com",
+      "noDownloadUrl": "Download URL not available",
+      "downloadNotAvailable": "Download functionality not available"
     }
   }
 }
