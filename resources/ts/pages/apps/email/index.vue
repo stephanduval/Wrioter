@@ -35,6 +35,8 @@ const {
     deleteMessage,
  } = useEmail();
 
+console.log('Available labels:', userLabels);
+
 const messages = ref<Email[]>([]); 
 
 // NEW: Ref for storing summary data of ALL user messages
@@ -159,11 +161,11 @@ const resolveStatusColor = (status?: 'new' | 'in_process' | 'completed' | null):
 }
 
 // Task status options for the dropdown
-const taskStatusOptions: { title: string, value: 'new' | 'in_process' | 'completed' }[] = [
+const taskStatusOptions = [
   { title: 'New', value: 'new' },
   { title: 'In Progress', value: 'in_process' },
   { title: 'Completed', value: 'completed' },
-];
+] as const;
 
 // --- Selection Logic ---
 const toggleSelectedEmail = (emailId: number) => {
@@ -618,8 +620,8 @@ const downloadAttachments = async (attachments: any[]) => {
                 <IconBtn :disabled="!selectedMessages.length">
                   <VIcon icon="bx-comment-check" size="22"/>
                   <VTooltip activator="parent" location="top">{{ t('emails.actions.changeTaskStatus') }}</VTooltip>
-                <VMenu activator="parent">
-                  <VList density="compact">
+                  <VMenu activator="parent">
+                    <VList density="compact">
                       <VListItem
                         v-for="statusOption in taskStatusOptions" 
                         :key="statusOption.value" 
@@ -631,21 +633,34 @@ const downloadAttachments = async (attachments: any[]) => {
                         </template>
                         <VListItemTitle class="ms-2">{{ t(`emails.status.${statusOption.value}`) }}</VListItemTitle>
                       </VListItem>
-                  </VList>
-                </VMenu>
-              </IconBtn>
+                    </VList>
+                  </VMenu>
+                </IconBtn>
                 <IconBtn :disabled="!selectedMessages.length">
                   <VIcon icon="bx-label" size="22"/>
                   <VTooltip activator="parent" location="top">{{ t('emails.actions.label') }}</VTooltip>
-                <VMenu activator="parent">
-                  <VList density="compact">
-                      <VListItem v-for="label in userLabels" :key="label.title" href="#" @click="handleEmailLabels(label.title)">
-                        <template #prepend><VBadge inline :color="resolveLabelColor(label.title)" dot/></template>
-                        <VListItemTitle class="ms-2 text-capitalize">{{ label.title }}</VListItemTitle>
-                    </VListItem>
-                  </VList>
-                </VMenu>
-              </IconBtn>
+                  <VMenu activator="parent">
+                    <VList density="compact">
+                      <VListItem 
+                        v-for="label in userLabels" 
+                        :key="label.title" 
+                        href="#" 
+                        @click="handleEmailLabels(label.title)"
+                      >
+                        <template #prepend>
+                          <VBadge 
+                            inline 
+                            :color="resolveLabelColor(label.title)" 
+                            dot
+                          />
+                        </template>
+                        <VListItemTitle class="ms-2 text-capitalize">
+                          {{ label.title }}
+                        </VListItemTitle>
+                      </VListItem>
+                    </VList>
+                  </VMenu>
+                </IconBtn>
             </div>
             <VSpacer />
               <IconBtn @click="fetchAllMessages">
@@ -678,6 +693,7 @@ const downloadAttachments = async (attachments: any[]) => {
               <span class="font-weight-semibold flex-shrink-0 ws-no-wrap text-truncate" style="max-inline-size: 180px;min-inline-size: 120px;">{{ t('headers.emails.from') }}</span>
               <span class="font-weight-semibold flex-shrink-0 ws-no-wrap text-truncate" style="max-inline-size: 180px;min-inline-size: 120px;">{{ t('headers.emails.to') }}</span>
               <span class="font-weight-semibold flex-grow-1 ws-no-wrap ms-2">{{ t('headers.emails.subject') }}</span>
+              <span class="font-weight-semibold flex-shrink-0 ws-no-wrap ms-2" style="min-inline-size: 120px;">{{ t('headers.emails.labels') }}</span>
             </div>
             <VDivider class="d-none d-md-block"/>
             <!-- END: Column Headers -->
@@ -764,6 +780,20 @@ const downloadAttachments = async (attachments: any[]) => {
                       <VIcon v-if="message.attachments && message.attachments.length > 0" icon="bx-paperclip" size="18" class="ms-1 text-disabled align-self-center" />
             </h6>
                     <div class="text-body-2 text-medium-emphasis text-truncate" v-html="message.message ? message.message.replace(/<p>|<\/p>/g, '') : ''"></div>
+        </div>
+        <div class="d-flex flex-wrap gap-1 ms-2" style="min-inline-size: 120px;">
+          <VChip
+            v-for="label in message.labels"
+            :key="label"
+            :color="resolveLabelColor(label)"
+            size="x-small"
+            class="text-capitalize"
+          >
+            {{ label }}
+          </VChip>
+          <span v-if="!message.labels || message.labels.length === 0" class="text-caption text-disabled">
+            {{ t('emails.messages.noLabels') }}
+          </span>
         </div>
       </div>
     </li>
@@ -859,9 +889,22 @@ const downloadAttachments = async (attachments: any[]) => {
                   <VTooltip activator="parent" location="top">{{ t('emails.actions.label') }}</VTooltip>
                   <VMenu activator="parent">
                     <VList density="compact">
-                      <VListItem v-for="label in userLabels" :key="label.title" href="#" @click="handleEmailLabels(label.title, [openedMessage.id])">
-                        <template #prepend><VBadge inline :color="resolveLabelColor(label.title)" dot /></template>
-                        <VListItemTitle class="ms-2 text-capitalize">{{ label.title }}</VListItemTitle>
+                      <VListItem 
+                        v-for="label in userLabels" 
+                        :key="label.title" 
+                        href="#" 
+                        @click="handleEmailLabels(label.title)"
+                      >
+                        <template #prepend>
+                          <VBadge 
+                            inline 
+                            :color="resolveLabelColor(label.title)" 
+                            dot
+                          />
+                        </template>
+                        <VListItemTitle class="ms-2 text-capitalize">
+                          {{ label.title }}
+                        </VListItemTitle>
                       </VListItem>
                     </VList>
                   </VMenu>

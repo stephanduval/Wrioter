@@ -286,7 +286,8 @@
       "actions": "Actions",
       "dueDate": "Due Date",
       "sender": "Sender",
-      "to": "To"
+      "to": "To",
+      "labels": "Labels"
     }
   },
   "projects": {
@@ -474,7 +475,7 @@
     },
     "status": {
       "new": "New",
-      "in_progress": "In Progress",
+      "in_process": "In Progress",
       "completed": "Completed",
       "sent": "Sent",
       "received": "Received",
@@ -505,7 +506,8 @@
       "clickToReply": "Click here to",
       "clickToForward": "Forward",
       "unknown": "Unknown Sender",
-      "noEmail": "no-email@example.com"
+      "noEmail": "no-email@example.com",
+      "noLabels": "No labels"
     }
   }
 }
