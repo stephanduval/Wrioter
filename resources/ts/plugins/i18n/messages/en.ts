@@ -1,8 +1,6 @@
 export default {
   $vuetify: {
-    badge: {
-      content: '{0}'
-    },
+    badge: 'Badge',
     dataIterator: {
       loadingText: 'Loading items...',
       noResultsText: 'No matching records found',

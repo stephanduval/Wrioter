@@ -1131,7 +1131,7 @@ const downloadAttachments = async (attachments: any[]) => {
   <template v-else>
     <div class="d-flex flex-column align-center justify-center h-100 pa-10">
       <VIcon icon="bx-envelope" size="64" color="primary" class="mb-4" />
-      <h2 class="text-h5 mb-2">{{ t('emails.messages.noMessages') || 'No messages found.' }}</h2>
+      <h2 class="text-h5 mb-2">{{ t('emails.messages.noMessages') }}</h2>
       <VBtn color="primary" @click="fetchAllMessages">{{ t('emails.actions.refresh') }}</VBtn>
     </div>
   </template>

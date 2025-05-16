@@ -507,7 +507,8 @@
       "clickToForward": "Forward",
       "unknown": "Unknown Sender",
       "noEmail": "no-email@example.com",
-      "noLabels": "No labels"
+      "noLabels": "No labels",
+      "noMessages": "No messages found"
     }
   }
 }

@@ -38,21 +38,21 @@ class AuthController extends Controller
             if ($user->save()) {
                 \Log::info('User saved successfully.', ['user_id' => $user->id]);
 
-                // Optionally assign a default role named 'User'
-                $defaultRole = Role::where('name', 'User')->first();
+                // Optionally assign a default role named 'Client'
+                $defaultRole = Role::where('name', 'Client')->first();
                 if ($defaultRole) {
-                    \Log::info('Default role found.', ['role_id' => $defaultRole->id]);
+                    \Log::info('Client role found.', ['role_id' => $defaultRole->id]);
                     $user->roles()->attach($defaultRole->id);
                     \Log::info('Role assigned to user.', [
                         'user_id' => $user->id,
                         'role_id' => $defaultRole->id
                     ]);
                 } else {
-                    \Log::warning('Default role not found.');
+                    \Log::warning('Client role not found.');
                 }
 
                 return response()->json([
-                    'message' => 'Successfully created user with User role!'
+                    'message' => 'Successfully created user with Client role!'
                 ], 201);
             } else {
                 \Log::error('Failed to save user.', $user->toArray());
@@ -103,7 +103,7 @@ class AuthController extends Controller
                 ], 500);
             }
 
-            // For “remember me” you no longer do $token->expires_at with Sanctum by default
+            // For "remember me" you no longer do $token->expires_at with Sanctum by default
             // If you want to keep track, you can store it manually somewhere or skip it
 
             // Fetch permissions if your User model has a "permissions" attribute

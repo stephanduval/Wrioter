@@ -73,14 +73,24 @@ const login = async () => {
 
     const { accessToken, userData, abilityRules } = await res.json()
 
-    console.log('Ability Rules received:', abilityRules)
+    // Add debugging
+    console.log('Login Response:', {
+      userData,
+      abilityRules,
+      role: userData.role
+    })
 
-    console.log('User Data:', userData) // Add this line to check the user data
-    // Update ability
-    ability.update(abilityRules.map((rule: { action: string; subject: string }) => ({
+    // Update ability with debugging
+    const mappedRules = abilityRules.map((rule: { action: string; subject: string }) => ({
       action: rule.action.toLowerCase(),
       subject: rule.subject.toLowerCase(),
-    })))
+    }))
+    console.log('Mapped Ability Rules:', mappedRules)
+    
+    ability.update(mappedRules)
+
+    // Verify ability was updated
+    console.log('Current Ability Rules:', ability.rules.value)
 
     // Set cookies BEFORE navigation
     const userDataCookie = useCookie('userData')

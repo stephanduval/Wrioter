@@ -499,7 +499,8 @@
       "clickToReply": "Cliquez ici pour",
       "clickToForward": "Transférer",
       "unknown": "Expéditeur inconnu",
-      "noEmail": "pas-email@exemple.com"
+      "noEmail": "pas-email@exemple.com",
+      "noMessages": "Aucun message trouvé"
     }
   }
 }
