@@ -54,11 +54,11 @@ const headers = computed(() => [
 ])
 
 // Status options
-const statusOptions = [
+const statusOptions = computed(() => [
   { title: t('projects.status.received'), value: 'received' },
-  { title: t('projects.status.inProgress'), value: 'in_progress' },
+  { title: t('projects.status.in_progress'), value: 'in_progress' },
   { title: t('projects.status.delivered'), value: 'delivered' },
-]
+])
 
 // Status color mapping
 const statusColorMap: Record<string, string> = {
@@ -68,7 +68,7 @@ const statusColorMap: Record<string, string> = {
 }
 
 // Service type options
-const serviceTypeOptions = [
+const serviceTypeOptions = computed(() => [
   { title: t('projects.form.all'), value: '' },
   { title: t('projects.form.translation'), value: 'translation' },
   { title: t('projects.form.revision'), value: 'revision' },
@@ -76,7 +76,7 @@ const serviceTypeOptions = [
   { title: t('projects.form.transcription'), value: 'transcription' },
   { title: t('projects.form.voiceOver'), value: 'voice_over' },
   { title: t('projects.form.other'), value: 'other' },
-]
+])
 
 // Methods
 const fetchProjects = async () => {
@@ -312,13 +312,13 @@ onMounted(() => {
             :color="statusColorMap[item.status]"
             @update:model-value="updateProjectStatus(item.id, $event)"
           >
-            <template #selection="{ item }">
+            <template #selection="{ item: selectedItem }">
               <VChip
-                :color="statusColorMap[item.value]"
+                :color="statusColorMap[selectedItem.value]"
                 size="small"
                 class="text-capitalize"
               >
-                {{ t(`projects.status.${item.value}`) }}
+                {{ selectedItem.title }}
               </VChip>
             </template>
           </VSelect>

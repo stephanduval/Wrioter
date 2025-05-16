@@ -684,16 +684,44 @@ const downloadAttachments = async (attachments: any[]) => {
 
             <!-- START: Column Headers -->
             <div class="email-list-header d-none d-md-flex align-center px-3 py-2 gap-2 text-caption text-disabled">
-              <!-- Placeholders to align with Checkbox and Star -->
-              <span style="max-inline-size: 20px; min-inline-size: 20px;" class="me-1"></span>
-              <span style="max-inline-size: 38px; min-inline-size: 38px;"></span> 
-              <!-- Headers matching list item styles -->
-              <span class="font-weight-semibold flex-shrink-0 ws-no-wrap text-truncate" style="max-inline-size: 90px; min-inline-size: 90px;">{{ t('headers.emails.status') }}</span>
-              <span class="font-weight-semibold flex-shrink-0 ws-no-wrap ms-2" style="min-inline-size: 80px;">{{ t('headers.emails.dueDate') }}</span>
-              <span class="font-weight-semibold flex-shrink-0 ws-no-wrap text-truncate" style="max-inline-size: 180px;min-inline-size: 120px;">{{ t('headers.emails.from') }}</span>
-              <span class="font-weight-semibold flex-shrink-0 ws-no-wrap text-truncate" style="max-inline-size: 180px;min-inline-size: 120px;">{{ t('headers.emails.to') }}</span>
-              <span class="font-weight-semibold flex-grow-1 ws-no-wrap ms-2">{{ t('headers.emails.subject') }}</span>
-              <span class="font-weight-semibold flex-shrink-0 ws-no-wrap ms-2" style="min-inline-size: 120px;">{{ t('headers.emails.labels') }}</span>
+              <!-- Checkbox column (20px) -->
+              <span style="inline-size: 20px; min-inline-size: 20px;" class="me-1"></span>
+              
+              <!-- Star icon column (38px) -->
+              <span style="inline-size: 38px; min-inline-size: 38px;"></span>
+              
+              <!-- Read/Unread icon column (38px) -->
+              <span style="inline-size: 38px; min-inline-size: 38px;"></span>
+              
+              <!-- Status column (90px) -->
+              <span class="font-weight-semibold flex-shrink-0 ws-no-wrap text-truncate" style="inline-size: 90px; min-inline-size: 90px;">
+                {{ t('headers.emails.status') }}
+              </span>
+              
+              <!-- Due Date column (80px) -->
+              <span class="font-weight-semibold flex-shrink-0 ws-no-wrap ms-2" style="inline-size: 80px; min-inline-size: 80px;">
+                {{ t('headers.emails.dueDate') }}
+              </span>
+              
+              <!-- From column (180px) -->
+              <span class="font-weight-semibold flex-shrink-0 ws-no-wrap text-truncate" style="inline-size: 180px; min-inline-size: 180px;">
+                {{ t('headers.emails.from') }}
+              </span>
+              
+              <!-- To column (180px) -->
+              <span class="font-weight-semibold flex-shrink-0 ws-no-wrap text-truncate" style="inline-size: 180px; min-inline-size: 180px;">
+                {{ t('headers.emails.to') }}
+              </span>
+              
+              <!-- Subject column (flex-grow) -->
+              <span class="font-weight-semibold flex-grow-1 ws-no-wrap ms-2">
+                {{ t('headers.emails.subject') }}
+              </span>
+              
+              <!-- Labels column (120px) -->
+              <span class="font-weight-semibold flex-shrink-0 ws-no-wrap ms-2" style="inline-size: 120px; min-inline-size: 120px;">
+                {{ t('headers.emails.labels') }}
+              </span>
             </div>
             <VDivider class="d-none d-md-block"/>
             <!-- END: Column Headers -->
@@ -703,101 +731,100 @@ const downloadAttachments = async (attachments: any[]) => {
         v-for="message in messages"
         :key="message.id"
         class="email-item d-flex align-center pa-3 gap-1 cursor-pointer"
-                :class="[{ 'message-read': message.isRead } ]"
+        :class="[{ 'message-read': message.isRead }]"
         @click="openMessage(message)"
       >
-                <div class="d-flex align-center flex-grow-1 gap-2"> 
+        <div class="d-flex align-center flex-grow-1 gap-2">
+          <!-- Checkbox -->
           <VCheckbox
             :model-value="selectedMessages.includes(message.id)"
-                    class="flex-shrink-0 me-1" 
-                      @update:model-value="toggleSelectedEmail(message.id)"
+            class="checkbox-column"
+            @update:model-value="toggleSelectedEmail(message.id)"
             @click.stop
           />
+          
+          <!-- Star icon -->
           <IconBtn
             :class="{ 'starred-button': message.isStarred }"
-                    class="flex-shrink-0"
+            class="star-column"
             @click.stop="handleActionClick(message.isStarred ? 'unstar' : 'star', [message.id])"
           >
-                    <VIcon :icon="message.isStarred ? 'bxs-star' : 'bx-star'" size="22" />
+            <VIcon :icon="message.isStarred ? 'bxs-star' : 'bx-star'" size="22" />
           </IconBtn>
-          <!-- Read/Unread Toggle Icon -->
+          
+          <!-- Read/Unread icon -->
           <IconBtn 
-             @click.stop="handleActionClick(message.isRead ? 'unread' : 'read', [message.id])"
-             class="ms-1 me-1" >
-             <VIcon :icon="message.isRead ? 'bx-envelope-open' : 'bx-envelope'" size="22" />
-             <VTooltip activator="parent" location="top">
-               {{ message.isRead ? 'Mark as Unread' : 'Mark as Read' }}
-             </VTooltip>
+            class="read-column"
+            @click.stop="handleActionClick(message.isRead ? 'unread' : 'read', [message.id])"
+          >
+            <VIcon :icon="message.isRead ? 'bx-envelope-open' : 'bx-envelope'" size="22" />
           </IconBtn>
-
-                   <VChip
-                       v-if="message.task_status"
-                       :color="resolveStatusColor(message.task_status)"
-                       size="small"
-                       class="flex-shrink-0 ws-no-wrap text-capitalize ms-2"
-                       style=" max-inline-size: 90px;min-inline-size: 90px;"
-                   >
-                    {{ message.task_status }}
-                   </VChip>
-                   <span
-                      v-else
-                      class="text-caption text-disabled flex-shrink-0 ws-no-wrap ms-2"
-                      style=" max-inline-size: 90px;min-inline-size: 90px;"
-                   >
-                      N/A
-                   </span>
-                  <span
-                    v-if="message.dueDate"
-                    class="text-caption text-medium-emphasis flex-shrink-0 ws-no-wrap ms-2"
-                    style="min-inline-size: 80px;"
-                  >
-                    {{ formatDate(message.dueDate) }}
-                  </span>
-                  <span
-                    v-else
-                    class="text-caption text-disabled flex-shrink-0 ws-no-wrap ms-2"
-                    style="min-inline-size: 80px;"
-                  >
-                    N/A
-                  </span>
-          <h6
-            v-if="message.from?.fullName"
-                    class="text-h6 font-weight-semibold flex-shrink-0 ws-no-wrap text-truncate"
-                    style="max-inline-size: 180px; min-inline-size: 120px;"
-          >
-            {{ message.from.fullName }}
-          </h6>
-                  <div 
-                    v-if="message.to && message.to.length > 0" 
-                    class="text-caption text-medium-emphasis flex-shrink-0 ws-no-wrap text-truncate"
-                    style="max-inline-size: 180px; min-inline-size: 120px;"
-                  >
-                    To: {{ message.to[0]?.fullName || message.to[0]?.email || 'N/A' }}
+          
+          <!-- Status -->
+          <div class="status-column">
+            <VChip
+              v-if="message.task_status"
+              :color="resolveStatusColor(message.task_status)"
+              size="small"
+              class="ws-no-wrap text-capitalize"
+            >
+              {{ message.task_status }}
+            </VChip>
+            <span v-else class="text-caption text-disabled ws-no-wrap">N/A</span>
           </div>
-                  <div class="flex-grow-1 overflow-hidden ms-2">
-                    <h6 class="text-h6 font-weight-regular ws-no-wrap text-truncate mb-0">
-                      {{ message.subject }}
-                      <VIcon v-if="message.attachments && message.attachments.length > 0" icon="bx-paperclip" size="18" class="ms-1 text-disabled align-self-center" />
+          
+          <!-- Due Date -->
+          <div class="due-date-column">
+            <span
+              v-if="message.dueDate"
+              class="text-caption text-medium-emphasis ws-no-wrap"
+            >
+              {{ formatDate(message.dueDate) }}
+            </span>
+            <span v-else class="text-caption text-disabled ws-no-wrap">N/A</span>
+          </div>
+          
+          <!-- From -->
+          <div class="from-column">
+            <h6 v-if="message.from?.fullName" class="text-h6 font-weight-semibold ws-no-wrap text-truncate">
+              {{ message.from.fullName }}
             </h6>
-                    <div class="text-body-2 text-medium-emphasis text-truncate" v-html="message.message ? message.message.replace(/<p>|<\/p>/g, '') : ''"></div>
+          </div>
+          
+          <!-- To -->
+          <div class="to-column">
+            <div v-if="message.to && message.to.length > 0" class="text-caption text-medium-emphasis ws-no-wrap text-truncate">
+              To: {{ message.to[0]?.fullName || message.to[0]?.email || 'N/A' }}
+            </div>
+          </div>
+          
+          <!-- Subject -->
+          <div class="flex-grow-1 overflow-hidden">
+            <h6 class="text-h6 font-weight-regular ws-no-wrap text-truncate mb-0">
+              {{ message.subject }}
+              <VIcon v-if="message.attachments?.length" icon="bx-paperclip" size="18" class="ms-1 text-disabled" />
+            </h6>
+            <div class="text-body-2 text-medium-emphasis text-truncate" v-html="message.message ? message.message.replace(/<p>|<\/p>/g, '') : ''"></div>
+          </div>
+          
+          <!-- Labels -->
+          <div class="labels-column d-flex flex-wrap gap-1">
+            <VChip
+              v-for="label in message.labels"
+              :key="label"
+              :color="resolveLabelColor(label)"
+              size="x-small"
+              class="text-capitalize"
+            >
+              {{ label }}
+            </VChip>
+            <span v-if="!message.labels?.length" class="text-caption text-disabled">
+              {{ t('emails.messages.noLabels') }}
+            </span>
+          </div>
         </div>
-        <div class="d-flex flex-wrap gap-1 ms-2" style="min-inline-size: 120px;">
-          <VChip
-            v-for="label in message.labels"
-            :key="label"
-            :color="resolveLabelColor(label)"
-            size="x-small"
-            class="text-capitalize"
-          >
-            {{ label }}
-          </VChip>
-          <span v-if="!message.labels || message.labels.length === 0" class="text-caption text-disabled">
-            {{ t('emails.messages.noLabels') }}
-          </span>
-        </div>
-      </div>
-    </li>
-  </PerfectScrollbar>
+      </li>
+    </PerfectScrollbar>
           </template>
           
           <template v-else>
@@ -1246,5 +1273,59 @@ const downloadAttachments = async (attachments: any[]) => {
 
 .ws-no-wrap {
   white-space: nowrap;
+}
+
+.email-list-header {
+  .ws-no-wrap {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.email-item {
+  .d-flex.align-center {
+    gap: 0.5rem;
+
+    .checkbox-column {
+      inline-size: 20px;
+      min-inline-size: 20px;
+    }
+
+    .star-column {
+      inline-size: 38px;
+      min-inline-size: 38px;
+    }
+
+    .read-column {
+      inline-size: 38px;
+      min-inline-size: 38px;
+    }
+
+    .status-column {
+      inline-size: 90px;
+      min-inline-size: 90px;
+    }
+
+    .due-date-column {
+      inline-size: 80px;
+      min-inline-size: 80px;
+    }
+
+    .from-column {
+      inline-size: 180px;
+      min-inline-size: 180px;
+    }
+
+    .to-column {
+      inline-size: 180px;
+      min-inline-size: 180px;
+    }
+
+    .labels-column {
+      inline-size: 120px;
+      min-inline-size: 120px;
+    }
+  }
 }
 </style>
