@@ -168,8 +168,8 @@
     "badge": "Badge",
     "noDataText": "No data available",
     "close": "Close",
-    "open": "open",
-    "loading": "loading",
+    "open": "Open",
+    "loading": "Loading",
     "carousel": {
       "ariaLabel": {
         "delimiter": "delimiter"
@@ -186,28 +186,28 @@
     },
     "pagination": {
       "ariaLabel": {
-        "root": "root",
-        "previous": "previous",
-        "first": "first",
-        "last": "last",
-        "next": "next",
-        "currentPage": "currentPage",
-        "page": "page"
+        "root": "Pagination",
+        "previous": "Previous",
+        "first": "First",
+        "last": "Last",
+        "next": "Next",
+        "currentPage": "Current Page",
+        "page": "Page"
       }
     },
     "input": {
-      "clear": "clear",
-      "appendAction": "appendAction",
-      "prependAction": "prependAction",
-      "counterSize": "counterSize",
-      "otp": "otp"
+      "clear": "Clear",
+      "appendAction": "Append Action",
+      "prependAction": "Prepend Action",
+      "counterSize": "Counter Size",
+      "otp": "OTP"
     },
     "fileInput": {
-      "counterSize": "counterSize"
+      "counterSize": "Counter Size"
     },
     "rating": {
       "ariaLabel": {
-        "item": "item"
+        "item": "Item"
       }
     }
   },

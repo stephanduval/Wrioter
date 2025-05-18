@@ -14,11 +14,15 @@ const localeMessages = Object.fromEntries(
 const messages = {
   en: {
     ...localeMessages.en,
-    ...vuetifyMessages,
+    $vuetify: {
+      ...vuetifyMessages.$vuetify,
+    },
   },
   fr: {
     ...localeMessages.fr,
-    ...vuetifyMessages,
+    $vuetify: {
+      ...vuetifyMessages.$vuetify,
+    },
   },
 }
 

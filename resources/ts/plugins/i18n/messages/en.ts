@@ -1,20 +1,50 @@
 export default {
   $vuetify: {
     badge: 'Badge',
-    dataIterator: {
-      loadingText: 'Loading items...',
-      noResultsText: 'No matching records found',
-      noDataText: 'No data available',
+    noDataText: 'No data available',
+    close: 'Close',
+    open: 'Open',
+    loading: 'Loading',
+    carousel: {
+      ariaLabel: {
+        delimiter: 'delimiter'
+      }
     },
     dataFooter: {
       itemsPerPageText: 'Items per page:',
       itemsPerPageAll: 'All',
-      nextPage: 'Next page',
-      prevPage: 'Previous page',
-      firstPage: 'First page',
-      lastPage: 'Last page',
       pageText: '{0}-{1} of {2}',
+      firstPage: 'First Page',
+      prevPage: 'Previous Page',
+      nextPage: 'Next Page',
+      lastPage: 'Last Page'
     },
+    pagination: {
+      ariaLabel: {
+        root: 'Pagination',
+        previous: 'Previous',
+        first: 'First',
+        last: 'Last',
+        next: 'Next',
+        currentPage: 'Current Page',
+        page: 'Page'
+      }
+    },
+    input: {
+      clear: 'Clear',
+      appendAction: 'Append Action',
+      prependAction: 'Prepend Action',
+      counterSize: 'Counter Size',
+      otp: 'OTP'
+    },
+    fileInput: {
+      counterSize: 'Counter Size'
+    },
+    rating: {
+      ariaLabel: {
+        item: 'Item'
+      }
+    }
   },
   // ... existing translations ...
 } 
