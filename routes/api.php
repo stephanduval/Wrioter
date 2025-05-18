@@ -6,7 +6,6 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\RolesController;
-use App\Http\Controllers\EmailController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\LabelController;
 use App\Http\Controllers\AttachmentController;
@@ -42,9 +41,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/users/{id}', [UserController::class, 'updateUser']);
     Route::delete('/users/{id}', [UserController::class, 'deleteUser']);
 });
-
-// Email Management Routes
-Route::middleware('auth:sanctum')->get('/email', [EmailController::class, 'index']);
 
 // Company Management Routes
 Route::middleware('auth:sanctum')->group(function () {
