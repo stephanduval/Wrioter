@@ -562,579 +562,570 @@ const downloadAttachments = async (attachments: any[]) => {
 </script>
 
 <template>
-  <template v-if="messages && messages.length">
-    <VLayout style="min-block-size: 100%;" class="email-app-layout">
-      <VNavigationDrawer v-model="isLeftSidebarOpen" absolute touchless location="start" :temporary="$vuetify.display.mdAndDown">
-        <EmailLeftSidebarContent :messages-meta="messagesMeta" @toggle-compose-dialog-visibility="isComposeDialogVisible = !isComposeDialogVisible" />
-      </VNavigationDrawer>
-      <VMain>
-        <VCard flat class="email-content-list h-100 d-flex flex-column">
-          <div class="d-flex align-center">
-            <IconBtn class="d-lg-none ms-3" @click="isLeftSidebarOpen = true">
-              <VIcon icon="bx-menu" />
+  <VLayout style="min-block-size: 100%;" class="email-app-layout">
+    <VNavigationDrawer v-model="isLeftSidebarOpen" absolute touchless location="start" :temporary="$vuetify.display.mdAndDown">
+      <EmailLeftSidebarContent :messages-meta="messagesMeta" @toggle-compose-dialog-visibility="isComposeDialogVisible = !isComposeDialogVisible" />
+    </VNavigationDrawer>
+    <VMain>
+      <VCard flat class="email-content-list h-100 d-flex flex-column">
+        <div class="d-flex align-center">
+          <IconBtn class="d-lg-none ms-3" @click="isLeftSidebarOpen = true">
+            <VIcon icon="bx-menu" />
+          </IconBtn>
+
+          <VTextField
+            v-model="q"
+            density="default"
+            class="email-search px-sm-2 flex-grow-1 py-1"
+            :placeholder="t('emails.actions.search')"
+          >
+            <template #prepend-inner>
+              <VIcon
+                icon="bx-search"
+                size="22"
+                class="me-2 text-medium-emphasis"
+              />
+            </template>
+          </VTextField>
+        </div>
+        <VDivider />
+        
+        <template v-if="!openedMessage">
+          <div class="py-2 px-4 d-flex align-center gap-x-1">
+            <VCheckbox :model-value="selectAllEmailCheckbox" :indeterminate="isSelectAllEmailCheckboxIndeterminate" class="d-flex" @update:model-value="selectAllCheckboxUpdate"/>
+          <div
+            class="w-100 d-flex align-center action-bar-actions gap-x-1"
+          >
+              <IconBtn v-if="shallShowMoveToActionFor('archive')" @click="handleMoveMailsTo('archive')">
+                <VIcon icon="bx-archive" size="22" />
+                <VTooltip activator="parent" location="top">{{ t('emails.actions.archive') }}</VTooltip>
+              </IconBtn>
+              <IconBtn v-if="shallShowMoveToActionFor('inbox')" @click="handleMoveMailsTo('inbox')">
+                <VIcon icon="bx-envelope" size="22" />
+                <VTooltip activator="parent" location="top">{{ t('emails.actions.moveToInbox') }}</VTooltip>
+              </IconBtn>
+              <IconBtn v-if="shallShowMoveToActionFor('trash')" @click="initiateTrashConfirmation(selectedMessages)">
+                <VIcon icon="bx-trash" size="22" />
+                <VTooltip activator="parent" location="top">{{ t('emails.actions.moveToTrash') }}</VTooltip>
+              </IconBtn>
+              <IconBtn v-if="route.params.filter === 'trash'" color="error" @click="initiatePermanentDeleteConfirmation(selectedMessages)">
+                <VIcon icon="bxs-trash" size="22" />
+                <VTooltip activator="parent" location="top">{{ t('emails.actions.deleteForever') }}</VTooltip>
+              </IconBtn>
+              <IconBtn @click="handleActionClick(isAllMarkRead ? 'unread' : 'read')">
+                <VIcon :icon="isAllMarkRead ? 'bx-envelope' : 'bx-envelope-open'" size="22"/>
+                <VTooltip activator="parent" location="top">{{ isAllMarkRead ? t('emails.actions.markAsUnread') : t('emails.actions.markAsRead') }}</VTooltip>
+              </IconBtn>
+              <IconBtn :disabled="!selectedMessages.length">
+                <VIcon icon="bx-comment-check" size="22"/>
+                <VTooltip activator="parent" location="top">{{ t('emails.actions.changeTaskStatus') }}</VTooltip>
+                <VMenu activator="parent">
+                  <VList density="compact">
+                    <VListItem
+                      v-for="statusOption in taskStatusOptions" 
+                      :key="statusOption.value" 
+                      href="#"
+                      @click="handleSelectedTaskStatusUpdate(statusOption.value)"
+                    >
+                      <template #prepend>
+                        <VBadge inline :color="resolveStatusColor(statusOption.value)" dot/>
+                      </template>
+                      <VListItemTitle class="ms-2">{{ t(`emails.status.${statusOption.value}`) }}</VListItemTitle>
+                    </VListItem>
+                  </VList>
+                </VMenu>
+              </IconBtn>
+              <IconBtn :disabled="!selectedMessages.length">
+                <VIcon icon="bx-label" size="22"/>
+                <VTooltip activator="parent" location="top">{{ t('emails.actions.label') }}</VTooltip>
+                <VMenu activator="parent">
+                  <VList density="compact">
+                    <VListItem 
+                      v-for="label in userLabels" 
+                      :key="label.title" 
+                      href="#" 
+                      @click="handleEmailLabels(label.title)"
+                    >
+                      <template #prepend>
+                        <VBadge 
+                          inline 
+                          :color="resolveLabelColor(label.title)" 
+                          dot
+                        />
+                      </template>
+                      <VListItemTitle class="ms-2 text-capitalize">
+                        {{ label.title }}
+                      </VListItemTitle>
+                    </VListItem>
+                  </VList>
+                </VMenu>
+              </IconBtn>
+          </div>
+          <VSpacer />
+            <IconBtn @click="fetchAllMessages">
+              <VIcon icon="bx-refresh" size="22" />
+              <VTooltip activator="parent" location="top">{{ t('emails.actions.refresh') }}</VTooltip>
             </IconBtn>
-
-            <VTextField
-              v-model="q"
-              density="default"
-              class="email-search px-sm-2 flex-grow-1 py-1"
-              :placeholder="t('emails.actions.search')"
-            >
-              <template #prepend-inner>
-                <VIcon
-                  icon="bx-search"
-                  size="22"
-                  class="me-2 text-medium-emphasis"
-                />
-              </template>
-            </VTextField>
-          </div>
-          <VDivider />
+        </div>
+        <VDivider />
           
-          <template v-if="!openedMessage">
-            <div class="py-2 px-4 d-flex align-center gap-x-1">
-              <VCheckbox :model-value="selectAllEmailCheckbox" :indeterminate="isSelectAllEmailCheckboxIndeterminate" class="d-flex" @update:model-value="selectAllCheckboxUpdate"/>
-            <div
-              class="w-100 d-flex align-center action-bar-actions gap-x-1"
-            >
-                <IconBtn v-if="shallShowMoveToActionFor('archive')" @click="handleMoveMailsTo('archive')">
-                  <VIcon icon="bx-archive" size="22" />
-                  <VTooltip activator="parent" location="top">{{ t('emails.actions.archive') }}</VTooltip>
-              </IconBtn>
-                <IconBtn v-if="shallShowMoveToActionFor('inbox')" @click="handleMoveMailsTo('inbox')">
-                  <VIcon icon="bx-envelope" size="22" />
-                  <VTooltip activator="parent" location="top">{{ t('emails.actions.moveToInbox') }}</VTooltip>
-              </IconBtn>
-                <IconBtn v-if="shallShowMoveToActionFor('trash')" @click="initiateTrashConfirmation(selectedMessages)">
-                  <VIcon icon="bx-trash" size="22" />
-                  <VTooltip activator="parent" location="top">{{ t('emails.actions.moveToTrash') }}</VTooltip>
-                </IconBtn>
-                <IconBtn v-if="route.params.filter === 'trash'" color="error" @click="initiatePermanentDeleteConfirmation(selectedMessages)">
-                  <VIcon icon="bxs-trash" size="22" />
-                  <VTooltip activator="parent" location="top">{{ t('emails.actions.deleteForever') }}</VTooltip>
-                </IconBtn>
-                <IconBtn @click="handleActionClick(isAllMarkRead ? 'unread' : 'read')">
-                  <VIcon :icon="isAllMarkRead ? 'bx-envelope' : 'bx-envelope-open'" size="22"/>
-                  <VTooltip activator="parent" location="top">{{ isAllMarkRead ? t('emails.actions.markAsUnread') : t('emails.actions.markAsRead') }}</VTooltip>
-                </IconBtn>
-                <IconBtn :disabled="!selectedMessages.length">
-                  <VIcon icon="bx-comment-check" size="22"/>
-                  <VTooltip activator="parent" location="top">{{ t('emails.actions.changeTaskStatus') }}</VTooltip>
-                  <VMenu activator="parent">
-                    <VList density="compact">
-                      <VListItem
-                        v-for="statusOption in taskStatusOptions" 
-                        :key="statusOption.value" 
-                        href="#"
-                        @click="handleSelectedTaskStatusUpdate(statusOption.value)"
-                      >
-                        <template #prepend>
-                          <VBadge inline :color="resolveStatusColor(statusOption.value)" dot/>
-                        </template>
-                        <VListItemTitle class="ms-2">{{ t(`emails.status.${statusOption.value}`) }}</VListItemTitle>
-                      </VListItem>
-                    </VList>
-                  </VMenu>
-                </IconBtn>
-                <IconBtn :disabled="!selectedMessages.length">
-                  <VIcon icon="bx-label" size="22"/>
-                  <VTooltip activator="parent" location="top">{{ t('emails.actions.label') }}</VTooltip>
-                  <VMenu activator="parent">
-                    <VList density="compact">
-                      <VListItem 
-                        v-for="label in userLabels" 
-                        :key="label.title" 
-                        href="#" 
-                        @click="handleEmailLabels(label.title)"
-                      >
-                        <template #prepend>
-                          <VBadge 
-                            inline 
-                            :color="resolveLabelColor(label.title)" 
-                            dot
-                          />
-                        </template>
-                        <VListItemTitle class="ms-2 text-capitalize">
-                          {{ label.title }}
-                        </VListItemTitle>
-                      </VListItem>
-                    </VList>
-                  </VMenu>
-                </IconBtn>
-            </div>
-            <VSpacer />
-              <IconBtn @click="fetchAllMessages">
-                <VIcon icon="bx-refresh" size="22" />
-                <VTooltip activator="parent" location="top">{{ t('emails.actions.refresh') }}</VTooltip>
-              </IconBtn>
+          <!-- START: Summary Boxes (Always Visible) -->
+          <div class="px-4 py-2 d-flex gap-4">
+            <VChip color="warning" label size="small">
+              Due Today: {{ dueTodayCount }}
+            </VChip>
+            <VChip color="primary" label size="small">
+              New Tasks: {{ newStatusCount }}
+            </VChip>
           </div>
           <VDivider />
+          <!-- END: Summary Boxes -->
+
+          <!-- START: Column Headers -->
+          <div class="email-list-header d-none d-md-flex align-center px-3 py-2 gap-2 text-caption text-disabled">
+            <!-- Checkbox column (20px) -->
+            <span style="inline-size: 20px; min-inline-size: 20px;" class="me-1"></span>
             
-            <!-- START: Summary Boxes (Always Visible) -->
-            <div class="px-4 py-2 d-flex gap-4">
-              <VChip color="warning" label size="small">
-                Due Today: {{ dueTodayCount }}
-              </VChip>
-              <VChip color="primary" label size="small">
-                New Tasks: {{ newStatusCount }}
-              </VChip>
-            </div>
-            <VDivider />
-            <!-- END: Summary Boxes -->
-
-            <!-- START: Column Headers -->
-            <div class="email-list-header d-none d-md-flex align-center px-3 py-2 gap-2 text-caption text-disabled">
-              <!-- Checkbox column (20px) -->
-              <span style="inline-size: 20px; min-inline-size: 20px;" class="me-1"></span>
-              
-              <!-- Star icon column (38px) -->
-              <span style="inline-size: 38px; min-inline-size: 38px;"></span>
-              
-              <!-- Read/Unread icon column (38px) -->
-              <span style="inline-size: 38px; min-inline-size: 38px;"></span>
-              
-              <!-- Status column (90px) -->
-              <span class="font-weight-semibold flex-shrink-0 ws-no-wrap text-truncate" style="inline-size: 90px; min-inline-size: 90px;">
-                {{ t('headers.emails.status') }}
-              </span>
-              
-              <!-- Due Date column (80px) -->
-              <span class="font-weight-semibold flex-shrink-0 ws-no-wrap ms-2" style="inline-size: 80px; min-inline-size: 80px;">
-                {{ t('headers.emails.dueDate') }}
-              </span>
-              
-              <!-- From column (180px) -->
-              <span class="font-weight-semibold flex-shrink-0 ws-no-wrap text-truncate" style="inline-size: 180px; min-inline-size: 180px;">
-                {{ t('headers.emails.from') }}
-              </span>
-              
-              <!-- To column (180px) -->
-              <span class="font-weight-semibold flex-shrink-0 ws-no-wrap text-truncate" style="inline-size: 180px; min-inline-size: 180px;">
-                {{ t('headers.emails.to') }}
-              </span>
-              
-              <!-- Subject column (flex-grow) -->
-              <span class="font-weight-semibold flex-grow-1 ws-no-wrap ms-2">
-                {{ t('headers.emails.subject') }}
-              </span>
-              
-              <!-- Labels column (120px) -->
-              <span class="font-weight-semibold flex-shrink-0 ws-no-wrap ms-2" style="inline-size: 120px; min-inline-size: 120px;">
-                {{ t('headers.emails.labels') }}
-              </span>
-            </div>
-            <VDivider class="d-none d-md-block"/>
-            <!-- END: Column Headers -->
-          
-    <PerfectScrollbar v-if="messages.length" tag="ul" class="Message-list">
-      <li
-        v-for="message in messages"
-        :key="message.id"
-        class="email-item d-flex align-center pa-3 gap-1 cursor-pointer"
-        :class="[{ 'message-read': message.isRead }]"
-        @click="openMessage(message)"
-      >
-        <div class="d-flex align-center flex-grow-1 gap-2">
-          <!-- Checkbox -->
-          <VCheckbox
-            :model-value="selectedMessages.includes(message.id)"
-            class="checkbox-column"
-            @update:model-value="toggleSelectedEmail(message.id)"
-            @click.stop
-          />
-          
-          <!-- Star icon -->
-          <IconBtn
-            :class="{ 'starred-button': message.isStarred }"
-            class="star-column"
-            @click.stop="handleActionClick(message.isStarred ? 'unstar' : 'star', [message.id])"
-          >
-            <VIcon :icon="message.isStarred ? 'bxs-star' : 'bx-star'" size="22" />
-          </IconBtn>
-          
-          <!-- Read/Unread icon -->
-          <IconBtn 
-            class="read-column"
-            @click.stop="handleActionClick(message.isRead ? 'unread' : 'read', [message.id])"
-          >
-            <VIcon :icon="message.isRead ? 'bx-envelope-open' : 'bx-envelope'" size="22" />
-          </IconBtn>
-          
-          <!-- Status -->
-          <div class="status-column">
-            <VChip
-              v-if="message.task_status"
-              :color="resolveStatusColor(message.task_status)"
-              size="small"
-              class="ws-no-wrap text-capitalize"
-            >
-              {{ message.task_status }}
-            </VChip>
-            <span v-else class="text-caption text-disabled ws-no-wrap">N/A</span>
-          </div>
-          
-          <!-- Due Date -->
-          <div class="due-date-column">
-            <span
-              v-if="message.dueDate"
-              class="text-caption text-medium-emphasis ws-no-wrap"
-            >
-              {{ formatDate(message.dueDate) }}
+            <!-- Star icon column (38px) -->
+            <span style="inline-size: 38px; min-inline-size: 38px;"></span>
+            
+            <!-- Read/Unread icon column (38px) -->
+            <span style="inline-size: 38px; min-inline-size: 38px;"></span>
+            
+            <!-- Status column (90px) -->
+            <span class="font-weight-semibold flex-shrink-0 ws-no-wrap text-truncate" style="inline-size: 90px; min-inline-size: 90px;">
+              {{ t('headers.emails.status') }}
             </span>
-            <span v-else class="text-caption text-disabled ws-no-wrap">N/A</span>
-          </div>
-          
-          <!-- From -->
-          <div class="from-column">
-            <h6 v-if="message.from?.fullName" class="text-h6 font-weight-semibold ws-no-wrap text-truncate">
-              {{ message.from.fullName }}
-            </h6>
-          </div>
-          
-          <!-- To -->
-          <div class="to-column">
-            <div v-if="message.to && message.to.length > 0" class="text-caption text-medium-emphasis ws-no-wrap text-truncate">
-              To: {{ message.to[0]?.fullName || message.to[0]?.email || 'N/A' }}
-            </div>
-          </div>
-          
-          <!-- Subject -->
-          <div class="flex-grow-1 overflow-hidden">
-            <h6 class="text-h6 font-weight-regular ws-no-wrap text-truncate mb-0">
-              {{ message.subject }}
-              <VIcon v-if="message.attachments?.length" icon="bx-paperclip" size="18" class="ms-1 text-disabled" />
-            </h6>
-            <div class="text-body-2 text-medium-emphasis text-truncate" v-html="message.message ? message.message.replace(/<p>|<\/p>/g, '') : ''"></div>
-          </div>
-          
-          <!-- Labels -->
-          <div class="labels-column d-flex flex-wrap gap-1">
-            <VChip
-              v-for="label in message.labels"
-              :key="label"
-              :color="resolveLabelColor(label)"
-              size="x-small"
-              class="text-capitalize"
-            >
-              {{ label }}
-            </VChip>
-            <span v-if="!message.labels?.length" class="text-caption text-disabled">
-              {{ t('emails.messages.noLabels') }}
+            
+            <!-- Due Date column (80px) -->
+            <span class="font-weight-semibold flex-shrink-0 ws-no-wrap ms-2" style="inline-size: 80px; min-inline-size: 80px;">
+              {{ t('headers.emails.dueDate') }}
             </span>
+            
+            <!-- From column (180px) -->
+            <span class="font-weight-semibold flex-shrink-0 ws-no-wrap text-truncate" style="inline-size: 180px; min-inline-size: 180px;">
+              {{ t('headers.emails.from') }}
+            </span>
+            
+            <!-- To column (180px) -->
+            <span class="font-weight-semibold flex-shrink-0 ws-no-wrap text-truncate" style="inline-size: 180px; min-inline-size: 180px;">
+              {{ t('headers.emails.to') }}
+            </span>
+            
+            <!-- Subject column (flex-grow) -->
+            <span class="font-weight-semibold flex-grow-1 ws-no-wrap ms-2">
+              {{ t('headers.emails.subject') }}
+            </span>
+            
+            <!-- Labels column (120px) -->
+            <span class="font-weight-semibold flex-shrink-0 ws-no-wrap ms-2" style="inline-size: 120px; min-inline-size: 120px;">
+              {{ t('headers.emails.labels') }}
+            </span>
+          </div>
+          <VDivider class="d-none d-md-block"/>
+          <!-- END: Column Headers -->
+        
+  <PerfectScrollbar v-if="messages.length" tag="ul" class="Message-list">
+    <li
+      v-for="message in messages"
+      :key="message.id"
+      class="email-item d-flex align-center pa-3 gap-1 cursor-pointer"
+      :class="[{ 'message-read': message.isRead }]"
+      @click="openMessage(message)"
+    >
+      <div class="d-flex align-center flex-grow-1 gap-2">
+        <!-- Checkbox -->
+        <VCheckbox
+          :model-value="selectedMessages.includes(message.id)"
+          class="checkbox-column"
+          @update:model-value="toggleSelectedEmail(message.id)"
+          @click.stop
+        />
+        
+        <!-- Star icon -->
+        <IconBtn
+          :class="{ 'starred-button': message.isStarred }"
+          class="star-column"
+          @click.stop="handleActionClick(message.isStarred ? 'unstar' : 'star', [message.id])"
+        >
+          <VIcon :icon="message.isStarred ? 'bxs-star' : 'bx-star'" size="22" />
+        </IconBtn>
+        
+        <!-- Read/Unread icon -->
+        <IconBtn 
+          class="read-column"
+          @click.stop="handleActionClick(message.isRead ? 'unread' : 'read', [message.id])"
+        >
+          <VIcon :icon="message.isRead ? 'bx-envelope-open' : 'bx-envelope'" size="22" />
+        </IconBtn>
+        
+        <!-- Status -->
+        <div class="status-column">
+          <VChip
+            v-if="message.task_status"
+            :color="resolveStatusColor(message.task_status)"
+            size="small"
+            class="ws-no-wrap text-capitalize"
+          >
+            {{ message.task_status }}
+          </VChip>
+          <span v-else class="text-caption text-disabled ws-no-wrap">N/A</span>
+        </div>
+        
+        <!-- Due Date -->
+        <div class="due-date-column">
+          <span
+            v-if="message.dueDate"
+            class="text-caption text-medium-emphasis ws-no-wrap"
+          >
+            {{ formatDate(message.dueDate) }}
+          </span>
+          <span v-else class="text-caption text-disabled ws-no-wrap">N/A</span>
+        </div>
+        
+        <!-- From -->
+        <div class="from-column">
+          <h6 v-if="message.from?.fullName" class="text-h6 font-weight-semibold ws-no-wrap text-truncate">
+            {{ message.from.fullName }}
+          </h6>
+        </div>
+        
+        <!-- To -->
+        <div class="to-column">
+          <div v-if="message.to && message.to.length > 0" class="text-caption text-medium-emphasis ws-no-wrap text-truncate">
+            To: {{ message.to[0]?.fullName || message.to[0]?.email || 'N/A' }}
           </div>
         </div>
-      </li>
-    </PerfectScrollbar>
-          </template>
-          
-          <template v-else>
-            <div class="email-detail-view">
-              <div class="email-view-header d-flex align-center px-6 py-4">
-                <IconBtn
-                  class="me-2"
-                  @click="openedMessage = null; showReplyForm = false; replyMessage = ''"
+        
+        <!-- Subject -->
+        <div class="flex-grow-1 overflow-hidden">
+          <h6 class="text-h6 font-weight-regular ws-no-wrap text-truncate mb-0">
+            {{ message.subject }}
+            <VIcon v-if="message.attachments?.length" icon="bx-paperclip" size="18" class="ms-1 text-disabled" />
+          </h6>
+          <div class="text-body-2 text-medium-emphasis text-truncate" v-html="message.message ? message.message.replace(/<p>|<\/p>/g, '') : ''"></div>
+        </div>
+        
+        <!-- Labels -->
+        <div class="labels-column d-flex flex-wrap gap-1">
+          <VChip
+            v-for="label in message.labels"
+            :key="label"
+            :color="resolveLabelColor(label)"
+            size="x-small"
+            class="text-capitalize"
           >
-            <VIcon
-              size="22"
-                    icon="bx-chevron-left"
-                    class="flip-in-rtl text-medium-emphasis"
-            />
-          </IconBtn>
-
-                <div class="d-flex align-center flex-wrap flex-grow-1 overflow-hidden gap-2">
-                  <div class="text-body-1 text-high-emphasis text-truncate">
-                    {{ openedMessage.subject || 'No Subject' }}
-          </div>
-
-                  <div v-if="openedMessage.labels && openedMessage.labels.length" class="d-flex flex-wrap gap-2">
-                    <VChip
-                      v-for="label in openedMessage.labels"
-                      :key="label"
-                      :color="resolveLabelColor(label)"
-                      class="text-capitalize flex-shrink-0"
-                      size="small"
-                    >
-                      {{ label }}
-                    </VChip>
+            {{ label }}
+          </VChip>
+          <span v-if="!message.labels?.length" class="text-caption text-disabled">
+            {{ t('emails.messages.noLabels') }}
+          </span>
         </div>
       </div>
+    </li>
+  </PerfectScrollbar>
+        </template>
+        
+        <template v-else>
+          <div class="email-detail-view">
+            <div class="email-view-header d-flex align-center px-6 py-4">
+              <IconBtn
+                class="me-2"
+                @click="openedMessage = null; showReplyForm = false; replyMessage = ''"
+        >
+          <VIcon
+            size="22"
+                  icon="bx-chevron-left"
+                  class="flip-in-rtl text-medium-emphasis"
+          />
+        </IconBtn>
 
-                <div>
-                  <div class="d-flex align-center gap-1">
-                    <IconBtn
-                      :disabled="!messageViewMeta.hasPreviousEmail"
-                      @click="changeOpenedMessage('previous')"
-                    >
-                      <VIcon
-                        icon="bx-chevron-left"
-                        class="flip-in-rtl text-medium-emphasis"
-                      />
-                    </IconBtn>
+              <div class="d-flex align-center flex-wrap flex-grow-1 overflow-hidden gap-2">
+                <div class="text-body-1 text-high-emphasis text-truncate">
+                  {{ openedMessage.subject || 'No Subject' }}
+        </div>
 
-                    <IconBtn
-                      :disabled="!messageViewMeta.hasNextEmail"
-                      @click="changeOpenedMessage('next')"
-                    >
-                      <VIcon
-                        icon="bx-chevron-right"
-                        class="flip-in-rtl text-medium-emphasis"
-                      />
-                    </IconBtn>
-                  </div>
-                </div>
-              </div>
+                <div v-if="openedMessage.labels && openedMessage.labels.length" class="d-flex flex-wrap gap-2">
+                  <VChip
+                    v-for="label in openedMessage.labels"
+                    :key="label"
+                    :color="resolveLabelColor(label)"
+                    class="text-capitalize flex-shrink-0"
+                    size="small"
+                  >
+                    {{ label }}
+                  </VChip>
+      </div>
+    </div>
 
-              <VDivider />
+              <div>
+                <div class="d-flex align-center gap-1">
+                  <IconBtn
+                    :disabled="!messageViewMeta.hasPreviousEmail"
+                    @click="changeOpenedMessage('previous')"
+                  >
+                    <VIcon
+                      icon="bx-chevron-left"
+                      class="flip-in-rtl text-medium-emphasis"
+                    />
+                  </IconBtn>
 
-              <div class="email-view-action-bar d-flex align-center text-medium-emphasis ps-6 pe-4 gap-x-1">
-                <IconBtn v-if="!openedMessage.isArchived && openedMessage.status !== 'deleted'" @click="handleMoveMailsTo('archive', [openedMessage.id]); openedMessage = null">
-                  <VIcon icon="bx-archive" size="22" />
-                  <VTooltip activator="parent" location="top">{{ t('emails.actions.archive') }}</VTooltip>
-                </IconBtn>
-                <IconBtn v-if="openedMessage.isArchived" @click="handleMoveMailsTo('inbox', [openedMessage.id]); openedMessage = null">
-                  <VIcon icon="bx-envelope" size="22" />
-                  <VTooltip activator="parent" location="top">{{ t('emails.actions.moveToInbox') }}</VTooltip>
-                </IconBtn>
-                <IconBtn v-if="openedMessage.status !== 'deleted'" @click="initiateTrashConfirmation([openedMessage.id]); openedMessage = null">
-                  <VIcon icon="bx-trash" size="22" />
-                  <VTooltip activator="parent" location="top">{{ t('emails.actions.moveToTrash') }}</VTooltip>
-                </IconBtn>
-                <IconBtn v-if="openedMessage.status === 'deleted'" color="error" @click="initiatePermanentDeleteConfirmation([openedMessage.id]); openedMessage = null">
-                  <VIcon icon="bxs-trash" size="22" />
-                  <VTooltip activator="parent" location="top">{{ t('emails.actions.deleteForever') }}</VTooltip>
-                </IconBtn>
-                <IconBtn @click="handleActionClick('unread', [openedMessage.id]); openedMessage = null">
-                  <VIcon icon="bx-envelope" size="22" />
-                  <VTooltip activator="parent" location="top">{{ t('emails.actions.markAsUnread') }}</VTooltip>
-                </IconBtn>
-                <IconBtn @click="handleTaskStatusToggle(openedMessage)">
-                  <VIcon icon="bx-comment-check" size="22"/>
-                  <VTooltip activator="parent" location="top">{{ t('emails.actions.changeTaskStatus') }}</VTooltip>
-                </IconBtn>
-                <IconBtn>
-                  <VIcon icon="bx-label" size="22" />
-                  <VTooltip activator="parent" location="top">{{ t('emails.actions.label') }}</VTooltip>
-                  <VMenu activator="parent">
-                    <VList density="compact">
-                      <VListItem 
-                        v-for="label in userLabels" 
-                        :key="label.title" 
-                        href="#" 
-                        @click="handleEmailLabels(label.title)"
-                      >
-                        <template #prepend>
-                          <VBadge 
-                            inline 
-                            :color="resolveLabelColor(label.title)" 
-                            dot
-                          />
-                        </template>
-                        <VListItemTitle class="ms-2 text-capitalize">
-                          {{ label.title }}
-                        </VListItemTitle>
-                      </VListItem>
-                    </VList>
-                  </VMenu>
-                </IconBtn>
-                <VSpacer />
-                <div class="d-flex align-center gap-x-1">
-                  <IconBtn :class="{ 'starred-button': openedMessage.isStarred }" @click="handleActionClick(openedMessage.isStarred ? 'unstar' : 'star', [openedMessage.id])">
-                    <VIcon :icon="openedMessage.isStarred ? 'bxs-star' : 'bx-star'" size="22" />
+                  <IconBtn
+                    :disabled="!messageViewMeta.hasNextEmail"
+                    @click="changeOpenedMessage('next')"
+                  >
+                    <VIcon
+                      icon="bx-chevron-right"
+                      class="flip-in-rtl text-medium-emphasis"
+                    />
                   </IconBtn>
                 </div>
               </div>
+            </div>
 
-              <VDivider />
+            <VDivider />
 
-              <PerfectScrollbar
-                tag="div"
-                class="mail-content-container flex-grow-1 pa-sm-12 pa-6"
-                :options="{ wheelPropagation: false }"
-              >
-                <VCard class="mb-4">
-                  <div class="d-flex align-start align-sm-center pa-6 gap-x-4">
-                    <div class="d-flex flex-wrap flex-grow-1 overflow-hidden">
-                      <div class="text-truncate">
-                        <div class="text-body-1 font-weight-medium text-high-emphasis text-truncate">
-                          {{ openedMessage.from?.fullName || t('emails.messages.unknown') }}
-                        </div>
-                        <div class="text-sm">
-                          {{ openedMessage.from?.email || t('emails.messages.noEmail') }}
-                        </div>
+            <div class="email-view-action-bar d-flex align-center text-medium-emphasis ps-6 pe-4 gap-x-1">
+              <IconBtn v-if="!openedMessage.isArchived && openedMessage.status !== 'deleted'" @click="handleMoveMailsTo('archive', [openedMessage.id]); openedMessage = null">
+                <VIcon icon="bx-archive" size="22" />
+                <VTooltip activator="parent" location="top">{{ t('emails.actions.archive') }}</VTooltip>
+              </IconBtn>
+              <IconBtn v-if="openedMessage.isArchived" @click="handleMoveMailsTo('inbox', [openedMessage.id]); openedMessage = null">
+                <VIcon icon="bx-envelope" size="22" />
+                <VTooltip activator="parent" location="top">{{ t('emails.actions.moveToInbox') }}</VTooltip>
+              </IconBtn>
+              <IconBtn v-if="openedMessage.status !== 'deleted'" @click="initiateTrashConfirmation([openedMessage.id]); openedMessage = null">
+                <VIcon icon="bx-trash" size="22" />
+                <VTooltip activator="parent" location="top">{{ t('emails.actions.moveToTrash') }}</VTooltip>
+              </IconBtn>
+              <IconBtn v-if="openedMessage.status === 'deleted'" color="error" @click="initiatePermanentDeleteConfirmation([openedMessage.id]); openedMessage = null">
+                <VIcon icon="bxs-trash" size="22" />
+                <VTooltip activator="parent" location="top">{{ t('emails.actions.deleteForever') }}</VTooltip>
+              </IconBtn>
+              <IconBtn @click="handleActionClick('unread', [openedMessage.id]); openedMessage = null">
+                <VIcon icon="bx-envelope" size="22" />
+                <VTooltip activator="parent" location="top">{{ t('emails.actions.markAsUnread') }}</VTooltip>
+              </IconBtn>
+              <IconBtn @click="handleTaskStatusToggle(openedMessage)">
+                <VIcon icon="bx-comment-check" size="22"/>
+                <VTooltip activator="parent" location="top">{{ t('emails.actions.changeTaskStatus') }}</VTooltip>
+              </IconBtn>
+              <IconBtn>
+                <VIcon icon="bx-label" size="22" />
+                <VTooltip activator="parent" location="top">{{ t('emails.actions.label') }}</VTooltip>
+                <VMenu activator="parent">
+                  <VList density="compact">
+                    <VListItem 
+                      v-for="label in userLabels" 
+                      :key="label.title" 
+                      href="#" 
+                      @click="handleEmailLabels(label.title)"
+                    >
+                      <template #prepend>
+                        <VBadge 
+                          inline 
+                          :color="resolveLabelColor(label.title)" 
+                          dot
+                        />
+                      </template>
+                      <VListItemTitle class="ms-2 text-capitalize">
+                        {{ label.title }}
+                      </VListItemTitle>
+                    </VListItem>
+                  </VList>
+                </VMenu>
+              </IconBtn>
+              <VSpacer />
+              <div class="d-flex align-center gap-x-1">
+                <IconBtn :class="{ 'starred-button': openedMessage.isStarred }" @click="handleActionClick(openedMessage.isStarred ? 'unstar' : 'star', [openedMessage.id])">
+                  <VIcon :icon="openedMessage.isStarred ? 'bxs-star' : 'bx-star'" size="22" />
+                </IconBtn>
+              </div>
+            </div>
+
+            <VDivider />
+
+            <PerfectScrollbar
+              tag="div"
+              class="mail-content-container flex-grow-1 pa-sm-12 pa-6"
+              :options="{ wheelPropagation: false }"
+            >
+              <VCard class="mb-4">
+                <div class="d-flex align-start align-sm-center pa-6 gap-x-4">
+                  <div class="d-flex flex-wrap flex-grow-1 overflow-hidden">
+                    <div class="text-truncate">
+                      <div class="text-body-1 font-weight-medium text-high-emphasis text-truncate">
+                        {{ openedMessage.from?.fullName || t('emails.messages.unknown') }}
                       </div>
+                      <div class="text-sm">
+                        {{ openedMessage.from?.email || t('emails.messages.noEmail') }}
+                      </div>
+                    </div>
 
-                      <VSpacer />
+                    <VSpacer />
 
-                      <div class="d-flex align-center gap-x-4">
-                        <div class="text-disabled text-base">
-                          {{ new Date(openedMessage.time || Date.now()).toDateString() }}
-                        </div>
-                        <IconBtn 
-                          v-if="openedMessage.attachments?.length" 
-                          @click.stop="downloadAttachments(openedMessage.attachments)"
+                    <div class="d-flex align-center gap-x-4">
+                      <div class="text-disabled text-base">
+                        {{ new Date(openedMessage.time || Date.now()).toDateString() }}
+                      </div>
+                      <IconBtn 
+                        v-if="openedMessage.attachments?.length" 
+                        @click.stop="downloadAttachments(openedMessage.attachments)"
+                      >
+                        <VIcon
+                          icon="bx-paperclip"
+                          size="22"
+                        />
+                        <VTooltip
+                          activator="parent"
+                          location="top"
                         >
-                          <VIcon
-                            icon="bx-paperclip"
-                            size="22"
-                          />
-                          <VTooltip
-                            activator="parent"
-                            location="top"
-                          >
-                            {{ t('emails.messages.attachmentsCount', { count: openedMessage.attachments.length }) }}
-                          </VTooltip>
-                        </IconBtn>
-                      </div>
+                          {{ t('emails.messages.attachmentsCount', { count: openedMessage.attachments.length }) }}
+                        </VTooltip>
+                      </IconBtn>
                     </div>
                   </div>
+                </div>
 
+                <VDivider />
+
+                <VCardText>
+                  <div class="text-body-1 font-weight-medium text-truncate mb-4">
+                    {{ openedMessage.from?.fullName || t('emails.messages.unknown') }},
+                  </div>
+                  <div class="text-base" v-html="openedMessage.message || ''" />
+                </VCardText>
+
+                <template v-if="openedMessage.attachments && openedMessage.attachments.length">
                   <VDivider />
 
-                  <VCardText>
-                    <div class="text-body-1 font-weight-medium text-truncate mb-4">
-                      {{ openedMessage.from?.fullName || t('emails.messages.unknown') }},
-                    </div>
-                    <div class="text-base" v-html="openedMessage.message || ''" />
-                  </VCardText>
-
-                  <template v-if="openedMessage.attachments && openedMessage.attachments.length">
-                    <VDivider />
-
-                    <VCardText class="d-flex flex-column gap-y-4 pt-4">
-                      <span>{{ t('emails.messages.attachmentsCount', { count: openedMessage.attachments.length }) }}</span>
-                      <div
-                        v-for="attachment in openedMessage.attachments"
-                        :key="attachment.id || attachment.fileName || 'file'"
-                        class="d-flex align-center justify-space-between"
-                      >
-                        <div class="d-flex align-center gap-2">
-                          <VIcon
-                            icon="bx-file"
-                            size="20"
-                            color="primary"
-                          />
-                          <span>{{ attachment.fileName || 'Attachment' }}</span>
-                        </div>
-                        <VBtn
-                          variant="text"
+                  <VCardText class="d-flex flex-column gap-y-4 pt-4">
+                    <span>{{ t('emails.messages.attachmentsCount', { count: openedMessage.attachments.length }) }}</span>
+                    <div
+                      v-for="attachment in openedMessage.attachments"
+                      :key="attachment.id || attachment.fileName || 'file'"
+                      class="d-flex align-center justify-space-between"
+                    >
+                      <div class="d-flex align-center gap-2">
+                        <VIcon
+                          icon="bx-file"
+                          size="20"
                           color="primary"
-                          size="small"
-                          @click.stop="downloadAttachment(attachment)"
-                        >
-                          <VIcon
-                            icon="bx-download"
-                            size="20"
-                            class="me-1"
-                          />
-                          {{ t('emails.actions.download') }}
-                        </VBtn>
+                        />
+                        <span>{{ attachment.fileName || 'Attachment' }}</span>
                       </div>
-                    </VCardText>
-                  </template>
-                </VCard>
-
-                <VCard v-if="!showReplyForm">
-                  <VCardText class="font-weight-medium text-high-emphasis">
-                    <div class="text-base">
-                      {{ t('emails.messages.clickToReply') }} <span
-                        class="text-primary cursor-pointer"
-                        @click="showReplyForm = true"
-                      >
-                        {{ t('emails.actions.reply') }}
-                      </span>
-                    </div>
-                  </VCardText>
-                </VCard>
-
-                <VCard v-if="showReplyForm" class="mt-4">
-                  <VCardText>
-                    <div class="text-body-1 text-high-emphasis mb-6">
-                      Reply to {{ openedMessage.from?.fullName || openedMessage.from?.email || 'User' }}
-                    </div>
-                    <VTextarea
-                      v-model="replyMessage"
-                      placeholder="Write your message..."
-                      rows="4"
-                      hide-details
-                      class="mb-4"
-                    ></VTextarea>
-                    <div class="d-flex justify-end gap-4 pt-2 flex-wrap">
-                      <IconBtn
-                        icon="bx-trash"
-                        @click="showReplyForm = false; replyMessage = ''"
-                      />
                       <VBtn
                         variant="text"
-                        color="secondary"
+                        color="primary"
+                        size="small"
+                        @click.stop="downloadAttachment(attachment)"
                       >
-                        <template #prepend>
-                          <VIcon
-                            icon="bx-paperclip"
-                            color="secondary"
-                            size="16"
-                          />
-                        </template>
-                        Attachments
-                      </VBtn>
-                      <VBtn 
-                        append-icon="bx-paper-plane" 
-                        @click="sendReply"
-                      >
-                        Send
+                        <VIcon
+                          icon="bx-download"
+                          size="20"
+                          class="me-1"
+                        />
+                        {{ t('emails.actions.download') }}
                       </VBtn>
                     </div>
                   </VCardText>
-                </VCard>
-              </PerfectScrollbar>
-            </div>
-          </template>
-        </VCard>
-        <ComposeDialog
-          v-if="isComposeDialogVisible"
-          @close="isComposeDialogVisible = false"
-          @refresh="fetchAllMessages"
-        />
-        
-        <VDialog v-model="isTrashConfirmDialogVisible" max-width="500px">
-          <VCard>
-            <VCardTitle>{{ t('emails.confirmations.trash.title') }}</VCardTitle>
-            <VCardText>
-              {{ t('emails.confirmations.trash.message') }}
-            </VCardText>
-            <VCardActions>
-              <VSpacer />
-              <VBtn color="secondary" @click="isTrashConfirmDialogVisible = false">{{ t('emails.confirmations.trash.cancel') }}</VBtn>
-              <VBtn color="error" @click="confirmTrashMessages">{{ t('emails.confirmations.trash.confirm') }}</VBtn>
-            </VCardActions>
-          </VCard>
-        </VDialog>
+                </template>
+              </VCard>
 
-        <VDialog v-model="isPermanentDeleteConfirmDialogVisible" max-width="500px">
-          <VCard>
-            <VCardTitle class="text-h5 error--text">{{ t('emails.confirmations.delete.title') }}</VCardTitle>
-            <VCardText>
-              <VAlert type="warning" dense outlined class="mb-3">
-                {{ t('emails.confirmations.delete.warning') }}
-              </VAlert>
-              {{ t('emails.confirmations.delete.message') }}
-            </VCardText>
-            <VCardActions>
-              <VSpacer />
-              <VBtn color="secondary" @click="isPermanentDeleteConfirmDialogVisible = false">{{ t('emails.confirmations.delete.cancel') }}</VBtn>
-              <VBtn color="error" @click="confirmPermanentDeleteMessages">{{ t('emails.confirmations.delete.confirm') }}</VBtn>
-            </VCardActions>
-          </VCard>
-        </VDialog>
-      </VMain>
-    </VLayout>
-  </template>
-  <template v-else>
-    <div class="d-flex flex-column align-center justify-center h-100 pa-10">
-      <VIcon icon="bx-envelope" size="64" color="primary" class="mb-4" />
-      <h2 class="text-h5 mb-2">{{ t('emails.messages.noMessages') }}</h2>
-      <VBtn color="primary" @click="fetchAllMessages">{{ t('emails.actions.refresh') }}</VBtn>
-    </div>
-  </template>
+              <VCard v-if="!showReplyForm">
+                <VCardText class="font-weight-medium text-high-emphasis">
+                  <div class="text-base">
+                    {{ t('emails.messages.clickToReply') }} <span
+                      class="text-primary cursor-pointer"
+                      @click="showReplyForm = true"
+                    >
+                      {{ t('emails.actions.reply') }}
+                    </span>
+                  </div>
+                </VCardText>
+              </VCard>
+
+              <VCard v-if="showReplyForm" class="mt-4">
+                <VCardText>
+                  <div class="text-body-1 text-high-emphasis mb-6">
+                    Reply to {{ openedMessage.from?.fullName || openedMessage.from?.email || 'User' }}
+                  </div>
+                  <VTextarea
+                    v-model="replyMessage"
+                    placeholder="Write your message..."
+                    rows="4"
+                    hide-details
+                    class="mb-4"
+                  ></VTextarea>
+                  <div class="d-flex justify-end gap-4 pt-2 flex-wrap">
+                    <IconBtn
+                      icon="bx-trash"
+                      @click="showReplyForm = false; replyMessage = ''"
+                    />
+                    <VBtn
+                      variant="text"
+                      color="secondary"
+                    >
+                      <template #prepend>
+                        <VIcon
+                          icon="bx-paperclip"
+                          color="secondary"
+                          size="16"
+                        />
+                      </template>
+                      Attachments
+                    </VBtn>
+                    <VBtn 
+                      append-icon="bx-paper-plane" 
+                      @click="sendReply"
+                    >
+                      Send
+                    </VBtn>
+                  </div>
+                </VCardText>
+              </VCard>
+            </PerfectScrollbar>
+          </div>
+        </template>
+      </VCard>
+      <ComposeDialog
+        v-if="isComposeDialogVisible"
+        @close="isComposeDialogVisible = false"
+        @refresh="fetchAllMessages"
+      />
+      
+      <VDialog v-model="isTrashConfirmDialogVisible" max-width="500px">
+        <VCard>
+          <VCardTitle>{{ t('emails.confirmations.trash.title') }}</VCardTitle>
+          <VCardText>
+            {{ t('emails.confirmations.trash.message') }}
+          </VCardText>
+          <VCardActions>
+            <VSpacer />
+            <VBtn color="secondary" @click="isTrashConfirmDialogVisible = false">{{ t('emails.confirmations.trash.cancel') }}</VBtn>
+            <VBtn color="error" @click="confirmTrashMessages">{{ t('emails.confirmations.trash.confirm') }}</VBtn>
+          </VCardActions>
+        </VCard>
+      </VDialog>
+
+      <VDialog v-model="isPermanentDeleteConfirmDialogVisible" max-width="500px">
+        <VCard>
+          <VCardTitle class="text-h5 error--text">{{ t('emails.confirmations.delete.title') }}</VCardTitle>
+          <VCardText>
+            <VAlert type="warning" dense outlined class="mb-3">
+              {{ t('emails.confirmations.delete.warning') }}
+            </VAlert>
+            {{ t('emails.confirmations.delete.message') }}
+          </VCardText>
+          <VCardActions>
+            <VSpacer />
+            <VBtn color="secondary" @click="isPermanentDeleteConfirmDialogVisible = false">{{ t('emails.confirmations.delete.cancel') }}</VBtn>
+            <VBtn color="error" @click="confirmPermanentDeleteMessages">{{ t('emails.confirmations.delete.confirm') }}</VBtn>
+          </VCardActions>
+        </VCard>
+      </VDialog>
+    </VMain>
+  </VLayout>
 </template>
 
 <style lang="scss">
@@ -1173,6 +1164,52 @@ const downloadAttachments = async (attachments: any[]) => {
   border-start-start-radius: 0;
 }
 
+.email-item {
+  .d-flex.align-center {
+    gap: 0.5rem;
+
+    .checkbox-column {
+      inline-size: 20px;
+      min-inline-size: 20px;
+    }
+
+    .star-column {
+      inline-size: 38px;
+      min-inline-size: 38px;
+    }
+
+    .read-column {
+      inline-size: 38px;
+      min-inline-size: 38px;
+    }
+
+    .status-column {
+      inline-size: 90px;
+      min-inline-size: 90px;
+    }
+
+    .due-date-column {
+      inline-size: 80px;
+      min-inline-size: 80px;
+    }
+
+    .from-column {
+      inline-size: 180px;
+      min-inline-size: 180px;
+    }
+
+    .to-column {
+      inline-size: 180px;
+      min-inline-size: 180px;
+    }
+
+    .labels-column {
+      inline-size: 120px;
+      min-inline-size: 120px;
+    }
+  }
+}
+
 .email-list {
   white-space: nowrap;
 
@@ -1188,10 +1225,6 @@ const downloadAttachments = async (attachments: any[]) => {
     & + .email-item {
       border-block-start: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
     }
-  }
-
-  .email-item .email-meta {
-    display: flex;
   }
 
   .email-item:hover {
@@ -1280,52 +1313,6 @@ const downloadAttachments = async (attachments: any[]) => {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-  }
-}
-
-.email-item {
-  .d-flex.align-center {
-    gap: 0.5rem;
-
-    .checkbox-column {
-      inline-size: 20px;
-      min-inline-size: 20px;
-    }
-
-    .star-column {
-      inline-size: 38px;
-      min-inline-size: 38px;
-    }
-
-    .read-column {
-      inline-size: 38px;
-      min-inline-size: 38px;
-    }
-
-    .status-column {
-      inline-size: 90px;
-      min-inline-size: 90px;
-    }
-
-    .due-date-column {
-      inline-size: 80px;
-      min-inline-size: 80px;
-    }
-
-    .from-column {
-      inline-size: 180px;
-      min-inline-size: 180px;
-    }
-
-    .to-column {
-      inline-size: 180px;
-      min-inline-size: 180px;
-    }
-
-    .labels-column {
-      inline-size: 120px;
-      min-inline-size: 120px;
-    }
   }
 }
 </style>
