@@ -1,10 +1,15 @@
 <script setup lang="ts">
 import { VNodeRenderer } from '@layouts/components/VNodeRenderer'
 import { themeConfig } from '@themeConfig'
+import { useRouter } from 'vue-router'
 
 import authV2ForgotPasswordIllustration from '@images/pages/auth-v2-forgot-password-illustration.png'
 
+const router = useRouter()
 const email = ref('')
+const loading = ref(false)
+const error = ref('')
+const success = ref('')
 
 definePage({
   meta: {
@@ -12,6 +17,39 @@ definePage({
     unauthenticatedOnly: true,
   },
 })
+
+const handleSubmit = async () => {
+  try {
+    loading.value = true
+    error.value = ''
+    success.value = ''
+
+    const response = await fetch('/api/auth/forgot-password', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email: email.value }),
+    })
+
+    const data = await response.json()
+
+    if (response.ok) {
+      success.value = data.message || 'Password reset link has been sent to your email.'
+      // Optionally redirect after a delay
+      setTimeout(() => {
+        router.push({ name: 'login' })
+      }, 3000)
+    } else {
+      error.value = data.message || 'An error occurred. Please try again.'
+    }
+  } catch (err) {
+    error.value = 'An error occurred. Please try again.'
+    console.error('Password reset request error:', err)
+  } finally {
+    loading.value = false
+  }
+}
 </script>
 
 <template>
@@ -63,8 +101,30 @@ definePage({
         </VCardText>
 
         <VCardText>
-          <VForm @submit.prevent="() => {}">
+          <VForm @submit.prevent="handleSubmit">
             <VRow>
+              <!-- Success Alert -->
+              <VCol v-if="success" cols="12">
+                <VAlert
+                  color="success"
+                  variant="tonal"
+                  class="mb-4"
+                >
+                  {{ success }}
+                </VAlert>
+              </VCol>
+
+              <!-- Error Alert -->
+              <VCol v-if="error" cols="12">
+                <VAlert
+                  color="error"
+                  variant="tonal"
+                  class="mb-4"
+                >
+                  {{ error }}
+                </VAlert>
+              </VCol>
+
               <!-- email -->
               <VCol cols="12">
                 <AppTextField
@@ -73,6 +133,8 @@ definePage({
                   label="Email"
                   type="email"
                   placeholder="johndoe@email.com"
+                  :disabled="loading"
+                  :rules="[requiredValidator, emailValidator]"
                 />
               </VCol>
 
@@ -81,6 +143,8 @@ definePage({
                 <VBtn
                   block
                   type="submit"
+                  :loading="loading"
+                  :disabled="loading"
                 >
                   Send Reset Link
                 </VBtn>
@@ -109,5 +173,5 @@ definePage({
 </template>
 
 <style lang="scss">
-@use "@core-scss/template/pages/page-auth.scss";
+@use "@core-scss/template/pages/page-auth";
 </style>

@@ -3,7 +3,16 @@
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 
-//Catch-All Route (Placed at the bottom)
+// Password Reset Routes
+Route::get('/reset-password', function () {
+    return view('application');
+})->name('password.reset');
+
+Route::get('/forgot-password', function () {
+    return view('application');
+})->name('password.request');
+
+// Catch-All Route (Placed at the bottom)
 Route::get('{any}', function() {
     return view('application');
 })->where('any', '.*');

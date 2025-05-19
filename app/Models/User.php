@@ -7,11 +7,13 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Auth\Passwords\CanResetPassword;
+use Illuminate\Contracts\Auth\CanResetPassword as CanResetPasswordContract;
 
 
-class User extends Authenticatable
+class User extends Authenticatable implements CanResetPasswordContract
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable, CanResetPassword;
 
     /**
      * The attributes that are mass assignable.
@@ -106,6 +108,29 @@ class User extends Authenticatable
             });
         })->unique('id')->values();
     }
+
+    /**
+     * Get the password reset URL for the given token.
+     *
+     * @param  string  $token
+     * @return string
+     */
+    public function getPasswordResetUrl($token)
+    {
+        return config('app.frontend_url') . '/reset-password?token=' . $token . '&email=' . urlencode($this->email);
+    }
+
+    /**
+     * Send the password reset notification.
+     *
+     * @param  string  $token
+     * @return void
+     */
+    public function sendPasswordResetNotification($token)
+    {
+        $this->notify(new \App\Notifications\CustomResetPassword($token));
+    }
+
     protected static function boot()
     {
         parent::boot();

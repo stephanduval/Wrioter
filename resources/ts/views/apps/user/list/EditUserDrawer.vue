@@ -109,10 +109,12 @@ const fetchDropdownData = async () => {
       id: comp.id,
       name: comp.companyName,
     }))
-    roles.value = rolesData.map((r: { id: number; name: string }) => ({
-      id: r.id,
-      name: r.name,
-    }))
+    roles.value = rolesData
+      .filter((r: { id: number; name: string }) => ['Admin', 'Client'].includes(r.name))
+      .map((r: { id: number; name: string }) => ({
+        id: r.id,
+        name: r.name,
+      }))
   }
   catch (error) {
     console.error('Error fetching dropdown data:', error)

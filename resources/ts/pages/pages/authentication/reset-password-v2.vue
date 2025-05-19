@@ -1,8 +1,22 @@
 <script setup lang="ts">
 import { VNodeRenderer } from '@layouts/components/VNodeRenderer'
 import { themeConfig } from '@themeConfig'
+import { useRoute, useRouter } from 'vue-router'
 
 import authV2ResetPasswordIllustration from '@images/pages/auth-v2-reset-password-illustration.png'
+
+// Password validation rules
+const passwordValidator = (v: string) => {
+  if (!v) return 'Password is required'
+  if (v.length < 8) return 'Password must be at least 8 characters'
+  return true
+}
+
+const passwordConfirmationValidator = (v: string) => {
+  if (!v) return 'Password confirmation is required'
+  if (v !== form.value.password) return 'Passwords must match'
+  return true
+}
 
 definePage({
   meta: {
@@ -11,13 +25,54 @@ definePage({
   },
 })
 
+const router = useRouter()
+const route = useRoute()
+const loading = ref(false)
+const error = ref('')
+const success = ref('')
+
 const form = ref({
-  newPassword: '',
-  confirmPassword: '',
+  email: route.query.email as string || '',
+  token: route.query.token as string || '',
+  password: '',
+  password_confirmation: '',
 })
 
 const isPasswordVisible = ref(false)
 const isConfirmPasswordVisible = ref(false)
+
+const handleSubmit = async () => {
+  try {
+    loading.value = true
+    error.value = ''
+    success.value = ''
+
+    const response = await fetch('/api/auth/reset-password', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(form.value),
+    })
+
+    const data = await response.json()
+
+    if (response.ok) {
+      success.value = data.message
+      // Redirect to login after a delay
+      setTimeout(() => {
+        router.push({ name: 'login' })
+      }, 3000)
+    } else {
+      error.value = data.message || 'An error occurred. Please try again.'
+    }
+  } catch (err) {
+    error.value = 'An error occurred. Please try again.'
+    console.error('Password reset error:', err)
+  } finally {
+    loading.value = false
+  }
+}
 </script>
 
 <template>
@@ -69,30 +124,56 @@ const isConfirmPasswordVisible = ref(false)
         </VCardText>
 
         <VCardText>
-          <VForm @submit.prevent="() => {}">
+          <VForm @submit.prevent="handleSubmit">
             <VRow>
+              <!-- Success Alert -->
+              <VCol v-if="success" cols="12">
+                <VAlert
+                  color="success"
+                  variant="tonal"
+                  class="mb-4"
+                >
+                  {{ success }}
+                </VAlert>
+              </VCol>
+
+              <!-- Error Alert -->
+              <VCol v-if="error" cols="12">
+                <VAlert
+                  color="error"
+                  variant="tonal"
+                  class="mb-4"
+                >
+                  {{ error }}
+                </VAlert>
+              </VCol>
+
               <!-- password -->
               <VCol cols="12">
                 <AppTextField
-                  v-model="form.newPassword"
+                  v-model="form.password"
                   autofocus
                   label="New Password"
                   placeholder="············"
                   :type="isPasswordVisible ? 'text' : 'password'"
                   :append-inner-icon="isPasswordVisible ? 'bx-hide' : 'bx-show'"
                   @click:append-inner="isPasswordVisible = !isPasswordVisible"
+                  :disabled="loading"
+                  :rules="[requiredValidator, passwordValidator]"
                 />
               </VCol>
 
               <!-- Confirm Password -->
               <VCol cols="12">
                 <AppTextField
-                  v-model="form.confirmPassword"
+                  v-model="form.password_confirmation"
                   label="Confirm Password"
                   placeholder="············"
                   :type="isConfirmPasswordVisible ? 'text' : 'password'"
                   :append-inner-icon="isConfirmPasswordVisible ? 'bx-hide' : 'bx-show'"
                   @click:append-inner="isConfirmPasswordVisible = !isConfirmPasswordVisible"
+                  :disabled="loading"
+                  :rules="[requiredValidator, passwordConfirmationValidator]"
                 />
               </VCol>
 
@@ -101,6 +182,8 @@ const isConfirmPasswordVisible = ref(false)
                 <VBtn
                   block
                   type="submit"
+                  :loading="loading"
+                  :disabled="loading"
                 >
                   Save New Password
                 </VBtn>
@@ -110,7 +193,7 @@ const isConfirmPasswordVisible = ref(false)
               <VCol cols="12">
                 <RouterLink
                   class="d-flex align-center justify-center"
-                  :to="{ name: 'pages-authentication-login-v2' }"
+                  :to="{ name: 'login' }"
                 >
                   <VIcon
                     icon="bx-chevron-left"
@@ -129,5 +212,5 @@ const isConfirmPasswordVisible = ref(false)
 </template>
 
 <style lang="scss">
-@use "@core-scss/template/pages/page-auth.scss";
+@use "@core-scss/template/pages/page-auth";
 </style>

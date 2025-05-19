@@ -11,6 +11,7 @@ use App\Http\Controllers\LabelController;
 use App\Http\Controllers\AttachmentController;
 use App\Http\Controllers\SystemController;
 use App\Http\Controllers\ProjectController;
+use Illuminate\Support\Facades\Mail;
 
 /*
 |--------------------------------------------------------------------------
@@ -26,6 +27,10 @@ use App\Http\Controllers\ProjectController;
 Route::group(['prefix' => 'auth'], function () {
     Route::post('login', [AuthController::class, 'login']);
     Route::post('register', [AuthController::class, 'register']);
+    
+    // Password Reset Routes
+    Route::post('forgot-password', [AuthController::class, 'forgotPassword']);
+    Route::post('reset-password', [AuthController::class, 'resetPassword']);
 
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('logout', [AuthController::class, 'logout']);
@@ -103,4 +108,36 @@ Route::middleware('auth:sanctum')->get('/test-middleware', function (Request $re
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/projects/summary', [ProjectController::class, 'summary']);
     Route::apiResource('/projects', ProjectController::class);
+});
+
+// Test email route
+Route::get('/test-email', function () {
+    try {
+        Mail::mailer('mailgun')->raw('This is a test email from Laravel using Mailgun. If you receive this, your Mailgun setup is working correctly!', function($message) {
+            $message->to('stephan.duval@gmail.com')
+                   ->subject('Test Email from Laravel (Mailgun) - Setup Verification');
+        });
+        
+        return response()->json([
+            'message' => 'Test email sent successfully via Mailgun to stephan.duval@gmail.com',
+            'config' => [
+                'mailer' => config('mail.default'),
+                'domain' => config('mail.mailers.mailgun.domain'),
+                'from_address' => config('mail.from.address'),
+                'from_name' => config('mail.from.name'),
+            ]
+        ]);
+    } catch (\Exception $e) {
+        \Log::error('Mailgun test failed: ' . $e->getMessage());
+        return response()->json([
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString(),
+            'config' => [
+                'mailer' => config('mail.default'),
+                'domain' => config('mail.mailers.mailgun.domain'),
+                'from_address' => config('mail.from.address'),
+                'from_name' => config('mail.from.name'),
+            ]
+        ], 500);
+    }
 });
