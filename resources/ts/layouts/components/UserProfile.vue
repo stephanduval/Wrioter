@@ -4,42 +4,45 @@ import { PerfectScrollbar } from 'vue3-perfect-scrollbar'
 const router = useRouter()
 const ability = useAbility()
 
-// TODO: Get type from backend
-const userData = useCookie<any>('userData')
+// Get user data from localStorage instead of cookie
+const userData = ref(JSON.parse(localStorage.getItem('userData') || 'null'))
 
 const logout = async () => {
   console.log('Logging out...')
 
-  // Clear cookies and local storage
+  // Clear localStorage
+  localStorage.removeItem('accessToken')
+  localStorage.removeItem('userData')
+  localStorage.removeItem('abilityRules')
+
+  // Clear cookies for compatibility
   useCookie('accessToken').value = null
   useCookie('userData').value = null
-  useCookie('userAbilityRules').value = null
-  localStorage.removeItem('accessToken') // Clear token from local storage
-
-  // Remove "userData" from cookie
-  userData.value = null
-
-  // Remove "userData" from cookie
-  userData.value = null
-
-  // Redirect to login page
-  await router.push('/login')
-
-  // ℹ️ We had to remove abilities in then block because if we don't nav menu items mutation is visible while redirecting user to login page
-  // Remove "userAbilities" from cookie
-  useCookie('userAbilityRules').value = null
-  await router.push('/login')
-
-  // ℹ️ We had to remove abilities in then block because if we don't nav menu items mutation is visible while redirecting user to login page
-  // Remove "userAbilities" from cookie
   useCookie('userAbilityRules').value = null
 
   // Reset ability to initial ability
   ability.update([])
+
+  // Redirect to login page
+  await router.push('/login')
   window.location.reload() // Reload to reset state
 }
 
-const userProfileList = [
+interface NavItem {
+  type: 'navItem'
+  icon: string
+  title: string
+  to: { name: string; params?: { tab: string } }
+  badgeProps?: { color: string; content: string }
+}
+
+interface Divider {
+  type: 'divider'
+}
+
+type UserProfileItem = NavItem | Divider
+
+const userProfileList: UserProfileItem[] = [
   { type: 'divider' },
   // { type: 'navItem', icon: 'bx-user', title: 'Profile', to: { name: 'apps-user-view-id', params: { id: 21 } } },
   { type: 'navItem', icon: 'bx-cog', title: 'Settings', to: { name: 'pages-account-settings-tab', params: { tab: 'account' } } },
@@ -123,7 +126,7 @@ const userProfileList = [
           <PerfectScrollbar :options="{ wheelPropagation: false }">
             <template
               v-for="item in userProfileList"
-              :key="item.title"
+              :key="item.type === 'navItem' ? item.title : 'divider'"
             >
               <VListItem
                 v-if="item.type === 'navItem'"
@@ -139,7 +142,7 @@ const userProfileList = [
                 <VListItemTitle>{{ item.title }}</VListItemTitle>
 
                 <template
-                  v-if="item.badgeProps"
+                  v-if="item.type === 'navItem' && item.badgeProps"
                   #append
                 >
                   <VBadge
@@ -151,7 +154,7 @@ const userProfileList = [
               </VListItem>
 
               <VDivider
-                v-else
+                v-else-if="item.type === 'divider'"
                 class="my-1"
               />
             </template>
