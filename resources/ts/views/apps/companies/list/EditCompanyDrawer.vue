@@ -19,6 +19,9 @@ const { t } = useI18n();
 const companyName = ref('');
 const refForm = ref(null);
 
+// Add validator
+const requiredValidator = (value: string | null) => !!value || 'This field is required.';
+
 // Fetch company details
 const fetchCompanyDetails = async () => {
   if (!props.companyId) return;
@@ -100,7 +103,7 @@ onMounted(fetchCompanyDetails);
         <VTextField
           v-model="companyName"
           label="Company Name"
-          rules="[v => !!v || 'This field is required.']"
+          :rules="[requiredValidator]"
         />
         <VRow>
           <VCol>

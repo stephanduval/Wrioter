@@ -131,90 +131,89 @@ const updateOptions = (options: any) => {
 </script>
 
 <template>
-  <section>
-    <!-- Removed the Filters Card -->
-    
-    <VCard class="mb-6">
-      <!-- Keeping just the search and actions section -->
-      <VCardText class="d-flex flex-wrap gap-4">
-        <div class="me-3 d-flex gap-3">
-          <AppSelect
-            :model-value="itemsPerPage"
-            :items="[
-              { value: 10, title: '10' },
-              { value: 25, title: '25' },
-              { value: 50, title: '50' },
-              { value: 100, title: '100' },
-              { value: -1, title: 'All' },
-            ]"
-            :label="t('itemsPerPage')"
-            style="inline-size: 6.25rem;"
-            @update:model-value="itemsPerPage = parseInt($event, 10)"
-          />
-        </div>
-        <VSpacer />
-
-        <div class="app-company-search-filter d-flex align-center flex-wrap gap-4">
-          <!-- 👉 Search  -->
-          <div style="inline-size: 15.625rem;">
-            <AppTextField
-              v-model="searchQuery"
-              :placeholder="t('companies.search')"
+  <div>
+    <section>
+      <VCard class="mb-6">
+        <VCardText class="d-flex flex-wrap gap-4">
+          <div class="me-3 d-flex gap-3">
+            <AppSelect
+              :model-value="itemsPerPage"
+              :items="[
+                { value: 10, title: '10' },
+                { value: 25, title: '25' },
+                { value: 50, title: '50' },
+                { value: 100, title: '100' },
+                { value: -1, title: 'All' },
+              ]"
+              :label="t('itemsPerPage')"
+              style="inline-size: 6.25rem;"
+              @update:model-value="itemsPerPage = parseInt($event, 10)"
             />
           </div>
+          <VSpacer />
 
-          <!-- 👉 Add company button -->
-          <VBtn
-            prepend-icon="bx-plus"
-            @click="isAddNewCompanyDrawerVisible = true"
-          >
-            {{ t('companies.addNew') }}
+          <div class="app-company-search-filter d-flex align-center flex-wrap gap-4">
+            <!-- 👉 Search  -->
+            <div style="inline-size: 15.625rem;">
+              <AppTextField
+                v-model="searchQuery"
+                :placeholder="t('companies.search')"
+              />
+            </div>
+
+            <!-- 👉 Add company button -->
+            <VBtn
+              prepend-icon="bx-plus"
+              @click="isAddNewCompanyDrawerVisible = true"
+            >
+              {{ t('companies.addNew') }}
+            </VBtn>
+          </div>
+        </VCardText>
+      </VCard>
+
+      <!-- 👉 Add New Company Drawer -->
+      <AddNewCompanyDrawer v-model:isDrawerOpen="isAddNewCompanyDrawerVisible" />
+
+      <!-- 👉 Edit Company Drawer -->
+      <EditCompanyDrawer
+        v-model:isDrawerOpen="isEditCompanyDrawerVisible"
+        :company-id="selectedCompanyId"
+        @company-updated="handleCompanyUpdated"
+      />
+
+      <!-- 👉 Data Table -->
+      <VCard class="mb-6">
+        <VDataTableServer
+          v-model:items-per-page="itemsPerPage"
+          v-model:model-value="selectedRows"
+          v-model:page="page"
+          :items="companies"
+          item-value="id"
+          :items-length="totalCompanies"
+          :headers="headers"
+          class="text-no-wrap"
+          show-select
+          @update:options="updateOptions"
+        >
+          <!-- Company Name -->
+          <template #item.companyName="{ item }">
+            <h6 class="text-base">{{ item.companyName }}</h6>
+          </template>
+
+          <!-- Actions -->
+          <template #item.actions="{ item }">
+            <VBtn icon variant="text" color="medium-emphasis" @click="openEditCompanyDrawer(item.id)">
+            <VIcon icon="bx-pencil" />
           </VBtn>
-        </div>
-      </VCardText>
-    </VCard>
-
-    <!-- 👉 Add New Company Drawer -->
-    <AddNewCompanyDrawer v-model:isDrawerOpen="isAddNewCompanyDrawerVisible" />
-
-    <!-- 👉 Edit Company Drawer -->
-    <EditCompanyDrawer
-      v-model:isDrawerOpen="isEditCompanyDrawerVisible"
-      :company-id="selectedCompanyId"
-      @company-updated="handleCompanyUpdated"
-    />
-
-    <!-- 👉 Data Table -->
-    <VCard class="mb-6">
-      <VDataTableServer
-        v-model:items-per-page="itemsPerPage"
-        v-model:model-value="selectedRows"
-        v-model:page="page"
-        :items="companies"
-        item-value="id"
-        :items-length="totalCompanies"
-        :headers="headers"
-        class="text-no-wrap"
-        show-select
-        @update:options="updateOptions"
-      >
-        <!-- Company Name -->
-        <template #item.companyName="{ item }">
-          <h6 class="text-base">{{ item.companyName }}</h6>
-        </template>
-
-        <!-- Actions -->
-        <template #item.actions="{ item }">
-          <VBtn icon variant="text" color="medium-emphasis" @click="openEditCompanyDrawer(item.id)">
-          <VIcon icon="bx-pencil" />
-        </VBtn>
-          <IconBtn @click="deleteCompany(item.id)">
-            <VIcon icon="bx-trash" />
-          </IconBtn>
-        </template>
-      </VDataTableServer>
-    </VCard>
-  </section>
+            <IconBtn @click="deleteCompany(item.id)">
+              <VIcon icon="bx-trash" />
+            </IconBtn>
+          </template>
+        </VDataTableServer>
+      </VCard>
+    </section>
+  </div>
 </template>
 
 

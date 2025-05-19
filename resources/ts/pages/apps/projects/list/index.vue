@@ -114,7 +114,11 @@ const fetchProjects = async () => {
 
 const fetchClients = async () => {
   try {
-    const response = await axios.get('/users')
+    const params = new URLSearchParams({
+      itemsPerPage: '-1',  // Get all clients
+      role: 'client'       // Only get users with client role
+    })
+    const response = await axios.get('/users', { params })
     clients.value = response.data.data || []
   } catch (error) {
     console.error('Error fetching clients:', error)
@@ -208,180 +212,182 @@ onMounted(() => {
 </script>
 
 <template>
-  <section>
-    <VCard>
-      <VCardText class="d-flex flex-wrap gap-4">
-        <div class="me-3 d-flex gap-3">
-          <AppSelect
-            :model-value="itemsPerPage"
-            :items="[
-              { value: 10, title: '10' },
-              { value: 25, title: '25' },
-              { value: 50, title: '50' },
-              { value: 100, title: '100' },
-              { value: -1, title: 'All' },
-            ]"
-            :label="t('itemsPerPage')"
-            style="inline-size: 6.25rem;"
-            @update:model-value="itemsPerPage = parseInt($event, 10)"
-          />
-        </div>
-        <VSpacer />
-
-        <div class="app-user-search-filter d-flex align-center flex-wrap gap-4">
-          <!-- 👉 Search -->
-          <div style="inline-size: 15.625rem;">
-            <AppTextField
-              v-model="searchQuery"
-              :placeholder="t('projects.search')"
+  <div>
+    <section>
+      <VCard>
+        <VCardText class="d-flex flex-wrap gap-4">
+          <div class="me-3 d-flex gap-3">
+            <AppSelect
+              :model-value="itemsPerPage"
+              :items="[
+                { value: 10, title: '10' },
+                { value: 25, title: '25' },
+                { value: 50, title: '50' },
+                { value: 100, title: '100' },
+                { value: -1, title: 'All' },
+              ]"
+              :label="t('itemsPerPage')"
+              style="inline-size: 6.25rem;"
+              @update:model-value="itemsPerPage = parseInt($event, 10)"
             />
           </div>
+          <VSpacer />
 
-          <!-- 👉 Status Select -->
-          <div style="inline-size: 9.375rem;">
-            <AppSelect
-              v-model="selectedStatus"
+          <div class="app-user-search-filter d-flex align-center flex-wrap gap-4">
+            <!-- 👉 Search -->
+            <div style="inline-size: 15.625rem;">
+              <AppTextField
+                v-model="searchQuery"
+                :placeholder="t('projects.search')"
+              />
+            </div>
+
+            <!-- 👉 Status Select -->
+            <div style="inline-size: 9.375rem;">
+              <AppSelect
+                v-model="selectedStatus"
+                :items="statusOptions"
+                :placeholder="t('headers.projects.status')"
+                clearable
+                clear-icon="bx-x"
+              />
+            </div>
+
+            <!-- 👉 Service Type Select -->
+            <div style="inline-size: 9.375rem;">
+              <AppSelect
+                v-model="selectedServiceType"
+                :items="serviceTypeOptions"
+                :placeholder="t('headers.projects.serviceType')"
+                clearable
+                clear-icon="bx-x"
+              />
+            </div>
+          </div>
+        </VCardText>
+
+        <VDivider />
+
+        <!-- SECTION datatable -->
+        <VDataTableServer
+          v-model:items-per-page="itemsPerPage"
+          v-model:page="page"
+          :headers="headers"
+          :items="projects"
+          :items-length="totalProjects"
+          :loading="isLoading"
+          class="text-no-wrap"
+          @update:options="handleOptionsUpdate"
+        >
+          <!-- Project -->
+          <template #item.project="{ item }">
+            <div class="d-flex align-center">
+              <div class="d-flex flex-column">
+                <h6 class="text-base">
+                  <RouterLink
+                    :to="`/apps/projects/view/${item.id}`"
+                    class="font-weight-medium text-link"
+                  >
+                    {{ item.title }}
+                  </RouterLink>
+                </h6>
+                <div class="text-sm text-disabled">
+                  {{ item.property || 'No property specified' }}
+                </div>
+              </div>
+            </div>
+          </template>
+
+          <!-- Client -->
+          <template #item.client="{ item }">
+            <div class="d-flex align-center">
+              <div class="d-flex flex-column">
+                <h6 class="text-base">
+                  {{ item.client?.name || 'N/A' }}
+                </h6>
+                <div class="text-sm text-disabled">
+                  {{ item.client?.email || '' }}
+                </div>
+              </div>
+            </div>
+          </template>
+
+          <!-- Service Type -->
+          <template #item.service_type="{ item }">
+            <div class="text-capitalize">
+              {{ item.service_type || 'N/A' }}
+            </div>
+          </template>
+
+          <!-- Deadline -->
+          <template #item.deadline="{ item }">
+            <div>{{ formatDate(item.deadline) }}</div>
+          </template>
+
+          <!-- Status -->
+          <template #item.status="{ item }">
+            <VSelect
+              v-if="isAdmin"
+              v-model="item.status"
               :items="statusOptions"
-              :placeholder="t('headers.projects.status')"
-              clearable
-              clear-icon="bx-x"
-            />
-          </div>
-
-          <!-- 👉 Service Type Select -->
-          <div style="inline-size: 9.375rem;">
-            <AppSelect
-              v-model="selectedServiceType"
-              :items="serviceTypeOptions"
-              :placeholder="t('headers.projects.serviceType')"
-              clearable
-              clear-icon="bx-x"
-            />
-          </div>
-        </div>
-      </VCardText>
-
-      <VDivider />
-
-      <!-- SECTION datatable -->
-      <VDataTableServer
-        v-model:items-per-page="itemsPerPage"
-        v-model:page="page"
-        :headers="headers"
-        :items="projects"
-        :items-length="totalProjects"
-        :loading="isLoading"
-        class="text-no-wrap"
-        @update:options="handleOptionsUpdate"
-      >
-        <!-- Project -->
-        <template #item.project="{ item }">
-          <div class="d-flex align-center">
-            <div class="d-flex flex-column">
-              <h6 class="text-base">
-                <RouterLink
-                  :to="`/apps/projects/view/${item.id}`"
-                  class="font-weight-medium text-link"
+              density="compact"
+              variant="plain"
+              hide-details
+              class="status-select"
+              :color="statusColorMap[item.status]"
+              @update:model-value="updateProjectStatus(item.id, $event)"
+            >
+              <template #selection="{ item: selectedItem }">
+                <VChip
+                  :color="statusColorMap[selectedItem.value]"
+                  size="small"
+                  class="text-capitalize"
                 >
-                  {{ item.title }}
-                </RouterLink>
-              </h6>
-              <div class="text-sm text-disabled">
-                {{ item.property || 'No property specified' }}
-              </div>
+                  {{ selectedItem.title }}
+                </VChip>
+              </template>
+            </VSelect>
+            <VChip
+              v-else
+              :color="statusColorMap[item.status]"
+              size="small"
+              class="text-capitalize"
+            >
+              {{ item.status }}
+            </VChip>
+          </template>
+
+          <!-- Actions -->
+          <template #item.actions="{ item }">
+            <IconBtn @click="viewProject(item.id)">
+              <VIcon icon="bx-show" />
+            </IconBtn>
+
+            <IconBtn
+              v-if="isAdmin"
+              @click="deleteProject(item.id)"
+            >
+              <VIcon icon="bx-trash" />
+            </IconBtn>
+          </template>
+
+          <!-- Loading -->
+          <template #loading>
+            <div class="d-flex justify-center align-center pa-4">
+              <VProgressCircular indeterminate />
             </div>
-          </div>
-        </template>
+          </template>
 
-        <!-- Client -->
-        <template #item.client="{ item }">
-          <div class="d-flex align-center">
-            <div class="d-flex flex-column">
-              <h6 class="text-base">
-                {{ item.client?.name || 'N/A' }}
-              </h6>
-              <div class="text-sm text-disabled">
-                {{ item.client?.email || '' }}
-              </div>
+          <!-- No Data -->
+          <template #no-data>
+            <div class="d-flex justify-center align-center pa-4">
+              No projects found
             </div>
-          </div>
-        </template>
-
-        <!-- Service Type -->
-        <template #item.service_type="{ item }">
-          <div class="text-capitalize">
-            {{ item.service_type || 'N/A' }}
-          </div>
-        </template>
-
-        <!-- Deadline -->
-        <template #item.deadline="{ item }">
-          <div>{{ formatDate(item.deadline) }}</div>
-        </template>
-
-        <!-- Status -->
-        <template #item.status="{ item }">
-          <VSelect
-            v-if="isAdmin"
-            v-model="item.status"
-            :items="statusOptions"
-            density="compact"
-            variant="plain"
-            hide-details
-            class="status-select"
-            :color="statusColorMap[item.status]"
-            @update:model-value="updateProjectStatus(item.id, $event)"
-          >
-            <template #selection="{ item: selectedItem }">
-              <VChip
-                :color="statusColorMap[selectedItem.value]"
-                size="small"
-                class="text-capitalize"
-              >
-                {{ selectedItem.title }}
-              </VChip>
-            </template>
-          </VSelect>
-          <VChip
-            v-else
-            :color="statusColorMap[item.status]"
-            size="small"
-            class="text-capitalize"
-          >
-            {{ item.status }}
-          </VChip>
-        </template>
-
-        <!-- Actions -->
-        <template #item.actions="{ item }">
-          <IconBtn @click="viewProject(item.id)">
-            <VIcon icon="bx-show" />
-          </IconBtn>
-
-          <IconBtn
-            v-if="isAdmin"
-            @click="deleteProject(item.id)"
-          >
-            <VIcon icon="bx-trash" />
-          </IconBtn>
-        </template>
-
-        <!-- Loading -->
-        <template #loading>
-          <div class="d-flex justify-center align-center pa-4">
-            <VProgressCircular indeterminate />
-          </div>
-        </template>
-
-        <!-- No Data -->
-        <template #no-data>
-          <div class="d-flex justify-center align-center pa-4">
-            No projects found
-          </div>
-        </template>
-      </VDataTableServer>
-    </VCard>
-  </section>
+          </template>
+        </VDataTableServer>
+      </VCard>
+    </section>
+  </div>
 </template>
 
 <style lang="scss">
