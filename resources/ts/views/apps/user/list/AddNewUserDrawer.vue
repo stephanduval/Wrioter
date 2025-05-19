@@ -34,6 +34,7 @@ const refForm = ref<VForm | null>(null)
 
 const userName = ref('')
 const email = ref('')
+const department = ref('')
 const company = ref<string | null>(null) // Selected company name
 const role = ref<string | null>(null) // Selected role name
 
@@ -112,6 +113,7 @@ const onSubmit = async () => {
   console.log({
     name: userName.value,
     email: email.value,
+    department: department.value,
     password: 'password123',
     company_id: companies.value.find(c => c.name === company.value)?.id,
     role_id: roles.value.find(r => r.name === role.value)?.id,
@@ -129,7 +131,8 @@ const onSubmit = async () => {
           body: JSON.stringify({
             name: userName.value,
             email: email.value,
-            password: 'password123', // Generate or input a secure temp password
+            department: department.value,
+            password: 'password123',
             company_id: companies.value.find(c => c.name === company.value)?.id,
             role_id: roles.value.find(r => r.name === role.value)?.id,
           }),
@@ -200,6 +203,15 @@ const handleDrawerModelValueUpdate = (val: boolean) => {
                   :rules="[requiredValidator, emailValidator]"
                   :label="t('users.form.email')"
                   placeholder="johndoe@email.com"
+                />
+              </VCol>
+
+              <!-- Department -->
+              <VCol cols="12">
+                <AppTextField
+                  v-model="department"
+                  :label="t('users.form.department')"
+                  :placeholder="t('users.form.departmentPlaceholder')"
                 />
               </VCol>
 

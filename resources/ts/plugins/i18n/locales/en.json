@@ -258,6 +258,7 @@
       "user": "User",
       "name": "Name",
       "email": "Email",
+      "department": "Department",
       "role": "Role",
       "status": "Status",
       "actions": "Actions"
@@ -360,6 +361,8 @@
     "form": {
       "username": "Username",
       "email": "Email",
+      "department": "Department",
+      "departmentPlaceholder": "Enter department",
       "selectCompany": "Select Company",
       "selectRole": "Select Role"
     },

@@ -259,6 +259,7 @@
       "user": "Utilisateur",
       "name": "Nom",
       "email": "Email",
+      "department": "Département",
       "role": "Rôle",
       "status": "Statut",
       "actions": "Actions"
@@ -360,6 +361,8 @@
     "form": {
       "username": "Nom d'utilisateur",
       "email": "Email",
+      "department": "Département",
+      "departmentPlaceholder": "Entrer le département",
       "selectCompany": "Sélectionner une entreprise",
       "selectRole": "Sélectionner un rôle"
     },

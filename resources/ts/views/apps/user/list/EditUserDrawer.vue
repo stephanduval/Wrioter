@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { PerfectScrollbar } from 'vue3-perfect-scrollbar'
 import { VForm } from 'vuetify/components/VForm'
 import { VSelect } from 'vuetify/components/VSelect'
@@ -25,6 +26,7 @@ const refForm = ref<VForm | null>(null)
 
 const userName = ref('')
 const email = ref('')
+const department = ref('')
 const company = ref<string | null>(null)
 const role = ref<string | null>(null)
 
@@ -64,6 +66,7 @@ const fetchUserDetails = async () => {
     // Map API response to form fields
     userName.value = user.name || ''
     email.value = user.email || ''
+    department.value = user.department || ''
     company.value = companies.value.find(c => c.id === user.company_id)?.name || null
     role.value = roles.value.find(r => r.id === user.role_id)?.name || null
   }
@@ -148,6 +151,7 @@ const submitForm = async () => {
           body: JSON.stringify({
             name: userName.value || undefined,
             email: email.value || undefined,
+            department: department.value || undefined,
             company_id: companies.value.find(c => c.name === company.value)?.id,
             role_id: roles.value.find(r => r.name === role.value)?.id,
           }),
@@ -182,6 +186,9 @@ watch(() => props.userId, async newUserId => {
     await fetchUserDetails() // Fetch user details
   }
 })
+
+// i18n
+const { t } = useI18n()
 </script>
 
 <template>
@@ -227,6 +234,15 @@ watch(() => props.userId, async newUserId => {
                   :rules="[emailValidator]"
                   label="Email"
                   :placeholder="email || 'Enter email'"
+                />
+              </VCol>
+
+              <!-- Department -->
+              <VCol cols="12">
+                <AppTextField
+                  v-model="department"
+                  :label="t('users.form.department')"
+                  :placeholder="t('users.form.departmentPlaceholder')"
                 />
               </VCol>
 

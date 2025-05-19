@@ -48,6 +48,7 @@ const { t } = useI18n()
 const headers = computed(() => [
   { title: t('headers.users.user'), key: 'user' },
   { title: t('headers.users.email'), key: 'email' },
+  { title: t('headers.users.department'), key: 'department' },
   { title: t('headers.users.role'), key: 'role' },
   { title: t('headers.users.status'), key: 'status' },
   { title: t('headers.users.actions'), key: 'actions', sortable: false },
@@ -456,6 +457,13 @@ const openEditUserDrawer = (userId: number) => {
           >
             {{ item.status }}
           </VChip>
+        </template>
+
+        <!-- Department -->
+        <template #item.department="{ item }">
+          <div class="text-body-1 text-high-emphasis">
+            {{ item.department || 'N/A' }}
+          </div>
         </template>
 
         <!-- Actions -->
