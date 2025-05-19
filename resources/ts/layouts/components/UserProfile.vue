@@ -10,19 +10,33 @@ const userData = useCookie<any>('userData')
 const logout = async () => {
   console.log('Logging out...')
 
-  // Clear localStorage
-  localStorage.removeItem('accessToken')
-  localStorage.removeItem('userData')
-  localStorage.removeItem('abilityRules')
+  // Clear cookies and local storage
+  useCookie('accessToken').value = null
+  useCookie('userData').value = null
+  useCookie('userAbilityRules').value = null
+  localStorage.removeItem('accessToken') // Clear token from local storage
 
-  // Reset ability to initial state
-  ability.update([])
+  // Remove "userData" from cookie
+  userData.value = null
+
+  // Remove "userData" from cookie
+  userData.value = null
 
   // Redirect to login page
   await router.push('/login')
-  
-  // Reload to reset state
-  window.location.reload()
+
+  // ℹ️ We had to remove abilities in then block because if we don't nav menu items mutation is visible while redirecting user to login page
+  // Remove "userAbilities" from cookie
+  useCookie('userAbilityRules').value = null
+  await router.push('/login')
+
+  // ℹ️ We had to remove abilities in then block because if we don't nav menu items mutation is visible while redirecting user to login page
+  // Remove "userAbilities" from cookie
+  useCookie('userAbilityRules').value = null
+
+  // Reset ability to initial ability
+  ability.update([])
+  window.location.reload() // Reload to reset state
 }
 
 const userProfileList = [

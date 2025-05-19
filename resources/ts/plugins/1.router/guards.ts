@@ -18,7 +18,7 @@ export const setupGuards = (router: _RouterTyped<RouteNamedMap & { [key: string]
      * Check if user is logged in by checking if token & user data exists in local storage
      * Feel free to update this logic to suit your needs
      */
-    const isLoggedIn = !!(localStorage.getItem('userData') && localStorage.getItem('accessToken'))
+    const isLoggedIn = !!(useCookie('userData').value && useCookie('accessToken').value)
 
     console.log('Is logged in:', isLoggedIn)
 
