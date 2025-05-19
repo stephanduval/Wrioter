@@ -12,18 +12,17 @@ export const redirects: RouteRecordRaw[] = [
     path: '/',
     name: 'index',
     redirect: to => {
-      // TODO: Get type from backend
-      // Use explicit typing for the `userData` cookie
-      const userData = useCookie<{ role?: string }>('userData').value
-
+      // Get user data from localStorage
+      const userDataStr = localStorage.getItem('userData')
+      const userData = userDataStr ? JSON.parse(userDataStr) : null
       const userRole = userData?.role?.toLowerCase() // Normalize role to lowercase
 
       console.log('[Redirect] Checking role:', userRole); 
 
       // Change target for admin/auth
       if (userRole === 'admin' || userRole === 'auth') { 
-         console.log('[Redirect] Routing admin/auth to dashboards-analytics'); // <<< Update log
-         return { name: 'dashboards-analytics' }; // <<< CHANGE HERE
+         console.log('[Redirect] Routing admin/auth to dashboards-analytics');
+         return { name: 'dashboards-analytics' };
       }
       
       // Targets for other roles remain the same
@@ -39,13 +38,13 @@ export const redirects: RouteRecordRaw[] = [
 
       // Fallback logic - update default target
       console.log('[Redirect] Role undefined or unexpected, determining fallback...');
-      const isLoggedIn = !!(useCookie('userData').value && useCookie('accessToken').value)
+      const isLoggedIn = !!(localStorage.getItem('userData') && localStorage.getItem('accessToken'))
       if(!isLoggedIn) {
          console.log('[Redirect] Fallback: Not logged in, routing to login');
          return { name: 'login' }; 
       } else {
-         console.log('[Redirect] Fallback: Logged in, role unexpected. Defaulting to dashboards-analytics.'); // <<< Update log
-         return { name: 'dashboards-analytics' }; // <<< CHANGE HERE
+         console.log('[Redirect] Fallback: Logged in, role unexpected. Defaulting to dashboards-analytics.');
+         return { name: 'dashboards-analytics' }; 
       }
     },
   },

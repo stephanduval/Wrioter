@@ -38,9 +38,7 @@ const credentials = ref({
 })
 
 const isAuthenticated = () => {
-  const accessToken = document.cookie.split('; ').find(row => row.startsWith('accessToken='))
-
-  return !!accessToken
+  return !!localStorage.getItem('accessToken')
 }
 
 if (isAuthenticated())
@@ -96,22 +94,10 @@ const login = async () => {
     // Verify ability was updated
     console.log('Current Ability Rules:', ability.rules)
 
-    // Set cookies BEFORE navigation
-    const userDataCookie = useCookie('userData')
-    const abilityCookie = useCookie('userAbilityRules')
-    const tokenCookie = useCookie('accessToken')
-
-    // Set localStorage BEFORE navigation
+    // Store everything in localStorage
     localStorage.setItem('userData', JSON.stringify(userData))
     localStorage.setItem('abilityRules', JSON.stringify(abilityRules))
-    localStorage.setItem('accessToken', accessToken.toString())
-
-    // Ensure the values are strings or serialized properly
-    userDataCookie.value = JSON.stringify(userData)
-    abilityCookie.value = JSON.stringify(abilityRules)
-    tokenCookie.value = accessToken.toString()
-
-    console.log('Document.cookie from login.vue', document.cookie)
+    localStorage.setItem('accessToken', accessToken)
 
     // --- Direct Role-Based Redirect ---
     const userRole = userData.role?.toLowerCase() || 'User';
