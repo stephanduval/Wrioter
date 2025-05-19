@@ -110,48 +110,53 @@ const closeNavigationDrawer = () => {
 
 // Form submission
 const onSubmit = async () => {
-  console.log({
-    name: userName.value,
-    email: email.value,
-    department: department.value,
-    password: 'password123',
-    company_id: companies.value.find(c => c.name === company.value)?.id,
-    role_id: roles.value.find(r => r.name === role.value)?.id,
-  })
+  const { valid } = await refForm.value?.validate() || { valid: false }
+  
+  if (!valid) return
 
-  refForm.value?.validate().then(async ({ valid }) => {
-    if (valid) {
-      try {
-        const response = await fetch('/api/users', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-          },
-          body: JSON.stringify({
-            name: userName.value,
-            email: email.value,
-            department: department.value,
-            password: 'password123',
-            company_id: companies.value.find(c => c.name === company.value)?.id,
-            role_id: roles.value.find(r => r.name === role.value)?.id,
-          }),
-        })
-
-        if (!response.ok)
-          throw new Error('Failed to create user')
-
-        const result = await response.json()
-
-        emit('userData', { success: 'User created successfully!' })
-        closeNavigationDrawer()
-      }
-      catch (error) {
-        console.error('Error:', error)
-        emit('userData', { error: 'Failed to create user. Please try again.' })
-      }
+  try {
+    const userData = {
+      name: userName.value,
+      email: email.value,
+      department: department.value,
+      password: 'password123',
+      company_id: companies.value.find(c => c.name === company.value)?.id,
+      role_id: roles.value.find(r => r.name === role.value)?.id,
     }
-  })
+
+    const response = await fetch('/api/users', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+      },
+      body: JSON.stringify(userData),
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.error || 'Failed to create user')
+    }
+
+    const result = await response.json()
+    
+    // Emit the success event with the created user data
+    emit('userData', { 
+      success: true, 
+      message: 'User created successfully!',
+      user: result.user 
+    })
+    
+    // Close the drawer and reset form
+    closeNavigationDrawer()
+  }
+  catch (error) {
+    console.error('Error creating user:', error)
+    emit('userData', { 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Failed to create user. Please try again.' 
+    })
+  }
 }
 
 const handleDrawerModelValueUpdate = (val: boolean) => {

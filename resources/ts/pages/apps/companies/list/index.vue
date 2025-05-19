@@ -39,16 +39,28 @@ const openEditCompanyDrawer = (companyId: number) => {
   isEditCompanyDrawerVisible.value = true;
 };
 
+// Add interface for API response
+interface CompanyApiResponse {
+  data: Array<{
+    id: number
+    companyName: string
+  }>
+  total: number
+  current_page: number
+  per_page: number
+  last_page: number
+  from: number
+  to: number
+}
+
 // 👉 Fetching companies
-const { data: companiesData, execute: fetchCompanies } = useApi(() => {
+const { data: companiesData, execute: fetchCompanies } = useApi<CompanyApiResponse>(() => {
   const params = new URLSearchParams({
     page: String(page.value),
-    itemsPerPage: String(itemsPerPage.value),
-  }).toString();
+    itemsPerPage: String(itemsPerPage.value === -1 ? 'all' : itemsPerPage.value),
+  }).toString()
 
-  const token = localStorage.getItem('accessToken');
-
-  return `/paginatedCompanies?${params}`;
+  return `/paginatedCompanies?${params}`
 }, {
   method: 'GET',
   headers: {
@@ -56,19 +68,34 @@ const { data: companiesData, execute: fetchCompanies } = useApi(() => {
     'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
   },
   credentials: 'include',
-});
+})
 
 const companies = computed(() => companiesData.value?.data || []);
 const totalCompanies = computed(() => companiesData.value?.total || 0);
 
 // Handle Add Company Result
-const handleCompanyData = (data: any) => {
-  if (data.success) {
-    // Refetch companies or update the list
-    fetchCompanies();
+const handleCompanyData = async (response: { success: boolean; message?: string; error?: string; company?: any }) => {
+  if (!response.success) {
+    // Handle error case - you might want to show a toast notification here
+    console.error('Error adding company:', response.error)
+    return
+  }
 
-  } else if (data.error) {
-    // console.error(data.error)
+  try {
+    // Close the drawer
+    isAddNewCompanyDrawerVisible.value = false
+
+    // Reset to first page to show the new company
+    page.value = 1
+
+    // Refetch companies with updated data
+    await fetchCompanies()
+
+    // Optional: Show success message
+    // You can add a toast notification here if you have one
+  }
+  catch (error) {
+    console.error('Error refreshing company list:', error)
   }
 }
 
@@ -125,6 +152,13 @@ const updateOptions = (options: any) => {
 
   fetchCompanies();
 };
+
+// Update the itemsPerPage handler to reset to page 1 when changing
+const handleItemsPerPageChange = (value: number) => {
+  itemsPerPage.value = value
+  page.value = 1 // Reset to first page when changing items per page
+  fetchCompanies()
+}
 </script>
 
 <template>
@@ -144,7 +178,7 @@ const updateOptions = (options: any) => {
               ]"
               :label="t('itemsPerPage')"
               style="inline-size: 6.25rem;"
-              @update:model-value="itemsPerPage = parseInt($event, 10)"
+              @update:model-value="handleItemsPerPageChange"
             />
           </div>
           <VSpacer />
@@ -170,7 +204,10 @@ const updateOptions = (options: any) => {
       </VCard>
 
       <!-- 👉 Add New Company Drawer -->
-      <AddNewCompanyDrawer v-model:isDrawerOpen="isAddNewCompanyDrawerVisible" />
+      <AddNewCompanyDrawer 
+        v-model:isDrawerOpen="isAddNewCompanyDrawerVisible"
+        @company-data="handleCompanyData"
+      />
 
       <!-- 👉 Edit Company Drawer -->
       <EditCompanyDrawer

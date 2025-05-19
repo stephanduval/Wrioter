@@ -5,6 +5,18 @@ import { useI18n } from 'vue-i18n'
 
 import type { UserProperties } from '@db/apps/users/types'
 
+// Define the API response type based on the backend response
+interface UserApiResponse {
+  data: UserProperties[]
+  total: number
+  current_page: number
+  per_page: number
+  last_page: number
+  from: number
+  to: number
+  all_roles?: string[]
+}
+
 // 👉 Store
 const searchQuery = ref('')
 // Removing filter variables
@@ -62,7 +74,7 @@ const headers = computed(() => [
 
 // 👉 Fetching users
 
-const { data: usersData, execute: fetchUsers } = useApi(() => {
+const { data: usersData, execute: fetchUsers } = useApi<UserApiResponse>(() => {
   const params = new URLSearchParams({
     page: String(page.value),
     itemsPerPage: String(itemsPerPage.value),
@@ -96,7 +108,7 @@ const paginationMeta = ref({
 })
 
 // Watch for changes in usersData to update pagination
-watch(usersData, data => {
+watch(usersData, (data: UserApiResponse | null) => {
   if (data) {
     paginationMeta.value = {
       currentPage: data.current_page,
@@ -184,15 +196,29 @@ const resolveUserStatusVariant = (stat: string) => {
 }
 
 // 👉 Add new user
-const addNewUser = async (userData: UserProperties) => {
-  // await $api('/apps/users', {
-    await $api('/apps/users', {
-    method: 'POST',
-    body: userData,
-  })
+const addNewUser = async (response: { success: boolean; message?: string; error?: string; user?: any }) => {
+  if (!response.success) {
+    // Handle error case - you might want to show a toast notification here
+    console.error('Error adding user:', response.error)
+    return
+  }
 
-  // Refetch User
-  fetchUsers()
+  try {
+    // Close the drawer
+    isAddNewUserDrawerVisible.value = false
+
+    // Reset to first page to show the new user
+    page.value = 1
+
+    // Refetch users with updated data
+    await fetchUsers()
+
+    // Optional: Show success message
+    // You can add a toast notification here if you have one
+  }
+  catch (error) {
+    console.error('Error refreshing user list:', error)
+  }
 }
 
 // 👉 Delete user
@@ -468,10 +494,6 @@ const openEditUserDrawer = (userId: number) => {
 
         <!-- Actions -->
         <template #item.actions="{ item }">
-          <IconBtn @click="deleteUser(item.id)">
-            <VIcon icon="bx-trash" />
-          </IconBtn>
-
           <VBtn
             icon
             variant="text"
@@ -480,6 +502,9 @@ const openEditUserDrawer = (userId: number) => {
           >
             <VIcon icon="bx-pencil" />
           </VBtn>
+          <IconBtn @click="deleteUser(item.id)">
+            <VIcon icon="bx-trash" />
+          </IconBtn>
         </template>
 
         <!-- Pagination -->

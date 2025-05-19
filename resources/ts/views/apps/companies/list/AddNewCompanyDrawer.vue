@@ -28,7 +28,10 @@ const closeDrawer = () => {
 // Form Submission
 const onSubmit = async () => {
   if (!companyName.value.trim()) {
-    console.error('Company name is required')
+    emit('companyData', { 
+      success: false, 
+      error: 'Company name is required' 
+    })
     return
   }
 
@@ -44,15 +47,29 @@ const onSubmit = async () => {
       }),
     })
 
-    if (!response.ok) throw new Error('Failed to create company.')
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.error || 'Failed to create company')
+    }
 
     const result = await response.json()
 
-    emit('companyData', { success: 'Company created successfully!', data: result })
+    // Emit success with the created company data
+    emit('companyData', { 
+      success: true, 
+      message: 'Company created successfully!',
+      company: result.company 
+    })
+    
+    // Close drawer and reset form
     closeDrawer()
-  } catch (error) {
-    console.error('Error adding company:', error)
-    emit('companyData', { error: 'Failed to create company. Please try again.' })
+  } 
+  catch (error) {
+    console.error('Error creating company:', error)
+    emit('companyData', { 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Failed to create company. Please try again.' 
+    })
   }
 }
 </script>

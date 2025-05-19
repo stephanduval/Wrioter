@@ -61,19 +61,41 @@ class CompanyController extends Controller
 {
     $validated = $request->validate([
         'page' => 'integer|min:1',
-        'itemsPerPage' => 'integer|min:1|max:100',
+        'itemsPerPage' => 'string|in:all,10,25,50,100',  // Updated validation
         'q' => 'nullable|string',
     ]);
 
     $page = $request->get('page', 1);
-    $itemsPerPage = $request->get('itemsPerPage', 10);
+    $itemsPerPage = $request->get('itemsPerPage', '10');
 
-    $companies = Company::query()
+    $query = Company::query()
         ->when($request->get('q'), function ($query, $search) {
             $query->where('company_name', 'like', "%{$search}%");
-        })
-        ->paginate($itemsPerPage, ['*'], 'page', $page);
+        });
 
+    // Handle 'all' items per page
+    if ($itemsPerPage === 'all') {
+        $companies = $query->get();
+        $transformedCompanies = $companies->map(function ($company) {
+            return [
+                'id' => $company->id,
+                'companyName' => $company->company_name,
+            ];
+        });
+
+        return response()->json([
+            'data' => $transformedCompanies->toArray(),
+            'total' => $companies->count(),
+            'current_page' => 1,
+            'per_page' => $companies->count(),
+            'last_page' => 1,
+            'from' => 1,
+            'to' => $companies->count(),
+        ]);
+    }
+
+    // Handle paginated results
+    $companies = $query->paginate((int) $itemsPerPage, ['*'], 'page', $page);
     $transformedCompanies = $companies->getCollection()->map(function ($company) {
         return [
             'id' => $company->id,
