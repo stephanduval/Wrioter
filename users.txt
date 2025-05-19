@@ -1,0 +1,5 @@
+id	name	email	email_verified_at	password	remember_token	created_at	updated_at	password_reset_required
+1	Administrator	info@freynet-gagne.com	NULL	$2y$12$ZTAbKwCN5wvb/WjDg7z8wu.bfpAmkk9Zk6Pi.jXFLR3oqrmFA7wUe	NULL	2025-05-16 02:48:58	2025-05-16 02:48:58	1
+2	Sophie	sophie@freynet-gagne.com	NULL	$2y$12$laOI2PSDs.vefECtDRlkd.NWucoMA/ZxHoUb8FQKb6tDT25pspSx6	NULL	2025-05-16 02:48:58	2025-05-16 02:48:58	1
+3	Admin User	admin@admin.com	NULL	$2y$12$mF4unRTnoCxcUUnoC8HM2Odswtd82N00N2u/5lklChYK98wSkIZ9m	NULL	2025-05-16 02:48:58	2025-05-16 02:48:58	1
+4	Client User	client@client.com	NULL	$2y$12$7sGvvgsGB99MzZoShvHxc.Guu8C4EAN5BHSZ1uv5K1TA2GGSn0Rnq	NULL	2025-05-16 02:48:58	2025-05-16 02:48:58	1

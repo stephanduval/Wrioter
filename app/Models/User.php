@@ -99,8 +99,8 @@ class User extends Authenticatable
 
                 return [
                     'id' => $permission->id,
-                    'action' => $permission->action,
-                    'subject' => $permission->subject,
+                    'action' => strtolower($permission->action),
+                    'subject' => strtolower($permission->subject),
                 ];
             });
         })->unique('id')->values();

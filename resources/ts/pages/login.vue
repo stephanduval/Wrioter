@@ -81,16 +81,20 @@ const login = async () => {
     })
 
     // Update ability with debugging
-    const mappedRules = abilityRules.map((rule: { action: string; subject: string }) => ({
-      action: rule.action.toLowerCase(),
-      subject: rule.subject.toLowerCase(),
-    }))
+    const mappedRules = abilityRules.map((rule: { action: string; subject: string }) => {
+      const mappedRule = {
+        action: rule.action.toLowerCase(),
+        subject: rule.subject.toLowerCase(),
+      }
+      console.log('Mapping rule:', { original: rule, mapped: mappedRule })
+      return mappedRule
+    })
     console.log('Mapped Ability Rules:', mappedRules)
     
     ability.update(mappedRules)
 
     // Verify ability was updated
-    console.log('Current Ability Rules:', ability.rules.value)
+    console.log('Current Ability Rules:', ability.rules)
 
     // Set cookies BEFORE navigation
     const userDataCookie = useCookie('userData')

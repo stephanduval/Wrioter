@@ -70,7 +70,7 @@ export const routes: RouteRecordRaw[] = [
     meta: {
       layoutWrapperClasses: 'layout-content-height-fixed',
       action: 'read',
-      subject: 'project',
+      subject: 'projects',
       requiresAuth: true,
     },
   },
@@ -81,7 +81,7 @@ export const routes: RouteRecordRaw[] = [
     meta: {
       layoutWrapperClasses: 'layout-content-height-fixed',
       action: 'read',
-      subject: 'project',
+      subject: 'projects',
       requiresAuth: true,
     },
   },

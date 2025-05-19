@@ -8,6 +8,7 @@ export const canNavigate = (to: RouteLocationNormalized) => {
     path: to.path,
     meta: to.meta,
     currentRules: ability.rules,
+    ability: ability,
   })
   
   const canAccess = to.matched.some((route: RouteRecordRaw) => {
@@ -19,12 +20,14 @@ export const canNavigate = (to: RouteLocationNormalized) => {
       return false
     }
     
-    const can = ability.can(action, subject)
+    const can = ability.can(action.toLowerCase(), subject.toLowerCase())
     console.log('Route Check:', {
       path: route.path,
       action,
       subject,
       can,
+      actionLower: action.toLowerCase(),
+      subjectLower: subject.toLowerCase(),
     })
     return can
   })

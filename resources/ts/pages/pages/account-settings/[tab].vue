@@ -24,6 +24,9 @@ const tabs = [
 definePage({
   meta: {
     navActiveLink: 'pages-account-settings-tab',
+    action: 'read',
+    subject: 'client',
+    requiresAuth: true,
   },
 })
 </script>

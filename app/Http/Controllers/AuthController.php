@@ -113,6 +113,11 @@ class AuthController extends Controller
                 return response()->json(['message' => 'User does not have sufficient permissions.'], 403);
             }
 
+            \Log::info('User permissions:', [
+                'user_id' => $user->id,
+                'permissions' => $userPermissions->toArray(),
+            ]);
+
             // Fetch user role
             $userRole = $user->roles->first()->name ?? null;
             if (!$userRole) {

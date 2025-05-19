@@ -43,6 +43,15 @@ const isLoading = ref(true)
 const projectsData = ref<ApiResponse | null>(null)
 const clients = ref<{ id: number; name: string }[]>([])
 
+// Add user role check
+const userRole = computed(() => {
+  const userData = JSON.parse(localStorage.getItem('userData') || '{}')
+  return userData.role?.toLowerCase() || 'user'
+})
+
+const isAdmin = computed(() => userRole.value === 'admin')
+const isClient = computed(() => userRole.value === 'client')
+
 // Headers
 const headers = computed(() => [
   { title: t('headers.projects.project'), key: 'project', sortable: true },
@@ -145,6 +154,11 @@ const viewProject = (id: number) => {
 }
 
 const deleteProject = async (id: number) => {
+  if (!isAdmin.value) {
+    console.error('Only admins can delete projects')
+    return
+  }
+  
   if (!confirm('Are you sure you want to delete this project?')) return
   
   try {
@@ -157,6 +171,11 @@ const deleteProject = async (id: number) => {
 
 // Add updateProjectStatus function
 const updateProjectStatus = async (projectId: number, newStatus: string) => {
+  if (!isAdmin.value) {
+    console.error('Only admins can update project status')
+    return
+  }
+
   try {
     await axios.put(`/projects/${projectId}`, {
       status: newStatus
@@ -303,6 +322,7 @@ onMounted(() => {
         <!-- Status -->
         <template #item.status="{ item }">
           <VSelect
+            v-if="isAdmin"
             v-model="item.status"
             :items="statusOptions"
             density="compact"
@@ -322,6 +342,14 @@ onMounted(() => {
               </VChip>
             </template>
           </VSelect>
+          <VChip
+            v-else
+            :color="statusColorMap[item.status]"
+            size="small"
+            class="text-capitalize"
+          >
+            {{ item.status }}
+          </VChip>
         </template>
 
         <!-- Actions -->
@@ -330,7 +358,10 @@ onMounted(() => {
             <VIcon icon="bx-show" />
           </IconBtn>
 
-          <IconBtn @click="deleteProject(item.id)">
+          <IconBtn
+            v-if="isAdmin"
+            @click="deleteProject(item.id)"
+          >
             <VIcon icon="bx-trash" />
           </IconBtn>
         </template>

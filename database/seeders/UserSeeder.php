@@ -44,24 +44,27 @@ class UserSeeder extends Seeder
         // Find or create the "Freynet-Gagné" company
         $freynetGagne = Company::firstOrCreate(['company_name' => 'Freynet-Gagné']);
 
-        // Define roles for specific users
+        // Define roles for specific users by role name
         $userRoles = [
-            'sophie@freynet-gagne.com' => 2, // Client role (ID: 2)
-            'info@freynet-gagne.com' => 1, // Admin role (ID: 1)
-            'admin@admin.com' => 1, // Admin role (ID: 1)
-            'client@client.com' => 2, // Client role (ID: 2)
+            'sophie@freynet-gagne.com' => 'Client',
+            'info@freynet-gagne.com' => 'Admin',
+            'admin@admin.com' => 'Admin',
+            'client@client.com' => 'Client',
         ];
 
         foreach ($users as $userData) {
             $user = User::firstOrCreate(['email' => $userData['email']], $userData);
 
-            // Assign role based on email, default to client role (ID: 2)
-            $roleId = $userRoles[$userData['email']] ?? 2;
+            // Assign role based on email, default to Client role
+            $roleName = $userRoles[$userData['email']] ?? 'Client';
+            $roleId = DB::table('roles')->where('name', $roleName)->value('id');
 
-            DB::table('user_roles')->updateOrInsert(
-                ['user_id' => $user->id, 'role_id' => $roleId],
-                ['created_at' => now(), 'updated_at' => now()]
-            );
+            if ($roleId) {
+                DB::table('user_roles')->updateOrInsert(
+                    ['user_id' => $user->id, 'role_id' => $roleId],
+                    ['created_at' => now(), 'updated_at' => now()]
+                );
+            }
 
             // Assign the user to the "Freynet-Gagné" company
             DB::table('user_company')->updateOrInsert(
