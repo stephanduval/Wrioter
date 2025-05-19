@@ -31,10 +31,11 @@ const articleData = ref<HelpCenterArticle>()
 
 setTimeout(async () => {
   const { data, error } = await useApi<any>('/pages/help-center/article')
-  if (error.value)
-    console.log(error.value)
-  else
+  if (error.value) {
+    // console.log(error.value)
+  } else {
     articleData.value = data.value
+  }
 }, 1000)
 </script>
 

@@ -39,7 +39,7 @@ export const handlerAppsUsers = [
 
     // sort users
     if (sortByLocal) {
-      console.log(sortByLocal)
+      // console.log(sortByLocal)
       if (sortByLocal === 'user') {
         filteredUsers = filteredUsers.sort((a, b) => {
           if (orderByLocal === 'asc')

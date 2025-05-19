@@ -21,7 +21,7 @@ definePage({
   },
 })
 
-console.log("🚀 Emails page Index.vue is loading!");
+// console.log("🚀 Emails page Index.vue is loading!");
 
 const { 
     fetchMessages, 
@@ -35,7 +35,7 @@ const {
     deleteMessage,
  } = useEmail();
 
-console.log('Available labels:', userLabels);
+// console.log('Available labels:', userLabels);
 
 const messages = ref<Email[]>([]); 
 
@@ -49,17 +49,17 @@ const allUserMessagesSummary = ref<MessageSummary[]>([]);
 
 const fetchAllMessages = async () => {  
   try {
-    console.log("🔥 Fetching messages for current view...");
+    // console.log("🔥 Fetching messages for current view...");
     const response = await fetchMessages(); // This should resolve to Email[] from the view types
-    console.log("✅ View Messages Data:", response);
+    // console.log("✅ View Messages Data:", response);
     if (Array.isArray(response)) {
       messages.value = response; 
     } else {
-      console.error("❌ Invalid API response format for view messages:", response);
+      // console.error("❌ Invalid API response format for view messages:", response);
       messages.value = [];
     }
   } catch (error) {
-    console.error("❌ Error fetching view messages:", error);
+    // console.error("❌ Error fetching view messages:", error);
     messages.value = [];
   }
 };
@@ -67,17 +67,17 @@ const fetchAllMessages = async () => {
 // NEW: Fetch summary data for ALL user messages
 const fetchAllUserMessagesSummary = async () => {
   try {
-    console.log("🔥 Fetching summary data for ALL user messages...");
+    // console.log("🔥 Fetching summary data for ALL user messages...");
     const response = await $api('/messages/summary'); 
-    console.log("✅ Summary Data:", response);
+    // console.log("✅ Summary Data:", response);
     if (response && Array.isArray(response)) {
       allUserMessagesSummary.value = response;
     } else {
-      console.error("❌ Invalid API response format for summary data:", response);
+      // console.error("❌ Invalid API response format for summary data:", response);
       allUserMessagesSummary.value = [];
     }
   } catch (error) {
-    console.error("❌ Error fetching summary data:", error);
+    // console.error("❌ Error fetching summary data:", error);
     allUserMessagesSummary.value = [];
   }
 };
@@ -126,7 +126,7 @@ const dueTodayCount = computed(() => {
       return isDueToday;
     } catch (e) {
       // Log errors during parsing - Keep this one for actual errors
-      console.error(`  Error processing due_date ${m.due_date} for message ${m.id}:`, e);
+      // console.error(`  Error processing due_date ${m.due_date} for message ${m.id}:`, e);
       return false;
     }
   }).length;
@@ -147,7 +147,7 @@ const formatDate = (dateString: string | Date | undefined | null, includeTime = 
     const formatString = includeTime ? 'yyyy-MM-dd HH:mm' : 'yyyy-MM-dd';
     return format(date, formatString);
   } catch (error) {
-    console.error("Error formatting date:", dateString, error);
+    // console.error("Error formatting date:", dateString, error);
     return 'Invalid Date';
   }
 };
@@ -236,11 +236,11 @@ const changeOpenedMessage = async (dir: 'previous' | 'next') => {
 };
 
 const openMessage = async (message: Email) => {
-  console.log('Opening message:', message);
+  // console.log('Opening message:', message);
   
   openedMessage.value = message;
   
-  console.log('openedMessage set to:', openedMessage.value);
+  // console.log('openedMessage set to:', openedMessage.value);
   
   if (!message.isRead) {
     try {
@@ -255,7 +255,7 @@ const openMessage = async (message: Email) => {
         messageInList.status = 'read';
       }
     } catch (error) {
-      console.error('Error marking message as read:', error);
+      // console.error('Error marking message as read:', error);
     }
   }
 }
@@ -276,7 +276,7 @@ const handleActionClick = async (
   emailIds: number[] | Ref<number[]> = selectedMessages,
 ) => {
   const ids: number[] = isRef(emailIds) ? emailIds.value : emailIds;
-  console.log(`>>> handleActionClick: action=${action}, ids=`, ids);
+  // console.log(`>>> handleActionClick: action=${action}, ids=`, ids);
   if (!ids || ids.length === 0) return;
 
   let updateData: PartialDeep<Email> = {};
@@ -286,16 +286,16 @@ const handleActionClick = async (
   else if (action === 'read') updateData = { status: 'read', isRead: true };
   else if (action === 'unread') updateData = { isRead: false };
 
-  console.log(`>>> handleActionClick: Prepared updateData:`, updateData);
+  // console.log(`>>> handleActionClick: Prepared updateData:`, updateData);
 
   try {
-    console.log(`>>> handleActionClick: Calling updateEmails...`);
+    // console.log(`>>> handleActionClick: Calling updateEmails...`);
     await updateEmails(ids, updateData);
-    console.log(`>>> handleActionClick: updateEmails finished. Updating local state...`);
+    // console.log(`>>> handleActionClick: updateEmails finished. Updating local state...`);
     
     messages.value.forEach(msg => {
       if (ids.includes(msg.id)) {
-        console.log(`  - Updating local message ID ${msg.id}: action=${action}`);
+        // console.log(`  - Updating local message ID ${msg.id}: action=${action}`);
         if (action === 'star') msg.isStarred = true;
         if (action === 'unstar') msg.isStarred = false;
         if (action === 'read') { msg.isRead = true; msg.status = 'read'; }
@@ -303,15 +303,15 @@ const handleActionClick = async (
       }
     });
     if (openedMessage.value && ids.includes(openedMessage.value.id)) {
-      console.log(`  - Updating openedMessage ID ${openedMessage.value.id}: action=${action}`);
+      // console.log(`  - Updating openedMessage ID ${openedMessage.value.id}: action=${action}`);
       if (action === 'star') openedMessage.value.isStarred = true;
       if (action === 'unstar') openedMessage.value.isStarred = false;
       if (action === 'read') { openedMessage.value.isRead = true; openedMessage.value.status = 'read'; }
       if (action === 'unread') { openedMessage.value.isRead = false; openedMessage.value.status = 'sent'; }
     }
-    console.log(`>>> handleActionClick: Local state update finished.`);
+    // console.log(`>>> handleActionClick: Local state update finished.`);
   } catch (error) {
-    console.error('Error performing action:', action, error);
+    // console.error('Error performing action:', action, error);
   }
 }
 
@@ -320,7 +320,7 @@ const handleMoveMailsTo = async (action: MoveEmailToAction, ids: number[] | Ref<
   const actualIds: number[] = isRef(ids) ? ids.value : ids;
   if (!actualIds || actualIds.length === 0) return;
   
-  console.log(`Moving emails ${actualIds} to ${action}`);
+  // console.log(`Moving emails ${actualIds} to ${action}`);
   try {
     await moveSelectedEmailTo(action, actualIds);
 
@@ -333,7 +333,7 @@ const handleMoveMailsTo = async (action: MoveEmailToAction, ids: number[] | Ref<
     
       await fetchAllMessages();
   } catch (error) {
-    console.error(`Error moving emails to ${action}:`, error);
+    // console.error(`Error moving emails to ${action}:`, error);
   }
 };
 
@@ -365,14 +365,14 @@ const handleTaskStatusToggle = async (message: Email) => {
     newStatus = 'new';
   }
 
-  console.log(`Cycling task status for message ${message.id} to ${newStatus}`);
+  // console.log(`Cycling task status for message ${message.id} to ${newStatus}`);
   try {
     await updateEmails([message.id], { task_status: newStatus } as PartialDeep<Email>);
     message.task_status = newStatus;
     // Refresh summary data after status change
     await fetchAllUserMessagesSummary();
   } catch (error) {
-    console.error(`Error updating task status for message ${message.id}:`, error);
+    // console.error(`Error updating task status for message ${message.id}:`, error);
   }
 };
 
@@ -381,7 +381,7 @@ const handleSelectedTaskStatusUpdate = async (status: 'new' | 'in_process' | 'co
   const ids = selectedMessages.value;
   if (!ids || ids.length === 0) return;
 
-  console.log(`Updating task status for selected messages ${ids} to ${status}`);
+  // console.log(`Updating task status for selected messages ${ids} to ${status}`);
 
   try {
     await updateEmails(ids, { task_status: status } as PartialDeep<Email>);
@@ -403,21 +403,21 @@ const handleSelectedTaskStatusUpdate = async (status: 'new' | 'in_process' | 'co
     await fetchAllUserMessagesSummary();
 
   } catch (error) {
-    console.error(`Error updating task status for selected messages:`, error);
+    // console.error(`Error updating task status for selected messages:`, error);
   }
 };
 
 // --- Reply Logic ---
 const sendReply = async () => {
-  console.log("index.vue: sendReply function started."); 
+  // console.log("index.vue: sendReply function started."); 
 
   if (!openedMessage.value || !openedMessage.value.from || !openedMessage.value.from.id || !openedMessage.value.id) { 
-    console.error('Cannot send reply: Original message, sender, or IDs missing.');
+    // console.error('Cannot send reply: Original message, sender, or IDs missing.');
     return;
   }
 
   if (!replyMessage.value.trim()) {
-    console.error('Cannot send reply: Message body is empty.');
+    // console.error('Cannot send reply: Message body is empty.');
     return;
   }
 
@@ -436,25 +436,25 @@ const sendReply = async () => {
     company_id: currentUserCompanyId, 
   };
 
-  console.log("index.vue: Sending reply with payload:", payload); 
+  // console.log("index.vue: Sending reply with payload:", payload); 
 
   try {
     const result = await sendReplyMessage(payload); 
-    console.log("index.vue: sendReplyMessage call completed. Result:", result); 
+    // console.log("index.vue: sendReplyMessage call completed. Result:", result); 
 
     if (result && result.message === 'Message sent successfully') { 
-      console.log("Reply sent successfully:", result.data);
+      // console.log("Reply sent successfully:", result.data);
       showReplyForm.value = false;
       replyMessage.value = '';
     await fetchAllMessages();
       openedMessage.value = null;
     } else {
-      console.error("Failed to send reply, API returned error or unexpected response:", result);
+      // console.error("Failed to send reply, API returned error or unexpected response:", result);
     }
   } catch (error) {
-    console.error("Error sending reply:", error);
+    // console.error("Error sending reply:", error);
   }
-  console.log("index.vue: sendReply function finished."); 
+  // console.log("index.vue: sendReply function finished."); 
 };
 
 // --- Dialog State & Confirmation Logic ---
@@ -466,7 +466,7 @@ const messageIdsToConfirmPermanentDelete = ref<number[]>([]);
 const initiateTrashConfirmation = (ids: number[] | Ref<number[]>) => {
   const actualIds = isRef(ids) ? ids.value : ids;
   if (!actualIds || actualIds.length === 0) return;
-  console.log('Initiating trash confirmation for IDs:', actualIds);
+  // console.log('Initiating trash confirmation for IDs:', actualIds);
   messageIdsToConfirmTrash.value = [...actualIds];
   isTrashConfirmDialogVisible.value = true;
 };
@@ -474,7 +474,7 @@ const initiateTrashConfirmation = (ids: number[] | Ref<number[]>) => {
 const confirmTrashMessages = async () => {
   if (!messageIdsToConfirmTrash.value.length) return;
 
-  console.log('Confirming move to trash for IDs:', messageIdsToConfirmTrash.value);
+  // console.log('Confirming move to trash for IDs:', messageIdsToConfirmTrash.value);
   await handleMoveMailsTo('trash', messageIdsToConfirmTrash.value); 
   isTrashConfirmDialogVisible.value = false;
   messageIdsToConfirmTrash.value = [];
@@ -483,7 +483,7 @@ const confirmTrashMessages = async () => {
 const initiatePermanentDeleteConfirmation = (ids: number[] | Ref<number[]>) => {
   const actualIds = isRef(ids) ? ids.value : ids;
   if (!actualIds || actualIds.length === 0) return;
-  console.log('Initiating permanent delete confirmation for IDs:', actualIds);
+  // console.log('Initiating permanent delete confirmation for IDs:', actualIds);
   messageIdsToConfirmPermanentDelete.value = [...actualIds];
   isPermanentDeleteConfirmDialogVisible.value = true;
 };
@@ -491,7 +491,7 @@ const initiatePermanentDeleteConfirmation = (ids: number[] | Ref<number[]>) => {
 const confirmPermanentDeleteMessages = async () => {
   if (!messageIdsToConfirmPermanentDelete.value.length) return;
 
-  console.log('Confirming permanent delete for IDs:', messageIdsToConfirmPermanentDelete.value);
+  // console.log('Confirming permanent delete for IDs:', messageIdsToConfirmPermanentDelete.value);
   try {
     for (const id of messageIdsToConfirmPermanentDelete.value) {
       await deleteMessage(id);
@@ -504,7 +504,7 @@ const confirmPermanentDeleteMessages = async () => {
     }
     await fetchAllMessages();
   } catch (error) {
-    console.error('Error permanently deleting messages:', error);
+    // console.error('Error permanently deleting messages:', error);
   } finally {
     isPermanentDeleteConfirmDialogVisible.value = false;
     messageIdsToConfirmPermanentDelete.value = [];
@@ -525,11 +525,11 @@ const headers = [
 // --- Download Attachment Functions ---
 const downloadAttachment = (attachment: any) => {
   if (!attachment || typeof attachment !== 'object') {
-    console.error('Invalid attachment object:', attachment)
+    // console.error('Invalid attachment object:', attachment)
     return
   }
   if (!attachment.download_url) {
-    console.error('No download URL found in attachment:', attachment)
+    // console.error('No download URL found in attachment:', attachment)
     return
   }
   try {
@@ -539,7 +539,7 @@ const downloadAttachment = (attachment: any) => {
     link.rel = 'noopener noreferrer'
     link.click()
   } catch (error) {
-    console.error('Error downloading attachment:', error)
+    // console.error('Error downloading attachment:', error)
   }
 }
 

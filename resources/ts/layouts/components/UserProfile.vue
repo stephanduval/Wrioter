@@ -8,7 +8,7 @@ const ability = useAbility()
 const userData = ref(JSON.parse(localStorage.getItem('userData') || 'null'))
 
 const logout = async () => {
-  console.log('Logging out...')
+  // console.log('Logging out...')
 
   // Clear localStorage
   localStorage.removeItem('accessToken')

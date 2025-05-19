@@ -99,9 +99,7 @@ watch(attachmentsRef, (newFiles) => {
 }, { deep: true })
 
 watch(() => props.email, (newEmail) => {
-  if (newEmail) {
-    console.log('Email attachments:', newEmail.attachments)
-  }
+  // console.log('Email attachments:', newEmail.attachments)
 }, { immediate: true })
 </script>
 

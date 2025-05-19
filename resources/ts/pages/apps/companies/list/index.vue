@@ -64,12 +64,11 @@ const totalCompanies = computed(() => companiesData.value?.total || 0);
 // Handle Add Company Result
 const handleCompanyData = (data: any) => {
   if (data.success) {
-    console.log('Company added:', data.data)
     // Refetch companies or update the list
     fetchCompanies();
 
   } else if (data.error) {
-    console.error(data.error)
+    // console.error(data.error)
   }
 }
 
@@ -82,7 +81,7 @@ onMounted(async () => {
   try {
     await fetchCompanies();
   } catch (error) {
-    console.error('Error fetching companies:', error);
+    // console.error('Error fetching companies:', error);
   }
 });
 
@@ -107,12 +106,10 @@ const deleteCompany = async (id: number) => {
 
     if (!response.ok) throw new Error('Failed to delete company.')
 
-    console.log(`Company ${id} deleted successfully.`)
-
     // Refetch companies after deletion
     fetchCompanies()
   } catch (error) {
-    console.error('Error deleting company:', error)
+    // console.error('Error deleting company:', error)
   }
 }
 

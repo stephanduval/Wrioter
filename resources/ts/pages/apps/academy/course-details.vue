@@ -1,16 +1,16 @@
 <script setup lang="ts">
-import { VideoPlayer } from '@videojs-player/vue'
 import type { CourseDetails } from '@db/apps/academy/types'
 import InstructorPoster from '@images/pages/instructor-poster.png'
+import { VideoPlayer } from '@videojs-player/vue'
 import 'video.js/dist/video-js.css'
 
 const courseDetails = ref<CourseDetails>()
 
 const { data, error } = await useApi<CourseDetails>('/apps/academy/course-details')
 
-if (error.value)
-  console.log(error.value)
-else if (data.value)
+// if (error.value)
+//   console.log(error.value)
+if (data.value)
   courseDetails.value = data.value
 
 const panelStatus = ref(0)

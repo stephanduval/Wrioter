@@ -102,9 +102,9 @@ const fetchProject = async () => {
   error.value = null
   
   try {
-    console.log('Fetching project with ID:', projectId)
+    // console.log('Fetching project with ID:', projectId)
     const response = await axios.get(`${apiBaseUrl}/projects/${projectId}`)
-    console.log('API Response:', response.data)
+    // console.log('API Response:', response.data)
     
     if (!response.data) {
       throw new Error('No data received from API')
@@ -113,18 +113,18 @@ const fetchProject = async () => {
     project.value = response.data
     
     // Fetch messages related to this project
-    console.log('Fetching messages for project:', projectId)
+    // console.log('Fetching messages for project:', projectId)
     const messagesResponse = await axios.get(`${apiBaseUrl}/messages`, {
       params: {
         project_id: projectId,
       },
     })
-    console.log('Messages Response:', messagesResponse.data)
+    // console.log('Messages Response:', messagesResponse.data)
     
     messages.value = messagesResponse.data.data || []
   } catch (err: any) {
-    console.error('Error fetching project details:', err)
-    console.error('Error response:', err.response)
+    // console.error('Error fetching project details:', err)
+    // console.error('Error response:', err.response)
     error.value = err.response?.data?.message || 'Failed to load project details'
   } finally {
     isLoading.value = false
@@ -133,12 +133,12 @@ const fetchProject = async () => {
 
 // Add a watch to log when project data changes
 watch(project, (newVal) => {
-  console.log('Project data updated:', newVal)
+  // console.log('Project data updated:', newVal)
 }, { deep: true })
 
 // Add a watch to log when messages data changes
 watch(messages, (newVal) => {
-  console.log('Messages data updated:', newVal)
+  // console.log('Messages data updated:', newVal)
 }, { deep: true })
 
 const navigateBack = () => {
@@ -185,7 +185,7 @@ const saveProject = async () => {
     isEditing.value = false
     editedProject.value = {}
   } catch (err: any) {
-    console.error('Error updating project:', err)
+    // console.error('Error updating project:', err)
     error.value = err.response?.data?.message || 'Failed to update project'
   } finally {
     isLoading.value = false
@@ -225,7 +225,7 @@ const downloadAttachments = async (attachments: { id: number; download_url: stri
   try {
     window.open(attachments[0].download_url, '_blank')
   } catch (error) {
-    console.error('Error downloading attachment:', error)
+    // console.error('Error downloading attachment:', error)
   }
 }
 
@@ -274,12 +274,12 @@ const handleSendReply = async (data: { message: string, attachments: File[] }) =
       handleEmailClose()
     }
   } catch (error) {
-    console.error('Error sending reply:', error)
+    // console.error('Error sending reply:', error)
   }
 }
 
 onMounted(() => {
-  console.log('Component mounted, fetching project...')
+  // console.log('Component mounted, fetching project...')
   fetchProject()
 })
 </script>

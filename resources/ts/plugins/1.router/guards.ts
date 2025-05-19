@@ -5,7 +5,7 @@ export const setupGuards = (router: _RouterTyped<RouteNamedMap & { [key: string]
   // 👉 router.beforeEach
   // Docs: https://router.vuejs.org/guide/advanced/navigation-guards.html#global-before-guards
   router.beforeEach(to => {
-    console.log('Navigating to:', to.path)
+    // console.log('Navigating to:', to.path)
 
     /*
      * If it's a public route, continue navigation. This kind of pages are allowed to visited by login & non-login users. Basically, without any restrictions.
@@ -20,7 +20,7 @@ export const setupGuards = (router: _RouterTyped<RouteNamedMap & { [key: string]
      */
     const isLoggedIn = !!(useCookie('userData').value && useCookie('accessToken').value)
 
-    console.log('Is logged in:', isLoggedIn)
+    // console.log('Is logged in:', isLoggedIn)
 
     /*
       If user is logged in and is trying to access login like page, redirect to home

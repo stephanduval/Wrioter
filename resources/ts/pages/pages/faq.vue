@@ -12,7 +12,9 @@ const fetchFaqs = async () => {
     query: {
       q: faqSearchQuery.value,
     },
-  }).catch(err => console.log(err))
+  }).catch(err => {
+    // console.log(err)
+  })
 
   faqs.value = data
 }

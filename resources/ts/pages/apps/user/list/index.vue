@@ -26,7 +26,7 @@ const selectedUserId = ref<number | null>(null)
 
 // Update data table options
 const updateOptions = (options: any) => {
-  console.log('Options received:', options)
+  // console.log('Options received:', options)
 
   // Update sorting
   if (options.sortBy?.length) {
@@ -69,11 +69,11 @@ const { data: usersData, execute: fetchUsers } = useApi(() => {
   }).toString()
 
   const token = localStorage.getItem('accessToken')
-  console.log('Access Token before API call:', token) // Debugging line
+  // console.log('Access Token before API call:', token) // Debugging line
 
 
-  console.log('Access Token:', token)
-  console.log('API URL:', `/users?${params}`)
+  // console.log('Access Token:', token)
+  // console.log('API URL:', `/users?${params}`)
 
   return `/users?${params}`
 }, {
@@ -122,12 +122,12 @@ const totalUsers = computed(() => usersData.value?.total || 0)
 
 onMounted(async () => {
   try {
-    console.log('Fetching users...')
+    // console.log('Fetching users...')
     await fetchUsers()
-    console.log('Users fetched:', usersData.value)
+    // console.log('Users fetched:', usersData.value)
   }
   catch (error) {
-    console.error('Error fetching users:', error)
+    // console.error('Error fetching users:', error)
   }
 })
 
@@ -209,13 +209,13 @@ const deleteUser = async (id: number) => {
     if (!response.ok)
       throw new Error('Failed to delete user')
 
-    console.log('User deleted successfully.')
+    // console.log('User deleted successfully.')
 
     // Refetch users to update the table
     fetchUsers()
   }
   catch (error) {
-    console.error('Error deleting user:', error)
+    // console.error('Error deleting user:', error)
   }
 }
 
@@ -238,12 +238,12 @@ const { data: testData, execute: testApiCall } = useApi('/users?page=2&itemsPerP
 
 // Add this to log the results
 watch(testData, newData => {
-  console.log('Test API Response:', newData)
+  // console.log('Test API Response:', newData)
 }, { immediate: true })
 
 // Call it on mount
 onMounted(async () => {
-  console.log('Making test API call...')
+  // console.log('Making test API call...')
   await testApiCall()
 
   // Your existing code...
@@ -252,7 +252,7 @@ onMounted(async () => {
 
 // Update the options handler
 const handleOptionsUpdate = (options: any) => {
-  console.log('Options received:', options)
+  // console.log('Options received:', options)
 
   const newOptions = {
     page: options.page || 1,
@@ -261,7 +261,7 @@ const handleOptionsUpdate = (options: any) => {
     orderBy: options.sortBy?.[0]?.order,
   }
 
-  console.log('Updated options:', newOptions)
+  // console.log('Updated options:', newOptions)
 
   // Only fetch if page or itemsPerPage changed
   if (page.value !== newOptions.page || itemsPerPage.value !== newOptions.itemsPerPage) {

@@ -11,6 +11,13 @@ import '@styles/styles.scss'
 // Create vue app
 const app = createApp(App)
 
+// Suppress Suspense experimental warning
+app.config.warnHandler = (msg) => {
+  if (msg.includes('Suspense') && msg.includes('experimental'))
+    return
+  console.warn(msg)
+}
+
 // Register plugins
 registerPlugins(app)
 

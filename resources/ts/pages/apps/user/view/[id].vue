@@ -92,9 +92,9 @@ const fetchUser = async () => {
   error.value = null
   
   try {
-    console.log('Fetching user with ID:', userId)
+    // console.log('Fetching user with ID:', userId)
     const response = await axiosInstance.get(`/users/${userId}`)
-    console.log('API Response:', response.data)
+    // console.log('API Response:', response.data)
     
     if (!response.data) {
       throw new Error('No data received from API')
@@ -108,11 +108,11 @@ const fetchUser = async () => {
         user_id: userId,
       },
     })
-    console.log('Messages Response:', messagesResponse.data)
+    // console.log('Messages Response:', messagesResponse.data)
     messages.value = messagesResponse.data.data || []
   } catch (err: any) {
-    console.error('Error fetching user details:', err)
-    console.error('Error response:', err.response)
+    // console.error('Error fetching user details:', err)
+    // console.error('Error response:', err.response)
     error.value = err.response?.data?.message || 'Failed to load user details'
     
     // Handle authentication errors
@@ -200,7 +200,7 @@ const handleSendReply = async (data: { message: string, attachments: File[] }) =
       handleEmailClose()
     }
   } catch (error) {
-    console.error('Error sending reply:', error)
+    // console.error('Error sending reply:', error)
   }
 }
 
@@ -221,7 +221,7 @@ const fetchDropdownData = async () => {
       name: r.name,
     }))
   } catch (error) {
-    console.error('Error fetching dropdown data:', error)
+    // console.error('Error fetching dropdown data:', error)
   }
 }
 
@@ -263,7 +263,7 @@ const saveChanges = async () => {
       await fetchUser() // Refresh user data
     }
   } catch (err: any) {
-    console.error('Error saving user:', err)
+    // console.error('Error saving user:', err)
     error.value = err.response?.data?.message || 'Failed to save changes'
   }
 }
@@ -276,14 +276,14 @@ const fetchMessages = async () => {
       messages.value = response.data
     }
   } catch (error) {
-    console.error('Error fetching messages:', error)
+    // console.error('Error fetching messages:', error)
   }
 }
 
 const { t } = useI18n()
 
 onMounted(async () => {
-  console.log('Component mounted, fetching user...')
+  // console.log('Component mounted, fetching user...')
   await Promise.all([
     fetchUser(),
     fetchMessages(),

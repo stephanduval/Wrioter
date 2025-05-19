@@ -1,8 +1,8 @@
+import { paginateArray } from '@api-utils/paginateArray'
+import { db } from '@db/apps/ecommerce/db'
 import is from '@sindresorhus/is'
 import { destr } from 'destr'
 import { HttpResponse, http } from 'msw'
-import { db } from '@db/apps/ecommerce/db'
-import { paginateArray } from '@api-utils/paginateArray'
 
 export const handlerAppsEcommerce = [
 
@@ -183,7 +183,7 @@ export const handlerAppsEcommerce = [
     }).reverse()
 
     if (sortByLocal) {
-      console.log(sortByLocal)
+      // console.log(sortByLocal)
       if (sortByLocal === 'order') {
         filterOrders.sort((a, b) => {
           if (orderByLocal === 'desc')
