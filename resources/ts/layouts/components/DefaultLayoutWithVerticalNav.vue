@@ -69,8 +69,8 @@ const actionArrowInitialRotation = configStore.isVerticalNavCollapsed ? '180deg'
       <Footer />
     </template>
 
-    <!-- 👉 Customizer -->
-    <TheCustomizer />
+    <!-- �� Customizer -->
+    <!-- <TheCustomizer /> -->
   </VerticalNavLayout>
 </template>
 
