@@ -30,46 +30,26 @@ const route = useRoute()
 const loading = ref(false)
 const error = ref('')
 const success = ref('')
-const isValidToken = ref(false)
+const isValidCode = ref(false)
 
-// Validate token on component mount
+// Validate reset code on component mount
 onMounted(async () => {
-  const token = route.query.token as string
+  const code = route.query.code as string
   const email = route.query.email as string
 
-  if (!token || !email) {
-    error.value = 'Invalid or missing reset token. Please request a new password reset link.'
+  if (!code || !email) {
+    error.value = 'Invalid or missing reset code. Please contact your administrator for a new reset code.'
     return
   }
 
-  try {
-    loading.value = true
-    const response = await fetch('/api/auth/validate-reset-token', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ token, email }),
-    })
-
-    const data = await response.json()
-
-    if (response.ok) {
-      isValidToken.value = true
-    } else {
-      error.value = data.message || 'Invalid or expired reset token. Please request a new password reset link.'
-    }
-  } catch (err) {
-    error.value = 'An error occurred while validating the reset token. Please try again.'
-    console.error('Token validation error:', err)
-  } finally {
-    loading.value = false
-  }
+  form.value.email = email
+  form.value.reset_code = code
+  isValidCode.value = true
 })
 
 const form = ref({
-  email: route.query.email as string || '',
-  token: route.query.token as string || '',
+  email: '',
+  reset_code: '',
   password: '',
   password_confirmation: '',
 })
@@ -94,7 +74,7 @@ const handleSubmit = async () => {
     const data = await response.json()
 
     if (response.ok) {
-      success.value = data.message
+      success.value = data.message || 'Password has been reset successfully. You can now login with your new password.'
       // Redirect to login after a delay
       setTimeout(() => {
         router.push({ name: 'login' })
@@ -162,22 +142,14 @@ const handleSubmit = async () => {
         <VCardText>
           <VForm @submit.prevent="handleSubmit">
             <VRow>
-              <!-- Token Validation Error -->
-              <VCol v-if="!isValidToken && error" cols="12">
+              <!-- Code Validation Error -->
+              <VCol v-if="!isValidCode && error" cols="12">
                 <VAlert
                   color="error"
                   variant="tonal"
                   class="mb-4"
                 >
                   {{ error }}
-                  <template #append>
-                    <RouterLink
-                      class="text-decoration-none"
-                      :to="{ name: 'forgot-password' }"
-                    >
-                      Request New Link
-                    </RouterLink>
-                  </template>
                 </VAlert>
               </VCol>
 
@@ -203,8 +175,28 @@ const handleSubmit = async () => {
                 </VAlert>
               </VCol>
 
-              <!-- Form Fields (only show if token is valid) -->
-              <template v-if="isValidToken">
+              <!-- Form Fields (only show if code is valid) -->
+              <template v-if="isValidCode">
+                <!-- Reset Code -->
+                <VCol cols="12">
+                  <AppTextField
+                    v-model="form.reset_code"
+                    label="Reset Code"
+                    placeholder="Enter the reset code"
+                    :disabled="true"
+                  />
+                </VCol>
+
+                <!-- Email -->
+                <VCol cols="12">
+                  <AppTextField
+                    v-model="form.email"
+                    label="Email"
+                    type="email"
+                    :disabled="true"
+                  />
+                </VCol>
+
                 <!-- password -->
                 <VCol cols="12">
                   <AppTextField

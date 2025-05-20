@@ -68,6 +68,12 @@ class ProjectController extends Controller
         $perPage = $request->input('per_page', 10);
         $projects = $query->paginate($perPage);
 
+        // Append has_attachments attribute to each project
+        $projects->getCollection()->transform(function ($project) {
+            $project->append('has_attachments');
+            return $project;
+        });
+
         return response()->json($projects);
     }
 

@@ -54,6 +54,16 @@ export const redirects: RouteRecordRaw[] = [
 ]
 
 export const routes: RouteRecordRaw[] = [
+  // Reset Password Route
+  {
+    path: '/reset-password',
+    name: 'reset-password',
+    component: () => import('@/pages/pages/authentication/reset-password-v2.vue'),
+    meta: {
+      layout: 'blank',
+      public: true,
+    },
+  },
   // Project routes
   {
     path: '/apps/projects/list',

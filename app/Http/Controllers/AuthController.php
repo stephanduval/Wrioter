@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Auth\Events\PasswordReset;
+use Illuminate\Support\Facades\DB;
 
 class AuthController extends Controller
 {
@@ -221,35 +222,64 @@ class AuthController extends Controller
     }
 
     /**
-     * Reset password
+     * Reset the user's password using a reset code.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
      */
     public function resetPassword(Request $request)
     {
         try {
             $request->validate([
-                'token' => 'required',
                 'email' => 'required|email',
+                'reset_code' => 'required|string',
                 'password' => 'required|min:8|confirmed',
             ]);
 
-            $status = Password::reset(
-                $request->only('email', 'password', 'password_confirmation', 'token'),
-                function ($user, $password) {
-                    $user->forceFill([
-                        'password' => Hash::make($password),
-                        'remember_token' => Str::random(60),
-                        'password_reset_required' => false,
-                    ])->save();
+            // Find the reset token record
+            $resetRecord = DB::table('password_reset_tokens')
+                ->where('email', $request->email)
+                ->first();
 
-                    event(new PasswordReset($user));
-                }
-            );
-
-            if ($status === Password::PASSWORD_RESET) {
-                return response()->json(['message' => 'Password reset successfully'], 200);
+            if (!$resetRecord) {
+                return response()->json(['message' => 'Invalid reset code.'], 400);
             }
 
-            return response()->json(['message' => 'Unable to reset password'], 400);
+            // Check if the reset code is valid
+            if (!Hash::check($request->reset_code, $resetRecord->token)) {
+                return response()->json(['message' => 'Invalid reset code.'], 400);
+            }
+
+            // Check if the reset code has expired (60 minutes)
+            if (now()->diffInMinutes($resetRecord->created_at) > 60) {
+                return response()->json(['message' => 'Reset code has expired. Please request a new one.'], 400);
+            }
+
+            // Find the user
+            $user = User::where('email', $request->email)->first();
+            if (!$user) {
+                return response()->json(['message' => 'User not found.'], 404);
+            }
+
+            // Update the user's password
+            $user->forceFill([
+                'password' => Hash::make($request->password),
+                'remember_token' => Str::random(60),
+                'password_reset_required' => false,
+            ])->save();
+
+            // Delete the used reset code
+            DB::table('password_reset_tokens')
+                ->where('email', $request->email)
+                ->delete();
+
+            // Log the password reset
+            \Log::info('Password reset successful', [
+                'user_id' => $user->id,
+                'email' => $user->email,
+            ]);
+
+            return response()->json(['message' => 'Password has been reset successfully.'], 200);
         } catch (\Exception $e) {
             \Log::error('Password reset error:', [
                 'message' => $e->getMessage(),

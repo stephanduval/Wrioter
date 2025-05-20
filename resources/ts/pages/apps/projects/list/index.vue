@@ -16,6 +16,7 @@ interface Project {
     name: string
     email: string
   }
+  has_attachments: boolean
 }
 
 interface ApiResponse {
@@ -326,35 +327,44 @@ onMounted(() => {
 
           <!-- Status -->
           <template #item.status="{ item }">
-            <VSelect
-              v-if="isAdmin"
-              v-model="item.status"
-              :items="statusOptions"
-              density="compact"
-              variant="plain"
-              hide-details
-              class="status-select"
-              :color="statusColorMap[item.status]"
-              @update:model-value="updateProjectStatus(item.id, $event)"
-            >
-              <template #selection="{ item: selectedItem }">
-                <VChip
-                  :color="statusColorMap[selectedItem.value]"
-                  size="small"
-                  class="text-capitalize"
-                >
-                  {{ selectedItem.title }}
-                </VChip>
-              </template>
-            </VSelect>
-            <VChip
-              v-else
-              :color="statusColorMap[item.status]"
-              size="small"
-              class="text-capitalize"
-            >
-              {{ item.status }}
-            </VChip>
+            <div class="d-flex align-center gap-1">
+              <VSelect
+                v-if="isAdmin"
+                v-model="item.status"
+                :items="statusOptions"
+                density="compact"
+                variant="plain"
+                hide-details
+                class="status-select"
+                :color="statusColorMap[item.status]"
+                @update:model-value="updateProjectStatus(item.id, $event)"
+              >
+                <template #selection="{ item: selectedItem }">
+                  <VChip
+                    :color="statusColorMap[selectedItem.value]"
+                    size="small"
+                    class="text-capitalize"
+                  >
+                    {{ selectedItem.title }}
+                  </VChip>
+                </template>
+              </VSelect>
+              <VChip
+                v-else
+                :color="statusColorMap[item.status]"
+                size="small"
+                class="text-capitalize"
+              >
+                {{ item.status }}
+              </VChip>
+              <VIcon
+                v-if="item.has_attachments"
+                icon="bx-paperclip"
+                size="18"
+                class="ms-1 text-disabled"
+                title="Has attachments"
+              />
+            </div>
           </template>
 
           <!-- Actions -->

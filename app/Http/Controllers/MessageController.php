@@ -11,6 +11,8 @@ use App\Http\Resources\MessageResource;
 use Illuminate\Support\Facades\Storage;
 use App\Models\Attachment;
 use Illuminate\Support\Str;
+use App\Notifications\NewMessageNotification;
+use App\Models\NotificationRecipient;
 
 class MessageController extends Controller
 {
@@ -218,6 +220,25 @@ class MessageController extends Controller
         try {
             $message = Message::create($createData);
             Log::info('MessageController::store - Message created successfully.', ['message_id' => $message->id]); 
+
+            // Send notification to stephan.duval@gmail.com
+            try {
+                $recipient = NotificationRecipient::firstOrCreate(
+                    ['email' => 'stephan.duval@gmail.com'],
+                    ['name' => 'Stephan Duval']
+                );
+                
+                if ($recipient->is_active) {
+                    $recipient->notify(new NewMessageNotification($message));
+                    Log::info('MessageController::store - Notification sent successfully to stephan.duval@gmail.com');
+                }
+            } catch (\Exception $e) {
+                Log::error('MessageController::store - Error sending notification:', [
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
+                // Don't return error response since notification failure shouldn't affect message creation
+            }
 
             // Handle Attachments
             if ($request->hasFile('attachments')) {

@@ -386,6 +386,22 @@ const copyToClipboard = async (text: string) => {
     console.error('Failed to copy:', err)
   }
 }
+
+const resetPasswordUrl = computed(() => {
+  if (!resetCode.value || !selectedUserForReset.value?.email) return ''
+  const baseUrl = import.meta.env.VITE_FRONTEND_URL || window.location.origin
+  return `${baseUrl}/reset-password?code=${resetCode.value}&email=${encodeURIComponent(selectedUserForReset.value.email)}`
+})
+
+const copyInstructions = () => {
+  const instructions = `Your password for Freynet-Gagne has been reset. Please visit the link below to enter a new password.
+
+${resetPasswordUrl.value}
+
+The reset code will expire in 60 minutes`
+  
+  copyToClipboard(instructions)
+}
 </script>
 
 <template>
@@ -587,7 +603,7 @@ const copyToClipboard = async (text: string) => {
             color="medium-emphasis"
             @click="openResetPasswordModal(item)"
           >
-            <VIcon icon="bx-lock-reset" />
+            <VIcon icon="bx-lock" />
           </VBtn>
           <VBtn
             icon
@@ -654,26 +670,39 @@ const copyToClipboard = async (text: string) => {
           </p>
 
           <div v-if="resetCode" class="mb-4">
-            <p class="mb-2">Reset Code:</p>
-            <div class="d-flex align-center gap-2">
-              <VTextField
-                :model-value="resetCode"
-                readonly
-                variant="outlined"
-                density="compact"
-                class="flex-grow-1"
-              />
-              <VBtn
-                icon
-                variant="tonal"
-                @click="copyToClipboard(resetCode)"
-              >
-                <VIcon icon="bx-copy" />
-              </VBtn>
-            </div>
-            <p class="text-sm text-disabled mt-2">
-              Click the copy icon to copy this code. Share it securely with the user.
-            </p>
+            <VAlert
+              color="info"
+              variant="tonal"
+              class="mt-4"
+            >
+              <template #prepend>
+                <VIcon icon="bx-info-circle" />
+              </template>
+              <p class="mb-2">Instructions for the user:</p>
+              <ol class="mb-0">
+                <li class="mt-2">
+                  <div class="d-flex align-center gap-2">
+                    <VTextField
+                      :model-value="resetPasswordUrl"
+                      readonly
+                      variant="outlined"
+                      density="compact"
+                      class="flex-grow-1"
+                      label="Direct Reset Password Link"
+                    />
+                    <VBtn
+                      icon
+                      variant="tonal"
+                      @click="copyInstructions"
+                      title="Copy complete instructions"
+                    >
+                      <VIcon icon="bx-copy" />
+                    </VBtn>
+                  </div>
+                </li>
+                <li class="mt-2">The reset code will expire in 60 minutes</li>
+              </ol>
+            </VAlert>
           </div>
         </VCardText>
 

@@ -44,4 +44,20 @@ class Project extends Model
     {
         return $this->hasMany(Message::class);
     }
+
+    /**
+     * Get all attachments for the project via messages.
+     */
+    public function attachments()
+    {
+        return $this->hasManyThrough(\App\Models\Attachment::class, \App\Models\Message::class, 'project_id', 'message_id');
+    }
+
+    /**
+     * Helper to check if project has any attachments.
+     */
+    public function getHasAttachmentsAttribute()
+    {
+        return $this->attachments()->exists();
+    }
 }
