@@ -30,6 +30,42 @@ const route = useRoute()
 const loading = ref(false)
 const error = ref('')
 const success = ref('')
+const isValidToken = ref(false)
+
+// Validate token on component mount
+onMounted(async () => {
+  const token = route.query.token as string
+  const email = route.query.email as string
+
+  if (!token || !email) {
+    error.value = 'Invalid or missing reset token. Please request a new password reset link.'
+    return
+  }
+
+  try {
+    loading.value = true
+    const response = await fetch('/api/auth/validate-reset-token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ token, email }),
+    })
+
+    const data = await response.json()
+
+    if (response.ok) {
+      isValidToken.value = true
+    } else {
+      error.value = data.message || 'Invalid or expired reset token. Please request a new password reset link.'
+    }
+  } catch (err) {
+    error.value = 'An error occurred while validating the reset token. Please try again.'
+    console.error('Token validation error:', err)
+  } finally {
+    loading.value = false
+  }
+})
 
 const form = ref({
   email: route.query.email as string || '',
@@ -126,6 +162,25 @@ const handleSubmit = async () => {
         <VCardText>
           <VForm @submit.prevent="handleSubmit">
             <VRow>
+              <!-- Token Validation Error -->
+              <VCol v-if="!isValidToken && error" cols="12">
+                <VAlert
+                  color="error"
+                  variant="tonal"
+                  class="mb-4"
+                >
+                  {{ error }}
+                  <template #append>
+                    <RouterLink
+                      class="text-decoration-none"
+                      :to="{ name: 'forgot-password' }"
+                    >
+                      Request New Link
+                    </RouterLink>
+                  </template>
+                </VAlert>
+              </VCol>
+
               <!-- Success Alert -->
               <VCol v-if="success" cols="12">
                 <VAlert
@@ -148,61 +203,64 @@ const handleSubmit = async () => {
                 </VAlert>
               </VCol>
 
-              <!-- password -->
-              <VCol cols="12">
-                <AppTextField
-                  v-model="form.password"
-                  autofocus
-                  label="New Password"
-                  placeholder="············"
-                  :type="isPasswordVisible ? 'text' : 'password'"
-                  :append-inner-icon="isPasswordVisible ? 'bx-hide' : 'bx-show'"
-                  @click:append-inner="isPasswordVisible = !isPasswordVisible"
-                  :disabled="loading"
-                  :rules="[requiredValidator, passwordValidator]"
-                />
-              </VCol>
-
-              <!-- Confirm Password -->
-              <VCol cols="12">
-                <AppTextField
-                  v-model="form.password_confirmation"
-                  label="Confirm Password"
-                  placeholder="············"
-                  :type="isConfirmPasswordVisible ? 'text' : 'password'"
-                  :append-inner-icon="isConfirmPasswordVisible ? 'bx-hide' : 'bx-show'"
-                  @click:append-inner="isConfirmPasswordVisible = !isConfirmPasswordVisible"
-                  :disabled="loading"
-                  :rules="[requiredValidator, passwordConfirmationValidator]"
-                />
-              </VCol>
-
-              <!-- Set password -->
-              <VCol cols="12">
-                <VBtn
-                  block
-                  type="submit"
-                  :loading="loading"
-                  :disabled="loading"
-                >
-                  Save New Password
-                </VBtn>
-              </VCol>
-
-              <!-- back to login -->
-              <VCol cols="12">
-                <RouterLink
-                  class="d-flex align-center justify-center"
-                  :to="{ name: 'login' }"
-                >
-                  <VIcon
-                    icon="bx-chevron-left"
-                    size="20"
-                    class="me-1 flip-in-rtl"
+              <!-- Form Fields (only show if token is valid) -->
+              <template v-if="isValidToken">
+                <!-- password -->
+                <VCol cols="12">
+                  <AppTextField
+                    v-model="form.password"
+                    autofocus
+                    label="New Password"
+                    placeholder="············"
+                    :type="isPasswordVisible ? 'text' : 'password'"
+                    :append-inner-icon="isPasswordVisible ? 'bx-hide' : 'bx-show'"
+                    @click:append-inner="isPasswordVisible = !isPasswordVisible"
+                    :disabled="loading"
+                    :rules="[requiredValidator, passwordValidator]"
                   />
-                  <span>Back to login</span>
-                </RouterLink>
-              </VCol>
+                </VCol>
+
+                <!-- Confirm Password -->
+                <VCol cols="12">
+                  <AppTextField
+                    v-model="form.password_confirmation"
+                    label="Confirm Password"
+                    placeholder="············"
+                    :type="isConfirmPasswordVisible ? 'text' : 'password'"
+                    :append-inner-icon="isConfirmPasswordVisible ? 'bx-hide' : 'bx-show'"
+                    @click:append-inner="isConfirmPasswordVisible = !isConfirmPasswordVisible"
+                    :disabled="loading"
+                    :rules="[requiredValidator, passwordConfirmationValidator]"
+                  />
+                </VCol>
+
+                <!-- Set password -->
+                <VCol cols="12">
+                  <VBtn
+                    block
+                    type="submit"
+                    :loading="loading"
+                    :disabled="loading"
+                  >
+                    Save New Password
+                  </VBtn>
+                </VCol>
+
+                <!-- back to login -->
+                <VCol cols="12">
+                  <RouterLink
+                    class="d-flex align-center justify-center"
+                    :to="{ name: 'login' }"
+                  >
+                    <VIcon
+                      icon="bx-chevron-left"
+                      size="20"
+                      class="me-1 flip-in-rtl"
+                    />
+                    <span>Back to login</span>
+                  </RouterLink>
+                </VCol>
+              </template>
             </VRow>
           </VForm>
         </VCardText>

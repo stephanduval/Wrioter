@@ -31,6 +31,9 @@ Route::group(['prefix' => 'auth'], function () {
     // Password Reset Routes
     Route::post('forgot-password', [AuthController::class, 'forgotPassword']);
     Route::post('reset-password', [AuthController::class, 'resetPassword']);
+    Route::post('/auth/validate-reset-token', [AuthController::class, 'validateResetToken'])->name('password.validate-token');
+    Route::post('/auth/reset-password', [AuthController::class, 'resetPassword'])->name('password.update');
+    Route::post('/auth/forgot-password', [AuthController::class, 'forgotPassword'])->name('password.email');
 
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('logout', [AuthController::class, 'logout']);
@@ -45,6 +48,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/users', [UserController::class, 'addUser'])->name('users.store');
     Route::put('/users/{id}', [UserController::class, 'updateUser']);
     Route::delete('/users/{id}', [UserController::class, 'deleteUser']);
+    Route::post('/users/{id}/generate-reset-code', [UserController::class, 'generateResetCode']);
 });
 
 // Company Management Routes

@@ -9,6 +9,8 @@ use App\Models\UserRole;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Password;
 
 class UserController extends Controller
 {
@@ -152,75 +154,126 @@ class UserController extends Controller
             return response()->json(['error' => 'Failed to create user.', 'details' => $e->getMessage()], 500);
         }
     }
+
     public function deleteUser($id)
-{
-    try {
-        $user = User::findOrFail($id);
+    {
+        try {
+            $user = User::findOrFail($id);
 
-        \DB::transaction(function () use ($user) {
-            $user->delete();
-        });
+            \DB::transaction(function () use ($user) {
+                $user->delete();
+            });
 
-        return response()->json(['message' => 'User deleted successfully.'], 200);
-    } catch (\Exception $e) {
-        \Log::error('Error deleting user: ', ['message' => $e->getMessage()]);
-        return response()->json(['error' => 'Failed to delete user.'], 500);
-    }
-}
-public function showUser($id)
-{
-    try {
-        $user = User::with(['companies', 'roles'])->findOrFail($id);
-
-        return response()->json([
-            'id' => $user->id,
-            'name' => $user->name,
-            'email' => $user->email,
-            'department' => $user->department,
-            'company_id' => $user->companies->first()?->id, // Assuming one company per user
-            'role_id' => $user->roles->first()?->id, // Assuming one role per user
-        ]);
-    } catch (\Exception $e) {
-        \Log::error('Error fetching user details: ', ['message' => $e->getMessage()]);
-
-        return response()->json(['error' => 'User not found.'], 404);
-    }
-}
-public function updateUser(Request $request, $id)
-{
-    try {
-        $validated = $request->validate([
-            'name' => 'sometimes|required|string|max:255',
-            'email' => 'sometimes|required|string|email|unique:users,email,' . $id,
-            'company_id' => 'sometimes|required|exists:companies,id',
-            'role_id' => 'sometimes|required|exists:roles,id',
-            'department' => 'nullable|string|max:255',
-        ]);
-
-        $user = User::findOrFail($id);
-
-        // Update user fields
-        $user->update([
-            'name' => $validated['name'] ?? $user->name,
-            'email' => $validated['email'] ?? $user->email,
-            'department' => $validated['department'] ?? $user->department,
-        ]);
-
-        // Update company relationship
-        if (isset($validated['company_id'])) {
-            $user->companies()->sync([$validated['company_id']]);
+            return response()->json(['message' => 'User deleted successfully.'], 200);
+        } catch (\Exception $e) {
+            \Log::error('Error deleting user: ', ['message' => $e->getMessage()]);
+            return response()->json(['error' => 'Failed to delete user.'], 500);
         }
-
-        // Update role relationship
-        if (isset($validated['role_id'])) {
-            $user->roles()->sync([$validated['role_id']]);
-        }
-
-        return response()->json(['message' => 'User updated successfully.', 'user' => $user]);
-    } catch (\Exception $e) {
-        \Log::error('Error updating user: ', ['message' => $e->getMessage()]);
-
-        return response()->json(['error' => 'Failed to update user.', 'details' => $e->getMessage()], 500);
     }
-}
+
+    public function showUser($id)
+    {
+        try {
+            $user = User::with(['companies', 'roles'])->findOrFail($id);
+
+            return response()->json([
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'department' => $user->department,
+                'company_id' => $user->companies->first()?->id, // Assuming one company per user
+                'role_id' => $user->roles->first()?->id, // Assuming one role per user
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error fetching user details: ', ['message' => $e->getMessage()]);
+
+            return response()->json(['error' => 'User not found.'], 404);
+        }
+    }
+
+    public function updateUser(Request $request, $id)
+    {
+        try {
+            $validated = $request->validate([
+                'name' => 'sometimes|required|string|max:255',
+                'email' => 'sometimes|required|string|email|unique:users,email,' . $id,
+                'company_id' => 'sometimes|required|exists:companies,id',
+                'role_id' => 'sometimes|required|exists:roles,id',
+                'department' => 'nullable|string|max:255',
+            ]);
+
+            $user = User::findOrFail($id);
+
+            // Update user fields
+            $user->update([
+                'name' => $validated['name'] ?? $user->name,
+                'email' => $validated['email'] ?? $user->email,
+                'department' => $validated['department'] ?? $user->department,
+            ]);
+
+            // Update company relationship
+            if (isset($validated['company_id'])) {
+                $user->companies()->sync([$validated['company_id']]);
+            }
+
+            // Update role relationship
+            if (isset($validated['role_id'])) {
+                $user->roles()->sync([$validated['role_id']]);
+            }
+
+            return response()->json(['message' => 'User updated successfully.', 'user' => $user]);
+        } catch (\Exception $e) {
+            \Log::error('Error updating user: ', ['message' => $e->getMessage()]);
+
+            return response()->json(['error' => 'Failed to update user.', 'details' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Generate a reset code for a user
+     *
+     * @param int $id
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function generateResetCode($id)
+    {
+        try {
+            $user = User::findOrFail($id);
+
+            // Generate a secure random code
+            $resetCode = Str::random(12);
+
+            // Store the reset code in the password_reset_tokens table
+            DB::table('password_reset_tokens')->updateOrInsert(
+                ['email' => $user->email],
+                [
+                    'token' => Hash::make($resetCode),
+                    'created_at' => now(),
+                ]
+            );
+
+            // Log the reset code generation
+            \Log::info('Reset code generated for user', [
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'generated_at' => now(),
+            ]);
+
+            return response()->json([
+                'message' => 'Reset code generated successfully',
+                'reset_code' => $resetCode,
+                'expires_at' => now()->addMinutes(60)->toIso8601String(),
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error generating reset code:', [
+                'user_id' => $id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'message' => 'Failed to generate reset code',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
 }

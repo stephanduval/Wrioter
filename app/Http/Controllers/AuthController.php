@@ -258,4 +258,36 @@ class AuthController extends Controller
             return response()->json(['message' => 'An error occurred. Please try again.'], 500);
         }
     }
+
+    /**
+     * Validate a password reset token.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function validateResetToken(Request $request)
+    {
+        try {
+            $request->validate([
+                'token' => 'required',
+                'email' => 'required|email',
+            ]);
+
+            $status = Password::tokenExists(
+                $request->only('email', 'token')
+            );
+
+            if ($status) {
+                return response()->json(['message' => 'Token is valid'], 200);
+            }
+
+            return response()->json(['message' => 'Invalid or expired token'], 400);
+        } catch (\Exception $e) {
+            \Log::error('Token validation error:', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return response()->json(['message' => 'An error occurred while validating the token'], 500);
+        }
+    }
 }

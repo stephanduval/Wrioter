@@ -6,10 +6,10 @@ import { useRouter } from 'vue-router'
 import authV2ForgotPasswordIllustration from '@images/pages/auth-v2-forgot-password-illustration.png'
 
 const router = useRouter()
-const email = ref('')
-const loading = ref(false)
-const error = ref('')
-const success = ref('')
+// const email = ref('')
+// const loading = ref(false)
+// const error = ref('')
+// const success = ref('')
 
 definePage({
   meta: {
@@ -18,38 +18,38 @@ definePage({
   },
 })
 
-const handleSubmit = async () => {
-  try {
-    loading.value = true
-    error.value = ''
-    success.value = ''
+// const handleSubmit = async () => {
+//   try {
+//     loading.value = true
+//     error.value = ''
+//     success.value = ''
 
-    const response = await fetch('/api/auth/forgot-password', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ email: email.value }),
-    })
+//     const response = await fetch('/api/auth/forgot-password', {
+//       method: 'POST',
+//       headers: {
+//         'Content-Type': 'application/json',
+//       },
+//       body: JSON.stringify({ email: email.value }),
+//     })
 
-    const data = await response.json()
+//     const data = await response.json()
 
-    if (response.ok) {
-      success.value = data.message || 'Password reset link has been sent to your email.'
-      // Optionally redirect after a delay
-      setTimeout(() => {
-        router.push({ name: 'login' })
-      }, 3000)
-    } else {
-      error.value = data.message || 'An error occurred. Please try again.'
-    }
-  } catch (err) {
-    error.value = 'An error occurred. Please try again.'
-    console.error('Password reset request error:', err)
-  } finally {
-    loading.value = false
-  }
-}
+//     if (response.ok) {
+//       success.value = data.message || 'Password reset link has been sent to your email. Please check your spam folder if you don\'t see it in your inbox.'
+//       // Optionally redirect after a delay
+//       setTimeout(() => {
+//         router.push({ name: 'login' })
+//       }, 5000)
+//     } else {
+//       error.value = data.message || 'An error occurred. Please try again.'
+//     }
+//   } catch (err) {
+//     error.value = 'An error occurred. Please try again.'
+//     console.error('Password reset request error:', err)
+//   } finally {
+//     loading.value = false
+//   }
+// }
 </script>
 
 <template>
@@ -96,76 +96,23 @@ const handleSubmit = async () => {
             Forgot Password? 🔒
           </h4>
           <p class="mb-0">
-            Enter your email and we'll send you instructions to reset your password
+            Please contact your administrator at info@freynet-gagne.com to reset your password
           </p>
         </VCardText>
 
         <VCardText>
-          <VForm @submit.prevent="handleSubmit">
-            <VRow>
-              <!-- Success Alert -->
-              <VCol v-if="success" cols="12">
-                <VAlert
-                  color="success"
-                  variant="tonal"
-                  class="mb-4"
-                >
-                  {{ success }}
-                </VAlert>
-              </VCol>
-
-              <!-- Error Alert -->
-              <VCol v-if="error" cols="12">
-                <VAlert
-                  color="error"
-                  variant="tonal"
-                  class="mb-4"
-                >
-                  {{ error }}
-                </VAlert>
-              </VCol>
-
-              <!-- email -->
-              <VCol cols="12">
-                <AppTextField
-                  v-model="email"
-                  autofocus
-                  label="Email"
-                  type="email"
-                  placeholder="johndoe@email.com"
-                  :disabled="loading"
-                  :rules="[requiredValidator, emailValidator]"
-                />
-              </VCol>
-
-              <!-- Reset link -->
-              <VCol cols="12">
-                <VBtn
-                  block
-                  type="submit"
-                  :loading="loading"
-                  :disabled="loading"
-                >
-                  Send Reset Link
-                </VBtn>
-              </VCol>
-
-              <!-- back to login -->
-              <VCol cols="12">
-                <RouterLink
-                  class="d-flex align-center justify-center"
-                  :to="{ name: 'login' }"
-                >
-                  <VIcon
-                    icon="bx-chevron-left"
-                    size="20"
-                    class="me-1 flip-in-rtl"
-                  />
-                  <span>Back to login</span>
-                </RouterLink>
-              </VCol>
-            </VRow>
-          </VForm>
+          <!-- Back to login -->
+          <RouterLink
+            class="d-flex align-center justify-center"
+            :to="{ name: 'login' }"
+          >
+            <VIcon
+              icon="bx-chevron-left"
+              size="20"
+              class="me-1 flip-in-rtl"
+            />
+            <span>Back to login</span>
+          </RouterLink>
         </VCardText>
       </VCard>
     </VCol>

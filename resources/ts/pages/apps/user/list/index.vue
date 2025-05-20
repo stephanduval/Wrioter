@@ -36,6 +36,17 @@ const isAddNewUserDrawerVisible = ref(false)
 const isEditUserDrawerVisible = ref(false)
 const selectedUserId = ref<number | null>(null)
 
+// Add these refs near the top with other refs
+const isResetPasswordModalVisible = ref(false)
+const selectedUserForReset = ref<{ id: number; name: string; email: string } | null>(null)
+const resetCode = ref('')
+const isGeneratingReset = ref(false)
+const resetError = ref('')
+
+// Add these refs near the other refs at the top of the script
+const isDeleteModalVisible = ref(false)
+const selectedUserForDelete = ref<{ id: number; name: string; email: string } | null>(null)
+
 // Update data table options
 const updateOptions = (options: any) => {
   // console.log('Options received:', options)
@@ -234,9 +245,11 @@ const addNewUser = async (response: { success: boolean; message?: string; error?
 }
 
 // 👉 Delete user
-const deleteUser = async (id: number) => {
+const confirmDelete = async () => {
+  if (!selectedUserForDelete.value) return
+
   try {
-    const response = await fetch(`/api/users/${id}`, {
+    const response = await fetch(`/api/users/${selectedUserForDelete.value.id}`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
@@ -247,14 +260,25 @@ const deleteUser = async (id: number) => {
     if (!response.ok)
       throw new Error('Failed to delete user')
 
-    // console.log('User deleted successfully.')
+    // Close the modal
+    isDeleteModalVisible.value = false
+    selectedUserForDelete.value = null
 
     // Refetch users to update the table
     fetchUsers()
   }
   catch (error) {
-    // console.error('Error deleting user:', error)
+    console.error('Error deleting user:', error)
   }
+}
+
+const openDeleteModal = (user: any) => {
+  selectedUserForDelete.value = {
+    id: user.id,
+    name: user.fullName,
+    email: user.email,
+  }
+  isDeleteModalVisible.value = true
 }
 
 // const widgetData = ref([
@@ -313,6 +337,54 @@ const handleOptionsUpdate = (options: any) => {
 const openEditUserDrawer = (userId: number) => {
   selectedUserId.value = userId
   isEditUserDrawerVisible.value = true
+}
+
+// Add this function with other functions
+const generateResetCode = async (userId: number) => {
+  try {
+    isGeneratingReset.value = true
+    resetError.value = ''
+    
+    const response = await fetch(`/api/users/${userId}/generate-reset-code`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+      },
+    })
+
+    const data = await response.json()
+
+    if (!response.ok)
+      throw new Error(data.message || 'Failed to generate reset code')
+
+    resetCode.value = data.reset_code
+  } catch (err) {
+    console.error('Error generating reset code:', err)
+    resetError.value = err instanceof Error ? err.message : 'Failed to generate reset code'
+  } finally {
+    isGeneratingReset.value = false
+  }
+}
+
+const openResetPasswordModal = (user: any) => {
+  selectedUserForReset.value = {
+    id: user.id,
+    name: user.fullName,
+    email: user.email,
+  }
+  isResetPasswordModalVisible.value = true
+  resetCode.value = ''
+  resetError.value = ''
+}
+
+const copyToClipboard = async (text: string) => {
+  try {
+    await navigator.clipboard.writeText(text)
+    // You could add a toast notification here
+  } catch (err) {
+    console.error('Failed to copy:', err)
+  }
 }
 </script>
 
@@ -509,9 +581,22 @@ const openEditUserDrawer = (userId: number) => {
           >
             <VIcon icon="bx-pencil" />
           </VBtn>
-          <IconBtn @click="deleteUser(item.id)">
+          <VBtn
+            icon
+            variant="text"
+            color="medium-emphasis"
+            @click="openResetPasswordModal(item)"
+          >
+            <VIcon icon="bx-lock-reset" />
+          </VBtn>
+          <VBtn
+            icon
+            variant="text"
+            color="warning"
+            @click="openDeleteModal(item)"
+          >
             <VIcon icon="bx-trash" />
-          </IconBtn>
+          </VBtn>
         </template>
 
         <!-- Pagination -->
@@ -539,5 +624,128 @@ const openEditUserDrawer = (userId: number) => {
       :user-id="selectedUserId"
       @user-updated="fetchUsers"
     />
+
+    <!-- Reset Password Modal -->
+    <VDialog
+      v-model="isResetPasswordModalVisible"
+      max-width="500"
+    >
+      <VCard>
+        <VCardTitle class="text-h5 pa-6">
+          Reset Password
+        </VCardTitle>
+
+        <VCardText class="pa-6">
+          <VAlert
+            v-if="resetError"
+            color="error"
+            variant="tonal"
+            class="mb-4"
+          >
+            {{ resetError }}
+          </VAlert>
+
+          <p class="mb-4">
+            Are you sure you want to reset the password for <strong>{{ selectedUserForReset?.name }}</strong> ({{ selectedUserForReset?.email }})?
+          </p>
+
+          <p class="mb-4 text-warning">
+            This will generate a new reset code that can be used to set a new password. The user will need to use this code to reset their password.
+          </p>
+
+          <div v-if="resetCode" class="mb-4">
+            <p class="mb-2">Reset Code:</p>
+            <div class="d-flex align-center gap-2">
+              <VTextField
+                :model-value="resetCode"
+                readonly
+                variant="outlined"
+                density="compact"
+                class="flex-grow-1"
+              />
+              <VBtn
+                icon
+                variant="tonal"
+                @click="copyToClipboard(resetCode)"
+              >
+                <VIcon icon="bx-copy" />
+              </VBtn>
+            </div>
+            <p class="text-sm text-disabled mt-2">
+              Click the copy icon to copy this code. Share it securely with the user.
+            </p>
+          </div>
+        </VCardText>
+
+        <VCardActions class="pa-6 pt-0">
+          <VSpacer />
+          <VBtn
+            variant="tonal"
+            color="secondary"
+            @click="isResetPasswordModalVisible = false"
+          >
+            Cancel
+          </VBtn>
+          <VBtn
+            color="primary"
+            :loading="isGeneratingReset"
+            :disabled="!!resetCode"
+            @click="generateResetCode(selectedUserForReset?.id!)"
+          >
+            {{ resetCode ? 'Reset Code Generated' : 'Generate Reset Code' }}
+          </VBtn>
+        </VCardActions>
+      </VCard>
+    </VDialog>
+
+    <!-- Delete Confirmation Modal -->
+    <VDialog
+      v-model="isDeleteModalVisible"
+      max-width="500"
+    >
+      <VCard>
+        <VCardTitle class="text-h5 pa-6">
+          Delete User
+        </VCardTitle>
+
+        <VCardText class="pa-6">
+          <VAlert
+            color="warning"
+            variant="tonal"
+            class="mb-4"
+          >
+            <template #prepend>
+              <VIcon icon="bx-error" />
+            </template>
+            Warning: This action cannot be undone.
+          </VAlert>
+
+          <p class="mb-4">
+            Are you sure you want to delete <strong>{{ selectedUserForDelete?.name }}</strong> ({{ selectedUserForDelete?.email }})?
+          </p>
+
+          <p class="text-warning mb-4">
+            This will permanently remove the user and all associated data from the system.
+          </p>
+        </VCardText>
+
+        <VCardActions class="pa-6 pt-0">
+          <VSpacer />
+          <VBtn
+            variant="tonal"
+            color="secondary"
+            @click="isDeleteModalVisible = false"
+          >
+            Cancel
+          </VBtn>
+          <VBtn
+            color="error"
+            @click="confirmDelete"
+          >
+            Delete User
+          </VBtn>
+        </VCardActions>
+      </VCard>
+    </VDialog>
   </section>
 </template>
