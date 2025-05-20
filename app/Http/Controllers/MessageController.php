@@ -221,21 +221,56 @@ class MessageController extends Controller
             $message = Message::create($createData);
             Log::info('MessageController::store - Message created successfully.', ['message_id' => $message->id]); 
 
-            // Send notification to stephan.duval@gmail.com
+            // Send notification only if the sender is a client
             try {
-                $recipient = NotificationRecipient::firstOrCreate(
-                    ['email' => 'stephan.duval@gmail.com'],
-                    ['name' => 'Stephan Duval']
-                );
+                $sender = $message->sender;
+                Log::info('MessageController::store - Checking sender roles:', [
+                    'sender_id' => $sender->id,
+                    'sender_name' => $sender->name,
+                    'sender_email' => $sender->email
+                ]);
                 
-                if ($recipient->is_active) {
-                    $recipient->notify(new NewMessageNotification($message));
-                    Log::info('MessageController::store - Notification sent successfully to stephan.duval@gmail.com');
+                $isClient = $sender->roles()->where('name', 'Client')->exists();
+                Log::info('MessageController::store - Is sender a client?', ['is_client' => $isClient]);
+                
+                if ($isClient) {
+                    Log::info('MessageController::store - Sender is a client, preparing to send notification');
+                    $recipient = NotificationRecipient::firstOrCreate(
+                        ['email' => 'stephan.duval@gmail.com'],
+                        ['name' => 'Stephan Duval']
+                    );
+                    
+                    Log::info('MessageController::store - Notification recipient status:', [
+                        'recipient_id' => $recipient->id,
+                        'is_active' => $recipient->is_active,
+                        'email' => $recipient->email
+                    ]);
+                    
+                    if ($recipient->is_active) {
+                        $recipient->notify(new NewMessageNotification($message));
+                        Log::info('MessageController::store - Notification sent successfully to stephan.duval@gmail.com for client message', [
+                            'message_id' => $message->id,
+                            'sender_id' => $sender->id,
+                            'recipient_id' => $recipient->id
+                        ]);
+                    } else {
+                        Log::warning('MessageController::store - Notification recipient is not active', [
+                            'recipient_id' => $recipient->id,
+                            'email' => $recipient->email
+                        ]);
+                    }
+                } else {
+                    Log::info('MessageController::store - No notification sent as sender is not a client', [
+                        'sender_id' => $sender->id,
+                        'sender_roles' => $sender->roles->pluck('name')
+                    ]);
                 }
             } catch (\Exception $e) {
                 Log::error('MessageController::store - Error sending notification:', [
                     'error' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString()
+                    'trace' => $e->getTraceAsString(),
+                    'message_id' => $message->id,
+                    'sender_id' => $message->sender_id
                 ]);
                 // Don't return error response since notification failure shouldn't affect message creation
             }
