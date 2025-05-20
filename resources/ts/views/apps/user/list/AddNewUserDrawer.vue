@@ -120,7 +120,7 @@ const onSubmit = async () => {
     const userData = {
       name: userName.value,
       email: email.value,
-      department: department.value,
+      department: department.value || '',
       password: 'password123',
       company_id: companies.value.find(c => c.name === company.value)?.id,
       role_id: roles.value.find(r => r.name === role.value)?.id,

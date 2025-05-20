@@ -69,9 +69,19 @@ const fetchUserDetails = async () => {
     department.value = user.department || ''
     company.value = companies.value.find(c => c.id === user.company_id)?.name || null
     role.value = roles.value.find(r => r.id === user.role_id)?.name || null
+
+    // Log the fetched data for debugging
+    console.log('Fetched user details:', {
+      name: userName.value,
+      email: email.value,
+      department: department.value,
+      company: company.value,
+      role: role.value,
+    })
   }
   catch (error) {
     console.error('Error fetching user details:', error)
+    emit('userUpdated', { error: 'Failed to fetch user details. Please try again.' })
   }
 }
 
@@ -122,9 +132,19 @@ const fetchDropdownData = async () => {
 }
 
 // Watchers
-watch(() => props.userId, async newUserId => {
-  if (newUserId)
-    await fetchUserDetails()
+watch(() => props.isDrawerOpen, async (isOpen) => {
+  if (isOpen && props.userId) {
+    await fetchDropdownData() // Ensure dropdowns are loaded first
+    await fetchUserDetails() // Then fetch user details
+  }
+})
+
+// Also keep the userId watcher as a backup
+watch(() => props.userId, async (newUserId) => {
+  if (newUserId && props.isDrawerOpen) {
+    await fetchDropdownData() // Ensure dropdowns are loaded first
+    await fetchUserDetails() // Then fetch user details
+  }
 })
 
 // Close Drawer Handler
@@ -153,7 +173,7 @@ const submitForm = async () => {
           body: JSON.stringify({
             name: userName.value || undefined,
             email: email.value || undefined,
-            department: department.value || undefined,
+            department: department.value || '',
             company_id: companies.value.find(c => c.name === company.value)?.id,
             role_id: roles.value.find(r => r.name === role.value)?.id,
           }),
@@ -180,13 +200,6 @@ onMounted(async () => {
   await fetchDropdownData() // Fetch companies and roles first
   if (props.userId)
     await fetchUserDetails() // Then fetch user details
-})
-
-watch(() => props.userId, async newUserId => {
-  if (newUserId) {
-    await fetchDropdownData() // Ensure dropdowns are loaded
-    await fetchUserDetails() // Fetch user details
-  }
 })
 
 // i18n

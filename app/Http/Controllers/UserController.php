@@ -56,6 +56,7 @@ class UserController extends Controller
                 'email' => $user->email,
                 'role' => $user->roles->first()?->name ?? 'N/A',
                 'company' => $user->companies->first()?->company_name ?? 'N/A',
+                'department' => $user->department ?? 'N/A',
                 'status' => 'active',
                 'currentPlan' => 'basic',
                 'avatar' => null,
@@ -64,6 +65,7 @@ class UserController extends Controller
                     'email' => $user->email,
                     'company' => $user->companies->first()?->company_name ?? 'N/A',
                     'role' => $user->roles->first()?->name ?? 'N/A',
+                    'department' => $user->department ?? 'N/A',
                 ],
             ];
         };
@@ -110,6 +112,7 @@ class UserController extends Controller
             'password' => 'required|string|min:8',
             'company_id' => 'required|exists:companies,id',
             'role_id' => 'required|exists:roles,id',
+            'department' => 'nullable|string|max:255',
         ]);
 
         \Log::info('Validated Data: ', $validated);
@@ -123,6 +126,7 @@ class UserController extends Controller
                 'email' => $validated['email'],
                 'password' => Hash::make($validated['password']),
                 'password_reset_required' => true,
+                'department' => $validated['department'] ?? null,
             ]);
 
             \Log::info('User created: ', ['id' => $user->id]);
@@ -172,15 +176,9 @@ public function showUser($id)
             'id' => $user->id,
             'name' => $user->name,
             'email' => $user->email,
-            'role' => $user->roles->first()?->name ?? 'N/A',
-            'companies' => $user->companies->map(function($company) {
-                return [
-                    'id' => $company->id,
-                    'company_name' => $company->company_name
-                ];
-            }),
-            'created_at' => $user->created_at,
-            'updated_at' => $user->updated_at
+            'department' => $user->department,
+            'company_id' => $user->companies->first()?->id, // Assuming one company per user
+            'role_id' => $user->roles->first()?->id, // Assuming one role per user
         ]);
     } catch (\Exception $e) {
         \Log::error('Error fetching user details: ', ['message' => $e->getMessage()]);
@@ -196,6 +194,7 @@ public function updateUser(Request $request, $id)
             'email' => 'sometimes|required|string|email|unique:users,email,' . $id,
             'company_id' => 'sometimes|required|exists:companies,id',
             'role_id' => 'sometimes|required|exists:roles,id',
+            'department' => 'nullable|string|max:255',
         ]);
 
         $user = User::findOrFail($id);
@@ -204,6 +203,7 @@ public function updateUser(Request $request, $id)
         $user->update([
             'name' => $validated['name'] ?? $user->name,
             'email' => $validated['email'] ?? $user->email,
+            'department' => $validated['department'] ?? $user->department,
         ]);
 
         // Update company relationship

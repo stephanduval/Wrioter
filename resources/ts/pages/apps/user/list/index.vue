@@ -59,7 +59,6 @@ const { t } = useI18n()
 // Headers
 const headers = computed(() => [
   { title: t('headers.users.user'), key: 'user' },
-  { title: t('headers.users.email'), key: 'email' },
   { title: t('headers.users.department'), key: 'department' },
   { title: t('headers.users.role'), key: 'role' },
   { title: t('headers.users.status'), key: 'status' },
@@ -75,26 +74,22 @@ const headers = computed(() => [
 // 👉 Fetching users
 
 const { data: usersData, execute: fetchUsers } = useApi<UserApiResponse>(() => {
-  const params = new URLSearchParams({
-    page: String(page.value),
-    itemsPerPage: String(itemsPerPage.value),
-  }).toString()
+  const params = new URLSearchParams()
+  params.append('page', String(page.value))
+  params.append('itemsPerPage', String(itemsPerPage.value))
+  if (searchQuery.value)
+    params.append('q', searchQuery.value)
 
   const token = localStorage.getItem('accessToken')
-  // console.log('Access Token before API call:', token) // Debugging line
+  console.log('Fetching users with params:', {
+    page: page.value,
+    itemsPerPage: itemsPerPage.value,
+    searchQuery: searchQuery.value,
+    token: token ? 'Present' : 'Missing',
+    url: `/users?${params.toString()}`,
+  })
 
-
-  // console.log('Access Token:', token)
-  // console.log('API URL:', `/users?${params}`)
-
-  return `/users?${params}`
-}, {
-  method: 'GET',
-  headers: {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-  },
-  credentials: 'include',
+  return `/users?${params.toString()}`
 })
 
 // Add this to store pagination metadata
@@ -109,39 +104,56 @@ const paginationMeta = ref({
 
 // Watch for changes in usersData to update pagination
 watch(usersData, (data: UserApiResponse | null) => {
-  if (data) {
-    paginationMeta.value = {
-      currentPage: data.current_page,
-      lastPage: data.last_page,
-      total: data.total,
-      perPage: data.per_page,
-      from: data.from,
-      to: data.to,
-    }
+  console.log('Users Data Updated:', data)
+  if (!data) {
+    console.warn('No data received from API')
+    return
+  }
+
+  paginationMeta.value = {
+    currentPage: data.current_page,
+    lastPage: data.last_page,
+    total: data.total,
+    perPage: data.per_page,
+    from: data.from,
+    to: data.to,
   }
 }, { immediate: true })
 
+// Update the fetchUsers call in onMounted
+onMounted(async () => {
+  try {
+    console.log('Component mounted, fetching users...')
+    await fetchUsers()
+    console.log('Initial users fetch complete:', usersData.value)
+  }
+  catch (error) {
+    console.error('Error fetching users:', error)
+  }
+})
+
+// Update the watch for search/filter changes
 watch(
-  // Removed filter variables from watch array
   [searchQuery, itemsPerPage, page, sortBy, orderBy],
-  () => {
-    fetchUsers()
+  async () => {
+    console.log('Filters changed, fetching users with:', {
+      searchQuery: searchQuery.value,
+      itemsPerPage: itemsPerPage.value,
+      page: page.value,
+      sortBy: sortBy.value,
+      orderBy: orderBy.value,
+    })
+    try {
+      await fetchUsers()
+    }
+    catch (error) {
+      console.error('Error fetching users after filter change:', error)
+    }
   },
 )
 
 const users = computed(() => usersData.value?.data || [])
 const totalUsers = computed(() => usersData.value?.total || 0)
-
-onMounted(async () => {
-  try {
-    // console.log('Fetching users...')
-    await fetchUsers()
-    // console.log('Users fetched:', usersData.value)
-  }
-  catch (error) {
-    // console.error('Error fetching users:', error)
-  }
-})
 
 // 👉 search filters
 // Keeping these variables for reference in case they're used elsewhere
@@ -451,6 +463,15 @@ const openEditUserDrawer = (userId: number) => {
           </div>
         </template>
 
+        <!-- Department -->
+        <template #item.department="{ item }">
+          <div class="d-flex flex-column">
+            <div class="text-body-1 text-high-emphasis">
+              {{ item.department || 'N/A' }}
+            </div>
+          </div>
+        </template>
+
         <!-- Role -->
         <template #item.role="{ item }">
           <div class="d-flex align-center gap-x-2">
@@ -466,13 +487,6 @@ const openEditUserDrawer = (userId: number) => {
           </div>
         </template>
 
-        <!-- Company -->
-        <template #item.company="{ item }">
-          <div class="text-body-1 text-high-emphasis text-capitalize">
-            {{ item.company || 'N/A' }}
-          </div>
-        </template>
-
         <!-- Status -->
         <template #item.status="{ item }">
           <VChip
@@ -483,13 +497,6 @@ const openEditUserDrawer = (userId: number) => {
           >
             {{ item.status }}
           </VChip>
-        </template>
-
-        <!-- Department -->
-        <template #item.department="{ item }">
-          <div class="text-body-1 text-high-emphasis">
-            {{ item.department || 'N/A' }}
-          </div>
         </template>
 
         <!-- Actions -->
