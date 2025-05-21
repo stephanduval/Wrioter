@@ -114,21 +114,23 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('/projects', ProjectController::class);
 });
 
-// Test email route
-Route::get('/test-email', function () {
+// Message notification route
+Route::get('/send-message-notification', function () {
     try {
-        Mail::mailer('mailgun')->raw('This is a test email from Laravel using Mailgun. If you receive this, your Mailgun setup is working correctly!', function($message) {
-            $message->to('stephan.duval@gmail.com')
-                   ->subject('Test Email from Laravel (Mailgun) - Setup Verification');
-        });
+        Mail::mailer('mailgun')
+            ->send('emails.new-message-alert', [], function($message) {
+                $message->to('stephan.duval@gmail.com')
+                       ->subject('Freynet-Gagné Portal - New Message Alert');
+            });
         
         return response()->json([
-            'message' => 'Test email sent successfully via Mailgun to stephan.duval@gmail.com',
+            'message' => 'Message notification sent successfully via Mailgun to stephan.duval@gmail.com',
             'config' => [
                 'mailer' => config('mail.default'),
                 'domain' => config('mail.mailers.mailgun.domain'),
                 'from_address' => config('mail.from.address'),
                 'from_name' => config('mail.from.name'),
+                'app_url' => config('app.url'),
             ]
         ]);
     } catch (\Exception $e) {
@@ -141,6 +143,7 @@ Route::get('/test-email', function () {
                 'domain' => config('mail.mailers.mailgun.domain'),
                 'from_address' => config('mail.from.address'),
                 'from_name' => config('mail.from.name'),
+                'app_url' => config('app.url'),
             ]
         ], 500);
     }

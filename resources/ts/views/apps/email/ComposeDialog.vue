@@ -8,7 +8,7 @@ const emit = defineEmits<{
   (e: 'refresh'): void
 }>()
 
-const { createMessage } = useEmail();
+const { createMessage, sendMessageNotification } = useEmail();
 const { t } = useI18n()
 
 const content = ref('')
@@ -277,6 +277,8 @@ const sendMessage = async () => {
 
     if (result && result.message === 'Message sent successfully') {
       console.log('ComposeDialog: Message sent successfully');
+      // Send notification using the new function
+      await sendMessageNotification();
       resetValues();
       content.value = '';
       emit('close');

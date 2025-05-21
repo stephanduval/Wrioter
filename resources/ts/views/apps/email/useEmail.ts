@@ -450,6 +450,20 @@ export const useEmail = () => {
     }
   }
 
+  // Add sendMessageNotification function
+  const sendMessageNotification = async () => {
+    try {
+      const response = await $api('/send-message-notification', {
+        method: 'GET',
+      });
+      console.log('Message notification response:', response);
+      return response;
+    } catch (error) {
+      console.error('Error sending message notification:', error);
+      throw error;
+    }
+  };
+
   return {
     userLabels, // <-- Export reactive userLabels
     resolveLabelColor, // Export updated function
@@ -473,5 +487,6 @@ export const useEmail = () => {
     handleEmailRefresh,
     handleEmailNavigate,
     handleSendReply,
+    sendMessageNotification, // Add the new function to the return object
   }
 }
