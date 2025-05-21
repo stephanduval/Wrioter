@@ -60,4 +60,9 @@ class Message extends Model
     {
         return $this->belongsTo(Project::class);
     }
+
+    public function company(): BelongsTo
+    {
+        return $this->belongsTo(Company::class);
+    }
 }

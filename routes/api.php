@@ -117,34 +117,60 @@ Route::middleware('auth:sanctum')->group(function () {
 // Message notification route
 Route::get('/send-message-notification', function () {
     try {
+        // Get the latest message with all necessary relationships
+        $message = \App\Models\Message::with(['sender', 'company', 'attachments', 'project'])
+            ->latest()
+            ->first();
+
+        if (!$message) {
+            return response()->json([
+                'error' => 'No message found to send notification for',
+            ], 404);
+        }
+
+        // Log the message and its relationships for debugging
+        \Log::info('Message notification - Message details:', [
+            'message_id' => $message->id,
+            'has_sender' => $message->relationLoaded('sender'),
+            'has_company' => $message->relationLoaded('company'),
+            'sender' => $message->sender ? [
+                'id' => $message->sender->id,
+                'name' => $message->sender->name,
+                'email' => $message->sender->email,
+            ] : null,
+            'company' => $message->company ? [
+                'id' => $message->company->id,
+                'name' => $message->company->company_name,
+            ] : null,
+            'subject' => $message->subject,
+            'body' => $message->body,
+        ]);
+
+        // Ensure relationships are loaded
+        if (!$message->relationLoaded('sender') || !$message->relationLoaded('company')) {
+            $message->load(['sender', 'company']);
+        }
+
+        // Send email using the template with the message data
         Mail::mailer('mailgun')
-            ->send('emails.new-message-alert', [], function($message) {
-                $message->to('stephan.duval@gmail.com')
-                       ->subject('Freynet-Gagné Portal - New Message Alert');
+            ->send('emails.new-message-alert', ['msg' => $message], function($mail) use ($message) {
+                $mail->to('stephan.duval@gmail.com')
+                     ->subject('Freynet-Gagné Portal - New Message: ' . $message->subject);
             });
-        
+
         return response()->json([
-            'message' => 'Message notification sent successfully via Mailgun to stephan.duval@gmail.com',
-            'config' => [
-                'mailer' => config('mail.default'),
-                'domain' => config('mail.mailers.mailgun.domain'),
-                'from_address' => config('mail.from.address'),
-                'from_name' => config('mail.from.name'),
-                'app_url' => config('app.url'),
-            ]
+            'success' => true,
+            'message' => 'Notification sent successfully',
+            'message_id' => $message->id
         ]);
     } catch (\Exception $e) {
-        \Log::error('Mailgun test failed: ' . $e->getMessage());
-        return response()->json([
+        \Log::error('Error sending message notification:', [
             'error' => $e->getMessage(),
-            'trace' => $e->getTraceAsString(),
-            'config' => [
-                'mailer' => config('mail.default'),
-                'domain' => config('mail.mailers.mailgun.domain'),
-                'from_address' => config('mail.from.address'),
-                'from_name' => config('mail.from.name'),
-                'app_url' => config('app.url'),
-            ]
+            'trace' => $e->getTraceAsString()
+        ]);
+        
+        return response()->json([
+            'error' => 'Failed to send notification: ' . $e->getMessage()
         ], 500);
     }
 });
