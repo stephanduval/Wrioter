@@ -141,9 +141,28 @@ class UserController extends Controller
             $user->roles()->attach($validated['role_id']);
             \Log::info('Role assigned to user.', ['user_id' => $user->id, 'role_id' => $validated['role_id']]);
 
+            // Generate reset code for the new user
+            $resetCode = Str::random(12);
+            DB::table('password_reset_tokens')->updateOrInsert(
+                ['email' => $user->email],
+                [
+                    'token' => Hash::make($resetCode),
+                    'created_at' => now(),
+                ]
+            );
+
+            \Log::info('Reset code generated for new user', [
+                'user_id' => $user->id,
+                'email' => $user->email,
+            ]);
+
             \DB::commit();
 
-            return response()->json(['message' => 'User created successfully.', 'user' => $user], 201);
+            return response()->json([
+                'message' => 'User created successfully.',
+                'user' => $user,
+                'reset_code' => $resetCode,
+            ], 201);
         } catch (\Exception $e) {
             \DB::rollBack();
             \Log::error('Error Adding User: ', [

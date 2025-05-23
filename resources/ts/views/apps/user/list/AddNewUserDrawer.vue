@@ -32,6 +32,15 @@ const { t } = useI18n()
 const isFormValid = ref(false)
 const refForm = ref<VForm | null>(null)
 
+// Add these new refs for the success modal
+const isSuccessModalVisible = ref(false)
+const newUserData = ref<{ email: string; name: string; resetCode?: string } | null>(null)
+const resetPasswordUrl = computed(() => {
+  if (!newUserData.value?.resetCode || !newUserData.value?.email) return ''
+  const baseUrl = import.meta.env.VITE_FRONTEND_URL || window.location.origin
+  return `${baseUrl}/reset-password?code=${newUserData.value.resetCode}&email=${encodeURIComponent(newUserData.value.email)}`
+})
+
 const userName = ref('')
 const email = ref('')
 const department = ref('')
@@ -142,6 +151,14 @@ const onSubmit = async () => {
 
     const result = await response.json()
     
+    // Store the new user data and show success modal
+    newUserData.value = {
+      email: result.user.email,
+      name: result.user.name,
+      resetCode: result.reset_code
+    }
+    isSuccessModalVisible.value = true
+    
     // Emit the success event with the created user data
     emit('userData', { 
       success: true, 
@@ -159,6 +176,25 @@ const onSubmit = async () => {
       error: error instanceof Error ? error.message : 'Failed to create user. Please try again.' 
     })
   }
+}
+
+const copyWelcomeMessage = () => {
+  if (!newUserData.value) return
+  
+  const message = `Welcome to Freynet-Gagné Portal!
+
+Dear ${newUserData.value.name},
+
+Your account has been created successfully. To get started, please set your password by visiting the link below:
+
+${resetPasswordUrl.value}
+
+This link will expire in 60 minutes. If you need a new link, please contact your administrator.
+
+Best regards,
+Freynet-Gagné Team`
+  
+  navigator.clipboard.writeText(message)
 }
 
 const handleDrawerModelValueUpdate = (val: boolean) => {
@@ -266,5 +302,79 @@ const handleDrawerModelValueUpdate = (val: boolean) => {
         </VCardText>
       </VCard>
     </PerfectScrollbar>
+
+    <!-- Add Success Modal -->
+    <VDialog
+      v-model="isSuccessModalVisible"
+      max-width="600"
+    >
+      <VCard>
+        <VCardTitle class="text-h5 pa-6">
+          User Created Successfully
+        </VCardTitle>
+
+        <VCardText class="pa-6">
+          <VAlert
+            color="success"
+            variant="tonal"
+            class="mb-4"
+          >
+            <template #prepend>
+              <VIcon icon="bx-check-circle" />
+            </template>
+            The user has been created successfully. Please copy and send the welcome message below to the new user.
+          </VAlert>
+
+          <div class="mb-4">
+            <p class="text-body-1 mb-2">
+              <strong>User Details:</strong>
+            </p>
+            <p class="text-body-2">
+              Name: {{ newUserData?.name }}<br>
+              Email: {{ newUserData?.email }}
+            </p>
+          </div>
+
+          <VAlert
+            color="info"
+            variant="tonal"
+            class="mt-4"
+          >
+            <template #prepend>
+              <VIcon icon="bx-info-circle" />
+            </template>
+            <p class="mb-2">Welcome Message (click to copy):</p>
+            <div class="d-flex align-center gap-2">
+              <VTextField
+                :model-value="resetPasswordUrl"
+                readonly
+                variant="outlined"
+                density="compact"
+                class="flex-grow-1"
+                label="Reset Password Link"
+              />
+              <VBtn
+                icon
+                variant="tonal"
+                @click="copyWelcomeMessage"
+                title="Copy welcome message"
+              >
+                <VIcon icon="bx-copy" />
+              </VBtn>
+            </div>
+          </VAlert>
+        </VCardText>
+
+        <VCardActions class="pa-6 pt-0">
+          <VSpacer />
+          <VBtn
+            color="primary"
+            @click="isSuccessModalVisible = false"
+          >
+            Close
+          </VBtn>
+        </VCardActions>
+      </VCard>
+    </VDialog>
   </VNavigationDrawer>
 </template>
