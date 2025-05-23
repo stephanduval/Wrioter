@@ -3,13 +3,21 @@ import { useEmail } from '@/views/apps/email/useEmail';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 
-const emit = defineEmits<{
+// Add interfaces at the top of the script
+interface Props {
+  isDrawerOpen?: boolean
+}
+
+interface Emit {
   (e: 'close'): void
   (e: 'refresh'): void
-}>()
+}
+
+const props = defineProps<Props>()
+const emit = defineEmits<Emit>()
+const { t } = useI18n()
 
 const { createMessage, sendMessageNotification } = useEmail();
-const { t } = useI18n()
 
 const content = ref('')
 const to = ref('')
@@ -29,6 +37,11 @@ const serviceDescription = ref('')
 const ADMIN_EMAIL = 'info@freynet-gagne.com';
 const ADMIN_NAME = 'Administrator';
 
+// Simplified user selection state
+const selectedUser = ref<string | null>(null)
+const users = ref<Array<{ id: number, fullName: string, email: string }>>([])
+const loading = ref(false)
+
 // Get current user role
 const userData = computed(() => {
   try {
@@ -40,7 +53,8 @@ const userData = computed(() => {
 })
 
 const userRole = computed(() => userData.value?.role || '')
-const isClient = computed(() => userRole.value === 'client')
+const isAdmin = computed(() => userRole.value === 'Admin')
+const isClient = computed(() => userRole.value === 'Client')
 
 // Ref for attachments
 const attachmentsRef = ref<File[]>([]); // Use VFileInput's multiple capability
@@ -50,11 +64,6 @@ const cc = ref('')
 const bcc = ref('')
 const isEmailCc = ref(false)
 const isEmailBcc = ref(false)
-
-// Add user data for autocomplete
-const users = ref<Array<{ id: number, fullName: string, email: string }>>([])
-const loading = ref(false)
-const searchQuery = ref('')
 
 // For filtered users in dropdown
 const filteredToUsers = ref<Array<{ id: number, fullName: string, email: string }>>([])
@@ -96,29 +105,51 @@ onMounted(async () => {
   try {
     loading.value = true
     
-    // Set default recipient for all users
-    to.value = `${ADMIN_NAME} <${ADMIN_EMAIL}>`
-    
-    // Initialize project form with defaults for client users
-    if (isClient.value) {
-      if (!projectTitle.value) projectTitle.value = '';
-      if (!property.value) property.value = '';
-      if (!timePreference.value) timePreference.value = 'anytime';
-      if (!serviceType.value) serviceType.value = '';
-      
-      // Set a default due date if none provided (14 days from now)
-      if (!dueDate.value) {
-        const defaultDueDate = new Date();
-        defaultDueDate.setDate(defaultDueDate.getDate() + 14);
-        dueDate.value = defaultDueDate.toISOString().split('T')[0]; // Format as YYYY-MM-DD
-      }
+    // Fetch users list with required parameters
+    const response = await fetch('/api/users?itemsPerPage=-1', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+      },
+    })
 
-      // Set a default latest completion date if none provided (21 days from now)
-      if (!latestCompletionDate.value) {
-        const defaultLatestCompletion = new Date();
-        defaultLatestCompletion.setDate(defaultLatestCompletion.getDate() + 21);
-        latestCompletionDate.value = defaultLatestCompletion.toISOString().split('T')[0]; // Format as YYYY-MM-DD
-      }
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.error || 'Failed to fetch users')
+    }
+
+    const usersData = await response.json()
+    console.log('Fetched users:', usersData) // Debug log
+    
+    if (usersData.data) {
+      users.value = usersData.data.map((user: any) => ({
+        id: user.id,
+        fullName: user.fullName,
+        email: user.email,
+      }))
+    } else {
+      console.error('Unexpected API response format:', usersData)
+      throw new Error('Invalid API response format')
+    }
+    
+    // Initialize project form with defaults
+    if (!projectTitle.value) projectTitle.value = '';
+    if (!property.value) property.value = '';
+    if (!timePreference.value) timePreference.value = 'anytime';
+    if (!serviceType.value) serviceType.value = '';
+    
+    // Set default dates
+    if (!dueDate.value) {
+      const defaultDueDate = new Date();
+      defaultDueDate.setDate(defaultDueDate.getDate() + 14);
+      dueDate.value = defaultDueDate.toISOString().split('T')[0];
+    }
+
+    if (!latestCompletionDate.value) {
+      const defaultLatestCompletion = new Date();
+      defaultLatestCompletion.setDate(defaultLatestCompletion.getDate() + 21);
+      latestCompletionDate.value = defaultLatestCompletion.toISOString().split('T')[0];
     }
     
     loading.value = false
@@ -126,6 +157,7 @@ onMounted(async () => {
   catch (error) {
     console.error('Error in onMounted:', error)
     loading.value = false
+    // You might want to show an error message to the user here
   }
 })
 
@@ -191,7 +223,7 @@ const isLatestCompletionDateValid = computed(() => {
   return completionDate >= deadlineDate
 })
 
-// Update sendMessage to include date validation
+// Update sendMessage to use selected user ID
 const sendMessage = async () => {
   console.log("ComposeDialog: sendMessage called");
   
@@ -200,56 +232,25 @@ const sendMessage = async () => {
     console.error('Subject and Message fields are required');
     return;
   }
-  
-  // For client role, validate required project fields
-  if (isClient.value) {
-    if (!projectTitle.value) {
-      console.error('Project title is required for client messages');
-      return;
-    }
-    if (!property.value) {
-      console.error('Property is required for client messages');
-      return;
-    }
-    if (!serviceType.value) {
-      console.error('Service type is required for client messages');
-      return;
-    }
-    if (!dueDate.value) {
-      console.error('Due date is required for client messages');
-      return;
-    }
-    if (!isDeadlineValid.value) {
-      console.error('Due date must be today or later');
-      return;
-    }
-    if (!latestCompletionDate.value) {
-      console.error('Latest completion date is required for client messages');
-      return;
-    }
-    if (!isLatestCompletionDateValid.value) {
-      console.error('Latest completion date must be after or equal to the due date');
-      return;
-    }
-    if (!timePreference.value) {
-      console.error('Time preference is required for client messages');
-      return;
-    }
-  }
-  
-  // --- Attachment Validation Check ---
-  if (attachmentErrors.value.length > 0) {
-    console.error('Cannot send: Attachment validation errors exist.', attachmentErrors.value);
+
+  // Validate user selection
+  if (!selectedUser.value) {
+    console.error('Please select a recipient');
     return;
   }
   
-  // Always send to admin
-  const receiverId = 1; // ID for info@freynet-gagne.com from UserSeeder (first user created)
+  // Get receiver ID from selected user
+  const receiverId = users.value.find(u => u.email === selectedUser.value)?.id
+  
+  if (!receiverId) {
+    console.error('Invalid receiver selected');
+    return;
+  }
   
   // Prepare payload
   const payload: MessagePayload = {
     receiver_id: receiverId,
-    company_id: 1, // Adjust as needed
+    company_id: 1,
     subject: subject.value,
     message: content.value,
     due_date: dueDate.value,
@@ -293,16 +294,15 @@ const sendMessage = async () => {
   }
 }
 
-// Update resetValues to remove deadline
+// Update resetValues
 const resetValues = () => {
-  to.value = subject.value = '';
-  content.value = ''; // Ensure Tiptap content is also reset
-  cc.value = bcc.value = '';
-  filteredToUsers.value = filteredCcUsers.value = filteredBccUsers.value = [];
-  dueDate.value = null; // Reset due date
-  latestCompletionDate.value = null; // Reset latest completion date
-  attachmentsRef.value = []; // Clear attachments
-  attachmentErrors.value = []; // Clear errors
+  subject.value = '';
+  content.value = '';
+  selectedUser.value = null;
+  dueDate.value = null;
+  latestCompletionDate.value = null;
+  attachmentsRef.value = [];
+  attachmentErrors.value = [];
   
   // Reset project fields
   projectTitle.value = '';
@@ -347,13 +347,23 @@ const resetValues = () => {
       <VCardText>
         <VRow>
           <VCol cols="12">
-            <VTextField
-              v-model="to"
+            <VSelect
+              v-model="selectedUser"
+              :items="users"
+              item-title="email"
+              item-value="email"
               :label="t('emails.compose.to')"
-              autofocus
-              :rules="[(value: string) => !!value || t('emails.compose.project.validation.titleRequired')]"
-              disabled
-            />
+              :loading="loading"
+              :rules="[(v: string | null) => !!v || 'Recipient is required']"
+              class="mb-4"
+            >
+              <template #item="{ props, item }">
+                <VListItem v-bind="props">
+                  <VListItemTitle>{{ item.raw.fullName }}</VListItemTitle>
+                  <VListItemSubtitle>{{ item.raw.email }}</VListItemSubtitle>
+                </VListItem>
+              </template>
+            </VSelect>
           </VCol>
         </VRow>
       </VCardText>
@@ -643,10 +653,19 @@ const resetValues = () => {
 <style lang="scss">
 @use "@core-scss/base/mixins";
 
+.v-select {
+  .v-field__input {
+    padding-block-start: 6px;
+  }
+
+  .v-list-item {
+    min-block-size: 44px;
+  }
+}
+
 .v-card.email-compose-dialog {
   z-index: 910 !important;
-
-  @include mixins.elevation(10);
+  box-shadow: 0 0 0.375rem 0.25rem rgba(161, 172, 184, 15%) !important; // Replace mixins.elevation with direct box-shadow
 
   .v-field--prepended {
     padding-inline-start: 20px;
