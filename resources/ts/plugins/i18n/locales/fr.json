@@ -397,6 +397,7 @@
     "compose": {
       "title": "Composer un message",
       "to": "À",
+      "selectRecipient": "Sélectionner un destinataire",
       "subject": "Sujet",
       "message": "Message",
       "send": "Envoyer",

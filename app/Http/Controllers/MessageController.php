@@ -169,8 +169,13 @@ class MessageController extends Controller
         // Create project if project_data is provided, regardless of user role
         if (isset($validated['project_data'])) {
             try {
+                // Determine the client_id based on user role
+                $client_id = $user->roles()->where('name', 'Client')->exists() 
+                    ? $user->id  // If sender is a client, use their ID
+                    : $validated['receiver_id']; // If sender is admin, use receiver's ID
+
                 $projectData = [
-                    'client_id' => $user->id,
+                    'client_id' => $client_id,
                     'title' => $validated['project_data']['title'],
                     'property' => $validated['project_data']['property'],
                     'contact_email' => $user->email,

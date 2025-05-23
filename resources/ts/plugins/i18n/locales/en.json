@@ -397,6 +397,7 @@
     "compose": {
       "title": "Compose Message",
       "to": "To",
+      "selectRecipient": "Select Recipient",
       "subject": "Subject",
       "message": "Message",
       "send": "Send",

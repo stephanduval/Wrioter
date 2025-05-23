@@ -396,6 +396,7 @@ const resetValues = () => {
               item-title="email"
               item-value="email"
               :label="t('emails.compose.to')"
+              :placeholder="t('emails.compose.selectRecipient')"
               :loading="loading"
               :rules="[(v: string | null) => !!v || 'Recipient is required']"
               class="mb-4"
