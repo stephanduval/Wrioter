@@ -22,6 +22,11 @@ class ProjectController extends Controller
 
         $query = Project::with('client:id,name,email');
 
+        // Show all projects for user ID 1 (admin), otherwise filter by user_id
+        if ($user->id !== 1) {
+            $query->where('client_id', $user->id);
+        }
+
         // Filter by client for admin users if client_id is provided
         if ($request->has('client_id') && $userRole === 'admin') {
             $query->where('client_id', $request->client_id);
