@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { $api, clearAuthData, setAuthData } from '@/utils/api'
 import AuthProvider from '@/views/pages/authentication/AuthProvider.vue'
 import authV2LoginIllustration from '@images/pages/auth-v2-login-illustration.png'
 import { VNodeRenderer } from '@layouts/components/VNodeRenderer'
@@ -50,35 +51,25 @@ const rememberMe = ref(false)
 
 const login = async () => {
   try {
-    const res = await fetch('/api/auth/login', {
+    const { accessToken, userData, abilityRules } = await $api('/auth/login', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include', // Ensure credentials are included
-      body: JSON.stringify({
+      body: {
         email: credentials.value.email,
         password: credentials.value.password,
         remember_me: rememberMe.value,
-      }),
+      },
     })
-
-    if (!res.ok) {
-      const error = await res.json()
-
-      errors.value.general = error.message || 'Login failed. Please try again.'
-
-      return
-    }
-
-    const { accessToken, userData, abilityRules } = await res.json()
 
     // Add debugging
     console.log('Login Response:', {
-      userData,
-      abilityRules,
-      role: userData.role
+      accessToken: accessToken ? 'Token received' : 'No token',
+      userData: userData ? 'User data received' : 'No user data',
+      abilityRules: abilityRules ? `${abilityRules.length} rules received` : 'No rules',
     })
+
+    if (!accessToken || !userData || !abilityRules) {
+      throw new Error('Invalid login response - missing required data')
+    }
 
     // Update ability with debugging
     const mappedRules = abilityRules.map((rule: { action: string; subject: string }) => {
@@ -96,22 +87,14 @@ const login = async () => {
     // Verify ability was updated
     console.log('Current Ability Rules:', ability.rules)
 
-    // Set cookies BEFORE navigation
-    const userDataCookie = useCookie('userData')
-    const abilityCookie = useCookie('userAbilityRules')
-    const tokenCookie = useCookie('accessToken')
-
-    // Set localStorage BEFORE navigation
-    localStorage.setItem('userData', JSON.stringify(userData))
-    localStorage.setItem('abilityRules', JSON.stringify(abilityRules))
-    localStorage.setItem('accessToken', accessToken.toString())
-
-    // Ensure the values are strings or serialized properly
-    userDataCookie.value = JSON.stringify(userData)
-    abilityCookie.value = JSON.stringify(abilityRules)
-    tokenCookie.value = accessToken.toString()
-
-    console.log('Document.cookie from login.vue', document.cookie)
+    // Use the enhanced setAuthData utility
+    try {
+      setAuthData({ accessToken, userData, abilityRules })
+      console.log('Auth data stored successfully')
+    } catch (error) {
+      console.error('Failed to store auth data:', error)
+      throw new Error('Failed to store authentication data')
+    }
 
     // --- Direct Role-Based Redirect ---
     const userRole = userData.role?.toLowerCase() || 'User';
@@ -129,18 +112,19 @@ const login = async () => {
         targetRoute = { path: '/messages/list' };
         console.log(`[DEBUG] Target set for manager/user:`, targetRoute);
     } else {
-        // Fallback if role is unexpected
         console.warn(`[DEBUG] Unexpected role "${userRole}", defaulting to dashboards-analytics`);
         targetRoute = { name: 'dashboards-analytics' };
     }
 
-    console.log(`[DEBUG] Attempting router.replace directly from login with:`, targetRoute);
-    router.replace(targetRoute); 
+    console.log(`[DEBUG] Attempting router.replace with:`, targetRoute);
+    await router.replace(targetRoute);
 
-  }
-  catch (err) {
-    console.error('login error', err)
-    errors.value.general = 'An error occurred. Please try again.'
+  } catch (err: any) {
+    console.error('Login error:', err)
+    errors.value.general = err.data?.message || err.message || 'An error occurred during login. Please try again.'
+    
+    // Clear any partial auth data on error
+    clearAuthData()
   }
 }
 

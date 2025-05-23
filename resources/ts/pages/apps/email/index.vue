@@ -748,7 +748,7 @@ const downloadAttachments = async (attachments: any[]) => {
           class="star-column"
           @click.stop="handleActionClick(message.isStarred ? 'unstar' : 'star', [message.id])"
         >
-          <VIcon :icon="message.isStarred ? 'bxs-star' : 'bx-star'" size="22" />
+          <VIcon :icon="message.isStarred ? 'bxs-star.' : 'bx-star'" size="22" />
         </IconBtn>
         
         <!-- Read/Unread icon -->
@@ -756,7 +756,7 @@ const downloadAttachments = async (attachments: any[]) => {
           class="read-column"
           @click.stop="handleActionClick(message.isRead ? 'unread' : 'read', [message.id])"
         >
-          <VIcon :icon="message.isRead ? 'bx-envelope-open' : 'bx-envelope'" size="22" />
+          <VIcon :icon="message.isRead ? 'bx-envelope-open ' : 'bx-envelope'" size="22" />
         </IconBtn>
         
         <!-- Status -->

@@ -75,7 +75,13 @@ export default defineConfig({
     svgLoader(),
   ],
 
-  define: { 'process.env': { VITE_API_URL: process.env.VITE_API_URL } },
+  define: {
+    'process.env': {
+      VITE_API_URL: process.env.VITE_API_URL,
+      VITE_API_BASE_URL: process.env.VITE_API_BASE_URL,
+      NODE_ENV: process.env.NODE_ENV,
+    },
+  },
 
   resolve: {
     alias: {
@@ -94,15 +100,30 @@ export default defineConfig({
 
   build: {
     outDir: 'public/build',
-    chunkSizeWarningLimit: 5000,
-    emptyOutDir: false, // Prevents deleting non-build files
+    emptyOutDir: true,
+    manifest: 'manifest.json',
     rollupOptions: {
       input: 'resources/ts/main.ts',
+      output: {
+        manualChunks: undefined,
+        entryFileNames: 'js/[name].[hash].js',
+        chunkFileNames: 'js/[name].[hash].js',
+        assetFileNames: 'assets/[name].[hash][extname]',
+      },
     },
+    sourcemap: false, // Disable sourcemaps in production
+    minify: 'terser',
+    target: 'esnext',
   },
 
   optimizeDeps: {
     exclude: ['vuetify'],
     entries: ['./resources/ts/**/*.vue'],
+  },
+
+  server: {
+    hmr: {
+      host: 'localhost',
+    },
   },
 });

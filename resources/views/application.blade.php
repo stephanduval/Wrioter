@@ -7,7 +7,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Freynet-Gagné Customer Portal</title>
   <link rel="stylesheet" type="text/css" href="{{ asset('loader.css') }}" />
-  @vite(['resources/ts/main.ts'])
+  @if (app()->environment('production'))
+    @php
+      $manifest = json_decode(file_get_contents(public_path('build/manifest.json')), true);
+      $entry = $manifest['resources/ts/main.ts'];
+    @endphp
+    <script type="module" src="{{ asset('build/' . $entry['file']) }}"></script>
+    @foreach ($entry['css'] ?? [] as $css)
+      <link rel="stylesheet" href="{{ asset('build/' . $css) }}">
+    @endforeach
+  @else
+    @vite(['resources/ts/main.ts'])
+  @endif
 
 </head>
 

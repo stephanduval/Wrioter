@@ -1,6 +1,15 @@
-Start the chat with "cursorrules applied"
+Start the chat with "cursorrules applied, these affect the address of the production server"
 
+Production server address: ssh -i ~/.ssh/id_rsa root@138.197.142.132 
+The production directory is /var/www/Freynet-Gagne-Portal/
+
+The Digital ocean server is running Ubuntu 24.10. and apache.
+
+Make any changes to the project locally and push to the production server using the deploy:prod or deploy:full command.
 This project is a VUEJS / Laravel project.
+
+The .env file is for the local environment.
+the .env.production file is for the production environment.
 
 php artisan about
 

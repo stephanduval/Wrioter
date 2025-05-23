@@ -19,6 +19,7 @@ const getAuthToken = () => {
 // Create axios instance with default config
 const axiosInstance = axios.create({
   baseURL: apiBaseUrl,
+  withCredentials: true,
 })
 
 // Add request interceptor to include token

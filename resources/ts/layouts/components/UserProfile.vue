@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { $api, clearAuthData } from '@/utils/api'
 import { PerfectScrollbar } from 'vue3-perfect-scrollbar'
 
 const router = useRouter()
@@ -8,24 +9,24 @@ const ability = useAbility()
 const userData = ref(JSON.parse(localStorage.getItem('userData') || 'null'))
 
 const logout = async () => {
-  // console.log('Logging out...')
+  try {
+    // Call logout endpoint
+    await $api('/auth/logout', {
+      method: 'POST',
+    })
+  } catch (error) {
+    console.error('Logout error:', error)
+  } finally {
+    // Clear auth data regardless of API call success
+    clearAuthData()
+    
+    // Reset ability to initial ability
+    ability.update([])
 
-  // Clear localStorage
-  localStorage.removeItem('accessToken')
-  localStorage.removeItem('userData')
-  localStorage.removeItem('abilityRules')
-
-  // Clear cookies for compatibility
-  useCookie('accessToken').value = null
-  useCookie('userData').value = null
-  useCookie('userAbilityRules').value = null
-
-  // Reset ability to initial ability
-  ability.update([])
-
-  // Redirect to login page
-  await router.push('/login')
-  window.location.reload() // Reload to reset state
+    // Redirect to login page
+    await router.push('/login')
+    window.location.reload() // Reload to reset state
+  }
 }
 
 interface NavItem {

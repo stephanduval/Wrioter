@@ -5,12 +5,18 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build --mode production",
+    "build:dev": "vite build --mode development",
     "typecheck": "vue-tsc --noEmit",
     "lint": "eslint . -c .eslintrc.cjs --fix --ext .ts,.js,.cjs,.vue,.tsx,.jsx",
     "build:icons": "tsx resources/ts/plugins/iconify/build-icons.ts",
     "msw:init": "msw init public/ --save",
-    "postinstall": "npm run build:icons && npm run msw:init"
+    "postinstall": "npm run build:icons && npm run msw:init",
+    "deploy:prepare": "yarn install && yarn build",
+    "deploy:local": "yarn deploy:prepare && rsync -avz --delete public/build/ /var/www/Freynet-Gagne-Portal/public/build/",
+    "deploy:prod": "yarn deploy:prepare && rsync -avz --delete -e 'ssh -i ~/.ssh/id_rsa' public/build/ root@138.197.142.132:/var/www/Freynet-Gagne-Portal/public/build/",
+    "deploy:full": "yarn deploy:prepare && rsync -avz --delete -e 'ssh -i ~/.ssh/id_rsa' --exclude-from=.deployignore ./ root@138.197.142.132:/var/www/Freynet-Gagne-Portal/",
+    "db:fresh": "php artisan migrate:fresh --seed --force && php artisan cache:clear && php artisan config:clear && php artisan route:clear && php artisan view:clear"
   },
   "dependencies": {
     "@casl/ability": "6.7.1",
@@ -30,6 +36,7 @@
     "apexcharts": "3.49.2",
     "chart.js": "4.4.3",
     "cookie-es": "1.1.0",
+    "date-fns": "^4.1.0",
     "eslint-plugin-regexp": "2.6.0",
     "jwt-decode": "4.0.0",
     "mapbox-gl": "3.2.0",
@@ -69,8 +76,8 @@
     "@iconify/utils": "2.1.25",
     "@iconify/vue": "4.1.1",
     "@intlify/unplugin-vue-i18n": "1.6.0",
-    "@stylistic/stylelint-plugin": "2.1.2",
     "@stylistic/stylelint-config": "1.0.1",
+    "@stylistic/stylelint-plugin": "2.1.2",
     "@tiptap/extension-character-count": "2.4.0",
     "@tiptap/extension-placeholder": "2.4.0",
     "@tiptap/extension-subscript": "2.4.0",
@@ -94,6 +101,7 @@
     "eslint-plugin-sonarjs": "0.24.0",
     "eslint-plugin-unicorn": "51.0.1",
     "eslint-plugin-vue": "9.26.0",
+    "laravel-vite-plugin": "1.0",
     "msw": "2.3.1",
     "postcss-html": "1.7.0",
     "postcss-scss": "4.0.9",
@@ -103,6 +111,7 @@
     "stylelint-config-idiomatic-order": "10.0.0",
     "stylelint-config-standard-scss": "13.0.0",
     "stylelint-use-logical-spec": "5.0.1",
+    "terser": "^5.39.2",
     "tsx": "4.15.7",
     "type-fest": "4.20.1",
     "typescript": "5.5.2",
@@ -116,8 +125,7 @@
     "vite-plugin-vuetify": "2.0.3",
     "vite-svg-loader": "5.1.0",
     "vue-shepherd": "3.0.0",
-    "vue-tsc": "2.0.22",
-    "laravel-vite-plugin": "1.0"
+    "vue-tsc": "2.0.22"
   },
   "resolutions": {
     "postcss": "^8",

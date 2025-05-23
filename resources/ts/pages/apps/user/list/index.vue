@@ -648,7 +648,7 @@ The reset code will expire in 60 minutes`
     >
       <VCard>
         <VCardTitle class="text-h5 pa-6">
-          Reset Password
+          Reset Password ...
         </VCardTitle>
 
         <VCardText class="pa-6">
