@@ -135,6 +135,8 @@ const onSubmit = async () => {
       role_id: roles.value.find(r => r.name === role.value)?.id,
     }
 
+    console.log('Sending user creation request:', { ...userData, password: '[REDACTED]' })
+
     const response = await fetch('/api/users', {
       method: 'POST',
       headers: {
@@ -150,6 +152,12 @@ const onSubmit = async () => {
     }
 
     const result = await response.json()
+    console.log('User creation response:', {
+      success: true,
+      hasResetCode: !!result.reset_code,
+      userEmail: result.user?.email,
+      responseKeys: Object.keys(result)
+    })
     
     // Store the new user data and show success modal
     newUserData.value = {
@@ -157,6 +165,13 @@ const onSubmit = async () => {
       name: result.user.name,
       resetCode: result.reset_code
     }
+
+    console.log('New user data prepared for modal:', {
+      email: newUserData.value.email,
+      name: newUserData.value.name,
+      hasResetCode: !!newUserData.value.resetCode
+    })
+
     isSuccessModalVisible.value = true
     
     // Emit the success event with the created user data

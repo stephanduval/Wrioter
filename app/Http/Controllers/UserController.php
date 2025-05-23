@@ -143,7 +143,13 @@ class UserController extends Controller
 
             // Generate reset code for the new user
             $resetCode = Str::random(12);
-            DB::table('password_reset_tokens')->updateOrInsert(
+            \Log::info('Generated reset code for new user', [
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'reset_code' => $resetCode, // Log the actual reset code
+            ]);
+
+            $tokenInserted = DB::table('password_reset_tokens')->updateOrInsert(
                 ['email' => $user->email],
                 [
                     'token' => Hash::make($resetCode),
@@ -151,18 +157,27 @@ class UserController extends Controller
                 ]
             );
 
-            \Log::info('Reset code generated for new user', [
+            \Log::info('Reset token stored in database', [
                 'user_id' => $user->id,
                 'email' => $user->email,
+                'token_inserted' => $tokenInserted,
             ]);
 
             \DB::commit();
 
-            return response()->json([
+            $response = [
                 'message' => 'User created successfully.',
                 'user' => $user,
                 'reset_code' => $resetCode,
-            ], 201);
+            ];
+
+            \Log::info('Sending response for new user creation', [
+                'user_id' => $user->id,
+                'has_reset_code' => !empty($resetCode),
+                'response_keys' => array_keys($response),
+            ]);
+
+            return response()->json($response, 201);
         } catch (\Exception $e) {
             \DB::rollBack();
             \Log::error('Error Adding User: ', [
