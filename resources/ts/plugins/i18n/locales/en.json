@@ -266,6 +266,7 @@
     "projects": {
       "title": "Projects",
       "project": "Project",
+      "property": "Property",
       "client": "Client",
       "serviceType": "Service Type",
       "deadline": "Deadline",

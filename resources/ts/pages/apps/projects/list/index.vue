@@ -55,12 +55,12 @@ const isClient = computed(() => userRole.value === 'client')
 
 // Headers
 const headers = computed(() => [
-  { title: t('headers.projects.project'), key: 'project', sortable: true },
-  { title: t('headers.projects.client'), key: 'client', sortable: true },
-  { title: t('headers.projects.serviceType'), key: 'service_type', sortable: true },
-  { title: t('headers.projects.deadline'), key: 'deadline', sortable: true },
-  { title: t('headers.projects.status'), key: 'status', sortable: true },
-  { title: t('headers.projects.actions'), key: 'actions', sortable: false },
+  { title: t('headers.projects.project'), key: 'project', sortable: true, width: '25%' },
+  { title: t('headers.projects.client'), key: 'client', sortable: true, width: '25%' },
+  { title: t('headers.projects.serviceType'), key: 'service_type', sortable: true, width: '15%' },
+  { title: t('headers.projects.deadline'), key: 'deadline', sortable: true, width: '15%' },
+  { title: t('headers.projects.status'), key: 'status', sortable: true, width: '15%' },
+  { title: t('headers.projects.actions'), key: 'actions', sortable: false, width: '5%' },
 ])
 
 // Status options
@@ -278,23 +278,21 @@ onMounted(() => {
           :items-length="totalProjects"
           :loading="isLoading"
           class="text-no-wrap"
+          density="compact"
           @update:options="handleOptionsUpdate"
         >
           <!-- Project -->
           <template #item.project="{ item }">
             <div class="d-flex align-center">
-              <div class="d-flex flex-column">
+              <div class="d-flex flex-column text-truncate" style="max-inline-size: 250px;">
                 <h6 class="text-base">
                   <RouterLink
                     :to="{ name: 'apps-projects-view-id', params: { id: item.id }}"
-                    class="font-weight-medium text-link"
+                    class="font-weight-medium text-link text-truncate"
                   >
                     {{ item.title }}
                   </RouterLink>
                 </h6>
-                <div class="text-sm text-disabled">
-                  {{ item.property || 'No property specified' }}
-                </div>
               </div>
             </div>
           </template>
@@ -302,11 +300,11 @@ onMounted(() => {
           <!-- Client -->
           <template #item.client="{ item }">
             <div class="d-flex align-center">
-              <div class="d-flex flex-column">
-                <h6 class="text-base">
+              <div class="d-flex flex-column text-truncate" style="max-inline-size: 200px;">
+                <h6 class="text-base text-truncate">
                   {{ item.client?.name || 'N/A' }}
                 </h6>
-                <div class="text-sm text-disabled">
+                <div class="text-sm text-disabled text-truncate">
                   {{ item.client?.email || '' }}
                 </div>
               </div>
@@ -315,14 +313,16 @@ onMounted(() => {
 
           <!-- Service Type -->
           <template #item.service_type="{ item }">
-            <div class="text-capitalize">
+            <div class="text-capitalize text-truncate" style="max-inline-size: 120px;">
               {{ item.service_type || 'N/A' }}
             </div>
           </template>
 
           <!-- Deadline -->
           <template #item.deadline="{ item }">
-            <div>{{ formatDate(item.deadline) }}</div>
+            <div class="text-truncate" style="max-inline-size: 100px;">
+              {{ formatDate(item.deadline) }}
+            </div>
           </template>
 
           <!-- Status -->
@@ -403,5 +403,17 @@ onMounted(() => {
 <style lang="scss">
 .text-capitalize {
   text-transform: capitalize;
+}
+
+.text-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.v-data-table {
+  .v-data-table__wrapper {
+    overflow-x: auto;
+  }
 }
 </style> 

@@ -267,6 +267,7 @@
     "projects": {
       "title": "Projets",
       "project": "Projet",
+      "property": "Propriété",
       "client": "Client",
       "serviceType": "Type de service",
       "deadline": "Date limite",
