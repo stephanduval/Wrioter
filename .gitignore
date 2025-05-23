@@ -65,6 +65,7 @@ public/mockServiceWorker.js
 
 # Env files
 .env*
+env*
 !.env.example
 FreynetGagnePortal.zip
 Backups/Sneat_Working_Production_Backup.zip
