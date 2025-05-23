@@ -36,25 +36,42 @@ const serviceDescription = ref('')
 // Admin recipient ID (info@freynet-gagne.com)
 const ADMIN_EMAIL = 'info@freynet-gagne.com';
 const ADMIN_NAME = 'Administrator';
+const ADMIN_USER_ID = 1;
 
 // Simplified user selection state
 const selectedUser = ref<string | null>(null)
 const users = ref<Array<{ id: number, fullName: string, email: string }>>([])
 const loading = ref(false)
 
-// Get current user role
+// Add debug logging to the computed properties
 const userData = computed(() => {
   try {
-    return localStorage.getItem('userData') ? JSON.parse(localStorage.getItem('userData') || '{}') : {}
+    const data = localStorage.getItem('userData') ? JSON.parse(localStorage.getItem('userData') || '{}') : {}
+    console.log('UserData from localStorage:', data) // Debug log
+    return data
   } catch (e) {
     console.error('Error parsing userData from localStorage:', e)
     return {}
   }
 })
 
-const userRole = computed(() => userData.value?.role || '')
-const isAdmin = computed(() => userRole.value === 'Admin')
-const isClient = computed(() => userRole.value === 'Client')
+const userRole = computed(() => {
+  const role = userData.value?.role || ''
+  console.log('Detected user role:', role) // Debug log
+  return role.toLowerCase() // Convert to lowercase for consistent comparison
+})
+
+const isAdmin = computed(() => {
+  const admin = userRole.value === 'admin' // Compare with lowercase
+  console.log('Is admin?', admin) // Debug log
+  return admin
+})
+
+const isClient = computed(() => {
+  const client = userRole.value === 'client' // Compare with lowercase
+  console.log('Is client?', client) // Debug log
+  return client
+})
 
 // Ref for attachments
 const attachmentsRef = ref<File[]>([]); // Use VFileInput's multiple capability
@@ -100,37 +117,52 @@ interface MessagePayload {
   }
 }
 
-// Fetch users on component mount
+// Update onMounted with more debug logging
 onMounted(async () => {
   try {
     loading.value = true
+    console.log('Component mounted, user role:', userRole.value) // Debug log
     
-    // Fetch users list with required parameters
-    const response = await fetch('/api/users?itemsPerPage=-1', {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-      },
-    })
+    // Only fetch users if the current user is an admin
+    if (isAdmin.value) {
+      console.log('Fetching users for admin...') // Debug log
+      const response = await fetch('/api/users?itemsPerPage=-1', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+        },
+      })
 
-    if (!response.ok) {
-      const errorData = await response.json()
-      throw new Error(errorData.error || 'Failed to fetch users')
-    }
+      if (!response.ok) {
+        const errorData = await response.json()
+        console.error('Failed to fetch users:', errorData) // Debug log
+        throw new Error(errorData.error || 'Failed to fetch users')
+      }
 
-    const usersData = await response.json()
-    console.log('Fetched users:', usersData) // Debug log
-    
-    if (usersData.data) {
-      users.value = usersData.data.map((user: any) => ({
-        id: user.id,
-        fullName: user.fullName,
-        email: user.email,
-      }))
+      const usersData = await response.json()
+      console.log('Fetched users data:', usersData) // Debug log
+      
+      if (usersData.data) {
+        users.value = usersData.data.map((user: any) => ({
+          id: user.id,
+          fullName: user.fullName,
+          email: user.email,
+        }))
+        console.log('Mapped users:', users.value) // Debug log
+      } else {
+        console.error('Unexpected API response format:', usersData)
+        throw new Error('Invalid API response format')
+      }
     } else {
-      console.error('Unexpected API response format:', usersData)
-      throw new Error('Invalid API response format')
+      console.log('Setting admin as only option for non-admin user') // Debug log
+      // For client users, set the admin as the only option
+      users.value = [{
+        id: ADMIN_USER_ID,
+        fullName: 'Administrator',
+        email: ADMIN_EMAIL,
+      }]
+      selectedUser.value = ADMIN_EMAIL
     }
     
     // Initialize project form with defaults
@@ -347,7 +379,18 @@ const resetValues = () => {
       <VCardText>
         <VRow>
           <VCol cols="12">
+            <!-- Show disabled field for client users -->
+            <VTextField
+              v-if="isClient"
+              v-model="selectedUser"
+              :value="ADMIN_EMAIL"
+              disabled
+              :label="t('emails.compose.to')"
+              class="mb-4"
+            />
+            <!-- Show dropdown for admin users -->
             <VSelect
+              v-else
               v-model="selectedUser"
               :items="users"
               item-title="email"
