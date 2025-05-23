@@ -35,7 +35,10 @@ interface Props {
 
 const props = defineProps<Props>()
 
-defineEmits<{ (e: 'toggleComposeDialogVisibility'): void }>()
+defineEmits<{ 
+  (e: 'toggleComposeDialogVisibility'): void
+  (e: 'folderSelected'): void 
+}>()
 
 const { t } = useI18n()
 
@@ -176,7 +179,7 @@ const confirmLabelDelete = async () => {
           >
             <div
               :class="{ 'email-filter-active': isActive }"
-              @click="navigate"
+              @click="() => { navigate(); $emit('folderSelected') }"
             >
               <VIcon :icon="folder.prependIcon" />
               {{ folder.title }}

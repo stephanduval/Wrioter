@@ -565,6 +565,12 @@ const downloadAttachments = async (attachments: any[]) => {
   }
 }
 
+const closeEmailView = () => {
+  openedMessage.value = null
+  showReplyForm.value = false
+  replyMessage.value = ''
+}
+
 </script>
 
 <template>
@@ -577,7 +583,8 @@ const downloadAttachments = async (attachments: any[]) => {
         :add-label="emailComposable.addLabel"
         :resolve-label-color="emailComposable.resolveLabelColor"
         :delete-label="emailComposable.deleteLabel"
-        @toggle-compose-dialog-visibility="isComposeDialogVisible = !isComposeDialogVisible" 
+        @toggle-compose-dialog-visibility="isComposeDialogVisible = !isComposeDialogVisible"
+        @folder-selected="closeEmailView"
       />
     </VNavigationDrawer>
     <VMain>
