@@ -286,7 +286,7 @@ onMounted(() => {
               <div class="d-flex flex-column">
                 <h6 class="text-base">
                   <RouterLink
-                    :to="`/apps/projects/view/${item.id}`"
+                    :to="{ name: 'apps-projects-view-id', params: { id: item.id }}"
                     class="font-weight-medium text-link"
                   >
                     {{ item.title }}

@@ -136,19 +136,56 @@ class ProjectController extends Controller
      */
     public function show(string $id)
     {
-        Log::info("ProjectController::show - Fetching project {$id}");
+        Log::info("ProjectController::show - Starting request", [
+            'project_id' => $id,
+            'request_method' => request()->method(),
+            'request_url' => request()->fullUrl(),
+            'request_headers' => request()->headers->all()
+        ]);
+
+        // Log authentication state
+        Log::info("Auth state:", [
+            'is_authenticated' => auth()->check(),
+            'user_id' => auth()->id(),
+            'user_role' => auth()->user()?->roles->first()?->name,
+            'token' => request()->bearerToken() ? 'Present' : 'Missing'
+        ]);
         
         try {
             $project = Project::with('client:id,name,email', 'messages')->findOrFail($id);
+            Log::info("Project found:", [
+                'project_id' => $project->id,
+                'client_id' => $project->client_id,
+                'auth_user_id' => auth()->id(),
+                'project_status' => $project->status
+            ]);
             
             // Use policy authorization
             if (!auth()->user()->can('view', $project)) {
+                Log::warning("User not authorized to view project", [
+                    'user_id' => auth()->id(),
+                    'user_role' => auth()->user()?->roles->first()?->name,
+                    'project_id' => $id,
+                    'project_client_id' => $project->client_id,
+                    'ability' => auth()->user()?->getAllPermissions()->pluck('name')
+                ]);
                 return response()->json(['message' => 'Unauthorized to view this project'], 403);
             }
             
+            Log::info("Project access granted", [
+                'user_id' => auth()->id(),
+                'project_id' => $id
+            ]);
+            
             return response()->json($project);
         } catch (\Exception $e) {
-            Log::error("Error fetching project: " . $e->getMessage());
+            Log::error("Error in ProjectController::show", [
+                'exception' => $e,
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'user_id' => auth()->id(),
+                'project_id' => $id
+            ]);
             return response()->json(['message' => 'Failed to fetch project'], 500);
         }
     }

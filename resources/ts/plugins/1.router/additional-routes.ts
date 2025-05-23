@@ -78,7 +78,7 @@ export const routes: RouteRecordRaw[] = [
   },
   {
     path: '/apps/projects/view/:id',
-    name: 'apps-projects-view',
+    name: 'apps-projects-view-id',
     component: projectDetailsComponent,
     meta: {
       layoutWrapperClasses: 'layout-content-height-fixed',

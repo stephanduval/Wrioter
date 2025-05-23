@@ -9,6 +9,74 @@ import { useRoute, useRouter } from 'vue-router'
 // Configure axios
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '/api'
 
+// Add debug logging for localStorage
+const debugAuthState = () => {
+  console.log('Current Auth State:', {
+    accessToken: localStorage.getItem('accessToken') ? 'Present' : 'Missing',
+    userData: localStorage.getItem('userData') ? JSON.parse(localStorage.getItem('userData') || '{}') : 'Missing',
+    abilityRules: localStorage.getItem('abilityRules') ? 'Present' : 'Missing'
+  })
+}
+
+// Create axios instance with default config
+const axiosInstance = axios.create({
+  baseURL: apiBaseUrl,
+  headers: {
+    'Accept': 'application/json',
+    'Content-Type': 'application/json',
+  },
+})
+
+// Add request interceptor to include token
+axiosInstance.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('accessToken')
+    console.log('Making request to:', config.url, {
+      hasToken: !!token,
+      method: config.method,
+      headers: config.headers
+    })
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`
+    }
+    return config
+  },
+  (error) => {
+    console.error('Request interceptor error:', error)
+    return Promise.reject(error)
+  }
+)
+
+// Add response interceptor to handle auth errors
+axiosInstance.interceptors.response.use(
+  (response) => {
+    console.log('Response received:', {
+      url: response.config.url,
+      status: response.status,
+      statusText: response.statusText
+    })
+    return response
+  },
+  (error) => {
+    console.error('Response error:', {
+      url: error.config?.url,
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data
+    })
+    
+    if (error.response?.status === 401 || error.response?.status === 403) {
+      console.log('Auth error detected, clearing storage and redirecting to login')
+      debugAuthState()
+      localStorage.removeItem('accessToken')
+      localStorage.removeItem('userData')
+      localStorage.removeItem('abilityRules')
+      router.push('/login')
+    }
+    return Promise.reject(error)
+  }
+)
+
 const route = useRoute()
 const router = useRouter()
 const projectId = route.params.id as string
@@ -98,13 +166,17 @@ const stripHtml = (html: string) => {
 }
 
 const fetchProject = async () => {
+  console.log('Fetching project:', projectId)
+  debugAuthState()
   isLoading.value = true
   error.value = null
   
   try {
-    // console.log('Fetching project with ID:', projectId)
-    const response = await axios.get(`${apiBaseUrl}/projects/${projectId}`)
-    // console.log('API Response:', response.data)
+    const response = await axiosInstance.get(`/projects/${projectId}`)
+    console.log('Project fetch response:', {
+      status: response.status,
+      hasData: !!response.data
+    })
     
     if (!response.data) {
       throw new Error('No data received from API')
@@ -113,18 +185,25 @@ const fetchProject = async () => {
     project.value = response.data
     
     // Fetch messages related to this project
-    // console.log('Fetching messages for project:', projectId)
-    const messagesResponse = await axios.get(`${apiBaseUrl}/messages`, {
+    console.log('Fetching project messages')
+    const messagesResponse = await axiosInstance.get('/messages', {
       params: {
         project_id: projectId,
       },
     })
-    // console.log('Messages Response:', messagesResponse.data)
+    console.log('Messages fetch response:', {
+      status: messagesResponse.status,
+      messageCount: messagesResponse.data.data?.length || 0
+    })
     
     messages.value = messagesResponse.data.data || []
   } catch (err: any) {
-    // console.error('Error fetching project details:', err)
-    // console.error('Error response:', err.response)
+    console.error('Error in fetchProject:', {
+      error: err,
+      response: err.response,
+      status: err.response?.status,
+      data: err.response?.data
+    })
     error.value = err.response?.data?.message || 'Failed to load project details'
   } finally {
     isLoading.value = false
@@ -180,12 +259,11 @@ const cancelEditing = () => {
 const saveProject = async () => {
   try {
     isLoading.value = true
-    const response = await axios.put(`${apiBaseUrl}/projects/${projectId}`, editedProject.value)
+    const response = await axiosInstance.put(`/projects/${projectId}`, editedProject.value)
     project.value = response.data.data
     isEditing.value = false
     editedProject.value = {}
   } catch (err: any) {
-    // console.error('Error updating project:', err)
     error.value = err.response?.data?.message || 'Failed to update project'
   } finally {
     isLoading.value = false
@@ -263,7 +341,7 @@ const handleSendReply = async (data: { message: string, attachments: File[] }) =
       data.attachments.forEach(file => formData.append('attachments[]', file))
     }
 
-    const response = await axios.post(`${apiBaseUrl}/messages`, formData, {
+    const response = await axiosInstance.post('/messages', formData, {
       headers: {
         'Accept': 'application/json',
       },
@@ -274,12 +352,17 @@ const handleSendReply = async (data: { message: string, attachments: File[] }) =
       handleEmailClose()
     }
   } catch (error) {
-    // console.error('Error sending reply:', error)
+    console.error('Error sending reply:', error)
   }
 }
 
+// Log initial state when component mounts
 onMounted(() => {
-  // console.log('Component mounted, fetching project...')
+  console.log('Project View Component Mounted:', {
+    projectId,
+    route: route.fullPath
+  })
+  debugAuthState()
   fetchProject()
 })
 </script>
