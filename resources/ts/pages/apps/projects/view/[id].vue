@@ -2,7 +2,7 @@
 import SharedEmailView from '@/components/SharedEmailView.vue'
 import axios from 'axios'
 import { format } from 'date-fns'
-import { onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 
@@ -94,6 +94,24 @@ const emailMeta = ref({
 const isEditDrawerOpen = ref(false)
 
 const { t } = useI18n()
+
+// Add computed property for user role check
+const userData = computed(() => {
+  try {
+    return JSON.parse(localStorage.getItem('userData') || '{}')
+  } catch (e) {
+    console.error('Error parsing userData:', e)
+    return {}
+  }
+})
+
+const userRole = computed(() => {
+  return userData.value?.role?.toLowerCase() || ''
+})
+
+const canEditProject = computed(() => {
+  return userRole.value !== 'client'
+})
 
 interface Project {
   id: number
@@ -440,7 +458,7 @@ onMounted(() => {
               {{ t('projects.details.projectInformation') }}
             </VCardTitle>
             <template #append>
-              <template v-if="isEditing">
+              <template v-if="isEditing && canEditProject">
                 <VBtn
                   color="error"
                   variant="outlined"
@@ -458,7 +476,7 @@ onMounted(() => {
                 </VBtn>
               </template>
               <VBtn
-                v-else
+                v-else-if="canEditProject"
                 color="primary"
                 @click="startEditing"
               >
@@ -484,7 +502,7 @@ onMounted(() => {
                 </VListItemTitle>
                 <VListItemSubtitle>
                   <VTextField
-                    v-if="isEditing"
+                    v-if="isEditing && canEditProject"
                     v-model="editedProject.title"
                     density="compact"
                     hide-details
@@ -508,7 +526,7 @@ onMounted(() => {
                 </VListItemTitle>
                 <VListItemSubtitle>
                   <VTextField
-                    v-if="isEditing"
+                    v-if="isEditing && canEditProject"
                     v-model="editedProject.property"
                     density="compact"
                     hide-details
@@ -532,7 +550,7 @@ onMounted(() => {
                 </VListItemTitle>
                 <VListItemSubtitle>
                   <VSelect
-                    v-if="isEditing"
+                    v-if="isEditing && canEditProject"
                     v-model="editedProject.time_preference"
                     :items="timePreferenceOptions"
                     density="compact"
@@ -557,7 +575,7 @@ onMounted(() => {
                 </VListItemTitle>
                 <VListItemSubtitle>
                   <VSelect
-                    v-if="isEditing"
+                    v-if="isEditing && canEditProject"
                     v-model="editedProject.service_type"
                     :items="serviceTypeOptions"
                     density="compact"
@@ -582,7 +600,7 @@ onMounted(() => {
                 </VListItemTitle>
                 <VListItemSubtitle>
                   <VTextField
-                    v-if="isEditing"
+                    v-if="isEditing && canEditProject"
                     v-model="editedProject.deadline"
                     type="date"
                     density="compact"
@@ -607,7 +625,7 @@ onMounted(() => {
                 </VListItemTitle>
                 <VListItemSubtitle>
                   <VTextField
-                    v-if="isEditing"
+                    v-if="isEditing && canEditProject"
                     v-model="editedProject.latest_completion_date"
                     type="date"
                     density="compact"
@@ -632,7 +650,7 @@ onMounted(() => {
                 </VListItemTitle>
                 <VListItemSubtitle>
                   <VSelect
-                    v-if="isEditing"
+                    v-if="isEditing && canEditProject"
                     v-model="editedProject.status"
                     :items="statusOptions"
                     density="compact"
@@ -677,7 +695,7 @@ onMounted(() => {
                 </VListItemTitle>
                 <VListItemSubtitle>
                   <VTextField
-                    v-if="isEditing"
+                    v-if="isEditing && canEditProject"
                     v-model="editedProject.contact_email"
                     density="compact"
                     hide-details
@@ -757,7 +775,7 @@ onMounted(() => {
                 </VListItemTitle>
                 <VListItemSubtitle>
                   <VTextarea
-                    v-if="isEditing"
+                    v-if="isEditing && canEditProject"
                     v-model="editedProject.service_description"
                     density="compact"
                     hide-details
