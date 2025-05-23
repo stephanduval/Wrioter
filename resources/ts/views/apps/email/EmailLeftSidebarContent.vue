@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { useEmail } from '@/views/apps/email/useEmail';
 import { computed, defineEmits, defineProps, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import type { RouteLocationRaw } from 'vue-router';
@@ -10,10 +9,6 @@ defineOptions({
 })
 
 console.log ("WTF sidebar");
-
-const props = defineProps<Props>()
-
-defineEmits<{ (e: 'toggleComposeDialogVisibility'): void }>()
 
 interface EmailLabelData {
   id: number;
@@ -30,15 +25,17 @@ interface EmailsMeta {
 }
 
 interface Props {
-  emailsMeta?: EmailsMeta
+  messagesMeta: EmailsMeta,
+  userLabels: Array<{ id: number; title: string; color: string }>,
+  fetchUserLabels: () => Promise<void>,
+  addLabel: (data: { label_name: string; colour: string }) => Promise<boolean>,
+  resolveLabelColor: (labelTitle: string) => string,
+  deleteLabel: (id: number) => Promise<boolean>,
 }
 
-const { 
-  userLabels,
-  addLabel: addApiLabel,
-  resolveLabelColor,
-  deleteLabel: deleteApiLabel,
-} = useEmail();
+const props = defineProps<Props>()
+
+defineEmits<{ (e: 'toggleComposeDialogVisibility'): void }>()
 
 const { t } = useI18n()
 
@@ -51,7 +48,7 @@ const dueTodayEmails = ref(0)
 
 // Watch props and update counts
 watch(
-  () => props.emailsMeta,
+  () => props.messagesMeta,
   emailsMeta => {
     inboxEmails.value = emailsMeta?.inbox ?? 0
     draftEmails.value = emailsMeta?.draft ?? 0
@@ -110,7 +107,7 @@ const handleAddLabel = async () => {
     return
   }
 
-  const success = await addApiLabel({
+  const success = await props.addLabel({
     label_name: newLabelName.value,
     colour: selectedColour.value,
   })
@@ -119,6 +116,7 @@ const handleAddLabel = async () => {
     newLabelName.value = ''
     selectedColour.value = 'primary'
     showAddLabelForm.value = false
+    await props.fetchUserLabels()
   }
 }
 
@@ -136,7 +134,7 @@ const confirmLabelDelete = async () => {
   if (!labelToDelete.value) return;
 
   console.log("Confirming delete for label ID:", labelToDelete.value.id);
-  const success = await deleteApiLabel(labelToDelete.value.id);
+  const success = await props.deleteLabel(labelToDelete.value.id);
 
   if (success) {
     console.log("Label deleted successfully.");
@@ -231,9 +229,9 @@ const confirmLabelDelete = async () => {
       </VExpandTransition>
 
       <!-- Conditionally show Label List -->
-      <ul class="email-labels mt-4" v-if="userLabels.length > 0">
+      <ul class="email-labels mt-4" v-if="props.userLabels.length > 0">
         <li
-          v-for="label in userLabels"
+          v-for="label in props.userLabels"
           :key="label.id"
         >
           <RouterLink
@@ -249,7 +247,7 @@ const confirmLabelDelete = async () => {
               <div class="d-flex align-center">
                 <VIcon
                   icon="bx-bxs-circle"
-                  :color="resolveLabelColor(label.title)"
+                  :color="props.resolveLabelColor(label.title)"
                   size="20"
                   class="me-2"
                 />

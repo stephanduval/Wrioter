@@ -23,19 +23,9 @@ definePage({
 
 // console.log("🚀 Emails page Index.vue is loading!");
 
-const { 
-    fetchMessages, 
-    sendReplyMessage,
-    userLabels,
-    resolveLabelColor,
-    emailMoveToFolderActions,
-    shallShowMoveToActionFor,
-    moveSelectedEmailTo,
-    updateEmails,
-    deleteMessage,
- } = useEmail();
+const emailComposable = useEmail();
 
-// console.log('Available labels:', userLabels);
+// console.log('Available labels:', emailComposable.userLabels);
 
 const messages = ref<Email[]>([]); 
 
@@ -50,7 +40,7 @@ const allUserMessagesSummary = ref<MessageSummary[]>([]);
 const fetchAllMessages = async () => {  
   try {
     // console.log("🔥 Fetching messages for current view...");
-    const response = await fetchMessages(); // This should resolve to Email[] from the view types
+    const response = await emailComposable.fetchMessages(); // This should resolve to Email[] from the view types
     // console.log("✅ View Messages Data:", response);
     if (Array.isArray(response)) {
       messages.value = response; 
@@ -85,10 +75,9 @@ const fetchAllUserMessagesSummary = async () => {
 const selectedMessages = ref<number[]>([]);
 const messagesMeta = computed(() => ({
   inbox: messages.value.filter(m => m.folder === 'inbox' && !m.isArchived && m.status !== 'deleted').length,
-  sent: messages.value.filter(m => m.folder === 'sent').length,
-  archive: messages.value.filter(m => m.isArchived).length,
-  trash: messages.value.filter(m => m.status === 'deleted').length,
-  starred: messages.value.filter(m => m.isStarred).length,
+  draft: 0,
+  spam: 0,
+  star: messages.value.filter(m => m.isStarred).length,
   dueToday: dueTodayCount.value
 }));
 
@@ -244,7 +233,7 @@ const openMessage = async (message: Email) => {
   
   if (!message.isRead) {
     try {
-      await updateEmails([message.id], { status: 'read', isRead: true }); 
+      await emailComposable.updateEmails([message.id], { status: 'read', isRead: true }); 
       if (openedMessage.value && openedMessage.value.id === message.id) {
         openedMessage.value.isRead = true;
         openedMessage.value.status = 'read';
@@ -290,7 +279,7 @@ const handleActionClick = async (
 
   try {
     // console.log(`>>> handleActionClick: Calling updateEmails...`);
-    await updateEmails(ids, updateData);
+    await emailComposable.updateEmails(ids, updateData);
     // console.log(`>>> handleActionClick: updateEmails finished. Updating local state...`);
     
     messages.value.forEach(msg => {
@@ -322,7 +311,7 @@ const handleMoveMailsTo = async (action: MoveEmailToAction, ids: number[] | Ref<
   
   // console.log(`Moving emails ${actualIds} to ${action}`);
   try {
-    await moveSelectedEmailTo(action, actualIds);
+    await emailComposable.moveSelectedEmailTo(action, actualIds);
 
     if (openedMessage.value && actualIds.includes(openedMessage.value.id)) {
       openedMessage.value = null;
@@ -342,15 +331,32 @@ const handleEmailLabels = async (labelTitle: EmailLabel, messageIds: number[] | 
   const idsToUpdate: number[] = isRef(messageIds) ? messageIds.value : messageIds;
   if (!idsToUpdate || idsToUpdate.length === 0) return;
 
-  await updateEmails(idsToUpdate, { toggleLabel: labelTitle } as PartialDeep<Email>);
+  try {
+    // Update the labels on the server
+    await emailComposable.updateEmails(idsToUpdate, { toggleLabel: labelTitle } as PartialDeep<Email>);
+    
+    // Refresh the labels list
+    await emailComposable.fetchUserLabels();
 
-  if (openedMessage.value && idsToUpdate.includes(openedMessage.value.id)) {
-    await refreshOpenedMessage(); 
-  } else if (messageIds === selectedMessages) {
-    selectedMessages.value = [];
+    // If we're updating the opened message
+    if (openedMessage.value && idsToUpdate.includes(openedMessage.value.id)) {
+      // Fetch the updated message
+      const updatedMessage = await emailComposable.fetchMessages();
+      const refreshedMessage = updatedMessage.find(m => m.id === openedMessage.value?.id);
+      if (refreshedMessage) {
+        openedMessage.value = refreshedMessage;
+      }
+    }
+
+    // Refresh the message list
     await fetchAllMessages();
-  } else {
-    await fetchAllMessages();
+
+    // Clear selection if we were updating selected messages
+    if (messageIds === selectedMessages) {
+      selectedMessages.value = [];
+    }
+  } catch (error) {
+    console.error('Error updating labels:', error);
   }
 }
 
@@ -367,7 +373,7 @@ const handleTaskStatusToggle = async (message: Email) => {
 
   // console.log(`Cycling task status for message ${message.id} to ${newStatus}`);
   try {
-    await updateEmails([message.id], { task_status: newStatus } as PartialDeep<Email>);
+    await emailComposable.updateEmails([message.id], { task_status: newStatus } as PartialDeep<Email>);
     message.task_status = newStatus;
     // Refresh summary data after status change
     await fetchAllUserMessagesSummary();
@@ -384,7 +390,7 @@ const handleSelectedTaskStatusUpdate = async (status: 'new' | 'in_process' | 'co
   // console.log(`Updating task status for selected messages ${ids} to ${status}`);
 
   try {
-    await updateEmails(ids, { task_status: status } as PartialDeep<Email>);
+    await emailComposable.updateEmails(ids, { task_status: status } as PartialDeep<Email>);
 
     // Update local state
     messages.value.forEach(msg => {
@@ -439,7 +445,7 @@ const sendReply = async () => {
   // console.log("index.vue: Sending reply with payload:", payload); 
 
   try {
-    const result = await sendReplyMessage(payload); 
+    const result = await emailComposable.sendReplyMessage(payload); 
     // console.log("index.vue: sendReplyMessage call completed. Result:", result); 
 
     if (result && result.message === 'Message sent successfully') { 
@@ -494,7 +500,7 @@ const confirmPermanentDeleteMessages = async () => {
   // console.log('Confirming permanent delete for IDs:', messageIdsToConfirmPermanentDelete.value);
   try {
     for (const id of messageIdsToConfirmPermanentDelete.value) {
-      await deleteMessage(id);
+      await emailComposable.deleteMessage(id);
     }
     if (openedMessage.value && messageIdsToConfirmPermanentDelete.value.includes(openedMessage.value.id)) {
       openedMessage.value = null;
@@ -564,7 +570,15 @@ const downloadAttachments = async (attachments: any[]) => {
 <template>
   <VLayout style="min-block-size: 100%;" class="email-app-layout">
     <VNavigationDrawer v-model="isLeftSidebarOpen" absolute touchless location="start" :temporary="$vuetify.display.mdAndDown">
-      <EmailLeftSidebarContent :messages-meta="messagesMeta" @toggle-compose-dialog-visibility="isComposeDialogVisible = !isComposeDialogVisible" />
+      <EmailLeftSidebarContent 
+        :messages-meta="messagesMeta" 
+        :user-labels="emailComposable.userLabels.value" 
+        :fetch-user-labels="emailComposable.fetchUserLabels"
+        :add-label="emailComposable.addLabel"
+        :resolve-label-color="emailComposable.resolveLabelColor"
+        :delete-label="emailComposable.deleteLabel"
+        @toggle-compose-dialog-visibility="isComposeDialogVisible = !isComposeDialogVisible" 
+      />
     </VNavigationDrawer>
     <VMain>
       <VCard flat class="email-content-list h-100 d-flex flex-column">
@@ -596,15 +610,15 @@ const downloadAttachments = async (attachments: any[]) => {
           <div
             class="w-100 d-flex align-center action-bar-actions gap-x-1"
           >
-              <IconBtn v-if="shallShowMoveToActionFor('archive')" @click="handleMoveMailsTo('archive')">
+              <IconBtn v-if="emailComposable.shallShowMoveToActionFor('archive')" @click="handleMoveMailsTo('archive')">
                 <VIcon icon="bx-archive" size="22" />
                 <VTooltip activator="parent" location="top">{{ t('emails.actions.archive') }}</VTooltip>
               </IconBtn>
-              <IconBtn v-if="shallShowMoveToActionFor('inbox')" @click="handleMoveMailsTo('inbox')">
+              <IconBtn v-if="emailComposable.shallShowMoveToActionFor('inbox')" @click="handleMoveMailsTo('inbox')">
                 <VIcon icon="bx-envelope" size="22" />
                 <VTooltip activator="parent" location="top">{{ t('emails.actions.moveToInbox') }}</VTooltip>
               </IconBtn>
-              <IconBtn v-if="shallShowMoveToActionFor('trash')" @click="initiateTrashConfirmation(selectedMessages)">
+              <IconBtn v-if="emailComposable.shallShowMoveToActionFor('trash')" @click="initiateTrashConfirmation(selectedMessages)">
                 <VIcon icon="bx-trash" size="22" />
                 <VTooltip activator="parent" location="top">{{ t('emails.actions.moveToTrash') }}</VTooltip>
               </IconBtn>
@@ -641,7 +655,7 @@ const downloadAttachments = async (attachments: any[]) => {
                 <VMenu activator="parent">
                   <VList density="compact">
                     <VListItem 
-                      v-for="label in userLabels" 
+                      v-for="label in emailComposable.userLabels.value" 
                       :key="label.title" 
                       href="#" 
                       @click="handleEmailLabels(label.title)"
@@ -649,7 +663,7 @@ const downloadAttachments = async (attachments: any[]) => {
                       <template #prepend>
                         <VBadge 
                           inline 
-                          :color="resolveLabelColor(label.title)" 
+                          :color="emailComposable.resolveLabelColor(label.title)" 
                           dot
                         />
                       </template>
@@ -811,7 +825,7 @@ const downloadAttachments = async (attachments: any[]) => {
           <VChip
             v-for="label in message.labels"
             :key="label"
-            :color="resolveLabelColor(label)"
+            :color="emailComposable.resolveLabelColor(label)"
             size="x-small"
             class="text-capitalize"
           >
@@ -849,7 +863,7 @@ const downloadAttachments = async (attachments: any[]) => {
                   <VChip
                     v-for="label in openedMessage.labels"
                     :key="label"
-                    :color="resolveLabelColor(label)"
+                    :color="emailComposable.resolveLabelColor(label)"
                     class="text-capitalize flex-shrink-0"
                     size="small"
                   >
@@ -916,7 +930,7 @@ const downloadAttachments = async (attachments: any[]) => {
                 <VMenu activator="parent">
                   <VList density="compact">
                     <VListItem 
-                      v-for="label in userLabels" 
+                      v-for="label in emailComposable.userLabels.value" 
                       :key="label.title" 
                       href="#" 
                       @click="handleEmailLabels(label.title)"
@@ -924,7 +938,7 @@ const downloadAttachments = async (attachments: any[]) => {
                       <template #prepend>
                         <VBadge 
                           inline 
-                          :color="resolveLabelColor(label.title)" 
+                          :color="emailComposable.resolveLabelColor(label.title)" 
                           dot
                         />
                       </template>
