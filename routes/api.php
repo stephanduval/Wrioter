@@ -146,11 +146,6 @@ Route::get('/send-message-notification', function () {
             'body' => $message->body,
         ]);
 
-        // Ensure relationships are loaded
-        if (!$message->relationLoaded('sender') || !$message->relationLoaded('company')) {
-            $message->load(['sender', 'company']);
-        }
-
         // Send email using the template with the message data
         Mail::mailer('mailgun')
             ->send('emails.new-message-alert', ['msg' => $message], function($mail) use ($message) {
@@ -170,7 +165,7 @@ Route::get('/send-message-notification', function () {
         ]);
         
         return response()->json([
-            'error' => 'Failed to send notification: ' . $e->getMessage()
+            'error' => 'Failed to process notification: ' . $e->getMessage()
         ], 500);
     }
 });
