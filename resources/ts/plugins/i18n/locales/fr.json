@@ -475,7 +475,9 @@
       "label": "Étiquette",
       "search": "Rechercher un message",
       "refresh": "Actualiser",
-      "changeTaskStatus": "Changer le statut de la tâche"
+      "changeTaskStatus": "Changer le statut de la tâche",
+      "download": "Télécharger",
+      "downloadAll": "Tout télécharger"
     },
     "status": {
       "new": "Nouveau",

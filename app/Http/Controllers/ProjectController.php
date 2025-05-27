@@ -8,6 +8,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Database\Eloquent\Builder;
+use App\Http\Resources\ProjectResource;
 
 class ProjectController extends Controller
 {
@@ -20,7 +21,7 @@ class ProjectController extends Controller
         $user = Auth::user();
         $userRole = $user->roles->first()?->name;
 
-        $query = Project::with('client:id,name,email');
+        $query = Project::with(['client:id,name,email', 'messages.attachments']);
 
         // Show all projects for user ID 1 (admin), otherwise filter by user_id
         if ($user->id !== 1) {
@@ -73,13 +74,7 @@ class ProjectController extends Controller
         $perPage = $request->input('per_page', 10);
         $projects = $query->paginate($perPage);
 
-        // Append has_attachments attribute to each project
-        $projects->getCollection()->transform(function ($project) {
-            $project->append('has_attachments');
-            return $project;
-        });
-
-        return response()->json($projects);
+        return ProjectResource::collection($projects);
     }
 
     /**
@@ -125,10 +120,7 @@ class ProjectController extends Controller
         // Create the project
         $project = Project::create($validated);
         
-        return response()->json([
-            'message' => 'Project created successfully',
-            'data' => $project
-        ], 201);
+        return new ProjectResource($project->load(['client', 'messages.attachments']));
     }
 
     /**
@@ -152,7 +144,7 @@ class ProjectController extends Controller
         ]);
         
         try {
-            $project = Project::with('client:id,name,email', 'messages')->findOrFail($id);
+            $project = Project::with(['client:id,name,email', 'messages.attachments'])->findOrFail($id);
             Log::info("Project found:", [
                 'project_id' => $project->id,
                 'client_id' => $project->client_id,
@@ -167,7 +159,6 @@ class ProjectController extends Controller
                     'user_role' => auth()->user()?->roles->first()?->name,
                     'project_id' => $id,
                     'project_client_id' => $project->client_id,
-                    'ability' => auth()->user()?->getAllPermissions()->pluck('name')
                 ]);
                 return response()->json(['message' => 'Unauthorized to view this project'], 403);
             }
@@ -177,7 +168,7 @@ class ProjectController extends Controller
                 'project_id' => $id
             ]);
             
-            return response()->json($project);
+            return new ProjectResource($project);
         } catch (\Exception $e) {
             Log::error("Error in ProjectController::show", [
                 'exception' => $e,
@@ -241,10 +232,7 @@ class ProjectController extends Controller
             
             $project->update($validated);
             
-            return response()->json([
-                'message' => 'Project updated successfully',
-                'data' => $project
-            ]);
+            return new ProjectResource($project->load(['client', 'messages.attachments']));
         } catch (\Exception $e) {
             Log::error("Error updating project: " . $e->getMessage());
             return response()->json(['message' => 'Failed to update project'], 500);

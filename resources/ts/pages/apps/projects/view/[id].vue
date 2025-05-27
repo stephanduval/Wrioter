@@ -200,7 +200,48 @@ const fetchProject = async () => {
       throw new Error('No data received from API')
     }
     
-    project.value = response.data
+    // Add detailed logging of the project data
+    console.log('Project Resource Data Structure:', {
+      fullResponse: response.data,
+      project: response.data.data,
+      messages: response.data.data?.messages,
+      attachments: response.data.data?.attachments,
+      attachmentCount: response.data.data?.attachment_count,
+      client: response.data.data?.client,
+      company: response.data.data?.company
+    })
+
+    // Log individual messages with their attachments
+    if (response.data.data?.messages) {
+      console.log('Messages with attachments:')
+      response.data.data.messages.forEach((message: any, index: number) => {
+        console.log(`Message ${index + 1}:`, {
+          id: message.id,
+          subject: message.subject,
+          created_at: message.created_at,
+          has_attachments: message.has_attachments,
+          attachments: message.attachments
+        })
+      })
+    }
+
+    // Log all attachments with their details
+    if (response.data.data?.attachments) {
+      console.log('All Project Attachments:')
+      response.data.data.attachments.forEach((attachment: any, index: number) => {
+        console.log(`Attachment ${index + 1}:`, {
+          id: attachment.id,
+          filename: attachment.filename,
+          message_id: attachment.message_id,
+          mime_type: attachment.mime_type,
+          size: attachment.size,
+          download_url: attachment.download_url,
+          created_at: attachment.created_at
+        })
+      })
+    }
+    
+    project.value = response.data.data
     
     // Fetch messages related to this project
     console.log('Fetching project messages')
@@ -215,6 +256,16 @@ const fetchProject = async () => {
     })
     
     messages.value = messagesResponse.data.data || []
+
+    // Add debug logging after data is set
+    console.log('Final component state:', {
+      project: project.value,
+      messages: messages.value,
+      hasAttachments: project.value?.attachments?.length > 0,
+      attachmentCount: project.value?.attachments?.length,
+      firstMessageAttachments: messages.value[0]?.attachments,
+      firstProjectAttachment: project.value?.attachments?.[0]
+    })
   } catch (err: any) {
     console.error('Error in fetchProject:', {
       error: err,
@@ -304,31 +355,48 @@ const handleProjectUpdated = () => {
   fetchProject()
 }
 
-const downloadAttachments = async (attachments: { id: number; download_url: string }[]) => {
+const downloadAttachment = (attachment: any) => {
+  console.log('Download attachment called with:', attachment)
+  
+  if (!attachment || typeof attachment !== 'object') {
+    console.error('Invalid attachment object:', attachment)
+    return
+  }
+
+  console.log('Full attachment object:', JSON.stringify(attachment, null, 2))
+
+  if (!attachment.download_url) {
+    console.error('No download URL found in attachment:', attachment)
+    return
+  }
+
+  try {
+    const link = document.createElement('a')
+    link.href = attachment.download_url
+    link.target = '_blank'
+    link.rel = 'noopener noreferrer'
+    link.click()
+  } catch (error) {
+    console.error('Error downloading attachment:', error)
+  }
+}
+
+const downloadAttachments = async (attachments: any[]) => {
   if (!attachments || attachments.length === 0) return
 
-  // If there are multiple attachments, open the email view instead
   if (attachments.length > 1) {
-    // Find the message that contains these attachments
-    const message = messages.value.find(m => m.attachments?.some((a: { id: number }) => attachments.some(att => att.id === a.id)))
-    if (message) {
-      handleEmailClick(message)
+    for (const attachment of attachments) {
+      if (attachment?.download_url) {
+        window.open(attachment.download_url, '_blank')
+        await new Promise(resolve => setTimeout(resolve, 500))
+      }
     }
     return
   }
 
-  // For single attachment, download directly
-  try {
+  if (attachments[0]?.download_url) {
     window.open(attachments[0].download_url, '_blank')
-  } catch (error) {
-    // console.error('Error downloading attachment:', error)
   }
-}
-
-// Add a function to download a single attachment
-const downloadAttachment = (attachment: any) => {
-  if (!attachment?.download_url) return
-  window.open(attachment.download_url, '_blank')
 }
 
 const handleEmailNavigate = (direction: 'previous' | 'next') => {
@@ -351,7 +419,7 @@ const handleSendReply = async (data: { message: string, attachments: File[] }) =
     const formData = new FormData()
     formData.append('subject', `Re: ${selectedEmail.value.subject}`)
     formData.append('message', data.message)
-    formData.append('company_id', selectedEmail.value.company_id.toString())
+    formData.append('company_id', selectedEmail.value.from.company_id.toString())
     formData.append('receiver_id', selectedEmail.value.from.id.toString())
     formData.append('reply_to_id', selectedEmail.value.id.toString())
 
@@ -383,6 +451,44 @@ onMounted(() => {
   debugAuthState()
   fetchProject()
 })
+
+const getFileIcon = (mimeType: string) => {
+  if (!mimeType) return 'bx-file'
+  
+  const type = mimeType.split('/')[0]
+  switch (type) {
+    case 'image':
+      return 'bx-image'
+    case 'video':
+      return 'bx-video'
+    case 'audio':
+      return 'bx-music'
+    case 'application':
+      if (mimeType.includes('pdf')) return 'bx-file-pdf'
+      if (mimeType.includes('word')) return 'bx-file-doc'
+      if (mimeType.includes('excel') || mimeType.includes('sheet')) return 'bx-file-spreadsheet'
+      if (mimeType.includes('powerpoint') || mimeType.includes('presentation')) return 'bx-file-slides'
+      if (mimeType.includes('zip') || mimeType.includes('compressed')) return 'bx-file-archive'
+      return 'bx-file'
+    default:
+      return 'bx-file'
+  }
+}
+
+const formatFileSize = (bytes: number) => {
+  if (!bytes) return '0 B'
+  
+  const units = ['B', 'KB', 'MB', 'GB']
+  let size = bytes
+  let unitIndex = 0
+  
+  while (size >= 1024 && unitIndex < units.length - 1) {
+    size /= 1024
+    unitIndex++
+  }
+  
+  return `${Math.round(size * 100) / 100} ${units[unitIndex]}`
+}
 </script>
 
 <template>
@@ -662,7 +768,7 @@ onMounted(() => {
                       size="small"
                       class="text-capitalize"
                     >
-                      {{ t(`projects.status.${project?.status}`) }}
+                      {{ t(`projects.status.${project?.status || 'received'}`) }}
                     </VChip>
                   </template>
                 </VListItemSubtitle>
@@ -790,23 +896,6 @@ onMounted(() => {
             </VList>
           </VCardText>
         </VCard>
-        
-        <VCard
-          v-if="project.service_description"
-          class="mt-6"
-        >
-          <VCardItem>
-            <VCardTitle>
-              {{ t('projects.details.serviceDescription') }}
-            </VCardTitle>
-          </VCardItem>
-          
-          <VDivider />
-          
-          <VCardText>
-            <p>{{ project.service_description }}</p>
-          </VCardText>
-        </VCard>
       </VCol>
       
       <!-- Project Messages -->
@@ -815,7 +904,7 @@ onMounted(() => {
         md="7"
         lg="8"
       >
-        <VCard>
+        <VCard class="mb-4">
           <VCardItem>
             <VCardTitle>
               {{ t('projects.details.messages') }}
@@ -861,7 +950,7 @@ onMounted(() => {
               <VListItemSubtitle class="d-flex flex-column">
                 <span>{{ t('projects.details.from') }}: {{ message.from?.fullName || message.from?.email || t('projects.details.unknown') }}</span>
                 <!-- Add message preview with truncation and HTML stripping -->
-                <span class="text-truncate" style="max-inline-size: 300px;">{{ stripHtml(message.message) }}</span>
+                <span class="text-truncate" style="max-inline-size: 300px;">{{ stripHtml(message.body || '') }}</span>
               </VListItemSubtitle>
               
               <template #append>
@@ -911,54 +1000,104 @@ onMounted(() => {
 
     <!-- Attachments Section -->
     <VCard class="mb-6">
+      <VCardItem>
+        <VCardTitle>
+          {{ t('projects.details.attachments') }}
+          <VChip
+            v-if="project?.attachments?.length"
+            color="primary"
+            size="small"
+            class="ms-2"
+          >
+            {{ project.attachments.length }}
+          </VChip>
+        </VCardTitle>
+        <template #append>
+          <VBtn
+            v-if="project?.attachments?.length"
+            color="primary"
+            variant="tonal"
+            @click="downloadAttachments(project.attachments)"
+          >
+            <VIcon
+              icon="bx-download"
+              size="20"
+              class="me-1"
+            />
+            {{ t('emails.actions.downloadAll') }}
+          </VBtn>
+        </template>
+      </VCardItem>
+
+      <VDivider />
+
       <VCardText>
-        <h3 class="text-h6 mb-4">{{ t('projects.details.attachments') }}</h3>
         <div v-if="!project?.attachments?.length">
           {{ t('projects.details.noAttachments') }}
         </div>
-        <div v-else class="d-flex flex-column gap-2">
-          <div
-            v-for="attachment in project.attachments"
-            :key="attachment.id"
-            class="d-flex align-center justify-space-between"
-          >
-            <div class="d-flex align-center gap-2">
-              <VIcon
-                icon="bx-file"
-                size="20"
-                color="primary"
-              />
-              <span>{{ attachment.filename }}</span>
-            </div>
-            <VBtn
-              variant="text"
-              color="primary"
-              size="small"
-              @click="downloadAttachment(attachment)"
+        <div v-else>
+          <VList>
+            <VListItem
+              v-for="attachment in project.attachments"
+              :key="attachment.id"
+              class="attachment-item"
             >
-              <VIcon
-                icon="bx-download"
-                size="20"
-                class="me-1"
-              />
-              {{ t('emails.actions.download') }}
-            </VBtn>
-          </div>
+              <template #prepend>
+                <VIcon
+                  :icon="getFileIcon(attachment.mime_type)"
+                  size="24"
+                  color="primary"
+                  class="me-3"
+                />
+              </template>
+
+              <VListItemTitle class="d-flex align-center">
+                <a
+                  href="#"
+                  class="text-decoration-none"
+                  @click.prevent="downloadAttachment(attachment)"
+                >
+                  {{ attachment.filename }}
+                </a>
+              </VListItemTitle>
+
+              <VListItemSubtitle>
+                {{ formatFileSize(attachment.size) }}
+              </VListItemSubtitle>
+
+              <template #append>
+                <VBtn
+                  variant="text"
+                  color="primary"
+                  size="small"
+                  @click="downloadAttachment(attachment)"
+                >
+                  <VIcon
+                    icon="bx-download"
+                    size="20"
+                    class="me-1"
+                  />
+                  {{ t('emails.actions.download') }}
+                </VBtn>
+              </template>
+            </VListItem>
+          </VList>
         </div>
       </VCardText>
     </VCard>
-
-    <!-- Edit Project Drawer -->
-    <EditProjectDrawer
-      v-model:is-drawer-open="isEditDrawerOpen"
-      :project="project"
-      @project-updated="handleProjectUpdated"
-    />
   </div>
 </template>
 
 <style lang="scss">
 .project-status {
   text-transform: capitalize;
+}
+
+.attachment-item {
+  transition: background-color 0.2s ease;
+
+  &:hover {
+    background-color: rgb(var(--v-theme-surface-variant));
+  }
 }
 </style> 

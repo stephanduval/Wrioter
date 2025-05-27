@@ -476,7 +476,8 @@
       "search": "Search mail",
       "refresh": "Refresh",
       "changeTaskStatus": "Change Task Status",
-      "download": "Download"
+      "download": "Download",
+      "downloadAll": "Download All"
     },
     "status": {
       "new": "New",
