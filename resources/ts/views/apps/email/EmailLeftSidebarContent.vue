@@ -101,8 +101,17 @@ const folders = computed(() => [
 // Local state for the add label form
 const showAddLabelForm = ref(false)
 const newLabelName = ref('')
-const selectedColour = ref<string>('primary')
-const availableColours = ['primary', 'success', 'error', 'warning', 'info']
+const labelColours = [
+  { name: 'blue', value: '#2196F3' },
+  { name: 'green', value: '#4CAF50' },
+  { name: 'red', value: '#F44336' },
+  { name: 'orange', value: '#FF9800' },
+  { name: 'purple', value: '#9C27B0' },
+  { name: 'teal', value: '#009688' }
+]
+
+// Update the selectedColour ref to use the color value
+const selectedColour = ref<string>(labelColours[0].value)
 
 const handleAddLabel = async () => {
   if (!newLabelName.value.trim()) {
@@ -117,7 +126,7 @@ const handleAddLabel = async () => {
 
   if (success) {
     newLabelName.value = ''
-    selectedColour.value = 'primary'
+    selectedColour.value = labelColours[0].value
     showAddLabelForm.value = false
     await props.fetchUserLabels()
   }
@@ -213,16 +222,15 @@ const confirmLabelDelete = async () => {
             class="mb-2"
           />
           <div class="d-flex gap-1 mb-2">
-            <span class="text-caption align-self-center">{{ t('emails.labels.color') }}:</span>
+            <span class="text-caption align-self-center">{{ t('emails.labels.colour') }}:</span>
             <VChip
-              v-for="colour in availableColours"
-              :key="colour"
-              :color="colour"
+              v-for="colour in labelColours"
+              :key="colour.name"
+              :style="{ backgroundColor: colour.value, border: selectedColour === colour.value ? '2px solid grey' : 'none' }"
               size="small"
-              :value="colour"
-              @click="selectedColour = colour"
+              :value="colour.value"
+              @click="selectedColour = colour.value"
               class="cursor-pointer"
-              :style="selectedColour === colour ? 'border: 2px solid grey;' : ''"
             >
               &nbsp;
             </VChip>
@@ -250,7 +258,7 @@ const confirmLabelDelete = async () => {
               <div class="d-flex align-center">
                 <VIcon
                   icon="bx-bxs-circle"
-                  :color="props.resolveLabelColor(label.title)"
+                  :style="{ color: label.color }"
                   size="20"
                   class="me-2"
                 />

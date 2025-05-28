@@ -99,6 +99,10 @@ const q = ref('')
 const showReplyForm = ref(false);
 const replyMessage = ref('');
 
+// Add these refs near the other reply-related state
+const replyAttachments = ref<File[]>([])
+const replyAttachmentInput = ref<HTMLInputElement | null>(null)
+
 // --- Computed Properties for Summary Boxes (Using Summary Data) ---
 const dueTodayCount = computed(() => {
   // Count based on ALL user messages summary
@@ -414,54 +418,62 @@ const handleSelectedTaskStatusUpdate = async (status: 'new' | 'in_process' | 'co
 };
 
 // --- Reply Logic ---
-const sendReply = async () => {
-  // console.log("index.vue: sendReply function started."); 
+const handleReplyAttachmentSelect = (event: Event) => {
+  const input = event.target as HTMLInputElement
+  if (input.files) {
+    replyAttachments.value = [...replyAttachments.value, ...Array.from(input.files)]
+  }
+  // Reset the input value so the same file can be selected again
+  input.value = ''
+}
 
+const removeReplyAttachment = (index: number) => {
+  replyAttachments.value.splice(index, 1)
+}
+
+const sendReply = async () => {
   if (!openedMessage.value || !openedMessage.value.from || !openedMessage.value.from.id || !openedMessage.value.id) { 
-    // console.error('Cannot send reply: Original message, sender, or IDs missing.');
-    return;
+    return
   }
 
   if (!replyMessage.value.trim()) {
-    // console.error('Cannot send reply: Message body is empty.');
-    return;
+    return
   }
 
-  let replySubject = openedMessage.value.subject || '(No Subject)';
+  let replySubject = openedMessage.value.subject || '(No Subject)'
   if (!replySubject.toLowerCase().startsWith('re:')) {
-    replySubject = `Re: ${replySubject}`;
+    replySubject = `Re: ${replySubject}`
   }
 
-  const currentUserCompanyId = 1;
-
-  const payload = {
-    receiver_id: openedMessage.value.from.id,
-    subject: replySubject,
-    body: replyMessage.value,
-    reply_to_id: openedMessage.value.id,
-    company_id: currentUserCompanyId, 
-  };
-
-  // console.log("index.vue: Sending reply with payload:", payload); 
+  const currentUserCompanyId = 1
 
   try {
-    const result = await emailComposable.sendReplyMessage(payload); 
-    // console.log("index.vue: sendReplyMessage call completed. Result:", result); 
-
-    if (result && result.message === 'Message sent successfully') { 
-      // console.log("Reply sent successfully:", result.data);
-      showReplyForm.value = false;
-      replyMessage.value = '';
-    await fetchAllMessages();
-      openedMessage.value = null;
-    } else {
-      // console.error("Failed to send reply, API returned error or unexpected response:", result);
+    const result = await emailComposable.sendReplyMessage({
+      receiver_id: openedMessage.value.from.id,
+      company_id: currentUserCompanyId,
+      subject: replySubject,
+      body: replyMessage.value,
+      reply_to_id: openedMessage.value.id,
+      attachments: replyAttachments.value
+    })
+    
+    if (result && result.message === 'Message sent successfully') {
+      showReplyForm.value = false
+      replyMessage.value = ''
+      replyAttachments.value = [] // Clear attachments
+      await fetchAllMessages()
+      openedMessage.value = null
     }
   } catch (error) {
-    // console.error("Error sending reply:", error);
+    console.error("Error sending reply:", error)
   }
-  // console.log("index.vue: sendReply function finished."); 
-};
+}
+
+const clearReplyForm = () => {
+  showReplyForm.value = false
+  replyMessage.value = ''
+  replyAttachments.value = []
+}
 
 // --- Dialog State & Confirmation Logic ---
 const isTrashConfirmDialogVisible = ref(false);
@@ -521,7 +533,7 @@ const { t } = useI18n();
 
 // Headers
 const headers = [
-  { title: t('headers.emails.subject'), key: 'subject' },
+  { title: t('headers.emails.projectSubject'), key: 'subject' },
   { title: t('headers.emails.from'), key: 'from' },
   { title: t('headers.emails.date'), key: 'date' },
   { title: t('headers.emails.status'), key: 'status' },
@@ -713,34 +725,24 @@ const closeEmailView = () => {
             <!-- Read/Unread icon column (38px) -->
             <span style="inline-size: 38px; min-inline-size: 38px;"></span>
             
-            <!-- Status column (90px) -->
-            <span class="font-weight-semibold flex-shrink-0 ws-no-wrap text-truncate" style="inline-size: 90px; min-inline-size: 90px;">
+            <!-- Status column (180px) -->
+            <span class="font-weight-semibold flex-shrink-0 ws-no-wrap text-truncate" style="inline-size: 180px; min-inline-size: 180px;">
               {{ t('headers.emails.status') }}
             </span>
             
-            <!-- Due Date column (80px) -->
-            <span class="font-weight-semibold flex-shrink-0 ws-no-wrap ms-2" style="inline-size: 80px; min-inline-size: 80px;">
-              {{ t('headers.emails.dueDate') }}
+            <!-- From/To column (200px) -->
+            <span class="font-weight-semibold flex-shrink-0 ws-no-wrap text-truncate" style="inline-size: 200px; min-inline-size: 200px;">
+              From/<span class="font-weight-bold">To</span>
             </span>
             
-            <!-- From column (180px) -->
-            <span class="font-weight-semibold flex-shrink-0 ws-no-wrap text-truncate" style="inline-size: 180px; min-inline-size: 180px;">
-              {{ t('headers.emails.from') }}
+            <!-- Project-Subject column (250px) -->
+            <span class="font-weight-semibold flex-shrink-0 ws-no-wrap text-truncate" style="inline-size: 250px; min-inline-size: 250px;">
+              {{ t('headers.emails.project') }}
             </span>
             
-            <!-- To column (180px) -->
-            <span class="font-weight-semibold flex-shrink-0 ws-no-wrap text-truncate" style="inline-size: 180px; min-inline-size: 180px;">
-              {{ t('headers.emails.to') }}
-            </span>
-            
-            <!-- Subject column (flex-grow) -->
+            <!-- Message column (flex-grow) -->
             <span class="font-weight-semibold flex-grow-1 ws-no-wrap ms-2">
-              {{ t('headers.emails.subject') }}
-            </span>
-            
-            <!-- Labels column (120px) -->
-            <span class="font-weight-semibold flex-shrink-0 ws-no-wrap ms-2" style="inline-size: 120px; min-inline-size: 120px;">
-              {{ t('headers.emails.labels') }}
+              {{ t('headers.emails.message') }}
             </span>
           </div>
           <VDivider class="d-none d-md-block"/>
@@ -769,7 +771,7 @@ const closeEmailView = () => {
           class="star-column"
           @click.stop="handleActionClick(message.isStarred ? 'unstar' : 'star', [message.id])"
         >
-          <VIcon :icon="message.isStarred ? 'bxs-star.' : 'bx-star'" size="22" />
+          <VIcon :icon="message.isStarred ? 'bxs-star' : 'bx-star'" size="22" />
         </IconBtn>
         
         <!-- Read/Unread icon -->
@@ -777,11 +779,12 @@ const closeEmailView = () => {
           class="read-column"
           @click.stop="handleActionClick(message.isRead ? 'unread' : 'read', [message.id])"
         >
-          <VIcon :icon="message.isRead ? 'bx-envelope-open ' : 'bx-envelope'" size="22" />
+          <VIcon :icon="message.isRead ? 'bx-envelope-open' : 'bx-envelope'" size="22" />
         </IconBtn>
         
-        <!-- Status -->
-        <div class="status-column">
+        <!-- Status Column (includes task status and labels) -->
+        <div class="status-column d-flex flex-column gap-1">
+          <!-- Task Status -->
           <VChip
             v-if="message.task_status"
             :color="resolveStatusColor(message.task_status)"
@@ -790,57 +793,49 @@ const closeEmailView = () => {
           >
             {{ message.task_status }}
           </VChip>
-          <span v-else class="text-caption text-disabled ws-no-wrap">N/A</span>
-        </div>
-        
-        <!-- Due Date -->
-        <div class="due-date-column">
-          <span
-            v-if="message.dueDate"
-            class="text-caption text-medium-emphasis ws-no-wrap"
-          >
-            {{ formatDate(message.dueDate) }}
-          </span>
-          <span v-else class="text-caption text-disabled ws-no-wrap">N/A</span>
-        </div>
-        
-        <!-- From -->
-        <div class="from-column">
-          <h6 v-if="message.from?.fullName" class="text-h6 font-weight-semibold ws-no-wrap text-truncate">
-            {{ message.from.fullName }}
-          </h6>
-        </div>
-        
-        <!-- To -->
-        <div class="to-column">
-          <div v-if="message.to && message.to.length > 0" class="text-caption text-medium-emphasis ws-no-wrap text-truncate">
-            To: {{ message.to[0]?.fullName || message.to[0]?.email || 'N/A' }}
+          <span v-else class="text-caption text-disabled ws-no-wrap">No Status</span>
+          
+          <!-- Labels -->
+          <div class="d-flex flex-wrap gap-1">
+            <VChip
+              v-for="label in message.labels"
+              :key="label"
+              :color="emailComposable.resolveLabelColor(label)"
+              size="x-small"
+              class="text-capitalize"
+            >
+              {{ label }}
+            </VChip>
+            <span v-if="!message.labels?.length" class="text-caption text-disabled ws-no-wrap">
+              {{ t('emails.messages.noLabels') }}
+            </span>
           </div>
         </div>
         
-        <!-- Subject -->
-        <div class="flex-grow-1 overflow-hidden">
-          <h6 class="text-h6 font-weight-regular ws-no-wrap text-truncate mb-0">
-            {{ message.subject }}
-            <VIcon v-if="message.attachments?.length" icon="bx-paperclip" size="18" class="ms-1 text-disabled" />
-          </h6>
-          <div class="text-body-2 text-medium-emphasis text-truncate" v-html="message.message ? message.message.replace(/<p>|<\/p>/g, '') : ''"></div>
+        <!-- Participants Column (From and To) -->
+        <div class="participants-column d-flex flex-column">
+          <div class="text-caption font-weight-medium text-truncate">
+            {{ message.from?.fullName || t('emails.messages.unknown') }}
+          </div>
+          <div class="text-caption text-medium-emphasis text-truncate">
+            {{ message.to?.[0]?.fullName || message.to?.[0]?.email || 'N/A' }}
+          </div>
         </div>
         
-        <!-- Labels -->
-        <div class="labels-column d-flex flex-wrap gap-1">
-          <VChip
-            v-for="label in message.labels"
-            :key="label"
-            :color="emailComposable.resolveLabelColor(label)"
-            size="x-small"
-            class="text-capitalize"
-          >
-            {{ label }}
-          </VChip>
-          <span v-if="!message.labels?.length" class="text-caption text-disabled">
-            {{ t('emails.messages.noLabels') }}
-          </span>
+        <!-- Project Column -->
+        <div class="project-subject-column d-flex flex-column">
+          <div class="text-subtitle-2 font-weight-bold text-primary text-truncate">
+            {{ message.project?.title }}
+          </div>
+          <div class="text-body-2 text-truncate">
+            {{ message.subject }}
+            <VIcon v-if="message.attachments?.length" icon="bx-paperclip" size="18" class="ms-1 text-disabled" />
+          </div>
+        </div>
+        
+        <!-- Message Column -->
+        <div class="message-column flex-grow-1">
+          <div class="text-body-2 text-medium-emphasis" v-html="message.message ? message.message.replace(/<p>|<\/p>/g, '') : ''"></div>
         </div>
       </div>
     </li>
@@ -1078,14 +1073,41 @@ const closeEmailView = () => {
                     hide-details
                     class="mb-4"
                   ></VTextarea>
+
+                  <!-- Attachment List -->
+                  <div v-if="replyAttachments.length > 0" class="mb-4">
+                    <div class="text-caption mb-2">Attachments:</div>
+                    <div v-for="(file, index) in replyAttachments" :key="index" class="d-flex align-center gap-2 mb-2">
+                      <VIcon icon="bx-file" size="20" color="primary" />
+                      <span class="text-truncate">{{ file.name }}</span>
+                      <VBtn
+                        icon
+                        variant="text"
+                        size="small"
+                        color="error"
+                        @click="removeReplyAttachment(index)"
+                      >
+                        <VIcon icon="bx-x" size="20" />
+                      </VBtn>
+                    </div>
+                  </div>
+
                   <div class="d-flex justify-end gap-4 pt-2 flex-wrap">
                     <IconBtn
                       icon="bx-trash"
-                      @click="showReplyForm = false; replyMessage = ''"
+                      @click="clearReplyForm"
+                    />
+                    <input
+                      ref="replyAttachmentInput"
+                      type="file"
+                      multiple
+                      class="d-none"
+                      @change="handleReplyAttachmentSelect"
                     />
                     <VBtn
                       variant="text"
                       color="secondary"
+                      @click="replyAttachmentInput?.click()"
                     >
                       <template #prepend>
                         <VIcon
@@ -1094,7 +1116,7 @@ const closeEmailView = () => {
                           size="16"
                         />
                       </template>
-                      Attachments
+                      {{ replyAttachments.length ? `${replyAttachments.length} Attachments` : 'Add Attachments' }}
                     </VBtn>
                     <VBtn 
                       append-icon="bx-paper-plane" 
@@ -1187,46 +1209,50 @@ const closeEmailView = () => {
 
 .email-item {
   .d-flex.align-center {
+    align-items: flex-start !important; // Align content to top
     gap: 0.5rem;
+    min-block-size: 64px; // Reduced to two lines
+    padding-block: 0.75rem; // Add some vertical padding
 
     .checkbox-column {
       inline-size: 20px;
+      margin-block-start: 0.25rem; // Align checkbox with text
       min-inline-size: 20px;
     }
 
     .star-column {
       inline-size: 38px;
+      margin-block-start: 0.25rem; // Align star icon with text
       min-inline-size: 38px;
     }
 
     .read-column {
       inline-size: 38px;
+      margin-block-start: 0.25rem; // Align read icon with text
       min-inline-size: 38px;
     }
 
     .status-column {
-      inline-size: 90px;
-      min-inline-size: 90px;
-    }
-
-    .due-date-column {
-      inline-size: 80px;
-      min-inline-size: 80px;
-    }
-
-    .from-column {
       inline-size: 180px;
       min-inline-size: 180px;
     }
 
-    .to-column {
-      inline-size: 180px;
-      min-inline-size: 180px;
+    .participants-column {
+      inline-size: 200px;
+      min-inline-size: 200px;
     }
 
-    .labels-column {
-      inline-size: 120px;
-      min-inline-size: 120px;
+    .project-subject-column {
+      inline-size: 250px;
+      min-inline-size: 250px;
+    }
+
+    .message-column {
+      display: -webkit-box;
+      overflow: hidden;
+      flex-grow: 1;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2; // Show only 2 lines
     }
   }
 }
@@ -1337,3 +1363,4 @@ const closeEmailView = () => {
   }
 }
 </style>
+

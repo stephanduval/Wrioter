@@ -17,7 +17,7 @@ class MessageResource extends JsonResource
     public function toArray(Request $request): array
     {
         // Eager load relationships if they aren't already
-        $this->resource->loadMissing(['sender', 'receiver', 'labels', 'attachments']);
+        $this->resource->loadMissing(['sender', 'receiver', 'labels', 'attachments', 'project']);
 
         // Determine folder based on status AND archive flag
         $folder = 'inbox'; // Default
@@ -80,6 +80,17 @@ class MessageResource extends JsonResource
             'folder' => $folder, // Calculated folder
             'status' => $this->status, // Existing status (read/unread/deleted)
             'task_status' => $this->task_status, // New task status ('new'/'completed')
+            'due_date' => $this->due_date?->toDateString(),
+            'company_id' => $this->company_id,
+            'project' => $this->whenLoaded('project', function() {
+                return $this->project ? [
+                    'id' => $this->project->id,
+                    'title' => $this->project->title,
+                    'property' => $this->project->property,
+                    'service_type' => $this->project->service_type,
+                    'deadline' => $this->project->deadline?->toDateString(),
+                ] : null;
+            }),
 
             // Include original fields if needed for debugging or specific logic
             // 'sender_id' => $this->sender_id,

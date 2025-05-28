@@ -49,19 +49,14 @@ const selectedUserForDelete = ref<{ id: number; name: string; email: string } | 
 
 // Update data table options
 const updateOptions = (options: any) => {
-  // console.log('Options received:', options)
-
-  // Update sorting
   if (options.sortBy?.length) {
     sortBy.value = options.sortBy[0]?.key
     orderBy.value = options.sortBy[0]?.order
   }
 
-  // Update pagination
   page.value = options.page || 1
   itemsPerPage.value = options.itemsPerPage || 10
 
-  // Trigger API fetch
   fetchUsers()
 }
 
@@ -87,7 +82,7 @@ const headers = computed(() => [
 const { data: usersData, execute: fetchUsers } = useApi<UserApiResponse>(() => {
   const params = new URLSearchParams()
   params.append('page', String(page.value))
-  params.append('itemsPerPage', String(itemsPerPage.value))
+  params.append('itemsPerPage', String(itemsPerPage.value === -1 ? 'all' : itemsPerPage.value))
   if (searchQuery.value)
     params.append('q', searchQuery.value)
 
@@ -103,7 +98,7 @@ const { data: usersData, execute: fetchUsers } = useApi<UserApiResponse>(() => {
   return `/users?${params.toString()}`
 })
 
-// Add this to store pagination metadata
+// Add pagination metadata ref
 const paginationMeta = ref({
   currentPage: 1,
   lastPage: 1,
@@ -115,11 +110,7 @@ const paginationMeta = ref({
 
 // Watch for changes in usersData to update pagination
 watch(usersData, (data: UserApiResponse | null) => {
-  console.log('Users Data Updated:', data)
-  if (!data) {
-    console.warn('No data received from API')
-    return
-  }
+  if (!data) return
 
   paginationMeta.value = {
     currentPage: data.current_page,
@@ -312,25 +303,11 @@ onMounted(async () => {
   fetchUsers()
 })
 
-// Update the options handler
-const handleOptionsUpdate = (options: any) => {
-  // console.log('Options received:', options)
-
-  const newOptions = {
-    page: options.page || 1,
-    itemsPerPage: options.itemsPerPage || 10,
-    sortBy: options.sortBy?.[0],
-    orderBy: options.sortBy?.[0]?.order,
-  }
-
-  // console.log('Updated options:', newOptions)
-
-  // Only fetch if page or itemsPerPage changed
-  if (page.value !== newOptions.page || itemsPerPage.value !== newOptions.itemsPerPage) {
-    page.value = newOptions.page
-    itemsPerPage.value = newOptions.itemsPerPage
-    fetchUsers()
-  }
+// Update the handleItemsPerPageChange function
+const handleItemsPerPageChange = (value: number) => {
+  itemsPerPage.value = value
+  page.value = 1 // Reset to first page when changing items per page
+  fetchUsers()
 }
 
 // Open Edit Drawer
@@ -474,7 +451,7 @@ The reset code will expire in 60 minutes`
             ]"
             :label="t('itemsPerPage')"
             style="inline-size: 6.25rem;"
-            @update:model-value="itemsPerPage = parseInt($event, 10)"
+            @update:model-value="handleItemsPerPageChange"
           />
         </div>
         <VSpacer />

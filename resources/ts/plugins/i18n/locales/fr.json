@@ -283,13 +283,18 @@
     "emails": {
       "title": "Messages",
       "subject": "Sujet",
+      "project": "Projet",
+      "projectSubject": "Projet - Sujet",
       "from": "De",
       "date": "Date",
       "status": "Statut",
       "actions": "Actions",
       "dueDate": "Date d'échéance",
       "sender": "Expéditeur",
-      "to": "À"
+      "to": "À",
+      "labels": "Étiquettes",
+      "participants": "Participants",
+      "message": "Message"
     }
   },
   "projects": {
@@ -446,6 +451,7 @@
       "addNew": "Ajouter une étiquette",
       "name": "Nom de la nouvelle étiquette",
       "color": "Couleur",
+      "colour": "Couleur",
       "add": "Ajouter",
       "deleteConfirm": {
         "title": "Confirmer la suppression de l'étiquette",

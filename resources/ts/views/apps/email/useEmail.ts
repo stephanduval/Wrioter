@@ -237,6 +237,7 @@ export const useEmail = () => {
     reply_to_id: number; // Original message ID - REQUIRED for reply
     attachments?: File[];
     due_date?: string | null; // Optional due date YYYY-MM-DD
+    project_id?: number | null; // Add project_id parameter
   }): Promise<any | undefined> => { 
     console.log("***** EXECUTING sendReplyMessage *****", payload); 
     try {
@@ -248,6 +249,11 @@ export const useEmail = () => {
       formData.append('company_id', payload.company_id.toString());
       formData.append('receiver_id', payload.receiver_id.toString()); // Original sender
       formData.append('reply_to_id', payload.reply_to_id.toString()); // Original message
+
+      // Append project_id if provided
+      if (payload.project_id) {
+        formData.append('project_id', payload.project_id.toString());
+      }
 
       // Append due_date if provided and not null/empty
       if (payload.due_date) {
@@ -439,6 +445,7 @@ export const useEmail = () => {
         body: data.message,
         reply_to_id: selectedEmail.value.id,
         attachments: data.attachments,
+        project_id: selectedEmail.value.project?.id, // Access project_id through the project object
       })
 
       if (response) {

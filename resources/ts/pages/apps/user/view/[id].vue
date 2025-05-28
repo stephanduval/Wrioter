@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import SharedEmailView from '@/components/SharedEmailView.vue'
+import { useEmail } from '@/views/apps/email/useEmail'
 import axios from 'axios'
 import { format } from 'date-fns'
 import { computed, onMounted, ref } from 'vue'
@@ -175,33 +176,27 @@ const handleEmailNavigate = (direction: 'previous' | 'next') => {
   }
 }
 
+const emailComposable = useEmail()
+
 const handleSendReply = async (data: { message: string, attachments: File[] }) => {
   if (!selectedEmail.value) return
 
   try {
-    const formData = new FormData()
-    formData.append('subject', `Re: ${selectedEmail.value.subject}`)
-    formData.append('body', data.message)
-    formData.append('company_id', selectedEmail.value.company_id.toString())
-    formData.append('receiver_id', selectedEmail.value.from.id.toString())
-    formData.append('reply_to_id', selectedEmail.value.id.toString())
-
-    if (data.attachments && data.attachments.length > 0) {
-      data.attachments.forEach(file => formData.append('attachments[]', file))
-    }
-
-    const response = await axiosInstance.post('/messages', formData, {
-      headers: {
-        'Accept': 'application/json',
-      },
+    const response = await emailComposable.sendReplyMessage({
+      receiver_id: selectedEmail.value.from.id,
+      company_id: selectedEmail.value.company_id,
+      subject: `Re: ${selectedEmail.value.subject}`,
+      body: data.message,
+      reply_to_id: selectedEmail.value.id,
+      attachments: data.attachments,
     })
 
-    if (response.data) {
+    if (response) {
       await handleEmailRefresh()
       handleEmailClose()
     }
   } catch (error) {
-    // console.error('Error sending reply:', error)
+    console.error('Error sending reply:', error)
   }
 }
 

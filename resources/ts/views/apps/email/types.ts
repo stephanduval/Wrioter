@@ -45,6 +45,13 @@ export interface Email {
   task_status?: 'new' | 'in_process' | 'completed'; // Added Task Status
   isArchived: boolean;          // Added Archive flag
   company_id: number;          // Added company_id field
+  project?: {                  // Added project information
+    id: number;
+    title: string;
+    property?: string | null;
+    service_type?: string | null;
+    deadline?: string | null;
+  } | null;
 }
 
 // Add MoveEmailToAction if not present

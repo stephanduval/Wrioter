@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import AddNewCompanyDrawer from '@/views/apps/companies/list/AddNewCompanyDrawer.vue';
 import EditCompanyDrawer from '@/views/apps/companies/list/EditCompanyDrawer.vue';
+import TablePagination from '@core/components/TablePagination.vue';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 
@@ -72,6 +73,30 @@ const { data: companiesData, execute: fetchCompanies } = useApi<CompanyApiRespon
 
 const companies = computed(() => companiesData.value?.data || []);
 const totalCompanies = computed(() => companiesData.value?.total || 0);
+
+// Add pagination metadata ref
+const paginationMeta = ref({
+  currentPage: 1,
+  lastPage: 1,
+  total: 0,
+  perPage: 10,
+  from: 0,
+  to: 0,
+})
+
+// Watch for changes in companiesData to update pagination
+watch(companiesData, (data: CompanyApiResponse | null) => {
+  if (!data) return
+
+  paginationMeta.value = {
+    currentPage: data.current_page,
+    lastPage: data.last_page,
+    total: data.total,
+    perPage: data.per_page,
+    from: data.from,
+    to: data.to,
+  }
+}, { immediate: true })
 
 // Handle Add Company Result
 const handleCompanyData = async (response: { success: boolean; message?: string; error?: string; company?: any }) => {
@@ -243,6 +268,16 @@ const handleItemsPerPageChange = (value: number) => {
             <IconBtn @click="deleteCompany(item.id)">
               <VIcon icon="bx-trash" />
             </IconBtn>
+          </template>
+
+          <!-- Pagination -->
+          <template #bottom>
+            <TablePagination
+              v-model:page="page"
+              :items-per-page="itemsPerPage"
+              :total-items="totalCompanies"
+              :showing-text="t('companies.showing', { from: paginationMeta.from, to: paginationMeta.to, total: paginationMeta.total })"
+            />
           </template>
         </VDataTableServer>
       </VCard>

@@ -31,87 +31,88 @@ class MessageController extends Controller
 
     public function index(Request $request)
     {
-        Log::info("Fetching messages with relationships.");
         $userId = Auth::id();
+        $query = Message::query();
 
-        // Start building the query with base visibility
-        $query = Message::with(['sender', 'receiver', 'labels', 'attachments'])
-                      ->where(function ($q) use ($userId) {
-                          $q->where('receiver_id', $userId)
-                            ->orWhere('sender_id', $userId);
-                      });
+        // Log all request parameters
+        Log::info("MessageController::index - Request parameters:", [
+            'all_params' => $request->all(),
+            'project_id' => $request->input('project_id'),
+            'filter' => $request->input('filter'),
+            'label' => $request->input('label'),
+            'due_today' => $request->input('due_today'),
+            'user_id' => $userId
+        ]);
 
         // Apply filters based on request parameters
-        $filter = $request->query('filter');
-        $label = $request->query('label');
+        $filter = $request->input('filter');
+        $label = $request->input('label');
+        $dueToday = $request->input('due_today') === 'true';
+        $projectId = $request->input('project_id');
 
-        Log::info("Request parameters:", ['filter' => $filter, 'label' => $label]);
+        // Always eager load these relationships
+        $query->with(['sender', 'receiver', 'labels', 'attachments', 'project']);
 
-        // --- Apply Specific Filters ---
-        if ($filter) {
-            Log::info("Applying filter: {$filter}");
-            switch ($filter) {
-                case 'all':
-                    // No additional filters needed, base query already includes sender/receiver
-                    // We want everything, including archived and deleted (trash)
-                    Log::info("Filter 'all' selected. Showing all messages.");
-                    break;
-                case 'archive':
-                    // Restore original logic
-                    $query->where('is_archived', true);
-                    break;
-                case 'starred':
-                    // Starred assumes non-archived, non-deleted unless explicitly in those folders
-                    $query->where('is_starred', true)
-                          ->where('is_archived', false) // Exclude archived from starred view
-                          ->where('status', '!=', 'deleted'); // Exclude trashed from starred view
-                    break;
-                case 'sent':
-                    // Sent items are from the sender, exclude archived/deleted
-                    $query->where('sender_id', $userId)
-                          // ->where('status', 'sent') // Can likely remove this if sender_id implies sent
-                          ->where('is_archived', false)
-                          ->where('status', '!=', 'deleted');
-                     break;
-                 case 'trash':
-                     $query->where('status', 'deleted');
-                    // Trash view ignores archive status (can un-delete to inbox/archive)
-                     break;
-                 // Add other filters like 'spam', 'draft' if needed
-
-                // Default case (treat any other filter value like inbox? Or ignore?)
-                // Let's assume unknown filters default to inbox logic (below)
-                default:
-                     Log::info("Filter '{$filter}' not explicitly handled, defaulting to inbox logic."); // Corrected variable name here
-                     // Fall through to the default inbox logic
-                    $query->where('receiver_id', $userId)
-                           ->where('is_archived', false)
-                           ->whereNotIn('status', ['deleted', 'draft', 'spam']); // Inbox excludes these
-                     break;
+        // Filter by project_id if provided
+        if ($projectId) {
+            Log::info("Applying project filter for project_id: {$projectId}", [
+                'query_sql' => $query->toSql(),
+                'query_bindings' => $query->getBindings()
+            ]);
+            // When filtering by project, we want ALL messages for that project
+            $query->where('project_id', $projectId)
+                  ->where('status', '!=', 'deleted'); // Only exclude deleted messages
+            Log::info("After adding project filter:", [
+                'query_sql' => $query->toSql(),
+                'query_bindings' => $query->getBindings()
+            ]);
+        } else {
+            // --- Specific Filters ---
+            if ($filter === 'sent') {
+                Log::info("Applying sent filter");
+                $query->where('sender_id', $userId)
+                      ->where('status', '!=', 'deleted');
+            } elseif ($filter === 'starred') {
+                Log::info("Applying starred filter");
+                $query->where('receiver_id', $userId)
+                      ->where('is_starred', true)
+                      ->where('status', '!=', 'deleted');
+            } elseif ($filter === 'archive') {
+                Log::info("Applying archive filter");
+                $query->where('receiver_id', $userId)
+                      ->where('is_archived', true)
+                      ->where('status', '!=', 'deleted');
+            } elseif ($filter === 'trash') {
+                Log::info("Applying trash filter");
+                $query->where('receiver_id', $userId)
+                      ->where('status', 'deleted');
+            } elseif ($label) {
+                Log::info("Applying label filter: {$label}");
+                // Labels apply to non-archived, non-deleted received mail
+                $query->whereHas('labels', function ($labelQuery) use ($label, $userId) {
+                    $labelQuery->where('label_name', $label)
+                              ->where('user_id', $userId); 
+                })
+                ->where('receiver_id', $userId)
+                ->where('is_archived', false)
+                ->where('status', '!=', 'deleted');
+            } else { // Default view: INBOX
+                Log::info("Defaulting to Inbox view (no filter specified)");
+                $query->where('receiver_id', $userId)
+                      ->where('is_archived', false) 
+                      ->whereNotIn('status', ['deleted', 'draft', 'spam']); // Inbox excludes these
             }
-        } elseif ($label) {
-            Log::info("Applying label filter: {$label}");
-            // Labels apply to non-archived, non-deleted received mail
-             $query->whereHas('labels', function ($labelQuery) use ($label, $userId) {
-                 $labelQuery->where('label_name', $label)
-                            ->where('user_id', $userId); 
-             })
-             ->where('receiver_id', $userId)
-             ->where('is_archived', false)
-             ->where('status', '!=', 'deleted');
-        } else { // Default view: INBOX
-             Log::info("Defaulting to Inbox view (no filter specified)");
-            $query->where('receiver_id', $userId)
-                    ->where('is_archived', false) 
-                    ->whereNotIn('status', ['deleted', 'draft', 'spam']); // Inbox excludes these
         }
         // --- End Specific Filters ---
 
         $messages = $query->orderBy('created_at', 'desc')->get();
 
-        Log::info("Retrieved messages count: " . $messages->count());
-        // Avoid logging potentially large arrays in production
-        // Log::debug("Retrieved messages after filtering:", $messages->toArray());
+        Log::info("Retrieved messages count: " . $messages->count(), [
+            'project_id' => $projectId,
+            'has_project_filter' => !is_null($projectId),
+            'messages_with_project' => $messages->whereNotNull('project_id')->count(),
+            'messages_with_matching_project' => $messages->where('project_id', $projectId)->count()
+        ]);
 
         return MessageResource::collection($messages);
     }
@@ -217,7 +218,7 @@ class MessageController extends Controller
             'task_status' => 'new',     // Default task status
             'due_date' => $validated['due_date'] ?? null, // Add due date
             'is_archived' => false,    // Default archive status
-            'project_id' => $project_id, // Assign the project ID if a project was created
+            'project_id' => $isReply ? Message::find($validated['reply_to_id'])->project_id : $project_id, // Copy project_id from original message for replies
         ];
 
         Log::info('MessageController::store - Attempting to create message with:', $createData); 

@@ -282,6 +282,8 @@
     "emails": {
       "title": "Messages",
       "subject": "Subject",
+      "project": "Project",
+      "projectSubject": "Project - Subject",
       "from": "From",
       "date": "Date",
       "status": "Status",
@@ -289,7 +291,9 @@
       "dueDate": "Due Date",
       "sender": "Sender",
       "to": "To",
-      "labels": "Labels"
+      "labels": "Labels",
+      "participants": "Participants",
+      "message": "Message"
     }
   },
   "projects": {
@@ -344,7 +348,8 @@
       "noHistory": "No history found",
       "cancel": "Cancel",
       "saveChanges": "Save Changes",
-      "sendMessage": "Send Message"
+      "sendMessage": "Send Message",
+      "fromMessage": "From message"
     },
     "showing": "Showing {from} to {to} of {total} entries"
   },
@@ -446,6 +451,7 @@
       "addNew": "Add New Label",
       "name": "New Label Name",
       "color": "Color",
+      "colour": "Colour",
       "add": "Add",
       "deleteConfirm": {
         "title": "Confirm Delete Label",

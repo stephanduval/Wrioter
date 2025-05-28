@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import SharedEmailView from '@/components/SharedEmailView.vue'
+import { useEmail } from '@/views/apps/email/useEmail'
 import axios from 'axios'
 import { format } from 'date-fns'
 import { computed, onMounted, ref, watch } from 'vue'
@@ -183,6 +184,8 @@ const stripHtml = (html: string) => {
   return tmp.textContent || tmp.innerText || ''
 }
 
+const emailComposable = useEmail()
+
 const fetchProject = async () => {
   console.log('Fetching project:', projectId)
   debugAuthState()
@@ -206,39 +209,24 @@ const fetchProject = async () => {
       project: response.data.data,
       messages: response.data.data?.messages,
       attachments: response.data.data?.attachments,
-      attachmentCount: response.data.data?.attachment_count,
+      attachmentCount: response.data.data?.attachments?.length || 0,
       client: response.data.data?.client,
       company: response.data.data?.company
     })
 
-    // Log individual messages with their attachments
-    if (response.data.data?.messages) {
-      console.log('Messages with attachments:')
-      response.data.data.messages.forEach((message: any, index: number) => {
-        console.log(`Message ${index + 1}:`, {
-          id: message.id,
-          subject: message.subject,
-          created_at: message.created_at,
-          has_attachments: message.has_attachments,
-          attachments: message.attachments
-        })
-      })
-    }
-
     // Log all attachments with their details
     if (response.data.data?.attachments) {
-      console.log('All Project Attachments:')
-      response.data.data.attachments.forEach((attachment: any, index: number) => {
-        console.log(`Attachment ${index + 1}:`, {
-          id: attachment.id,
-          filename: attachment.filename,
-          message_id: attachment.message_id,
-          mime_type: attachment.mime_type,
-          size: attachment.size,
-          download_url: attachment.download_url,
-          created_at: attachment.created_at
-        })
-      })
+      console.log('All Project Attachments:', response.data.data.attachments.map((attachment: any) => ({
+        id: attachment.id,
+        filename: attachment.filename,
+        message_id: attachment.message_id,
+        message_subject: attachment.message_subject,
+        message_date: attachment.message_date,
+        mime_type: attachment.mime_type,
+        size: attachment.size,
+        download_url: attachment.download_url,
+        created_at: attachment.created_at
+      })))
     }
     
     project.value = response.data.data
@@ -261,8 +249,8 @@ const fetchProject = async () => {
     console.log('Final component state:', {
       project: project.value,
       messages: messages.value,
-      hasAttachments: project.value?.attachments?.length > 0,
-      attachmentCount: project.value?.attachments?.length,
+      hasAttachments: (project.value?.attachments?.length ?? 0) > 0,
+      attachmentCount: project.value?.attachments?.length ?? 0,
       firstMessageAttachments: messages.value[0]?.attachments,
       firstProjectAttachment: project.value?.attachments?.[0]
     })
@@ -416,24 +404,16 @@ const handleSendReply = async (data: { message: string, attachments: File[] }) =
   if (!selectedEmail.value) return
 
   try {
-    const formData = new FormData()
-    formData.append('subject', `Re: ${selectedEmail.value.subject}`)
-    formData.append('message', data.message)
-    formData.append('company_id', selectedEmail.value.from.company_id.toString())
-    formData.append('receiver_id', selectedEmail.value.from.id.toString())
-    formData.append('reply_to_id', selectedEmail.value.id.toString())
-
-    if (data.attachments) {
-      data.attachments.forEach(file => formData.append('attachments[]', file))
-    }
-
-    const response = await axiosInstance.post('/messages', formData, {
-      headers: {
-        'Accept': 'application/json',
-      },
+    const response = await emailComposable.sendReplyMessage({
+      receiver_id: selectedEmail.value.from.id,
+      company_id: selectedEmail.value.company_id,
+      subject: `Re: ${selectedEmail.value.subject}`,
+      body: data.message,
+      reply_to_id: selectedEmail.value.id,
+      attachments: data.attachments,
     })
 
-    if (response.data) {
+    if (response) {
       await fetchProject()
       handleEmailClose()
     }
@@ -1051,7 +1031,7 @@ const formatFileSize = (bytes: number) => {
                 />
               </template>
 
-              <VListItemTitle class="d-flex align-center">
+              <VListItemTitle class="d-flex flex-column">
                 <a
                   href="#"
                   class="text-decoration-none"
@@ -1059,6 +1039,10 @@ const formatFileSize = (bytes: number) => {
                 >
                   {{ attachment.filename }}
                 </a>
+                <span class="text-caption text-medium-emphasis">
+                  {{ t('projects.details.fromMessage') }}: {{ attachment.message_subject }}
+                  ({{ formattedDate(attachment.message_date) }})
+                </span>
               </VListItemTitle>
 
               <VListItemSubtitle>

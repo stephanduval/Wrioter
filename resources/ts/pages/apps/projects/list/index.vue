@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import axios from '@/../js/axios'
+import TablePagination from '@core/components/TablePagination.vue'
 import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
@@ -43,6 +44,30 @@ const sortDesc = ref(true)
 const isLoading = ref(true)
 const projectsData = ref<ApiResponse | null>(null)
 const clients = ref<{ id: number; name: string }[]>([])
+
+// Add pagination metadata ref
+const paginationMeta = ref({
+  currentPage: 1,
+  lastPage: 1,
+  total: 0,
+  perPage: 10,
+  from: 0,
+  to: 0,
+})
+
+// Watch for changes in projectsData to update pagination
+watch(projectsData, (data: ApiResponse | null) => {
+  if (!data) return
+
+  paginationMeta.value = {
+    currentPage: data.current_page,
+    lastPage: data.last_page,
+    total: data.total,
+    perPage: data.per_page,
+    from: data.from,
+    to: data.to,
+  }
+}, { immediate: true })
 
 // Add user role check
 const userRole = computed(() => {
@@ -139,18 +164,20 @@ const resolveStatusVariant = (status: string) => {
 }
 
 const handleOptionsUpdate = (options: any) => {
-  console.log('Options received:', options)
-
-  // Update sorting
   if (options.sortBy?.length) {
     sortBy.value = options.sortBy[0].key
     sortDesc.value = options.sortBy[0].order === 'desc'
   }
 
-  // Update pagination
-  page.value = options.page
-  itemsPerPage.value = options.itemsPerPage
+  page.value = options.page || 1
+  itemsPerPage.value = options.itemsPerPage || 10
 
+  fetchProjects()
+}
+
+const handleItemsPerPageChange = (value: number) => {
+  itemsPerPage.value = value
+  page.value = 1 // Reset to first page when changing items per page
   fetchProjects()
 }
 
@@ -229,7 +256,7 @@ onMounted(() => {
               ]"
               :label="t('itemsPerPage')"
               style="inline-size: 6.25rem;"
-              @update:model-value="itemsPerPage = parseInt($event, 10)"
+              @update:model-value="handleItemsPerPageChange"
             />
           </div>
           <VSpacer />
@@ -278,7 +305,6 @@ onMounted(() => {
           :items-length="totalProjects"
           :loading="isLoading"
           class="text-no-wrap"
-          density="compact"
           @update:options="handleOptionsUpdate"
         >
           <!-- Project -->
@@ -393,6 +419,16 @@ onMounted(() => {
             <div class="d-flex justify-center align-center pa-4">
               No projects found
             </div>
+          </template>
+
+          <!-- Pagination -->
+          <template #bottom>
+            <TablePagination
+              v-model:page="page"
+              :items-per-page="itemsPerPage"
+              :total-items="totalProjects"
+              :showing-text="t('projects.showing', { from: paginationMeta.from, to: paginationMeta.to, total: paginationMeta.total })"
+            />
           </template>
         </VDataTableServer>
       </VCard>
