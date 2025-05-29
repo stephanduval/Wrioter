@@ -56,19 +56,22 @@ interface CompanyApiResponse {
 
 // 👉 Fetching companies
 const { data: companiesData, execute: fetchCompanies } = useApi<CompanyApiResponse>(() => {
-  const params = new URLSearchParams({
-    page: String(page.value),
-    itemsPerPage: String(itemsPerPage.value === -1 ? 'all' : itemsPerPage.value),
-  }).toString()
+  const params = new URLSearchParams()
+  params.append('page', String(page.value))
+  params.append('itemsPerPage', itemsPerPage.value === -1 ? 'all' : String(itemsPerPage.value))
+  if (searchQuery.value)
+    params.append('q', searchQuery.value)
 
-  return `/paginatedCompanies?${params}`
-}, {
-  method: 'GET',
-  headers: {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-  },
-  credentials: 'include',
+  const token = localStorage.getItem('accessToken')
+  console.log('Fetching companies with params:', {
+    page: page.value,
+    itemsPerPage: itemsPerPage.value === -1 ? 'all' : itemsPerPage.value,
+    searchQuery: searchQuery.value,
+    token: token ? 'Present' : 'Missing',
+    url: `/paginatedCompanies?${params.toString()}`,
+  })
+
+  return `/paginatedCompanies?${params.toString()}`
 })
 
 const companies = computed(() => companiesData.value?.data || []);
@@ -137,13 +140,46 @@ onMounted(async () => {
   }
 });
 
+// Update the watch for search/filter changes
 watch(
-  // Removed selectedRole, selectedPlan, selectedStatus from the watch array
   [searchQuery, itemsPerPage, page, sortBy, orderBy],
-  () => {
-    fetchCompanies();
+  async () => {
+    console.log('Filters changed, fetching companies with:', {
+      searchQuery: searchQuery.value,
+      itemsPerPage: itemsPerPage.value,
+      page: page.value,
+      sortBy: sortBy.value,
+      orderBy: orderBy.value,
+    })
+    try {
+      await fetchCompanies()
+    }
+    catch (error) {
+      console.error('Error fetching companies after filter change:', error)
+    }
+  },
+)
+
+// Update the handleItemsPerPageChange function
+const handleItemsPerPageChange = (value: number) => {
+  console.log('Items per page changed:', { oldValue: itemsPerPage.value, newValue: value })
+  itemsPerPage.value = Number(value) // Ensure value is treated as a number
+  page.value = 1 // Reset to first page when changing items per page
+  fetchCompanies()
+}
+
+// Update options
+const updateOptions = (options: any) => {
+  if (options.sortBy?.length) {
+    sortBy.value = options.sortBy[0]?.key
+    orderBy.value = options.sortBy[0]?.order
   }
-);
+
+  page.value = options.page || 1
+  itemsPerPage.value = options.itemsPerPage || 10
+
+  fetchCompanies()
+}
 
 // 👉 Delete Company
 const deleteCompany = async (id: number) => {
@@ -163,26 +199,6 @@ const deleteCompany = async (id: number) => {
   } catch (error) {
     // console.error('Error deleting company:', error)
   }
-}
-
-// 👉 Update options
-const updateOptions = (options: any) => {
-  if (options.sortBy?.length) {
-    sortBy.value = options.sortBy[0]?.key;
-    orderBy.value = options.sortBy[0]?.order;
-  }
-
-  page.value = options.page || 1;
-  itemsPerPage.value = options.itemsPerPage || 10;
-
-  fetchCompanies();
-};
-
-// Update the itemsPerPage handler to reset to page 1 when changing
-const handleItemsPerPageChange = (value: number) => {
-  itemsPerPage.value = value
-  page.value = 1 // Reset to first page when changing items per page
-  fetchCompanies()
 }
 </script>
 
@@ -214,6 +230,7 @@ const handleItemsPerPageChange = (value: number) => {
               <AppTextField
                 v-model="searchQuery"
                 :placeholder="t('companies.search')"
+                @update:model-value="() => { page.value = 1; fetchCompanies() }"
               />
             </div>
 

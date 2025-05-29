@@ -1,5 +1,4 @@
 import type { Email, EmailLabel, MoveEmailToAction } from '@/views/apps/email/types';
-import { isToday, parseISO } from 'date-fns';
 import type { PartialDeep } from 'type-fest';
 import { onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
@@ -90,63 +89,97 @@ export const useEmail = () => {
     }
   }
 
-  // ✅ Fetch messages, now including filter/label parameters
-  const fetchMessages = async (): Promise<Email[]> => {
+  // ✅ Fetch messages, now including filter/label parameters and search
+  const fetchMessages = async (searchParams?: string): Promise<Email[]> => {
     try {
-      console.log("🔥 Fetching messages from API...");
+      console.log('useEmail.fetchMessages - Starting with params:', {
+        searchParams,
+        currentFilter: route.params.filter,
+        currentLabel: route.params.label,
+        route: route.fullPath
+      })
 
-      // Prepare query parameters
-      const queryParams = new URLSearchParams();
-      const currentFilter = 'filter' in route.params ? route.params.filter as string : undefined;
-      const currentLabel = 'label' in route.params ? route.params.label as string : undefined;
-
+      // Initialize queryParams with search params if provided
+      const queryParams = new URLSearchParams(searchParams || '')
+      
+      // Add filter and label params if they exist in the route
+      const currentFilter = route.params.filter as string | undefined
+      const currentLabel = route.params.label as string | undefined
+      
       if (currentFilter) {
-        queryParams.append('filter', currentFilter);
-        console.log(`🔍 Fetching with filter: ${currentFilter}`);
-        
-        // Special handling for due-today filter
-        if (currentFilter === 'due-today') {
-          // Let the server know this is a due-today filter
-          // The actual filtering will happen client-side after getting all messages
-          queryParams.set('filter', 'all');
-          queryParams.append('due_today', 'true');
-          console.log('🔍 Due Today filter: Modified to fetch all messages and filter client-side');
-        }
-      } else if (currentLabel) {
-        queryParams.append('label', currentLabel);
-        console.log(`🔍 Fetching with label: ${currentLabel}`);
+        console.log('useEmail.fetchMessages - Adding filter:', currentFilter)
+        queryParams.set('filter', currentFilter)
+      }
+      
+      if (currentLabel) {
+        console.log('useEmail.fetchMessages - Adding label:', currentLabel)
+        queryParams.set('label', currentLabel)
       }
 
-      // Construct API URL with parameters if they exist
-      const queryString = queryParams.toString();
-      const apiUrl = `/messages${queryString ? '?' + queryString : ''}`;
-      console.log(`📞 Calling API: ${apiUrl}`);
-
-      const response = await $api(apiUrl, { method: 'GET' });
-      console.log("✅ Raw API Response:", response);
-      
-      let messages = (response?.data || []) as Email[];
-      
-      // Apply client-side filtering for due-today
+      // Special handling for due-today filter
       if (currentFilter === 'due-today') {
-        console.log('🔍 Applying client-side filtering for due-today');
-        messages = messages.filter(message => {
-          if (!message.dueDate) return false;
+        console.log('useEmail.fetchMessages - Handling due-today filter')
+        // For due-today, we'll fetch all messages and filter client-side
+        queryParams.delete('filter')
+        const response = await $api(`/messages?${queryParams.toString()}`)
+        
+        // Log the full response for debugging
+        console.log('useEmail.fetchMessages - Due today API response:', response)
+        
+        // Access messages from response.data
+        const messageArray = response?.data || []
+        
+        // Filter messages that are due today
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
+        
+        const tomorrow = new Date(today)
+        tomorrow.setDate(tomorrow.getDate() + 1)
+        
+        const filteredMessages = messageArray.filter((message: any) => {
           try {
-            const dueDateObj = parseISO(message.dueDate);
-            return isToday(dueDateObj);
-          } catch (e) {
-            console.error(`Error processing due date ${message.dueDate} for message ${message.id}:`, e);
-            return false;
+            const dueDate = new Date(message.due_date)
+            return dueDate >= today && dueDate < tomorrow
+          } catch (error) {
+            console.error('useEmail.fetchMessages - Error parsing due date:', error)
+            return false
           }
-        });
-        console.log(`🔍 Due Today filter found ${messages.length} messages`);
+        })
+        
+        console.log('useEmail.fetchMessages - Due today filtered messages:', {
+          total: filteredMessages.length,
+          firstMessage: filteredMessages[0]
+        })
+        
+        messages.value = filteredMessages
+        return filteredMessages
       }
 
-      return messages;
+      // Make the API call with the constructed query parameters
+      const apiUrl = `/messages?${queryParams.toString()}`
+      console.log('useEmail.fetchMessages - Making API call to:', apiUrl)
+      
+      const response = await $api(apiUrl)
+      
+      // Log the full response for debugging
+      console.log('useEmail.fetchMessages - API response:', response)
+      
+      // Access messages from response.data
+      const messageArray = response?.data || []
+      
+      console.log('useEmail.fetchMessages - Processed messages:', {
+        total: messageArray.length,
+        firstMessage: messageArray[0],
+        queryParams: queryParams.toString()
+      })
+      
+      messages.value = messageArray
+      return messageArray
     } catch (error) {
-      console.error("❌ Error fetching messages:", error);
-      return [];
+      console.error('useEmail.fetchMessages - Error:', error)
+      // Return empty array instead of throwing to prevent UI breakage
+      messages.value = []
+      return []
     }
   };
 

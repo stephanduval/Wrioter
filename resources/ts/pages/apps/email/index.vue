@@ -27,6 +27,7 @@ const emailComposable = useEmail();
 
 // console.log('Available labels:', emailComposable.userLabels);
 
+const searchQuery = ref('')
 const messages = ref<Email[]>([]); 
 
 // NEW: Ref for storing summary data of ALL user messages
@@ -37,19 +38,30 @@ interface MessageSummary {
 }
 const allUserMessagesSummary = ref<MessageSummary[]>([]);
 
-const fetchAllMessages = async () => {  
+const fetchAllMessages = async (searchParams?: string) => {  
   try {
-    // console.log("🔥 Fetching messages for current view...");
-    const response = await emailComposable.fetchMessages(); // This should resolve to Email[] from the view types
-    // console.log("✅ View Messages Data:", response);
+    console.log('📥 Fetching messages with params:', {
+      searchParams,
+      currentRoute: route.params,
+      currentFilter: route.params.filter,
+      currentLabel: route.params.label
+    })
+    
+    const response = await emailComposable.fetchMessages(searchParams);
+    console.log('📥 Messages response:', {
+      messageCount: Array.isArray(response) ? response.length : 0,
+      firstMessage: Array.isArray(response) && response.length > 0 ? response[0] : null,
+      searchParams
+    })
+    
     if (Array.isArray(response)) {
       messages.value = response; 
     } else {
-      // console.error("❌ Invalid API response format for view messages:", response);
+      console.error('❌ Invalid API response format:', response)
       messages.value = [];
     }
   } catch (error) {
-    // console.error("❌ Error fetching view messages:", error);
+    console.error('❌ Error fetching messages:', error)
     messages.value = [];
   }
 };
@@ -260,6 +272,27 @@ watch(() => route.params, async () => {
   selectedMessages.value = []; 
 }, { deep: true })
 
+// Watch for search query changes
+watch(
+  () => searchQuery.value,
+  async (newQuery) => {
+    console.log('🔍 Search query changed:', { 
+      newQuery,
+      currentRoute: route.params,
+      currentFilter: route.params.filter,
+      currentLabel: route.params.label
+    })
+    
+    const params = new URLSearchParams()
+    if (newQuery) {
+      params.append('q', newQuery)
+    }
+    
+    console.log('🔍 Constructed search params:', params.toString())
+    await fetchAllMessages(params.toString())
+  },
+  { immediate: true }
+)
 
 // --- Action Handling ---
 
@@ -607,10 +640,11 @@ const closeEmailView = () => {
           </IconBtn>
 
           <VTextField
-            v-model="q"
+            v-model="searchQuery"
             density="default"
             class="email-search px-sm-2 flex-grow-1 py-1"
             :placeholder="t('emails.actions.search')"
+            @update:model-value="() => { fetchAllMessages() }"
           >
             <template #prepend-inner>
               <VIcon
