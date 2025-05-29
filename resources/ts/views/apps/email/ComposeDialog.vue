@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import { useEmail } from '@/views/apps/email/useEmail';
+import { useDebounceFn } from '@vueuse/core';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 
@@ -40,8 +41,86 @@ const ADMIN_USER_ID = 1;
 
 // Simplified user selection state
 const selectedUser = ref<string | null>(null)
-const users = ref<Array<{ id: number, fullName: string, email: string }>>([])
+
+// Add back the loading ref
 const loading = ref(false)
+
+// Update the interface for user data
+interface UserData {
+  id: number
+  fullName: string
+  email: string
+  role: string
+}
+
+// Add pagination state
+const userPage = ref(1)
+const userItemsPerPage = ref(50) // Show more users per page in dropdown
+const userSearchQuery = ref('')
+const userTotal = ref(0)
+const isLoadingUsers = ref(false)
+
+// Replace the existing users ref with a computed property
+const users = ref<UserData[]>([])
+
+// Add function to fetch users with pagination
+const fetchUsers = async (search = '') => {
+  if (!isAdmin.value) return // Only fetch for admin users
+  
+  try {
+    isLoadingUsers.value = true
+    const params = new URLSearchParams({
+      page: String(userPage.value),
+      itemsPerPage: String(userItemsPerPage.value),
+      q: search || userSearchQuery.value,
+    })
+
+    const response = await fetch(`/api/users?${params.toString()}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+      },
+    })
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch users')
+    }
+
+    const data = await response.json()
+    
+    // Update the users list with the new data
+    users.value = data.data.map((user: any) => ({
+      id: user.id,
+      fullName: user.fullName,
+      email: user.email,
+      role: user.role,
+    }))
+    
+    // Update pagination metadata
+    userTotal.value = data.total
+    userPage.value = data.current_page
+    userItemsPerPage.value = data.per_page
+
+    console.log('Fetched users:', {
+      total: data.total,
+      currentPage: data.current_page,
+      perPage: data.per_page,
+      users: users.value
+    })
+  } catch (error) {
+    console.error('Error fetching users:', error)
+  } finally {
+    isLoadingUsers.value = false
+  }
+}
+
+// Add debounced search handler
+const debouncedSearch = useDebounceFn((value: string) => {
+  userSearchQuery.value = value
+  userPage.value = 1 // Reset to first page on new search
+  fetchUsers(value)
+}, 300)
 
 // Add debug logging to the computed properties
 const userData = computed(() => {
@@ -117,79 +196,48 @@ interface MessagePayload {
   }
 }
 
-// Update onMounted with more debug logging
+// Update onMounted
 onMounted(async () => {
   try {
     loading.value = true
-    console.log('Component mounted, user role:', userRole.value) // Debug log
+    console.log('Component mounted, user role:', userRole.value)
     
-    // Only fetch users if the current user is an admin
     if (isAdmin.value) {
-      console.log('Fetching users for admin...') // Debug log
-      const response = await fetch('/api/users?itemsPerPage=-1', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-        },
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        console.error('Failed to fetch users:', errorData) // Debug log
-        throw new Error(errorData.error || 'Failed to fetch users')
-      }
-
-      const usersData = await response.json()
-      console.log('Fetched users data:', usersData) // Debug log
-      
-      if (usersData.data) {
-        users.value = usersData.data.map((user: any) => ({
-          id: user.id,
-          fullName: user.fullName,
-          email: user.email,
-        }))
-        console.log('Mapped users:', users.value) // Debug log
-      } else {
-        console.error('Unexpected API response format:', usersData)
-        throw new Error('Invalid API response format')
-      }
+      await fetchUsers() // Initial fetch
     } else {
-      console.log('Setting admin as only option for non-admin user') // Debug log
       // For client users, set the admin as the only option
       users.value = [{
         id: ADMIN_USER_ID,
-        fullName: 'Administrator',
+        fullName: ADMIN_NAME,
         email: ADMIN_EMAIL,
+        role: 'admin',
       }]
       selectedUser.value = ADMIN_EMAIL
     }
     
     // Initialize project form with defaults
-    if (!projectTitle.value) projectTitle.value = '';
-    if (!property.value) property.value = '';
-    if (!timePreference.value) timePreference.value = 'anytime';
-    if (!serviceType.value) serviceType.value = '';
+    if (!projectTitle.value) projectTitle.value = ''
+    if (!property.value) property.value = ''
+    if (!timePreference.value) timePreference.value = 'anytime'
+    if (!serviceType.value) serviceType.value = ''
     
     // Set default dates
     if (!dueDate.value) {
-      const defaultDueDate = new Date();
-      defaultDueDate.setDate(defaultDueDate.getDate() + 14);
-      dueDate.value = defaultDueDate.toISOString().split('T')[0];
+      const defaultDueDate = new Date()
+      defaultDueDate.setDate(defaultDueDate.getDate() + 14)
+      dueDate.value = defaultDueDate.toISOString().split('T')[0]
     }
 
     if (!latestCompletionDate.value) {
-      const defaultLatestCompletion = new Date();
-      defaultLatestCompletion.setDate(defaultLatestCompletion.getDate() + 21);
-      latestCompletionDate.value = defaultLatestCompletion.toISOString().split('T')[0];
+      const defaultLatestCompletion = new Date()
+      defaultLatestCompletion.setDate(defaultLatestCompletion.getDate() + 21)
+      latestCompletionDate.value = defaultLatestCompletion.toISOString().split('T')[0]
     }
     
     loading.value = false
-  }
-  catch (error) {
+  } catch (error) {
     console.error('Error in onMounted:', error)
     loading.value = false
-    // You might want to show an error message to the user here
   }
 })
 
@@ -343,6 +391,15 @@ const resetValues = () => {
   serviceType.value = '';
   serviceDescription.value = '';
 }
+
+const isFormValid = computed(() => {
+  // For client users, check all required fields
+  if (isClient.value) {
+    return !!(projectTitle.value && property.value && serviceType.value && dueDate.value && subject.value && content.value && selectedUser.value)
+  }
+  // For admin users, only check basic message fields
+  return !!(subject.value && content.value && selectedUser.value)
+})
 </script>
 
 <template>
@@ -397,9 +454,10 @@ const resetValues = () => {
               item-value="email"
               :label="t('emails.compose.to')"
               :placeholder="t('emails.compose.selectRecipient')"
-              :loading="loading"
+              :loading="isLoadingUsers"
               :rules="[(v: string | null) => !!v || 'Recipient is required']"
               class="mb-4"
+              @update:search="debouncedSearch"
             >
               <template #item="{ props, item }">
                 <VListItem v-bind="props">
@@ -665,15 +723,27 @@ const resetValues = () => {
     </div>
 
     <div class="d-flex align-center px-6 py-4">
-      <VBtn
-        color="primary"
-        class="me-4"
-        append-icon="bx-paper-plane"
-        :disabled="(isClient && (!projectTitle || !property || !serviceType || !dueDate)) || !subject || !content || attachmentErrors.length > 0"
-        @click="sendMessage"
-      >
-        {{ t('emails.compose.send') }}
-      </VBtn>
+      <div class="d-flex align-center flex-grow-1">
+        <VBtn
+          color="primary"
+          class="me-4"
+          append-icon="bx-paper-plane"
+          :disabled="!isFormValid || attachmentErrors.length > 0"
+          @click="sendMessage"
+        >
+          {{ t('emails.compose.send') }}
+        </VBtn>
+
+        <VAlert
+          v-if="!isFormValid"
+          color="error"
+          variant="tonal"
+          density="compact"
+          class="mb-0"
+        >
+          {{ t('emails.compose.validation.allFieldsRequired') }}
+        </VAlert>
+      </div>
 
       <VSpacer />
 
@@ -797,6 +867,13 @@ const resetValues = () => {
 
   .position-relative {
     position: relative;
+  }
+}
+
+.v-alert {
+  &.v-alert--density-compact {
+    padding-block: 4px;
+    padding-inline: 8px;
   }
 }
 </style>

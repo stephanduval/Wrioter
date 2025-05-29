@@ -444,7 +444,11 @@
         "voiceOver": "Voice Over",
         "other": "Other"
       },
-      "cancel": "Cancel"
+      "cancel": "Cancel",
+      "validation": {
+        "allFieldsRequired": "All fields must be filled before sending",
+        "titleRequired": "Project title is required"
+      }
     },
     "labels": {
       "title": "LABELS",

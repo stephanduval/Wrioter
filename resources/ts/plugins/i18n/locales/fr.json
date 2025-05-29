@@ -444,7 +444,17 @@
         "voiceOver": "Voice-over",
         "other": "Autre"
       },
-      "cancel": "Annuler"
+      "cancel": "Annuler",
+      "validation": {
+        "allFieldsRequired": "Tous les champs doivent être remplis avant l'envoi",
+        "titleRequired": "Le titre du projet est requis",
+        "propertyRequired": "La propriété est requise",
+        "serviceTypeRequired": "Le type de service est requis",
+        "dueDateRequired": "La date d'échéance est requise",
+        "dueDateFuture": "La date d'échéance doit être aujourd'hui ou plus tard",
+        "completionDateRequired": "La date limite de réalisation est requise",
+        "completionDateAfterDue": "La date limite de réalisation doit être égale ou postérieure à la date d'échéance"
+      }
     },
     "labels": {
       "title": "ÉTIQUETTES",
