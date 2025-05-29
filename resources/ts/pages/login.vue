@@ -61,11 +61,11 @@ const login = async () => {
     })
 
     // Add debugging
-    console.log('Login Response:', {
-      accessToken: accessToken ? 'Token received' : 'No token',
-      userData: userData ? 'User data received' : 'No user data',
-      abilityRules: abilityRules ? `${abilityRules.length} rules received` : 'No rules',
-    })
+    // console.log('Login Response:', {
+    //   accessToken: accessToken ? 'Token received' : 'No token',
+    //   userData: userData ? 'User data received' : 'No user data',
+    //   abilityRules: abilityRules ? `${abilityRules.length} rules received` : 'No rules',
+    // })
 
     if (!accessToken || !userData || !abilityRules) {
       throw new Error('Invalid login response - missing required data')
@@ -77,20 +77,20 @@ const login = async () => {
         action: rule.action.toLowerCase(),
         subject: rule.subject.toLowerCase(),
       }
-      console.log('Mapping rule:', { original: rule, mapped: mappedRule })
+      // console.log('Mapping rule:', { original: rule, mapped: mappedRule })
       return mappedRule
     })
-    console.log('Mapped Ability Rules:', mappedRules)
+    // console.log('Mapped Ability Rules:', mappedRules)
     
     ability.update(mappedRules)
 
     // Verify ability was updated
-    console.log('Current Ability Rules:', ability.rules)
+    // console.log('Current Ability Rules:', ability.rules)
 
     // Use the enhanced setAuthData utility
     try {
       setAuthData({ accessToken, userData, abilityRules })
-      console.log('Auth data stored successfully')
+      // console.log('Auth data stored successfully')
     } catch (error) {
       console.error('Failed to store auth data:', error)
       throw new Error('Failed to store authentication data')
@@ -100,23 +100,23 @@ const login = async () => {
     const userRole = userData.role?.toLowerCase() || 'User';
     let targetRoute: RouteLocationRaw;
 
-    console.log(`[DEBUG] Determining redirect target for role: ${userRole}`);
+    // console.log(`[DEBUG] Determining redirect target for role: ${userRole}`);
 
     if (userRole === 'admin' || userRole === 'auth') {
         targetRoute = { name: 'dashboards-analytics' };
-        console.log(`[DEBUG] Target set for admin/auth:`, targetRoute);
+        // console.log(`[DEBUG] Target set for admin/auth:`, targetRoute);
     } else if (userRole === 'client') {
         targetRoute = { name: 'apps-email' };
-        console.log(`[DEBUG] Target set for client:`, targetRoute);
+        // console.log(`[DEBUG] Target set for client:`, targetRoute);
     } else if (userRole === 'manager' || userRole === 'user') {
         targetRoute = { path: '/messages/list' };
-        console.log(`[DEBUG] Target set for manager/user:`, targetRoute);
+        // console.log(`[DEBUG] Target set for manager/user:`, targetRoute);
     } else {
-        console.warn(`[DEBUG] Unexpected role "${userRole}", defaulting to dashboards-analytics`);
+        // console.warn(`[DEBUG] Unexpected role "${userRole}", defaulting to dashboards-analytics`);
         targetRoute = { name: 'dashboards-analytics' };
     }
 
-    console.log(`[DEBUG] Attempting router.replace with:`, targetRoute);
+    // console.log(`[DEBUG] Attempting router.replace with:`, targetRoute);
     await router.replace(targetRoute);
 
   } catch (err: any) {

@@ -12,11 +12,11 @@ const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '/api'
 
 // Add debug logging for localStorage
 const debugAuthState = () => {
-  console.log('Current Auth State:', {
-    accessToken: localStorage.getItem('accessToken') ? 'Present' : 'Missing',
-    userData: localStorage.getItem('userData') ? JSON.parse(localStorage.getItem('userData') || '{}') : 'Missing',
-    abilityRules: localStorage.getItem('abilityRules') ? 'Present' : 'Missing'
-  })
+  // console.log('Current Auth State:', {
+  //   accessToken: localStorage.getItem('accessToken') ? 'Present' : 'Missing',
+  //   userData: localStorage.getItem('userData') ? JSON.parse(localStorage.getItem('userData') || '{}') : 'Missing',
+  //   abilityRules: localStorage.getItem('abilityRules') ? 'Present' : 'Missing'
+  // })
 }
 
 // Create axios instance with default config
@@ -32,18 +32,18 @@ const axiosInstance = axios.create({
 axiosInstance.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('accessToken')
-    console.log('Making request to:', config.url, {
-      hasToken: !!token,
-      method: config.method,
-      headers: config.headers
-    })
+    // console.log('Making request to:', config.url, {
+    //   hasToken: !!token,
+    //   method: config.method,
+    //   headers: config.headers
+    // })
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
     return config
   },
   (error) => {
-    console.error('Request interceptor error:', error)
+    // console.error('Request interceptor error:', error)
     return Promise.reject(error)
   }
 )
@@ -51,23 +51,23 @@ axiosInstance.interceptors.request.use(
 // Add response interceptor to handle auth errors
 axiosInstance.interceptors.response.use(
   (response) => {
-    console.log('Response received:', {
-      url: response.config.url,
-      status: response.status,
-      statusText: response.statusText
-    })
+    // console.log('Response received:', {
+    //   url: response.config.url,
+    //   status: response.status,
+    //   statusText: response.statusText
+    // })
     return response
   },
   (error) => {
-    console.error('Response error:', {
-      url: error.config?.url,
-      status: error.response?.status,
-      statusText: error.response?.statusText,
-      data: error.response?.data
-    })
+    // console.error('Response error:', {
+    //   url: error.config?.url,
+    //   status: error.response?.status,
+    //   statusText: error.response?.statusText,
+    //   data: error.response?.data
+    // })
     
     if (error.response?.status === 401 || error.response?.status === 403) {
-      console.log('Auth error detected, clearing storage and redirecting to login')
+      // console.log('Auth error detected, clearing storage and redirecting to login')
       debugAuthState()
       localStorage.removeItem('accessToken')
       localStorage.removeItem('userData')
@@ -101,7 +101,7 @@ const userData = computed(() => {
   try {
     return JSON.parse(localStorage.getItem('userData') || '{}')
   } catch (e) {
-    console.error('Error parsing userData:', e)
+    // console.error('Error parsing userData:', e)
     return {}
   }
 })
@@ -187,80 +187,80 @@ const stripHtml = (html: string) => {
 const emailComposable = useEmail()
 
 const fetchProject = async () => {
-  console.log('Fetching project:', projectId)
+  // console.log('Fetching project:', projectId)
   debugAuthState()
   isLoading.value = true
   error.value = null
   
   try {
     const response = await axiosInstance.get(`/projects/${projectId}`)
-    console.log('Project fetch response:', {
-      status: response.status,
-      hasData: !!response.data
-    })
+    // console.log('Project fetch response:', {
+    //   status: response.status,
+    //   hasData: !!response.data
+    // })
     
     if (!response.data) {
       throw new Error('No data received from API')
     }
     
     // Add detailed logging of the project data
-    console.log('Project Resource Data Structure:', {
-      fullResponse: response.data,
-      project: response.data.data,
-      messages: response.data.data?.messages,
-      attachments: response.data.data?.attachments,
-      attachmentCount: response.data.data?.attachments?.length || 0,
-      client: response.data.data?.client,
-      company: response.data.data?.company
-    })
+    // console.log('Project Resource Data Structure:', {
+    //   fullResponse: response.data,
+    //   project: response.data.data,
+    //   messages: response.data.data?.messages,
+    //   attachments: response.data.data?.attachments,
+    //   attachmentCount: response.data.data?.attachments?.length || 0,
+    //   client: response.data.data?.client,
+    //   company: response.data.data?.company
+    // })
 
     // Log all attachments with their details
     if (response.data.data?.attachments) {
-      console.log('All Project Attachments:', response.data.data.attachments.map((attachment: any) => ({
-        id: attachment.id,
-        filename: attachment.filename,
-        message_id: attachment.message_id,
-        message_subject: attachment.message_subject,
-        message_date: attachment.message_date,
-        mime_type: attachment.mime_type,
-        size: attachment.size,
-        download_url: attachment.download_url,
-        created_at: attachment.created_at
-      })))
+      // console.log('All Project Attachments:', response.data.data.attachments.map((attachment: any) => ({
+      //   id: attachment.id,
+      //   filename: attachment.filename,
+      //   message_id: attachment.message_id,
+      //   message_subject: attachment.message_subject,
+      //   message_date: attachment.message_date,
+      //   mime_type: attachment.mime_type,
+      //   size: attachment.size,
+      //   download_url: attachment.download_url,
+      //   created_at: attachment.created_at
+      // })))
     }
     
     project.value = response.data.data
     
     // Fetch messages related to this project
-    console.log('Fetching project messages')
+    // console.log('Fetching project messages')
     const messagesResponse = await axiosInstance.get('/messages', {
       params: {
         project_id: projectId,
       },
     })
-    console.log('Messages fetch response:', {
-      status: messagesResponse.status,
-      messageCount: messagesResponse.data.data?.length || 0
-    })
+    // console.log('Messages fetch response:', {
+    //   status: messagesResponse.status,
+    //   messageCount: messagesResponse.data.data?.length || 0
+    // })
     
     messages.value = messagesResponse.data.data || []
 
     // Add debug logging after data is set
-    console.log('Final component state:', {
-      project: project.value,
-      messages: messages.value,
-      hasAttachments: (project.value?.attachments?.length ?? 0) > 0,
-      attachmentCount: project.value?.attachments?.length ?? 0,
-      firstMessageAttachments: messages.value[0]?.attachments,
-      firstProjectAttachment: project.value?.attachments?.[0]
-    })
+    // console.log('Final component state:', {
+    //   project: project.value,
+    //   messages: messages.value,
+    //   hasAttachments: (project.value?.attachments?.length ?? 0) > 0,
+    //   attachmentCount: project.value?.attachments?.length ?? 0,
+    //   firstMessageAttachments: messages.value[0]?.attachments,
+    //   firstProjectAttachment: project.value?.attachments?.[0]
+    // })
   } catch (err: any) {
-    console.error('Error in fetchProject:', {
-      error: err,
-      response: err.response,
-      status: err.response?.status,
-      data: err.response?.data
-    })
+    // console.error('Error in fetchProject:', {
+    //   error: err,
+    //   response: err.response,
+    //   status: err.response?.status,
+    //   data: err.response?.data
+    // })
     error.value = err.response?.data?.message || 'Failed to load project details'
   } finally {
     isLoading.value = false
@@ -344,17 +344,17 @@ const handleProjectUpdated = () => {
 }
 
 const downloadAttachment = (attachment: any) => {
-  console.log('Download attachment called with:', attachment)
+  // console.log('Download attachment called with:', attachment)
   
   if (!attachment || typeof attachment !== 'object') {
-    console.error('Invalid attachment object:', attachment)
+    // console.error('Invalid attachment object:', attachment)
     return
   }
 
-  console.log('Full attachment object:', JSON.stringify(attachment, null, 2))
+  // console.log('Full attachment object:', JSON.stringify(attachment, null, 2))
 
   if (!attachment.download_url) {
-    console.error('No download URL found in attachment:', attachment)
+    // console.error('No download URL found in attachment:', attachment)
     return
   }
 
@@ -365,7 +365,7 @@ const downloadAttachment = (attachment: any) => {
     link.rel = 'noopener noreferrer'
     link.click()
   } catch (error) {
-    console.error('Error downloading attachment:', error)
+    // console.error('Error downloading attachment:', error)
   }
 }
 
@@ -418,16 +418,16 @@ const handleSendReply = async (data: { message: string, attachments: File[] }) =
       handleEmailClose()
     }
   } catch (error) {
-    console.error('Error sending reply:', error)
+    // console.error('Error sending reply:', error)
   }
 }
 
 // Log initial state when component mounts
 onMounted(() => {
-  console.log('Project View Component Mounted:', {
-    projectId,
-    route: route.fullPath
-  })
+  // console.log('Project View Component Mounted:', {
+  //   projectId,
+  //   route: route.fullPath
+  // })
   debugAuthState()
   fetchProject()
 })

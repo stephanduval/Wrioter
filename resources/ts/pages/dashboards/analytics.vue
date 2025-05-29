@@ -20,17 +20,17 @@ const allUserMessagesSummary = ref<MessageSummary[]>([]);
 // Fetch summary data for ALL user messages (same API as email index.vue)
 const fetchAllUserMessagesSummary = async () => {
   try {
-    console.log("🔥 Fetching summary data for ALL user messages in dashboard...");
+    // console.log("🔥 Fetching summary data for ALL user messages in dashboard...");
     const response = await $api('/messages/summary'); 
-    console.log("✅ Summary Data:", response);
+    // console.log("✅ Summary Data:", response);
     if (response && Array.isArray(response)) {
       allUserMessagesSummary.value = response;
     } else {
-      console.error("❌ Invalid API response format for summary data:", response);
+      // console.error("❌ Invalid API response format for summary data:", response);
       allUserMessagesSummary.value = [];
     }
   } catch (error) {
-    console.error("❌ Error fetching summary data:", error);
+    // console.error("❌ Error fetching summary data:", error);
     allUserMessagesSummary.value = [];
   }
 };
@@ -46,7 +46,7 @@ const dueTodayCount = computed(() => {
       const isDueToday = isToday(dueDateObj);
       return isDueToday;
     } catch (e) {
-      console.error(`Error processing due_date ${m.due_date} for message ${m.id}:`, e);
+      // console.error(`Error processing due_date ${m.due_date} for message ${m.id}:`, e);
       return false;
     }
   }).length;

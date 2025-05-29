@@ -1,5 +1,5 @@
-import type { ActiveChat } from './useChat'
 import type { ChatContact, ChatContactWithChat, ChatMessage, ChatOut } from '@db/apps/chat/types'
+import type { ActiveChat } from './useChat'
 
 interface State {
   chatsContacts: ChatContactWithChat[]
@@ -25,7 +25,7 @@ export const useChatStore = defineStore('chat', {
       }))
 
       if (error.value) {
-        console.log(error.value)
+        // console.log(error.value)
       }
       else {
         const { chatsContacts, contacts, profileUser } = data.value

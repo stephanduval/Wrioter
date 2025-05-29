@@ -393,6 +393,7 @@
     "addNew": "Ajouter une entreprise",
     "edit": "Modifier l'entreprise",
     "search": "Rechercher une entreprise",
+    "showing": "Affichage de {from} à {to} sur {total} entrées",
     "form": {
       "name": "Nom de l'entreprise",
       "namePlaceholder": "Entrer le nom de l'entreprise"
@@ -523,6 +524,7 @@
       "clickToForward": "Transférer",
       "unknown": "Expéditeur inconnu",
       "noEmail": "pas-email@exemple.com",
+      "noLabels": "Aucune étiquette",
       "noMessages": "Aucun message trouvé"
     }
   }

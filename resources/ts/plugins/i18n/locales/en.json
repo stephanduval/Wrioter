@@ -393,6 +393,7 @@
     "addNew": "Add New Company",
     "edit": "Edit Company",
     "search": "Search Company",
+    "showing": "Showing {from} to {to} of {total} entries",
     "form": {
       "name": "Company Name",
       "namePlaceholder": "Enter company name"

@@ -63,13 +63,13 @@ const { data: companiesData, execute: fetchCompanies } = useApi<CompanyApiRespon
     params.append('q', searchQuery.value)
 
   const token = localStorage.getItem('accessToken')
-  console.log('Fetching companies with params:', {
-    page: page.value,
-    itemsPerPage: itemsPerPage.value === -1 ? 'all' : itemsPerPage.value,
-    searchQuery: searchQuery.value,
-    token: token ? 'Present' : 'Missing',
-    url: `/paginatedCompanies?${params.toString()}`,
-  })
+  // console.log('Fetching companies with params:', {
+  //   page: page.value,
+  //   itemsPerPage: itemsPerPage.value === -1 ? 'all' : itemsPerPage.value,
+  //   searchQuery: searchQuery.value,
+  //   token: token ? 'Present' : 'Missing',
+  //   url: `/paginatedCompanies?${params.toString()}`,
+  // })
 
   return `/paginatedCompanies?${params.toString()}`
 })
@@ -105,7 +105,7 @@ watch(companiesData, (data: CompanyApiResponse | null) => {
 const handleCompanyData = async (response: { success: boolean; message?: string; error?: string; company?: any }) => {
   if (!response.success) {
     // Handle error case - you might want to show a toast notification here
-    console.error('Error adding company:', response.error)
+    // console.error('Error adding company:', response.error)
     return
   }
 
@@ -123,7 +123,7 @@ const handleCompanyData = async (response: { success: boolean; message?: string;
     // You can add a toast notification here if you have one
   }
   catch (error) {
-    console.error('Error refreshing company list:', error)
+    // console.error('Error refreshing company list:', error)
   }
 }
 
@@ -144,25 +144,25 @@ onMounted(async () => {
 watch(
   [searchQuery, itemsPerPage, page, sortBy, orderBy],
   async () => {
-    console.log('Filters changed, fetching companies with:', {
-      searchQuery: searchQuery.value,
-      itemsPerPage: itemsPerPage.value,
-      page: page.value,
-      sortBy: sortBy.value,
-      orderBy: orderBy.value,
-    })
+    // console.log('Filters changed, fetching companies with:', {
+    //   searchQuery: searchQuery.value,
+    //   itemsPerPage: itemsPerPage.value,
+    //   page: page.value,
+    //   sortBy: sortBy.value,
+    //   orderBy: orderBy.value,
+    // })
     try {
       await fetchCompanies()
     }
     catch (error) {
-      console.error('Error fetching companies after filter change:', error)
+      // console.error('Error fetching companies after filter change:', error)
     }
   },
 )
 
 // Update the handleItemsPerPageChange function
 const handleItemsPerPageChange = (value: number) => {
-  console.log('Items per page changed:', { oldValue: itemsPerPage.value, newValue: value })
+  // console.log('Items per page changed:', { oldValue: itemsPerPage.value, newValue: value })
   itemsPerPage.value = Number(value) // Ensure value is treated as a number
   page.value = 1 // Reset to first page when changing items per page
   fetchCompanies()
