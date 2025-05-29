@@ -19,13 +19,13 @@ class UserController extends Controller
         // Validate general query parameters first
         $request->validate([
             'page' => 'sometimes|integer|min:1',
-            'itemsPerPage' => 'required|integer|min:-1|max:100|not_in:0',
+            'itemsPerPage' => 'required|string|in:all,10,25,50,100',
             'q' => 'nullable|string',
             'role' => 'nullable|string|max:50',
         ]);
 
         $page = $request->integer('page', 1);
-        $itemsPerPage = $request->integer('itemsPerPage', 10);
+        $itemsPerPage = $request->input('itemsPerPage', '10');
         $searchQuery = $request->input('q');
         $filterRole = $request->input('role');
 
@@ -75,13 +75,13 @@ class UserController extends Controller
         // Get all unique role names for the filter dropdown
         $allRoles = Role::distinct()->pluck('name')->toArray();
 
-        // Decide whether to paginate or get all results
-        if ($itemsPerPage === -1) {
+        // Handle 'all' items per page
+        if ($itemsPerPage === 'all') {
             $users = $query->get();
             $totalUsers = $users->count();
             $transformedUsers = $users->map($transformUser);
 
-            $response = [
+            return response()->json([
                 'data' => $transformedUsers->toArray(),
                 'total' => $totalUsers,
                 'current_page' => 1,
@@ -90,15 +90,16 @@ class UserController extends Controller
                 'from' => $totalUsers > 0 ? 1 : 0,
                 'to' => $totalUsers,
                 'all_roles' => $allRoles,
-            ];
-        } else {
-            $paginatedUsers = $query->paginate($itemsPerPage, ['*'], 'page', $page);
-            $transformedUsers = $paginatedUsers->getCollection()->map($transformUser);
-
-            $response = $paginatedUsers->toArray();
-            $response['data'] = $transformedUsers->toArray();
-            $response['all_roles'] = $allRoles;
+            ]);
         }
+
+        // Handle paginated results
+        $paginatedUsers = $query->paginate((int) $itemsPerPage, ['*'], 'page', $page);
+        $transformedUsers = $paginatedUsers->getCollection()->map($transformUser);
+
+        $response = $paginatedUsers->toArray();
+        $response['data'] = $transformedUsers->toArray();
+        $response['all_roles'] = $allRoles;
 
         return response()->json($response);
     }

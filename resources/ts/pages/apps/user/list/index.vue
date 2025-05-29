@@ -82,14 +82,14 @@ const headers = computed(() => [
 const { data: usersData, execute: fetchUsers } = useApi<UserApiResponse>(() => {
   const params = new URLSearchParams()
   params.append('page', String(page.value))
-  params.append('itemsPerPage', String(itemsPerPage.value === -1 ? 'all' : itemsPerPage.value))
+  params.append('itemsPerPage', itemsPerPage.value === -1 ? 'all' : String(itemsPerPage.value))
   if (searchQuery.value)
     params.append('q', searchQuery.value)
 
   const token = localStorage.getItem('accessToken')
   console.log('Fetching users with params:', {
     page: page.value,
-    itemsPerPage: itemsPerPage.value,
+    itemsPerPage: itemsPerPage.value === -1 ? 'all' : itemsPerPage.value,
     searchQuery: searchQuery.value,
     token: token ? 'Present' : 'Missing',
     url: `/users?${params.toString()}`,
