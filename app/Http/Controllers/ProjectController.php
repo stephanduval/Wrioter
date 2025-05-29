@@ -17,7 +17,12 @@ class ProjectController extends Controller
      */
     public function index(Request $request)
     {
-        Log::info('ProjectController::index - Fetching projects');
+        Log::info('ProjectController::index - Fetching projects', [
+            'per_page' => $request->input('per_page'),
+            'page' => $request->input('page'),
+            'all_params' => $request->all()
+        ]);
+        
         $user = Auth::user();
         $userRole = $user->roles->first()?->name;
 
@@ -72,9 +77,53 @@ class ProjectController extends Controller
 
         // Paginate results
         $perPage = $request->input('per_page', 10);
-        $projects = $query->paginate($perPage);
+        
+        Log::info('ProjectController::index - Before pagination', [
+            'per_page' => $perPage,
+            'query_sql' => $query->toSql(),
+            'query_bindings' => $query->getBindings()
+        ]);
+        
+        // Handle "All" option (per_page = -1)
+        if ($perPage === -1) {
+            $projects = $query->get();
+            $totalProjects = $projects->count();
+            
+            Log::info('ProjectController::index - Returning all projects', [
+                'total_projects' => $totalProjects,
+                'per_page' => $totalProjects,
+                'current_page' => 1,
+                'last_page' => 1
+            ]);
+            
+            return response()->json([
+                'data' => ProjectResource::collection($projects),
+                'total' => $totalProjects,
+                'current_page' => 1,
+                'per_page' => $totalProjects,
+                'last_page' => 1,
+                'from' => $totalProjects > 0 ? 1 : 0,
+                'to' => $totalProjects,
+            ]);
+        }
 
-        return ProjectResource::collection($projects);
+        $projects = $query->paginate($perPage);
+        
+        Log::info('ProjectController::index - Returning paginated projects', [
+            'total' => $projects->total(),
+            'per_page' => $projects->perPage(),
+            'current_page' => $projects->currentPage(),
+            'last_page' => $projects->lastPage()
+        ]);
+        
+        // Transform the paginated data using ProjectResource
+        $transformedProjects = ProjectResource::collection($projects->getCollection());
+        
+        // Create response with pagination metadata
+        $response = $projects->toArray();
+        $response['data'] = $transformedProjects->toArray($request);
+        
+        return response()->json($response);
     }
 
     /**

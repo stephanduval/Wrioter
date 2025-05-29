@@ -495,15 +495,6 @@ const formatFileSize = (bytes: number) => {
         <VCardTitle class="text-h5">
           {{ t('projects.details.information') }}
         </VCardTitle>
-        
-        <template #append>
-          <VBtn
-            color="primary"
-            @click="composeMessage"
-          >
-            {{ t('projects.details.sendMessage') }}
-          </VBtn>
-        </template>
       </VCardItem>
     </VCard>
 
@@ -889,15 +880,6 @@ const formatFileSize = (bytes: number) => {
             <VCardTitle>
               {{ t('projects.details.messages') }}
             </VCardTitle>
-            <template #append>
-              <VBtn
-                color="primary"
-                variant="text"
-                @click="composeMessage"
-              >
-                {{ t('projects.details.newMessage') }}
-              </VBtn>
-            </template>
           </VCardItem>
           
           <VDivider />

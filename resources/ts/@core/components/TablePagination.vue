@@ -28,6 +28,7 @@ const updatePage = (value: number) => {
       </p>
 
       <VPagination
+        v-if="itemsPerPage !== -1"
         :model-value="page"
         active-color="primary"
         :length="Math.ceil(totalItems / itemsPerPage)"

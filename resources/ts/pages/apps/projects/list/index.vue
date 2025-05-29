@@ -39,8 +39,9 @@ const selectedStatus = ref('')
 const selectedServiceType = ref('')
 const itemsPerPage = ref(10)
 const page = ref(1)
-const sortBy = ref('created_at')
-const sortDesc = ref(true)
+const sortBy = ref()
+const orderBy = ref()
+const selectedRows = ref([])
 const isLoading = ref(true)
 const projectsData = ref<ApiResponse | null>(null)
 const clients = ref<{ id: number; name: string }[]>([])
@@ -80,12 +81,12 @@ const isClient = computed(() => userRole.value === 'client')
 
 // Headers
 const headers = computed(() => [
-  { title: t('headers.projects.project'), key: 'project', sortable: true, width: '25%' },
-  { title: t('headers.projects.client'), key: 'client', sortable: true, width: '25%' },
-  { title: t('headers.projects.serviceType'), key: 'service_type', sortable: true, width: '15%' },
-  { title: t('headers.projects.deadline'), key: 'deadline', sortable: true, width: '15%' },
-  { title: t('headers.projects.status'), key: 'status', sortable: true, width: '15%' },
-  { title: t('headers.projects.actions'), key: 'actions', sortable: false, width: '5%' },
+  { title: t('headers.projects.project'), key: 'project', sortable: true },
+  { title: t('headers.projects.client'), key: 'client', sortable: true },
+  { title: t('headers.projects.serviceType'), key: 'service_type', sortable: true },
+  { title: t('headers.projects.deadline'), key: 'deadline', sortable: true },
+  { title: t('headers.projects.status'), key: 'status', sortable: true },
+  { title: t('headers.projects.actions'), key: 'actions', sortable: false, align: 'end' },
 ])
 
 // Status options
@@ -125,11 +126,24 @@ const fetchProjects = async () => {
     if (selectedServiceType.value) params.append('service_type', selectedServiceType.value)
     
     params.append('page', page.value.toString())
-    params.append('per_page', itemsPerPage.value.toString())
-    params.append('sort_by', sortBy.value)
-    params.append('sort_desc', sortDesc.value ? '1' : '0')
+    params.append('per_page', itemsPerPage.value === -1 ? 'all' : itemsPerPage.value.toString())
+    params.append('sort_by', sortBy.value || 'created_at')
+    params.append('sort_desc', orderBy.value === 'desc' ? '1' : '0')
+    
+    console.log('Fetching projects with params:', {
+      page: page.value,
+      per_page: itemsPerPage.value === -1 ? 'all' : itemsPerPage.value,
+      params: Object.fromEntries(params.entries())
+    })
     
     const response = await axios.get('/projects', { params })
+    console.log('Projects response:', {
+      total: response.data.total,
+      per_page: response.data.per_page,
+      current_page: response.data.current_page,
+      last_page: response.data.last_page,
+      data_length: response.data.data.length
+    })
     projectsData.value = response.data
   } catch (error) {
     console.error('Error fetching projects:', error)
@@ -166,7 +180,7 @@ const resolveStatusVariant = (status: string) => {
 const handleOptionsUpdate = (options: any) => {
   if (options.sortBy?.length) {
     sortBy.value = options.sortBy[0].key
-    sortDesc.value = options.sortBy[0].order === 'desc'
+    orderBy.value = options.sortBy[0].order
   }
 
   page.value = options.page || 1
@@ -176,6 +190,7 @@ const handleOptionsUpdate = (options: any) => {
 }
 
 const handleItemsPerPageChange = (value: number) => {
+  console.log('Items per page changed:', { oldValue: itemsPerPage.value, newValue: value })
   itemsPerPage.value = value
   page.value = 1 // Reset to first page when changing items per page
   fetchProjects()
@@ -300,11 +315,13 @@ onMounted(() => {
         <VDataTableServer
           v-model:items-per-page="itemsPerPage"
           v-model:page="page"
+          v-model:model-value="selectedRows"
           :headers="headers"
           :items="projects"
           :items-length="totalProjects"
           :loading="isLoading"
           class="text-no-wrap"
+          show-select
           @update:options="handleOptionsUpdate"
         >
           <!-- Project -->
@@ -451,5 +468,9 @@ onMounted(() => {
   .v-data-table__wrapper {
     overflow-x: auto;
   }
+}
+
+.status-select {
+  min-inline-size: 120px;
 }
 </style> 
