@@ -2,8 +2,8 @@
 import { $api, clearAuthData, setAuthData } from '@/utils/api'
 import AuthProvider from '@/views/pages/authentication/AuthProvider.vue'
 import authV2LoginIllustration from '@images/pages/auth-v2-login-illustration.png'
+import { layoutConfig } from '@layouts'
 import { VNodeRenderer } from '@layouts/components/VNodeRenderer'
-import { themeConfig } from '@themeConfig'
 import { RouteLocationRaw, useRouter } from 'vue-router'
 import { VForm } from 'vuetify/components/VForm'
 
@@ -140,9 +140,9 @@ const onSubmit = () => {
 <template>
   <RouterLink to="/">
     <div class="auth-logo d-flex align-center gap-x-2">
-      <VNodeRenderer :nodes="themeConfig.app.logo" />
+      <VNodeRenderer :nodes="layoutConfig.app.logo" />
       <h1 class="auth-title">
-        {{ themeConfig.app.title }}
+        {{ layoutConfig.app.title }}
       </h1>
     </div>
   </RouterLink>
@@ -178,7 +178,7 @@ const onSubmit = () => {
       >
         <VCardText>
           <h4 class="text-h4 mb-1">
-            Welcome to <span class="text-capitalize"> {{ themeConfig.app.title }} </span>! 👋🏻
+            Welcome to <span class="text-capitalize"> {{ layoutConfig.app.title }} </span>! ��🏻
           </h4>
           <p class="mb-0">
             Please sign-in to your account and start the adventure
