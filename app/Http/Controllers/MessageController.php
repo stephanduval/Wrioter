@@ -49,9 +49,66 @@ class MessageController extends Controller
         $label = $request->input('label');
         $dueToday = $request->input('due_today') === 'true';
         $projectId = $request->input('project_id');
+        $searchQuery = $request->input('q'); // Add search query parameter
 
         // Always eager load these relationships
         $query->with(['sender', 'receiver', 'labels', 'attachments', 'project']);
+
+        // Apply search query if provided
+        if ($searchQuery) {
+            Log::info("Applying search filter for query: {$searchQuery}");
+            
+            // Check if search is for attachments using string comparison
+            $attachmentKeyword = 'attachment';
+            $searchTerm = strtolower($searchQuery);
+            $isAttachmentSearch = $searchTerm === $attachmentKeyword || 
+                                strpos($attachmentKeyword, $searchTerm) === 0;
+
+            $query->where(function($q) use ($searchQuery, $isAttachmentSearch) {
+                if ($isAttachmentSearch) {
+                    // If searching for attachments, only look for messages that have attachments
+                    $q->whereHas('attachments');
+                    Log::info("Performing attachment search for term: {$searchQuery} - returning all messages with attachments");
+                } else {
+                    // Regular search across all fields
+                    $q->where('subject', 'like', "%{$searchQuery}%")
+                      ->orWhere('body', 'like', "%{$searchQuery}%")
+                      ->orWhere('task_status', 'like', "%{$searchQuery}%")
+                      ->orWhere('status', 'like', "%{$searchQuery}%")
+                      // Search in sender information
+                      ->orWhereHas('sender', function($senderQuery) use ($searchQuery) {
+                          $senderQuery->where('name', 'like', "%{$searchQuery}%")
+                                     ->orWhere('email', 'like', "%{$searchQuery}%");
+                      })
+                      // Search in receiver information
+                      ->orWhereHas('receiver', function($receiverQuery) use ($searchQuery) {
+                          $receiverQuery->where('name', 'like', "%{$searchQuery}%")
+                                       ->orWhere('email', 'like', "%{$searchQuery}%");
+                      })
+                      // Search in project information
+                      ->orWhereHas('project', function($projectQuery) use ($searchQuery) {
+                          $projectQuery->where('title', 'like', "%{$searchQuery}%")
+                                      ->orWhere('property', 'like', "%{$searchQuery}%")
+                                      ->orWhere('service_type', 'like', "%{$searchQuery}%")
+                                      ->orWhere('service_description', 'like', "%{$searchQuery}%");
+                      })
+                      // Search in labels
+                      ->orWhereHas('labels', function($labelQuery) use ($searchQuery) {
+                          $labelQuery->where('label_name', 'like', "%{$searchQuery}%");
+                      })
+                      // Search in attachment filenames (only if not doing attachment search)
+                      ->orWhereHas('attachments', function($attachmentQuery) use ($searchQuery) {
+                          $attachmentQuery->where('filename', 'like', "%{$searchQuery}%")
+                                         ->orWhere('mime_type', 'like', "%{$searchQuery}%");
+                      });
+                }
+            });
+
+            Log::info("Search query applied with term: {$searchQuery}", [
+                'is_attachment_search' => $isAttachmentSearch,
+                'search_term' => $searchTerm
+            ]);
+        }
 
         // Filter by project_id if provided
         if ($projectId) {
