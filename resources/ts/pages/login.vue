@@ -60,32 +60,42 @@ const login = async () => {
       },
     })
 
-    // Add debugging
+    // Enhanced debugging
     console.log('Login Response:', {
       accessToken: accessToken ? 'Token received' : 'No token',
-      userData: userData ? 'User data received' : 'No user data',
-      abilityRules: abilityRules ? `${abilityRules.length} rules received` : 'No rules',
+      userData: userData ? {
+        id: userData.id,
+        role: userData.role,
+        email: userData.email,
+      } : 'No user data',
+      abilityRules: abilityRules ? abilityRules : 'No rules',
     })
 
     if (!accessToken || !userData || !abilityRules) {
       throw new Error('Invalid login response - missing required data')
     }
 
-    // Update ability with debugging
+    // Update ability with enhanced debugging
     const mappedRules = abilityRules.map((rule: { action: string; subject: string }) => {
       const mappedRule = {
         action: rule.action.toLowerCase(),
         subject: rule.subject.toLowerCase(),
       }
-      console.log('Mapping rule:', { original: rule, mapped: mappedRule })
+      console.log('Mapping rule:', { 
+        original: rule, 
+        mapped: mappedRule,
+        canReadProjects: mappedRule.action === 'read' && mappedRule.subject === 'projects'
+      })
       return mappedRule
     })
-    console.log('Mapped Ability Rules:', mappedRules)
+    console.log('Final Mapped Ability Rules:', mappedRules)
     
     ability.update(mappedRules)
 
-    // Verify ability was updated
+    // Verify ability was updated with specific project check
     console.log('Current Ability Rules:', ability.rules)
+    console.log('Can read projects?', ability.can('read', 'projects'))
+    console.log('Can manage all?', ability.can('manage', 'all'))
 
     // Use the enhanced setAuthData utility
     try {

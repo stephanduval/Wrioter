@@ -14,8 +14,8 @@
     "postinstall": "npm run build:icons && npm run msw:init",
     "deploy:prepare": "yarn install && yarn build",
     "deploy:local": "yarn deploy:prepare && rsync -avz --delete public/build/ /var/www/Freynet-Gagne-Portal/public/build/",
-    "deploy:prod": "yarn deploy:prepare && rsync -avz --delete -e 'ssh -i ~/.ssh/id_rsa' public/build/ root@138.197.142.132:/var/www/Freynet-Gagne-Portal/public/build/",
-    "deploy:full": "yarn deploy:prepare && rsync -avz --delete -e 'ssh -i ~/.ssh/id_rsa' --exclude-from=.deployignore ./ root@138.197.142.132:/var/www/Freynet-Gagne-Portal/",
+    "deploy:prod": "yarn deploy:prepare && rsync -avz --delete -e 'ssh -i ~/.ssh/id_rsa' public/build/ root@enter.ip.address.here:/var/www/Freynet-Gagne-Portal/public/build/",
+    "deploy:full": "yarn deploy:prepare && rsync -avz --delete -e 'ssh -i ~/.ssh/id_rsa' --exclude-from=.deployignore ./ root@enter.ip.ADDRES.here:/var/www/Freynet-Gagne-Portal/",
     "db:fresh": "php artisan migrate:fresh --seed --force && php artisan cache:clear && php artisan config:clear && php artisan route:clear && php artisan view:clear"
   },
   "dependencies": {

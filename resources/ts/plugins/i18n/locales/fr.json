@@ -217,7 +217,8 @@
     "userManagement": "Gestion des utilisateurs",
     "companyList": "Liste des entreprises",
     "projects": "Projets",
-    "messages": "Messages"
+    "messages": "Messages",
+    "manuscripts": "Manuscrits"
   },
   "nav": {
     "dashboard": "Tableau de bord",

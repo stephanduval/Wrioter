@@ -1,8 +1,4 @@
 import { ofetch } from 'ofetch';
-import { useRouter } from 'vue-router';
-
-// Create a router instance for navigation
-const router = useRouter();
 
 // Determine the base URL based on the current environment
 const getBaseUrl = () => {
@@ -63,7 +59,7 @@ export const $api = ofetch.create({
       localStorage.removeItem('userData');
       localStorage.removeItem('abilityRules');
       
-      // Redirect to login
+      // Use window.location for navigation
       window.location.href = '/login';
     }
   },
@@ -80,27 +76,16 @@ export const getAuthToken = () => {
   return localStorage.getItem('accessToken');
 };
 
-// Export a function to set auth data
+// Export functions to manage auth data
 export const setAuthData = (data: { accessToken: string; userData: any; abilityRules: any[] }) => {
-  try {
-    localStorage.setItem('accessToken', data.accessToken);
-    localStorage.setItem('userData', JSON.stringify(data.userData));
-    localStorage.setItem('abilityRules', JSON.stringify(data.abilityRules));
-    console.log('Auth data stored successfully');
-  } catch (error) {
-    console.error('Error storing auth data:', error);
-    throw new Error('Failed to store authentication data');
-  }
+  localStorage.setItem('accessToken', data.accessToken);
+  localStorage.setItem('userData', JSON.stringify(data.userData));
+  localStorage.setItem('abilityRules', JSON.stringify(data.abilityRules));
+  console.log('Auth data stored successfully');
 };
 
-// Export a function to clear auth data
 export const clearAuthData = () => {
-  try {
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('userData');
-    localStorage.removeItem('abilityRules');
-    console.log('Auth data cleared successfully');
-  } catch (error) {
-    console.error('Error clearing auth data:', error);
-  }
+  localStorage.removeItem('accessToken');
+  localStorage.removeItem('userData');
+  localStorage.removeItem('abilityRules');
 };

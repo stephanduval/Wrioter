@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import menu from '@/navigation/vertical/Freynet-Gagné-menu'
-import manuscriptMenu from '@/navigation/vertical/ManuscriptMenu'
+import { can } from '@layouts/plugins/casl'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
@@ -16,27 +16,44 @@ interface MenuItem {
 
 const { t } = useI18n()
 
-// Create a computed property for the translated menu
+// Create a computed property for the translated menu with permission checks
 const translatedMenu = computed(() => {
-  // Combine both menus
-  const combinedMenu: MenuItem[] = [...menu, ...manuscriptMenu]
-  
-  return combinedMenu.map(item => {
-    if ('heading' in item && item.heading) {
+  return menu.map(item => {
+    // Type guard for heading items
+    if (item && 'heading' in item && item.heading) {
       return { ...item, heading: t(item.heading) }
     }
-    if ('title' in item && item.title) {
-      const translatedItem: MenuItem = { ...item, title: t(item.title) }
-      if ('children' in item && item.children) {
-        translatedItem.children = item.children.map(child => ({
-          ...child,
-          title: child.title ? t(child.title) : undefined
-        }))
+
+    // Type guard for menu items with title
+    if (item && 'title' in item && item.title) {
+      // Skip if user doesn't have permission
+      if (!can(item.action, item.subject)) {
+        return null
       }
+
+      const translatedItem: MenuItem = { ...item, title: t(item.title) }
+      
+      // Handle children with permission checks
+      if ('children' in item && item.children) {
+        const visibleChildren = item.children
+          .filter(child => can(child.action, child.subject))
+          .map(child => ({
+            ...child,
+            title: child.title ? t(child.title) : undefined
+          }))
+        
+        // Only show parent if it has visible children
+        if (visibleChildren.length > 0) {
+          translatedItem.children = visibleChildren
+        } else {
+          return null
+        }
+      }
+      
       return translatedItem
     }
-    return item
-  })
+    return null
+  }).filter((item): item is MenuItem => item !== null) // Type guard to remove null items
 })
 </script>
 
@@ -48,12 +65,37 @@ const translatedMenu = computed(() => {
         :title="item.heading"
         class="text-uppercase text-caption font-weight-medium"
       />
-      <VListItem
-        v-else
-        :title="item.title"
-        :to="item.to"
-        :prepend-icon="item.icon?.icon"
-      />
+      <template v-else>
+        <VListItem
+          v-if="!item.children"
+          :title="item.title"
+          :to="item.to"
+          :prepend-icon="item.icon?.icon"
+        />
+        <VListItemGroup
+          v-else
+          :value="false"
+        >
+          <VListItem
+            :title="item.title"
+            :prepend-icon="item.icon?.icon"
+          >
+            <template #append>
+              <VIcon
+                icon="bx-chevron-down"
+                size="small"
+              />
+            </template>
+          </VListItem>
+          <VListItem
+            v-for="child in item.children"
+            :key="child.title"
+            :title="child.title"
+            :to="child.to"
+            class="pl-4"
+          />
+        </VListItemGroup>
+      </template>
     </template>
   </VList>
 </template> 

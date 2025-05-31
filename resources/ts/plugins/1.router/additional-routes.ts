@@ -54,6 +54,78 @@ export const redirects: RouteRecordRaw[] = [
 ]
 
 export const routes: RouteRecordRaw[] = [
+  // Manuscripts route
+  {
+    path: '/apps/manuscripts',
+    name: 'manuscripts-list',
+    component: () => import('@/pages/apps/manuscripts/index.vue'),
+    meta: {
+      layoutWrapperClasses: 'layout-content-height-fixed',
+      action: 'read',
+      subject: 'manuscripts',
+      requiresAuth: true,
+    },
+  },
+  // Manuscript chapters route
+  {
+    path: '/apps/manuscripts/chapters',
+    name: 'manuscripts-chapters',
+    component: () => import('@/pages/apps/manuscripts/chapters/index.vue'),
+    meta: {
+      layoutWrapperClasses: 'layout-content-height-fixed',
+      action: 'read',
+      subject: 'manuscripts',
+      requiresAuth: true,
+    },
+  },
+  // Manuscript scenes route
+  {
+    path: '/apps/manuscripts/scenes',
+    name: 'manuscripts-scenes',
+    component: () => import('@/pages/apps/manuscripts/scenes/index.vue'),
+    meta: {
+      layoutWrapperClasses: 'layout-content-height-fixed',
+      action: 'read',
+      subject: 'manuscripts',
+      requiresAuth: true,
+    },
+  },
+  // Manuscript characters route
+  {
+    path: '/apps/manuscripts/characters',
+    name: 'manuscripts-characters',
+    component: () => import('@/pages/apps/manuscripts/characters/index.vue'),
+    meta: {
+      layoutWrapperClasses: 'layout-content-height-fixed',
+      action: 'read',
+      subject: 'manuscripts',
+      requiresAuth: true,
+    },
+  },
+  // Manuscript locations route
+  {
+    path: '/apps/manuscripts/locations',
+    name: 'manuscripts-locations',
+    component: () => import('@/pages/apps/manuscripts/locations/index.vue'),
+    meta: {
+      layoutWrapperClasses: 'layout-content-height-fixed',
+      action: 'read',
+      subject: 'manuscripts',
+      requiresAuth: true,
+    },
+  },
+  // Manuscript research route
+  {
+    path: '/apps/manuscripts/research',
+    name: 'manuscripts-research',
+    component: () => import('@/pages/apps/manuscripts/research/index.vue'),
+    meta: {
+      layoutWrapperClasses: 'layout-content-height-fixed',
+      action: 'read',
+      subject: 'manuscripts',
+      requiresAuth: true,
+    },
+  },
   // Reset Password Route
   {
     path: '/reset-password',

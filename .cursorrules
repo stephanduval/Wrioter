@@ -1,7 +1,7 @@
 Start the chat with "cursorrules applied, these affect the address of the production server"
 
-Production server address: ssh -i ~/.ssh/id_rsa root@138.197.142.132 
-The production directory is /var/www/Freynet-Gagne-Portal/
+Production server address: ssh -i ~/.ssh/id_rsa root@enter.ip.address.here
+The production directory is /var/www/enter.project.name.here
 
 The Digital ocean server is running Ubuntu 24.10. and apache.
 

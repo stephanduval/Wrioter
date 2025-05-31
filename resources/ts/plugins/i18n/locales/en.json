@@ -216,7 +216,15 @@
     "userManagement": "User Management",
     "companyList": "Company List",
     "projects": "Projects",
-    "messages": "Messages"
+    "messages": "Messages",
+    "manuscripts": "Manuscripts",
+    "manuscripts.all": "All Manuscripts",
+    "manuscripts.items": "Manuscript Items",
+    "manuscripts.items.chapters": "Chapters",
+    "manuscripts.items.scenes": "Scenes",
+    "manuscripts.items.characters": "Characters",
+    "manuscripts.items.locations": "Locations",
+    "manuscripts.items.research": "Research"
   },
   "nav": {
     "dashboard": "Dashboard",

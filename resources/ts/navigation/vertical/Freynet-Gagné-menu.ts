@@ -1,6 +1,8 @@
 export default [
+  // Main Menu Section
   { heading: 'menu.heading' },
   
+  // User Management Section
   {
     title: 'menu.userManagement',
     icon: { icon: 'bx-user' },
@@ -28,5 +30,54 @@ export default [
     to: 'apps-email',
     action: 'read',
     subject: 'messages',
+  },
+
+  // Manuscript Section
+  { heading: 'menu.manuscripts' },
+  
+  {
+    title: 'menu.manuscripts.all',
+    icon: { icon: 'bx-book' },
+    to: 'manuscripts-list',
+    action: 'read',
+    subject: 'projects',
+  },
+  {
+    title: 'menu.manuscripts.items',
+    icon: { icon: 'bx-book-content' },
+    action: 'read',
+    subject: 'projects',
+    children: [
+      {
+        title: 'menu.manuscripts.items.chapters',
+        to: 'manuscripts-chapters',
+        action: 'read',
+        subject: 'projects',
+      },
+      {
+        title: 'menu.manuscripts.items.scenes',
+        to: 'manuscripts-scenes',
+        action: 'read',
+        subject: 'projects',
+      },
+      {
+        title: 'menu.manuscripts.items.characters',
+        to: 'manuscripts-characters',
+        action: 'read',
+        subject: 'projects',
+      },
+      {
+        title: 'menu.manuscripts.items.locations',
+        to: 'manuscripts-locations',
+        action: 'read',
+        subject: 'projects',
+      },
+      {
+        title: 'menu.manuscripts.items.research',
+        to: 'manuscripts-research',
+        action: 'read',
+        subject: 'projects',
+      },
+    ],
   },
 ]
