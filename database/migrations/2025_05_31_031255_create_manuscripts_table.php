@@ -18,6 +18,7 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->string('status')->default('draft'); // draft, in_progress, completed
             $table->timestamps();
+            $table->softDeletes();
         });
 
         // Create outlines table

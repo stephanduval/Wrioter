@@ -13,6 +13,7 @@ class DatabaseSeeder extends Seeder
             CompanySeeder::class,
             UserSeeder::class,
             ManuscriptSeeder::class,
+            ItemSeeder::class,
             // ... other seeders
         ]);
     }
