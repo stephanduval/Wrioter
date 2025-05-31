@@ -1,18 +1,39 @@
 <script setup lang="ts">
 import menu from '@/navigation/vertical/Freynet-Gagné-menu'
+import manuscriptMenu from '@/navigation/vertical/ManuscriptMenu'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+
+interface MenuItem {
+  heading?: string
+  title?: string
+  icon?: { icon: string }
+  to?: string
+  action?: string
+  subject?: string
+  children?: MenuItem[]
+}
 
 const { t } = useI18n()
 
 // Create a computed property for the translated menu
 const translatedMenu = computed(() => {
-  return menu.map(item => {
-    if ('heading' in item) {
+  // Combine both menus
+  const combinedMenu: MenuItem[] = [...menu, ...manuscriptMenu]
+  
+  return combinedMenu.map(item => {
+    if ('heading' in item && item.heading) {
       return { ...item, heading: t(item.heading) }
     }
-    if ('title' in item) {
-      return { ...item, title: t(item.title) }
+    if ('title' in item && item.title) {
+      const translatedItem: MenuItem = { ...item, title: t(item.title) }
+      if ('children' in item && item.children) {
+        translatedItem.children = item.children.map(child => ({
+          ...child,
+          title: child.title ? t(child.title) : undefined
+        }))
+      }
+      return translatedItem
     }
     return item
   })

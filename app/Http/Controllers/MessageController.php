@@ -73,7 +73,6 @@ class MessageController extends Controller
                     // Regular search across all fields
                     $q->where('subject', 'like', "%{$searchQuery}%")
                       ->orWhere('body', 'like', "%{$searchQuery}%")
-                      ->orWhere('task_status', 'like', "%{$searchQuery}%")
                       ->orWhere('status', 'like', "%{$searchQuery}%")
                       // Search in sender information
                       ->orWhereHas('sender', function($senderQuery) use ($searchQuery) {
@@ -601,7 +600,7 @@ class MessageController extends Controller
             $query->where('sender_id', $userId)
                   ->orWhere('receiver_id', $userId);
         })
-        ->select('id', 'due_date', 'task_status') // Select only needed fields
+        ->select('id', 'due_date') // Remove 'task_status' from select
         ->get();
 
         Log::info("Retrieved " . $summaryData->count() . " messages for summary count for user {$userId}.");

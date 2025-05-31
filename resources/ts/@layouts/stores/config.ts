@@ -1,5 +1,4 @@
 import { AppContentLayoutNav, NavbarType } from '@layouts/enums'
-import { injectionKeyIsVerticalNavHovered } from '@layouts/symbols'
 import { _setDirAttr } from '@layouts/utils'
 
 // ℹ️ We should not import themeConfig here but in urgency we are doing it for now
@@ -87,15 +86,9 @@ export const useLayoutConfigStore = defineStore('layoutConfig', () => {
       - Collapsed
       - Isn't hovered by mouse
       - nav is not less than overlay breakpoint (hence, isn't overlay menu)
-
-    ℹ️ We are getting `isVerticalNavHovered` as param instead of via `inject` because
-        we are using this in `VerticalNav.vue` component which provide it and I guess because
-        same component is providing & injecting we are getting undefined error
   */
   const isVerticalNavMini = (isVerticalNavHovered: Ref<boolean> | null = null) => {
-    const isVerticalNavHoveredLocal = isVerticalNavHovered || inject(injectionKeyIsVerticalNavHovered) || ref(false)
-
-    return computed(() => isVerticalNavCollapsed.value && !isVerticalNavHoveredLocal.value && !isLessThanOverlayNavBreakpoint.value)
+    return computed(() => isVerticalNavCollapsed.value && !isVerticalNavHovered?.value && !isLessThanOverlayNavBreakpoint.value)
   }
 
   return {
