@@ -32,30 +32,56 @@ foreach ($tables as $table) {
     $tableName = $table->$tableKey;
     echo "Exporting table: {$tableName}\n";
     
-    // Get table data
-    $data = DB::table($tableName)->get();
+    // Get table structure
+    $columns = DB::select("SHOW COLUMNS FROM {$tableName}");
     
     // Write table header
     fwrite($file, "Table: {$tableName}\n");
     fwrite($file, str_repeat("-", 80) . "\n");
+    
+    // Write table structure
+    fwrite($file, "Table Structure:\n");
+    fwrite($file, str_repeat("-", 80) . "\n");
+    fwrite($file, sprintf("%-20s %-15s %-10s %-10s %-10s %-10s\n", 
+        'Column', 'Type', 'Null', 'Key', 'Default', 'Extra'));
+    fwrite($file, str_repeat("-", 80) . "\n");
+    
+    foreach ($columns as $column) {
+        fwrite($file, sprintf("%-20s %-15s %-10s %-10s %-10s %-10s\n",
+            $column->Field,
+            $column->Type,
+            $column->Null,
+            $column->Key,
+            $column->Default ?? 'NULL',
+            $column->Extra
+        ));
+    }
+    fwrite($file, "\n");
+    
+    // Get table data
+    $data = DB::table($tableName)->get();
     
     if ($data->isEmpty()) {
         fwrite($file, "No records found\n\n");
         continue;
     }
 
+    // Write table data header
+    fwrite($file, "Table Data:\n");
+    fwrite($file, str_repeat("-", 80) . "\n");
+    
     // Get column names and calculate column widths
-    $columns = array_keys((array) $data->first());
+    $dataColumns = array_keys((array) $data->first());
     $columnWidths = [];
     
     // Initialize column widths with header lengths
-    foreach ($columns as $column) {
+    foreach ($dataColumns as $column) {
         $columnWidths[$column] = strlen($column);
     }
     
     // Calculate maximum width for each column
     foreach ($data as $row) {
-        foreach ($columns as $column) {
+        foreach ($dataColumns as $column) {
             $value = (string) $row->$column;
             $columnWidths[$column] = max($columnWidths[$column], strlen($value));
         }
@@ -64,7 +90,7 @@ foreach ($tables as $table) {
     // Write column headers
     $header = '| ';
     $separator = '+-';
-    foreach ($columns as $column) {
+    foreach ($dataColumns as $column) {
         $header .= str_pad($column, $columnWidths[$column]) . ' | ';
         $separator .= str_repeat('-', $columnWidths[$column]) . '-+-';
     }
@@ -78,7 +104,7 @@ foreach ($tables as $table) {
     // Write data rows
     foreach ($data as $row) {
         $line = '| ';
-        foreach ($columns as $column) {
+        foreach ($dataColumns as $column) {
             $value = (string) $row->$column;
             $line .= str_pad($value, $columnWidths[$column]) . ' | ';
         }
