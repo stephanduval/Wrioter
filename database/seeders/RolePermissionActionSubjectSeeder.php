@@ -24,7 +24,7 @@ class RolePermissionActionSubjectSeeder extends Seeder
             DB::statement('SET FOREIGN_KEY_CHECKS=1;');
 
             // Define subjects and actions
-            $subjects = ['admin', 'client', 'all', 'projects', 'messages'];
+            $subjects = ['admin', 'client', 'all', 'projects', 'messages', 'manuscripts'];
             $actions = ['create', 'read', 'update', 'delete', 'manage'];
 
             // Create all permissions at once
@@ -75,9 +75,9 @@ class RolePermissionActionSubjectSeeder extends Seeder
 
             // Define role hierarchy and permissions
             $roleHierarchy = [
-                'admin' => ['admin', 'client', 'all', 'projects', 'messages'],
-                'client' => ['client', 'projects', 'messages'],
-                'user' => ['client'],
+                'admin' => ['admin', 'client', 'all', 'projects', 'messages', 'manuscripts'],
+                'client' => ['client', 'projects', 'messages', 'manuscripts'],
+                'user' => ['client', 'manuscripts'],
             ];
 
             // Assign permissions based on hierarchy

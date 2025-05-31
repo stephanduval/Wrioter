@@ -11,6 +11,7 @@ use App\Http\Controllers\LabelController;
 use App\Http\Controllers\AttachmentController;
 use App\Http\Controllers\SystemController;
 use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\ManuscriptController;
 use Illuminate\Support\Facades\Mail;
 
 /*
@@ -112,6 +113,15 @@ Route::middleware('auth:sanctum')->get('/test-middleware', function (Request $re
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/projects/summary', [ProjectController::class, 'summary']);
     Route::apiResource('/projects', ProjectController::class);
+});
+
+// Manuscript Routes
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/manuscripts', [ManuscriptController::class, 'index']);
+    Route::post('/manuscripts', [ManuscriptController::class, 'store']);
+    Route::get('/manuscripts/{id}', [ManuscriptController::class, 'show']);
+    Route::put('/manuscripts/{id}', [ManuscriptController::class, 'update']);
+    Route::delete('/manuscripts/{id}', [ManuscriptController::class, 'destroy']);
 });
 
 // Message notification route

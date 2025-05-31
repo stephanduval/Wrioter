@@ -41,6 +41,10 @@ dist-ssr
 laravelweb_schema.sql
 laravelweb_schema_*.sql
 
+# Database schemas
+/database_schemas/
+database_schemas/*.sql
+
 # 👉 Custom Git ignores
 
 # Editor directories and files
