@@ -12,12 +12,22 @@ class ManuscriptController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
         $userId = Auth::id();
         Log::info("Fetching manuscripts for user {$userId}");
 
-        $manuscripts = Manuscript::where('user_id', $userId)->get();
+        $query = Manuscript::where('user_id', $userId);
+
+        // Load items if requested
+        if ($request->has('with') && $request->with === 'items') {
+            $query->with(['items' => function ($query) {
+                $query->select('items.id', 'items.title', 'items.type')
+                    ->withPivot('order_index');
+            }]);
+        }
+
+        $manuscripts = $query->get();
 
         Log::info("Found {" . $manuscripts->count() . "} manuscripts for user {$userId}");
 

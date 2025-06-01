@@ -14,6 +14,7 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class,
             ManuscriptSeeder::class,
             ItemSeeder::class,
+            ManuscriptItemSeeder::class,
             // ... other seeders
         ]);
     }

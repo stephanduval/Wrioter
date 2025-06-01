@@ -66,6 +66,28 @@ export const routes: RouteRecordRaw[] = [
       requiresAuth: true,
     },
   },
+  {
+    path: '/apps/manuscripts/new',
+    name: 'manuscripts-new',
+    component: () => import('@/pages/apps/manuscripts/new.vue'),
+    meta: {
+      layoutWrapperClasses: 'layout-content-height-fixed',
+      action: 'create',
+      subject: 'manuscripts',
+      requiresAuth: true,
+    },
+  },
+  {
+    path: '/apps/manuscripts/:id',
+    name: 'manuscripts-view',
+    component: () => import('@/pages/apps/manuscripts/view/index.vue'),
+    meta: {
+      layoutWrapperClasses: 'layout-content-height-fixed',
+      action: 'read',
+      subject: 'manuscripts',
+      requiresAuth: true,
+    },
+  },
   // Manuscript chapters route
   {
     path: '/apps/manuscripts/chapters',

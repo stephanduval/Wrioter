@@ -218,13 +218,16 @@
     "projects": "Projects",
     "messages": "Messages",
     "manuscripts": "Manuscripts",
-    "manuscripts.all": "All Manuscripts",
-    "manuscripts.items": "Manuscript Items",
-    "manuscripts.items.chapters": "Chapters",
-    "manuscripts.items.scenes": "Scenes",
-    "manuscripts.items.characters": "Characters",
-    "manuscripts.items.locations": "Locations",
-    "manuscripts.items.research": "Research"
+    "manuscripts.new": "New Manuscript",
+    "manuscripts.list": "All Manuscripts",
+    "manuscripts.view": "View Manuscript",
+    "manuscripts.items": {
+      "chapter": "Chapter",
+      "scene": "Scene",
+      "character": "Character",
+      "location": "Location",
+      "research": "Research"
+    }
   },
   "nav": {
     "dashboard": "Dashboard",

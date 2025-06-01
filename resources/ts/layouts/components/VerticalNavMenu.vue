@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import DynamicManuscriptMenu from '@/components/DynamicManuscriptMenu.vue'
 import menu from '@/navigation/vertical/Freynet-Gagné-menu'
 import { can } from '@layouts/plugins/casl'
 import { computed } from 'vue'
@@ -34,10 +35,10 @@ const translatedMenu = computed(() => {
       const translatedItem: MenuItem = { ...item, title: t(item.title) }
       
       // Handle children with permission checks
-      if ('children' in item && item.children) {
-        const visibleChildren = item.children
-          .filter(child => can(child.action, child.subject))
-          .map(child => ({
+      if ('children' in item && Array.isArray(item.children)) {
+        const visibleChildren = (item.children as MenuItem[])
+          .filter((child: MenuItem) => can(child.action, child.subject))
+          .map((child: MenuItem) => ({
             ...child,
             title: child.title ? t(child.title) : undefined
           }))
@@ -97,5 +98,8 @@ const translatedMenu = computed(() => {
         </VListItemGroup>
       </template>
     </template>
+
+    <!-- Dynamic Manuscript Menu -->
+    <DynamicManuscriptMenu />
   </VList>
 </template> 
