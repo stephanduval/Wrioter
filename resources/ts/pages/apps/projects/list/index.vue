@@ -44,7 +44,6 @@ const orderBy = ref()
 const selectedRows = ref([])
 const isLoading = ref(true)
 const projectsData = ref<ApiResponse | null>(null)
-const clients = ref<{ id: number; name: string }[]>([])
 
 // Add pagination metadata ref
 const paginationMeta = ref({
@@ -126,42 +125,16 @@ const fetchProjects = async () => {
     if (selectedServiceType.value) params.append('service_type', selectedServiceType.value)
     
     params.append('page', page.value.toString())
-    params.append('per_page', itemsPerPage.value === -1 ? 'all' : itemsPerPage.value.toString())
+    params.append('per_page', itemsPerPage.value.toString())
     params.append('sort_by', sortBy.value || 'created_at')
     params.append('sort_desc', orderBy.value === 'desc' ? '1' : '0')
     
-    console.log('Fetching projects with params:', {
-      page: page.value,
-      per_page: itemsPerPage.value === -1 ? 'all' : itemsPerPage.value,
-      params: Object.fromEntries(params.entries())
-    })
-    
     const response = await axios.get('/projects', { params })
-    console.log('Projects response:', {
-      total: response.data.total,
-      per_page: response.data.per_page,
-      current_page: response.data.current_page,
-      last_page: response.data.last_page,
-      data_length: response.data.data.length
-    })
     projectsData.value = response.data
   } catch (error) {
     console.error('Error fetching projects:', error)
   } finally {
     isLoading.value = false
-  }
-}
-
-const fetchClients = async () => {
-  try {
-    const params = new URLSearchParams({
-      itemsPerPage: '-1',  // Get all clients
-      role: 'client'       // Only get users with client role
-    })
-    const response = await axios.get('/users', { params })
-    clients.value = response.data.data || []
-  } catch (error) {
-    console.error('Error fetching clients:', error)
   }
 }
 
@@ -190,7 +163,6 @@ const handleOptionsUpdate = (options: any) => {
 }
 
 const handleItemsPerPageChange = (value: number) => {
-  console.log('Items per page changed:', { oldValue: itemsPerPage.value, newValue: value })
   itemsPerPage.value = value
   page.value = 1 // Reset to first page when changing items per page
   fetchProjects()
@@ -250,7 +222,6 @@ watch(
 // Initialize
 onMounted(() => {
   fetchProjects()
-  fetchClients()
 })
 </script>
 

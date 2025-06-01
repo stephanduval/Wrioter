@@ -15,20 +15,20 @@ const {
 
 // Add downloadAttachment function
 const downloadAttachment = (attachment: any) => {
-  console.log('Download attachment called with:', attachment)
+  // console.log('Download attachment called with:', attachment)
   
   // Check if attachment exists and has required properties
   if (!attachment || typeof attachment !== 'object') {
-    console.error('Invalid attachment object:', attachment)
+    // console.error('Invalid attachment object:', attachment)
     return
   }
 
   // Log the full attachment object for debugging
-  console.log('Full attachment object:', JSON.stringify(attachment, null, 2))
+  // console.log('Full attachment object:', JSON.stringify(attachment, null, 2))
 
   // Check for download_url specifically
   if (!attachment.download_url) {
-    console.error('No download URL found in attachment:', attachment)
+    // console.error('No download URL found in attachment:', attachment)
     return
   }
 
@@ -40,7 +40,7 @@ const downloadAttachment = (attachment: any) => {
     link.rel = 'noopener noreferrer' // Security best practice
     link.click() // Trigger the download
   } catch (error) {
-    console.error('Error downloading attachment:', error)
+    // console.error('Error downloading attachment:', error)
   }
 }
 
@@ -75,7 +75,7 @@ const emit = defineEmits<{
 // Watch for changes in selectedEmail and update navigation state
 watch(() => selectedEmail.value, (newEmail) => {
   if (newEmail) {
-    console.log('Email attachments:', newEmail.attachments)
+    // console.log('Email attachments:', newEmail.attachments)
   }
 }, { immediate: true })
 </script>

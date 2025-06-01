@@ -87,13 +87,13 @@ const { data: usersData, execute: fetchUsers } = useApi<UserApiResponse>(() => {
     params.append('q', searchQuery.value)
 
   const token = localStorage.getItem('accessToken')
-  console.log('Fetching users with params:', {
-    page: page.value,
-    itemsPerPage: itemsPerPage.value === -1 ? 'all' : itemsPerPage.value,
-    searchQuery: searchQuery.value,
-    token: token ? 'Present' : 'Missing',
-    url: `/users?${params.toString()}`,
-  })
+  // console.log('Fetching users with params:', {
+  //   page: page.value,
+  //   itemsPerPage: itemsPerPage.value === -1 ? 'all' : itemsPerPage.value,
+  //   searchQuery: searchQuery.value,
+  //   token: token ? 'Present' : 'Missing',
+  //   url: `/users?${params.toString()}`,
+  // })
 
   return `/users?${params.toString()}`
 })
@@ -124,13 +124,13 @@ watch(usersData, (data: UserApiResponse | null) => {
 
 // Update the fetchUsers call in onMounted
 onMounted(async () => {
+  // console.log('Component mounted, fetching users...')
   try {
-    console.log('Component mounted, fetching users...')
     await fetchUsers()
-    console.log('Initial users fetch complete:', usersData.value)
+    // console.log('Initial users fetch complete:', usersData.value)
   }
   catch (error) {
-    console.error('Error fetching users:', error)
+    // console.error('Error fetching users:', error)
   }
 })
 
@@ -138,18 +138,18 @@ onMounted(async () => {
 watch(
   [searchQuery, itemsPerPage, page, sortBy, orderBy],
   async () => {
-    console.log('Filters changed, fetching users with:', {
-      searchQuery: searchQuery.value,
-      itemsPerPage: itemsPerPage.value,
-      page: page.value,
-      sortBy: sortBy.value,
-      orderBy: orderBy.value,
-    })
+    // console.log('Filters changed, fetching users with:', {
+    //   searchQuery: searchQuery.value,
+    //   itemsPerPage: itemsPerPage.value,
+    //   page: page.value,
+    //   sortBy: sortBy.value,
+    //   orderBy: orderBy.value,
+    // })
     try {
       await fetchUsers()
     }
     catch (error) {
-      console.error('Error fetching users after filter change:', error)
+      // console.error('Error fetching users after filter change:', error)
     }
   },
 )
@@ -213,7 +213,7 @@ const resolveUserStatusVariant = (stat: string) => {
 const addNewUser = async (response: { success: boolean; message?: string; error?: string; user?: any }) => {
   if (!response.success) {
     // Handle error case - you might want to show a toast notification here
-    console.error('Error adding user:', response.error)
+    // console.error('Error adding user:', response.error)
     return
   }
 
@@ -231,7 +231,7 @@ const addNewUser = async (response: { success: boolean; message?: string; error?
     // You can add a toast notification here if you have one
   }
   catch (error) {
-    console.error('Error refreshing user list:', error)
+    // console.error('Error refreshing user list:', error)
   }
 }
 
@@ -259,7 +259,7 @@ const confirmDelete = async () => {
     fetchUsers()
   }
   catch (error) {
-    console.error('Error deleting user:', error)
+    // console.error('Error deleting user:', error)
   }
 }
 
@@ -303,12 +303,15 @@ onMounted(async () => {
   fetchUsers()
 })
 
-// Update the handleItemsPerPageChange function
-const handleItemsPerPageChange = (value: number) => {
-  itemsPerPage.value = value
-  page.value = 1 // Reset to first page when changing items per page
-  fetchUsers()
-}
+// Add this computed property after the other computed properties
+const tableItemsPerPage = computed({
+  get: () => itemsPerPage.value,
+  set: (value: number) => {
+    itemsPerPage.value = value
+    page.value = 1 // Reset to first page when changing items per page
+    fetchUsers()
+  },
+})
 
 // Open Edit Drawer
 const openEditUserDrawer = (userId: number) => {
@@ -337,7 +340,7 @@ const generateResetCode = async (userId: number) => {
 
     resetCode.value = data.reset_code
   } catch (err) {
-    console.error('Error generating reset code:', err)
+    // console.error('Error generating reset code:', err)
     resetError.value = err instanceof Error ? err.message : 'Failed to generate reset code'
   } finally {
     isGeneratingReset.value = false
@@ -360,7 +363,7 @@ const copyToClipboard = async (text: string) => {
     await navigator.clipboard.writeText(text)
     // You could add a toast notification here
   } catch (err) {
-    console.error('Failed to copy:', err)
+    // console.error('Failed to copy:', err)
   }
 }
 
@@ -441,7 +444,7 @@ The reset code will expire in 60 minutes`
       <VCardText class="d-flex flex-wrap gap-4">
         <div class="me-3 d-flex gap-3">
           <AppSelect
-            :model-value="itemsPerPage"
+            :model-value="tableItemsPerPage"
             :items="[
               { value: 10, title: '10' },
               { value: 25, title: '25' },
@@ -451,7 +454,7 @@ The reset code will expire in 60 minutes`
             ]"
             :label="t('itemsPerPage')"
             style="inline-size: 6.25rem;"
-            @update:model-value="handleItemsPerPageChange"
+            @update:model-value="tableItemsPerPage = $event"
           />
         </div>
         <VSpacer />
@@ -487,7 +490,7 @@ The reset code will expire in 60 minutes`
 
       <!-- SECTION datatable -->
       <VDataTableServer
-        v-model:items-per-page="itemsPerPage"
+        v-model:items-per-page="tableItemsPerPage"
         v-model:model-value="selectedRows"
         v-model:page="page"
         :items="users"

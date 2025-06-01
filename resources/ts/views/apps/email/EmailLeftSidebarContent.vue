@@ -8,7 +8,7 @@ defineOptions({
   inheritAttrs: false,
 })
 
-console.log ("WTF sidebar");
+// console.log ("WTF sidebar");
 
 interface EmailLabelData {
   id: number;
@@ -115,7 +115,7 @@ const selectedColour = ref<string>(labelColours[0].value)
 
 const handleAddLabel = async () => {
   if (!newLabelName.value.trim()) {
-    console.error('Label name cannot be empty')
+    // console.error('Label name cannot be empty')
     return
   }
 
@@ -137,7 +137,7 @@ const isDeleteDialogOpen = ref(false);
 const labelToDelete = ref<EmailLabelData | null>(null);
 
 const initiateLabelDelete = (label: EmailLabelData) => {
-  console.log("Initiating delete for label:", label);
+  // console.log("Initiating delete for label:", label);
   labelToDelete.value = label;
   isDeleteDialogOpen.value = true;
 };
@@ -145,14 +145,14 @@ const initiateLabelDelete = (label: EmailLabelData) => {
 const confirmLabelDelete = async () => {
   if (!labelToDelete.value) return;
 
-  console.log("Confirming delete for label ID:", labelToDelete.value.id);
+  // console.log("Confirming delete for label ID:", labelToDelete.value.id);
   const success = await props.deleteLabel(labelToDelete.value.id);
 
   if (success) {
-    console.log("Label deleted successfully.");
+    // console.log("Label deleted successfully.");
     // The useEmail composable's deleteLabel already refreshes the list
   } else {
-    console.error("Failed to delete label.");
+    // console.error("Failed to delete label.");
     // Optional: Show error feedback to user
   }
 
