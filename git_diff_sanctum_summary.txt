@@ -1,8 +1,0 @@
- all_contents.txt                        |   7925 +
- an config:clear                         |    258 -
- api_response.txt                        | 252981 +++++++++++++++++++++++++++++
- app/Http/Controllers/UserController.php |      4 +-
- app/Models/User.php                     |     55 +-
- config/auth.php                         |     12 +-
- config/sanctum.php                      |     78 +-
- 7 files changed, 261018 insertions(+), 295 deletions(-)

@@ -1,0 +1,1767 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ScrivenerProject Template="No" Version="2.0" Identifier="F101AD8E-09AC-4698-9380-3580DC648872" Creator="SCRWIN-3.1.5.1" Device="MSI" Modified="2025-04-21 15:53:04 -0600" ModID="0AFE888F-C0F4-41F8-B8F7-541BA9FC7272">
+    <Binder>
+        <BinderItem UUID="F8F9FDEF-FD9F-4A8C-B33D-3434A1220ADC" Type="Text" Created="2018-11-06 07:50:52 -0600" Modified="2023-01-24 13:49:25 -0600">
+            <Title>Novel Format</Title>
+            <MetaData>
+                <IncludeInCompile>Yes</IncludeInCompile>
+                <IconFileName>Information</IconFileName>
+            </MetaData>
+            <TextSettings>
+                <TextSelection>12536,0</TextSelection>
+            </TextSettings>
+        </BinderItem>
+        <BinderItem UUID="4A1D6B18-0952-42EB-A487-D17915DD3BA1" Type="DraftFolder" Created="2018-11-06 07:50:52 -0600" Modified="2019-08-29 05:41:55 -0600">
+            <Title>Manuscript</Title>
+            <MetaData/>
+            <CorkboardAndOutliner>
+                <SelectedSubdocumentUUIDs>FD75AC3C-F304-4EA6-ADCC-2C32D6589969</SelectedSubdocumentUUIDs>
+                <CorkboardSettings>
+                    <Arrangement>Linear</Arrangement>
+                </CorkboardSettings>
+            </CorkboardAndOutliner>
+            <Children>
+                <BinderItem UUID="FD75AC3C-F304-4EA6-ADCC-2C32D6589969" Type="Folder" Created="2018-11-06 07:50:52 -0600" Modified="2025-04-17 17:42:15 -0600">
+                    <Title>SECTION - COVID SUMMER</Title>
+                    <MetaData>
+                        <IncludeInCompile>Yes</IncludeInCompile>
+                        <IconFileName>Clapper Board</IconFileName>
+                    </MetaData>
+                    <TextSettings>
+                        <TextSelection>0,0</TextSelection>
+                    </TextSettings>
+                    <CorkboardAndOutliner>
+                        <SelectedSubdocumentUUIDs>0A7EDD9F-9DE0-4CC9-9AC1-EE0E3769B6A8</SelectedSubdocumentUUIDs>
+                        <CorkboardSettings>
+                            <Arrangement>Linear</Arrangement>
+                        </CorkboardSettings>
+                    </CorkboardAndOutliner>
+                    <Children>
+                        <BinderItem UUID="F6436213-3C5A-4910-9E76-2D4A454E05BC" Type="Text" Created="2023-01-24 13:37:58 -0600" Modified="2023-01-24 13:49:25 -0600">
+                            <Title>Synposis of Chapter</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>107,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="0A7EDD9F-9DE0-4CC9-9AC1-EE0E3769B6A8" Type="Text" Created="2018-11-06 07:50:52 -0600" Modified="2023-01-24 13:49:25 -0600">
+                            <Title>Scene</Title>
+                            <MetaData>
+                                <StatusID>2</StatusID>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                    </Children>
+                </BinderItem>
+                <BinderItem UUID="1EBAC3EA-A71D-4FEC-AF73-8893F084B95E" Type="Folder" Created="2023-01-24 13:43:10 -0600" Modified="2023-01-24 13:49:25 -0600">
+                    <Title>SECTION - LOVE HARD</Title>
+                    <MetaData>
+                        <IncludeInCompile>Yes</IncludeInCompile>
+                    </MetaData>
+                    <TextSettings>
+                        <TextSelection>0,0</TextSelection>
+                    </TextSettings>
+                </BinderItem>
+            </Children>
+        </BinderItem>
+        <BinderItem UUID="06C0455C-36DD-4F38-BB7B-F7DD2453A8A5" Type="Folder" Created="2018-11-06 07:50:52 -0600" Modified="2025-04-21 14:21:41 -0600">
+            <Title>Characters</Title>
+            <MetaData>
+                <IncludeInCompile>Yes</IncludeInCompile>
+                <IconFileName>Characters (Photo)</IconFileName>
+            </MetaData>
+            <TextSettings>
+                <TextSelection>0,0</TextSelection>
+            </TextSettings>
+            <Bookmarks>
+                <Bookmark BinderUUID="FF754691-EE56-472A-9179-F28BB3202871">MY LIFE SO FAR</Bookmark>
+            </Bookmarks>
+            <DefaultChildTemplateUUID>28AFDB37-2FF4-4BD4-A273-1AEFF4E9EAE4</DefaultChildTemplateUUID>
+        </BinderItem>
+        <BinderItem UUID="6830B6AC-686B-4370-A979-2FD1D7288BDA" Type="Folder" Created="2018-11-06 07:50:52 -0600" Modified="2018-11-06 07:50:52 -0600">
+            <Title>Places</Title>
+            <MetaData>
+                <IncludeInCompile>Yes</IncludeInCompile>
+                <IconFileName>Locations (Map)</IconFileName>
+            </MetaData>
+            <TextSettings>
+                <TextSelection>0,0</TextSelection>
+            </TextSettings>
+            <DefaultChildTemplateUUID>0863BD1D-FA0F-4B8F-9B3F-3A0A2ACF174C</DefaultChildTemplateUUID>
+        </BinderItem>
+        <BinderItem UUID="57ECC98D-8199-4935-B5F1-D1F7A2D60646" Type="Folder" Created="2018-11-06 07:50:52 -0600" Modified="2025-04-16 14:47:39 -0600">
+            <Title>Front Matter</Title>
+            <MetaData>
+                <IncludeInCompile>Yes</IncludeInCompile>
+                <IconFileName>Front Matter</IconFileName>
+                <SectionType ChildDefault="F3D99402-96E3-4558-A2BE-FB83286017C8"/>
+            </MetaData>
+            <TextSettings>
+                <TextSelection>0,0</TextSelection>
+            </TextSettings>
+            <CorkboardAndOutliner>
+                <OutlinerExpandedState>
+                    <ItemID>89B13BE7-31C7-43FF-8E30-7A9BA402C959</ItemID>
+                </OutlinerExpandedState>
+                <OutlinerExpandedState>
+                    <ItemID>1FF93A44-228E-438A-9D4B-E6B6258219A2</ItemID>
+                </OutlinerExpandedState>
+                <OutlinerExpandedState>
+                    <ItemID>FD4B78C9-DEBC-4CAF-91C6-970A36B5332F</ItemID>
+                </OutlinerExpandedState>
+                <CorkboardSettings>
+                    <Arrangement>Linear</Arrangement>
+                </CorkboardSettings>
+            </CorkboardAndOutliner>
+            <Children>
+                <BinderItem UUID="1FF93A44-228E-438A-9D4B-E6B6258219A2" Type="Folder" Created="2019-08-29 06:04:08 -0600" Modified="2019-10-06 13:45:45 -0600">
+                    <Title>Manuscript Format</Title>
+                    <MetaData>
+                        <IncludeInCompile>Yes</IncludeInCompile>
+                    </MetaData>
+                    <TextSettings>
+                        <TextSelection>0,0</TextSelection>
+                    </TextSettings>
+                    <Children>
+                        <BinderItem UUID="323E42B8-881A-4A72-938C-1D683D78D8DF" Type="Text" Created="2019-08-29 06:04:08 -0600" Modified="2023-01-24 13:28:56 -0600">
+                            <Title>Title Page</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="6B2B7615-E4F9-46E6-84FC-8BEE60A93B00" Type="Text" Created="2023-07-08 07:12:49 -0600" Modified="2025-04-17 14:46:36 -0600">
+                            <Title>PERSPECTIVES. THE FLAG</Title>
+                            <MetaData>
+                                <StatusID>1</StatusID>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                                <NotesTextSelection>23,0</NotesTextSelection>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>2042,0</TextSelection>
+                            </TextSettings>
+                            <Bookmarks>
+                                <Bookmark BinderUUID="6B2B7615-E4F9-46E6-84FC-8BEE60A93B00">PERSPECTIVES. THE FLAG</Bookmark>
+                            </Bookmarks>
+                        </BinderItem>
+                    </Children>
+                </BinderItem>
+                <BinderItem UUID="FD4B78C9-DEBC-4CAF-91C6-970A36B5332F" Type="Folder" Created="2019-08-29 06:04:08 -0600" Modified="2019-10-06 13:45:45 -0600">
+                    <Title>Paperback</Title>
+                    <MetaData>
+                        <IncludeInCompile>Yes</IncludeInCompile>
+                    </MetaData>
+                    <TextSettings>
+                        <TextSelection>0,0</TextSelection>
+                    </TextSettings>
+                    <Children>
+                        <BinderItem UUID="9FDC7D70-BD4A-472E-B140-EDA8E105FAD6" Type="Text" Created="2019-08-29 06:04:08 -0600" Modified="2023-01-24 13:49:25 -0600">
+                            <Title>Title Page</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>8,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="5F40F985-59BA-43CC-8650-9EDD1E6A62B5" Type="Text" Created="2019-08-29 06:04:08 -0600" Modified="2019-08-29 06:04:08 -0600">
+                            <Title>Copyright</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>73,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="17AA5803-9EA9-49C2-A454-2E8386E18F0A" Type="Text" Created="2019-08-29 06:04:08 -0600" Modified="2019-08-29 06:04:08 -0600">
+                            <Title>Dedication</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>34,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="B23591A4-8EC3-4E1F-B242-ECCA0207561C" Type="Text" Created="2019-08-29 06:04:08 -0600" Modified="2021-03-03 23:42:09 -0600">
+                            <Title>Blank Page</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                    </Children>
+                </BinderItem>
+                <BinderItem UUID="89B13BE7-31C7-43FF-8E30-7A9BA402C959" Type="Folder" Created="2019-08-29 06:04:08 -0600" Modified="2019-10-06 13:45:45 -0600">
+                    <Title>Ebook</Title>
+                    <MetaData>
+                        <IncludeInCompile>Yes</IncludeInCompile>
+                    </MetaData>
+                    <TextSettings>
+                        <TextSelection>0,0</TextSelection>
+                    </TextSettings>
+                    <Children>
+                        <BinderItem UUID="62FF97C4-994E-4778-B24F-1B07FB81601D" Type="Image" Created="2019-08-29 06:04:08 -0600" Modified="2019-08-29 06:04:08 -0600">
+                            <Title>Cover</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                                <FileExtension>png</FileExtension>
+                                <ShowSynopsisImage>Yes</ShowSynopsisImage>
+                            </MetaData>
+                            <MediaSettings>
+                                <ImageScaleFactor>1</ImageScaleFactor>
+                                <ImageRotation>None</ImageRotation>
+                                <ImageScalesProportionally>Yes</ImageScalesProportionally>
+                            </MediaSettings>
+                        </BinderItem>
+                        <BinderItem UUID="4908D479-188E-4232-AA7D-38FD12692DC5" Type="Text" Created="2019-08-29 06:04:08 -0600" Modified="2019-08-29 06:04:08 -0600">
+                            <Title>Dedication</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>5,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                    </Children>
+                </BinderItem>
+            </Children>
+        </BinderItem>
+        <BinderItem UUID="69822417-D015-4BDD-90BD-18AAA6198D15" Type="Folder" Created="2018-11-06 07:50:52 -0600" Modified="2025-04-21 14:21:48 -0600">
+            <Title>Notes</Title>
+            <MetaData>
+                <IncludeInCompile>Yes</IncludeInCompile>
+                <IconFileName>Notes (Yellow Notepad)</IconFileName>
+            </MetaData>
+            <TextSettings>
+                <TextSelection>0,0</TextSelection>
+            </TextSettings>
+            <Bookmarks>
+                <Bookmark BinderUUID="FF754691-EE56-472A-9179-F28BB3202871">MY LIFE SO FAR</Bookmark>
+            </Bookmarks>
+            <Children>
+                <BinderItem UUID="3D3DC74F-5AB8-4FF7-ADD2-32C40BC2BC6A" Type="Text" Created="2025-04-17 17:40:50 -0600" Modified="2025-04-17 14:46:32 -0600">
+                    <Title>this is in the bookmarks folder</Title>
+                    <MetaData>
+                        <IncludeInCompile>Yes</IncludeInCompile>
+                    </MetaData>
+                    <TextSettings>
+                        <TextSelection>79,0</TextSelection>
+                    </TextSettings>
+                    <Bookmarks>
+                        <Bookmark BinderUUID="3D3DC74F-5AB8-4FF7-ADD2-32C40BC2BC6A">this is in the bookmarks folder</Bookmark>
+                    </Bookmarks>
+                </BinderItem>
+            </Children>
+        </BinderItem>
+        <BinderItem UUID="669D7B65-8096-4EFD-A0E2-6BDE8C1E3585" Type="ResearchFolder" Created="2018-11-06 07:50:52 -0600" Modified="2019-08-29 05:41:55 -0600">
+            <Title>Research</Title>
+            <MetaData/>
+            <Children>
+                <BinderItem UUID="9A470BDE-CF2B-4872-97C6-74F19BC90197" Type="Folder" Created="2018-11-06 07:50:52 -0600" Modified="2023-01-24 13:49:25 -0600">
+                    <Title>Sample Output</Title>
+                    <MetaData>
+                        <IncludeInCompile>Yes</IncludeInCompile>
+                    </MetaData>
+                    <TextSettings>
+                        <TextSelection>0,0</TextSelection>
+                    </TextSettings>
+                    <Children>
+                        <BinderItem UUID="8011470C-3DAB-46BE-A166-FCF536FE86F6" Type="PDF" Created="2021-03-10 16:42:16 -0600" Modified="2021-03-11 19:17:19 -0600">
+                            <Title>Standard Manuscript</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                                <FileExtension>pdf</FileExtension>
+                            </MetaData>
+                            <MediaSettings>
+                                <CurrentPDFPage>1</CurrentPDFPage>
+                            </MediaSettings>
+                        </BinderItem>
+                        <BinderItem UUID="AA7F21EF-A4C4-485A-8044-6A7856D23E5B" Type="PDF" Created="2021-03-11 19:32:10 -0600" Modified="2021-03-11 19:45:01 -0600">
+                            <Title>Paperback Novel</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                                <FileExtension>pdf</FileExtension>
+                            </MetaData>
+                            <MediaSettings>
+                                <CurrentPDFPage>1</CurrentPDFPage>
+                            </MediaSettings>
+                        </BinderItem>
+                    </Children>
+                </BinderItem>
+            </Children>
+        </BinderItem>
+        <BinderItem UUID="5C03DE09-C285-48ED-827F-78E62B7D0F72" Type="Folder" Created="2018-11-06 07:50:52 -0600" Modified="2018-11-06 07:50:52 -0600">
+            <Title>Template Sheets</Title>
+            <MetaData>
+                <IncludeInCompile>Yes</IncludeInCompile>
+            </MetaData>
+            <TextSettings>
+                <TextSelection>0,0</TextSelection>
+            </TextSettings>
+            <Children>
+                <BinderItem UUID="28AFDB37-2FF4-4BD4-A273-1AEFF4E9EAE4" Type="Text" Created="2019-08-29 06:01:58 -0600" Modified="2019-08-29 06:01:58 -0600">
+                    <Title>Character Sketch</Title>
+                    <MetaData>
+                        <IncludeInCompile>Yes</IncludeInCompile>
+                        <IconFileName>Characters (Character Sheet)</IconFileName>
+                        <ShowSynopsisImage>Yes</ShowSynopsisImage>
+                    </MetaData>
+                    <TextSettings>
+                        <TextSelection Caret="14">0,14</TextSelection>
+                    </TextSettings>
+                </BinderItem>
+                <BinderItem UUID="0863BD1D-FA0F-4B8F-9B3F-3A0A2ACF174C" Type="Text" Created="2019-08-29 06:01:58 -0600" Modified="2019-08-29 06:01:58 -0600">
+                    <Title>Setting Sketch</Title>
+                    <MetaData>
+                        <IncludeInCompile>Yes</IncludeInCompile>
+                        <IconFileName>Locations (Location Sheet)</IconFileName>
+                    </MetaData>
+                    <TextSettings>
+                        <TextSelection Caret="15">0,15</TextSelection>
+                    </TextSettings>
+                </BinderItem>
+            </Children>
+        </BinderItem>
+        <BinderItem UUID="A9D57009-189D-4CA9-A088-7BE5D263DE39" Type="Folder" Created="2025-04-17 16:10:18 -0600" Modified="2025-04-17 16:10:18 -0600">
+            <Title>New Collection (Unsorted)</Title>
+            <MetaData>
+                <IncludeInCompile>Yes</IncludeInCompile>
+            </MetaData>
+            <TextSettings>
+                <TextSelection>0,0</TextSelection>
+            </TextSettings>
+            <Children>
+                <BinderItem UUID="FCAE3A5A-2695-4FD5-AADA-0A7DE5B4B53F" Type="Text" Created="2025-04-17 16:10:18 -0600" Modified="2025-04-17 16:10:18 -0600">
+                    <MetaData>
+                        <IncludeInCompile>Yes</IncludeInCompile>
+                    </MetaData>
+                    <TextSettings>
+                        <TextSelection>0,0</TextSelection>
+                    </TextSettings>
+                </BinderItem>
+            </Children>
+        </BinderItem>
+        <BinderItem UUID="F2DF7FDE-46C4-4962-97F3-128A46433573" Type="TrashFolder" Created="2018-11-06 07:50:52 -0600" Modified="2019-08-29 05:41:55 -0600">
+            <Title>Trash</Title>
+            <MetaData/>
+            <Children>
+                <BinderItem UUID="6B326111-C70A-44CA-A1EC-64205C5E91EE" Type="Folder" Created="2023-01-24 13:36:51 -0600" Modified="2023-01-24 13:49:25 -0600">
+                    <MetaData>
+                        <IncludeInCompile>Yes</IncludeInCompile>
+                    </MetaData>
+                    <TextSettings>
+                        <TextSelection>0,0</TextSelection>
+                    </TextSettings>
+                </BinderItem>
+                <BinderItem UUID="337795F5-00A4-4AE8-BECB-F0DA0331DD8B" Type="Folder" Created="2023-06-07 09:35:04 -0600" Modified="2023-06-07 09:35:04 -0600">
+                    <MetaData>
+                        <IncludeInCompile>Yes</IncludeInCompile>
+                    </MetaData>
+                    <TextSettings>
+                        <TextSelection>0,0</TextSelection>
+                    </TextSettings>
+                </BinderItem>
+                <BinderItem UUID="CB8BBCB9-4A34-4AB6-B5B5-ED6CC10A1589" Type="Text" Created="2023-07-08 07:31:14 -0600" Modified="2023-07-08 07:31:14 -0600">
+                    <MetaData>
+                        <IncludeInCompile>Yes</IncludeInCompile>
+                    </MetaData>
+                    <TextSettings>
+                        <TextSelection>0,0</TextSelection>
+                    </TextSettings>
+                </BinderItem>
+                <BinderItem UUID="7FE316BE-242A-4BDD-899C-CF829B91FDED" Type="Text" Created="2023-08-15 06:55:57 -0600" Modified="2023-08-15 06:56:45 -0600">
+                    <MetaData>
+                        <IncludeInCompile>Yes</IncludeInCompile>
+                    </MetaData>
+                    <TextSettings>
+                        <TextSelection>0,0</TextSelection>
+                    </TextSettings>
+                </BinderItem>
+                <BinderItem UUID="8A805A0E-D563-491F-9442-7C1E53A71CD5" Type="Folder" Created="2025-04-17 17:31:11 -0600" Modified="2025-04-17 17:31:11 -0600">
+                    <MetaData>
+                        <IncludeInCompile>Yes</IncludeInCompile>
+                    </MetaData>
+                    <TextSettings>
+                        <TextSelection>0,0</TextSelection>
+                    </TextSettings>
+                </BinderItem>
+                <BinderItem UUID="49199F3F-C0CE-45FA-9A94-BCE23322CCB8" Type="Folder" Created="2025-04-17 17:31:05 -0600" Modified="2025-04-17 17:31:05 -0600">
+                    <MetaData>
+                        <IncludeInCompile>Yes</IncludeInCompile>
+                    </MetaData>
+                    <TextSettings>
+                        <TextSelection>0,0</TextSelection>
+                    </TextSettings>
+                </BinderItem>
+                <BinderItem UUID="2AAEE0CB-7581-4247-BD99-F0500A7F9DCD" Type="Folder" Created="2025-04-17 17:31:36 -0600" Modified="2025-04-17 17:31:36 -0600">
+                    <MetaData>
+                        <IncludeInCompile>Yes</IncludeInCompile>
+                    </MetaData>
+                    <TextSettings>
+                        <TextSelection>0,0</TextSelection>
+                    </TextSettings>
+                </BinderItem>
+                <BinderItem UUID="8C5731C3-4AE8-4D11-AC08-E99DF8987BC8" Type="Folder" Created="2025-04-17 17:31:33 -0600" Modified="2025-04-17 17:31:33 -0600">
+                    <MetaData>
+                        <IncludeInCompile>Yes</IncludeInCompile>
+                    </MetaData>
+                    <TextSettings>
+                        <TextSelection>0,0</TextSelection>
+                    </TextSettings>
+                </BinderItem>
+                <BinderItem UUID="CDCE2020-5887-4F84-9C39-81BE3A14C3CE" Type="Text" Created="2025-04-21 14:25:11 -0600" Modified="2025-04-21 14:25:21 -0600">
+                    <Title>MY LIFE SO FAR-1</Title>
+                    <MetaData>
+                        <LabelID>12</LabelID>
+                        <StatusID>1</StatusID>
+                        <IncludeInCompile>Yes</IncludeInCompile>
+                    </MetaData>
+                    <TextSettings>
+                        <TextSelection>0,0</TextSelection>
+                    </TextSettings>
+                </BinderItem>
+            </Children>
+        </BinderItem>
+        <BinderItem UUID="4AECA917-51BE-4146-B9E5-0E8F79A71082" Type="Folder" Created="2023-01-24 13:43:54 -0600" Modified="2025-04-17 14:46:45 -0600">
+            <Title>OUTLINE AND THEMES</Title>
+            <MetaData>
+                <IncludeInCompile>Yes</IncludeInCompile>
+            </MetaData>
+            <TextSettings>
+                <TextSelection>0,0</TextSelection>
+            </TextSettings>
+            <CorkboardAndOutliner>
+                <SelectedSubdocumentUUIDs>B457AB30-8B67-4401-9D43-F7FE51F59241</SelectedSubdocumentUUIDs>
+                <OutlinerExpandedState>
+                    <ItemID>7A9C1E03-2E05-4AC3-9C8D-61A3CE008137</ItemID>
+                </OutlinerExpandedState>
+                <CorkboardSettings>
+                    <Arrangement>Linear</Arrangement>
+                </CorkboardSettings>
+            </CorkboardAndOutliner>
+            <Bookmarks>
+                <Bookmark BinderUUID="E6FB525C-3891-4C4E-AA55-9B01424A9C86">&quot;THE DEAL&quot;</Bookmark>
+            </Bookmarks>
+            <Children>
+                <BinderItem UUID="7A9C1E03-2E05-4AC3-9C8D-61A3CE008137" Type="Folder" Created="2023-01-24 13:44:05 -0600" Modified="2023-01-24 13:49:25 -0600">
+                    <Title>THEMATIC CORK BOARD &amp; BEATS</Title>
+                    <MetaData>
+                        <IncludeInCompile>Yes</IncludeInCompile>
+                    </MetaData>
+                    <TextSettings>
+                        <TextSelection>0,0</TextSelection>
+                    </TextSettings>
+                    <CorkboardAndOutliner>
+                        <SelectedSubdocumentUUIDs>B457AB30-8B67-4401-9D43-F7FE51F59241</SelectedSubdocumentUUIDs>
+                        <CorkboardSettings>
+                            <Arrangement>Linear</Arrangement>
+                        </CorkboardSettings>
+                    </CorkboardAndOutliner>
+                    <Children>
+                        <BinderItem UUID="258A1361-74DE-417E-A48B-132D079FAD2C" Type="Text" Created="2023-06-07 09:35:35 -0600" Modified="2025-04-21 14:28:54 -0600">
+                            <Title>THE FLAG</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>409,0</TextSelection>
+                            </TextSettings>
+                            <Bookmarks>
+                                <Bookmark BinderUUID="FF754691-EE56-472A-9179-F28BB3202871">MY LIFE SO FAR</Bookmark>
+                            </Bookmarks>
+                        </BinderItem>
+                        <BinderItem UUID="B457AB30-8B67-4401-9D43-F7FE51F59241" Type="Text" Created="2023-07-12 03:53:02 -0600" Modified="2025-04-17 14:47:53 -0600">
+                            <Title>Always wanted kids</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>1448,0</TextSelection>
+                            </TextSettings>
+                            <Bookmarks>
+                                <Bookmark BinderUUID="4D8E7B1A-9361-4947-B04B-03A4DDDE6424">Revenants</Bookmark>
+                                <Bookmark BinderUUID="BD4B9F32-C259-4EC0-B03A-DC6DD41A2E49"/>
+                            </Bookmarks>
+                        </BinderItem>
+                        <BinderItem UUID="4069C1C1-174C-41F2-9E99-CA9977903DF9" Type="Text" Created="2023-07-12 04:56:53 -0600" Modified="2023-07-12 04:57:07 -0600">
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="7252E2E6-139E-4951-A532-47E569CF301C" Type="Text" Created="2025-04-17 14:46:50 -0600" Modified="2025-04-17 14:46:57 -0600">
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="641F83E2-B067-40CF-AC47-24635C1566C3" Type="Text" Created="2023-07-12 04:57:09 -0600" Modified="2023-08-15 08:21:15 -0600">
+                            <Title>Afghanistan 9/11 bar fight scene</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>1714,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="9FA6D0D1-60B7-4DA3-B160-004DEA4FA07E" Type="Text" Created="2023-07-16 09:53:34 -0600" Modified="2025-04-21 15:52:48 -0600">
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>694,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="0A635307-F0E3-48C1-A26A-17B8C5AAA676" Type="Text" Created="2023-07-12 04:53:37 -0600" Modified="2023-07-12 04:56:18 -0600">
+                            <Title>BEAVER AND EAGLE</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="FF754691-EE56-472A-9179-F28BB3202871" Type="Text" Created="2023-07-08 07:17:46 -0600" Modified="2025-04-21 14:44:21 -0600">
+                            <Title>MY LIFE SO FAR</Title>
+                            <MetaData>
+                                <LabelID>12</LabelID>
+                                <StatusID>1</StatusID>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>651,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="1D95CE26-7415-43BC-9A9A-D7236DDD7555" Type="Text" Created="2023-07-08 07:21:14 -0600" Modified="2023-07-08 07:23:15 -0600">
+                            <Title>FLASH</Title>
+                            <MetaData>
+                                <LabelID>10</LabelID>
+                                <StatusID>1</StatusID>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="EA2EFC8D-29F4-4F0B-A1A2-C0FDFDBA1FAC" Type="Text" Created="2023-07-16 09:54:22 -0600" Modified="2023-07-16 09:54:36 -0600">
+                            <Title>Dating sitution</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="1B28D916-066C-4194-867A-DE25720B0E2E" Type="Text" Created="2023-01-24 13:52:13 -0600" Modified="2025-04-21 14:42:51 -0600">
+                            <Title>SUPPORTING JENICA</Title>
+                            <MetaData>
+                                <StatusID>1</StatusID>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                            <Bookmarks>
+                                <Bookmark BinderUUID="F089A24D-B975-49C4-B65C-1EF68AEE25BE">LEAVING MISSOULA</Bookmark>
+                            </Bookmarks>
+                        </BinderItem>
+                        <BinderItem UUID="E6FB525C-3891-4C4E-AA55-9B01424A9C86" Type="Text" Created="2023-01-24 13:52:34 -0600" Modified="2025-04-17 14:46:45 -0600">
+                            <Title>&quot;THE DEAL&quot;</Title>
+                            <MetaData>
+                                <StatusID>1</StatusID>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                            <Bookmarks>
+                                <Bookmark BinderUUID="4AECA917-51BE-4146-B9E5-0E8F79A71082">OUTLINE AND THEMES</Bookmark>
+                            </Bookmarks>
+                        </BinderItem>
+                        <BinderItem UUID="74706958-00DC-45F0-B510-B8D0044032E9" Type="Text" Created="2023-07-08 07:27:28 -0600" Modified="2025-04-17 14:46:57 -0600">
+                            <Title>PLANS</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                            <Bookmarks>
+                                <Bookmark BinderUUID="4D8E7B1A-9361-4947-B04B-03A4DDDE6424">Revenants</Bookmark>
+                            </Bookmarks>
+                        </BinderItem>
+                        <BinderItem UUID="92864E4E-D6C5-46F2-8CF2-9B0A9D51A367" Type="Text" Created="2023-07-08 07:28:27 -0600" Modified="2025-04-17 14:46:47 -0600">
+                            <Title>Visit to California? </Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                            <Bookmarks>
+                                <Bookmark BinderUUID="92864E4E-D6C5-46F2-8CF2-9B0A9D51A367">Visit to California? </Bookmark>
+                            </Bookmarks>
+                        </BinderItem>
+                        <BinderItem UUID="4BAAFB86-9B6A-473A-8773-8A11833F21C9" Type="Text" Created="2023-07-08 07:28:31 -0600" Modified="2023-07-08 07:30:41 -0600">
+                            <Title>Meeting my parents</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="A40BACCC-6AFC-44D0-946F-948E509BF0E1" Type="Text" Created="2023-07-16 09:58:44 -0600" Modified="2025-04-17 14:46:59 -0600">
+                            <Title>General Desc of Missoula</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                            <Bookmarks>
+                                <Bookmark BinderUUID="4D8E7B1A-9361-4947-B04B-03A4DDDE6424">Revenants</Bookmark>
+                            </Bookmarks>
+                        </BinderItem>
+                        <BinderItem UUID="BD4B9F32-C259-4EC0-B03A-DC6DD41A2E49" Type="Text" Created="2023-07-16 09:59:20 -0600" Modified="2025-04-17 14:47:53 -0600">
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                            <Bookmarks>
+                                <Bookmark BinderUUID="B457AB30-8B67-4401-9D43-F7FE51F59241">Always wanted kids</Bookmark>
+                            </Bookmarks>
+                        </BinderItem>
+                        <BinderItem UUID="6DD6F65B-1CD4-472F-8A8E-29EB867C19C5" Type="Text" Created="2023-07-12 03:59:59 -0600" Modified="2025-04-17 14:47:02 -0600">
+                            <Title>Jenica Photoshoots; Make Up</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                            <Bookmarks>
+                                <Bookmark BinderUUID="4D8E7B1A-9361-4947-B04B-03A4DDDE6424">Revenants</Bookmark>
+                            </Bookmarks>
+                        </BinderItem>
+                        <BinderItem UUID="791AC9B8-06AD-46A8-A231-BBA30DB653C9" Type="Text" Created="2023-07-12 04:02:10 -0600" Modified="2023-07-12 04:03:36 -0600">
+                            <Title>Jenica radio interview, in the car, winter by the river</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="8DDCB928-2928-47DD-8450-584CCC6F8D5A" Type="Text" Created="2023-07-16 09:55:07 -0600" Modified="2023-07-16 09:55:21 -0600">
+                            <Title>Spotting Foreigners</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="E5ED8958-793D-4A61-A841-CD78CC1C1EB1" Type="Text" Created="2023-07-12 04:04:08 -0600" Modified="2023-07-12 04:04:32 -0600">
+                            <Title>Other Interviews</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="4E482AAA-6E36-482D-A2E0-053138DBB517" Type="Text" Created="2023-07-16 09:58:16 -0600" Modified="2023-07-16 09:58:34 -0600">
+                            <Title>Missoula Parking large trucks across sidewalks</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="4576DB01-6AC2-49AF-83E4-C2F22B6A6D05" Type="Text" Created="2023-07-16 09:49:31 -0600" Modified="2023-07-16 09:50:00 -0600">
+                            <Title>Sam Kulah and Miki</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="F4B28EFA-BD80-4A55-825B-DECB396922F4" Type="Text" Created="2023-07-16 09:55:24 -0600" Modified="2023-07-16 10:00:21 -0600">
+                            <Title>Fight with that contractor
+</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="AA0EF765-6313-4A52-814C-81DC67FBBC73" Type="Text" Created="2023-07-16 10:00:25 -0600" Modified="2023-07-16 10:04:04 -0600">
+                            <Title>&quot;In our America... &quot;
+</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="B3D82DE3-8C0B-4AD6-8D6F-138F3017158E" Type="Text" Created="2023-07-08 07:49:23 -0600" Modified="2023-07-08 07:54:20 -0600">
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="1A240619-7293-4F62-B5BD-413460053665" Type="Text" Created="2023-07-12 05:02:59 -0600" Modified="2023-07-12 05:03:17 -0600">
+                            <Title>f22 Raptor American Exceptionalism</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="4BC98D04-809D-4DBA-BFF3-DB5E6321CBCC" Type="Text" Created="2023-07-12 03:41:04 -0600" Modified="2023-07-12 03:41:59 -0600">
+                            <Title>COVID SUMMER</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="4D8E7B1A-9361-4947-B04B-03A4DDDE6424" Type="Text" Created="2023-12-01 07:08:51 -0600" Modified="2025-04-17 14:47:02 -0600">
+                            <Title>Revenants</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                            <Bookmarks>
+                                <Bookmark BinderUUID="B457AB30-8B67-4401-9D43-F7FE51F59241">Always wanted kids</Bookmark>
+                                <Bookmark BinderUUID="B457AB30-8B67-4401-9D43-F7FE51F59241">Always wanted kids</Bookmark>
+                                <Bookmark BinderUUID="74706958-00DC-45F0-B510-B8D0044032E9">PLANS</Bookmark>
+                                <Bookmark BinderUUID="A40BACCC-6AFC-44D0-946F-948E509BF0E1">General Desc of Missoula</Bookmark>
+                                <Bookmark BinderUUID="6DD6F65B-1CD4-472F-8A8E-29EB867C19C5">Jenica Photoshoots; Make Up</Bookmark>
+                            </Bookmarks>
+                        </BinderItem>
+                        <BinderItem UUID="DC37B387-85AE-424F-9C73-C9DF3B1BD609" Type="Text" Created="2025-04-17 16:10:27 -0600" Modified="2025-04-17 16:10:27 -0600">
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="18797A42-F20C-4E99-9A92-60D16F267B4B" Type="Text" Created="2025-04-17 16:10:28 -0600" Modified="2025-04-17 16:10:28 -0600">
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="4D612795-E6D0-43D5-A625-3DEEB72B467B" Type="Text" Created="2023-07-12 03:40:28 -0600" Modified="2023-07-12 05:02:36 -0600">
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="2AB8DB4F-575B-4DAA-BE09-B4C531540FAC" Type="Text" Created="2023-07-12 05:08:06 -0600" Modified="2023-07-12 05:08:13 -0600">
+                            <Title>Max Military Service</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="C8296A2C-5658-4F1C-A0BA-F76BC2694E1A" Type="Text" Created="2023-01-24 13:46:43 -0600" Modified="2023-07-08 07:49:20 -0600">
+                            <Title>COVID SUMMER</Title>
+                            <MetaData>
+                                <StatusID>1</StatusID>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="66CC83DF-626C-4212-8576-B4AD57A4AEB6" Type="Text" Created="2023-07-16 09:39:03 -0600" Modified="2023-07-16 09:39:37 -0600">
+                            <Title>Burping</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="D4503156-5F60-4C9C-AD97-644775E8B223" Type="Text" Created="2023-07-16 09:56:22 -0600" Modified="2023-07-16 09:56:36 -0600">
+                            <MetaData>
+                                <LabelID>9</LabelID>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="CBB241CB-2C7F-4DED-A374-AFDAE12798DB" Type="Text" Created="2023-07-12 04:02:59 -0600" Modified="2023-07-12 04:05:14 -0600">
+                            <Title>towards winter Protecting time for the book</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="762E9488-7435-4C85-9D88-05CD0F301495" Type="Text" Created="2023-07-08 07:55:31 -0600" Modified="2023-07-08 07:55:53 -0600">
+                            <Title>Neighbour David Brings Junk</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="78DFE2DB-50C5-4CC1-9C04-8264205FB510" Type="Text" Created="2023-07-08 07:54:35 -0600" Modified="2023-07-08 07:55:28 -0600">
+                            <Title>The origins of life in the universe</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="390362E2-01C9-4E50-87B3-41770CBC4028" Type="Text" Created="2023-07-08 07:54:23 -0600" Modified="2023-07-08 07:56:09 -0600">
+                            <Title>Rusell Moments</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="07DD2CAD-1060-4D6F-A66B-62A554873799" Type="Text" Created="2023-07-12 04:58:20 -0600" Modified="2023-07-12 04:58:27 -0600">
+                            <Title>Revenants</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="1A35D5AE-1D48-4482-9F1E-6ABBDD2B0073" Type="Text" Created="2023-07-16 10:21:53 -0600" Modified="2023-07-16 10:22:48 -0600">
+                            <Title>Deciding to be a programmer</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="04019381-4827-42E9-AF47-A513A6BED7F0" Type="Text" Created="2023-07-08 07:30:54 -0600" Modified="2023-07-08 07:54:56 -0600">
+                            <Title>Boundary Boss</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="123280A1-0F16-41A4-AC54-3A4D9B21A458" Type="Text" Created="2023-07-12 03:55:21 -0600" Modified="2023-07-12 05:10:10 -0600">
+                            <Title>School Shootings</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="938D9344-8B73-4361-923A-29E1F56268CF" Type="Text" Created="2023-07-12 03:54:58 -0600" Modified="2023-07-12 03:55:16 -0600">
+                            <Title>The unclaimed memories weigh on the Heart.
+</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="9A793CBC-D47B-4C90-8E31-61A8F40F9D1D" Type="Text" Created="2023-07-12 03:56:49 -0600" Modified="2023-07-16 10:21:39 -0600">
+                            <Title>Colette popping her head around</Title>
+                            <MetaData>
+                                <LabelID>9</LabelID>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="CDA52BFE-ED50-44F8-A2F6-50BAE8D08D62" Type="Text" Created="2023-01-24 13:52:49 -0600" Modified="2023-07-12 03:42:35 -0600">
+                            <Title>Nikki &amp; Briggs</Title>
+                            <MetaData>
+                                <StatusID>1</StatusID>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="CD4EA083-E6AC-4AA7-8501-ED242DD47325" Type="Text" Created="2023-01-24 14:19:20 -0600" Modified="2023-07-08 07:24:40 -0600">
+                            <Title>BLACK LIVES MATTER PROTEST</Title>
+                            <MetaData>
+                                <StatusID>1</StatusID>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="96FF9461-0F89-4BB6-9361-6310DEC626DA" Type="Text" Created="2023-01-24 13:51:38 -0600" Modified="2023-07-12 03:44:49 -0600">
+                            <Title>MAKING MAIL CLERK</Title>
+                            <MetaData>
+                                <StatusID>1</StatusID>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="89FCB22F-D70E-4DD4-89AF-E76DE8FBF76D" Type="Text" Created="2023-01-24 13:46:55 -0600" Modified="2023-07-08 07:23:08 -0600">
+                            <Title>LOVE HARD</Title>
+                            <MetaData>
+                                <StatusID>1</StatusID>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="3EE51EF5-E9E7-42B3-9563-89B5CF333485" Type="Text" Created="2023-07-08 07:25:32 -0600" Modified="2023-07-12 03:44:33 -0600">
+                            <Title>Gardening</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="C9287E6A-8100-40B2-BC16-EA67D6B48C37" Type="Text" Created="2023-07-16 10:19:57 -0600" Modified="2023-07-16 10:20:43 -0600">
+                            <Title>Russell doing fishing trips with folks from Texas</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="FECF08F3-70A8-415D-AE0F-CF24E1BA272D" Type="Text" Created="2023-07-12 03:44:52 -0600" Modified="2023-07-12 03:46:15 -0600">
+                            <Title>MAKING MAIL CLERK - 2</Title>
+                            <MetaData>
+                                <StatusID>1</StatusID>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="86DD4ACF-1F13-4CEA-974A-3B198ABB5ED2" Type="Text" Created="2023-07-12 05:10:38 -0600" Modified="2023-07-16 10:19:39 -0600">
+                            <Title>Russiel going partying on New Years</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="990A0C2B-F499-4824-80BA-91E7BA090934" Type="Text" Created="2023-01-24 13:47:04 -0600" Modified="2023-07-12 03:44:20 -0600">
+                            <Title>MARRIAGE</Title>
+                            <MetaData>
+                                <StatusID>1</StatusID>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="FB9F8783-CD4B-4C3E-9696-139F670598E3" Type="Text" Created="2023-01-24 13:44:33 -0600" Modified="2023-07-08 07:23:08 -0600">
+                            <Title>TRUMP | CHILDREN IN CAGES</Title>
+                            <MetaData>
+                                <LabelID>0</LabelID>
+                                <StatusID>1</StatusID>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="65EECDE3-E90E-4196-82BF-658E49DB8C48" Type="Text" Created="2023-01-24 13:51:53 -0600" Modified="2023-07-08 07:23:08 -0600">
+                            <Title>PROBLEMS WITH MAIL CLERK</Title>
+                            <MetaData>
+                                <StatusID>1</StatusID>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="C196161D-DBCC-484C-BE10-8B0E8787A6DF" Type="Text" Created="2023-01-24 13:47:08 -0600" Modified="2023-07-08 07:23:08 -0600">
+                            <Title>SEPARATION - APRIL </Title>
+                            <MetaData>
+                                <StatusID>1</StatusID>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="5819B0EE-E52D-44A5-BE6E-C2E5AE1D9B84" Type="Text" Created="2023-01-24 13:48:20 -0600" Modified="2023-07-16 10:24:12 -0600">
+                            <Title>KICKED OUT</Title>
+                            <MetaData>
+                                <StatusID>1</StatusID>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="33312E9B-35AB-496E-A995-0D54A5802099" Type="Text" Created="2023-01-24 13:47:14 -0600" Modified="2023-07-16 10:24:35 -0600">
+                            <Title>STAYING AT JENICA's HOUSE</Title>
+                            <MetaData>
+                                <StatusID>1</StatusID>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="D5B58DF1-D5BD-412A-94D0-96B2ABEF2B6C" Type="Text" Created="2023-07-12 04:59:23 -0600" Modified="2023-07-12 04:59:34 -0600">
+                            <Title>Needing a Hug</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="206D1408-E70E-4E4E-9E69-86AD52D34225" Type="Text" Created="2023-07-16 10:22:54 -0600" Modified="2025-04-16 14:46:52 -0600">
+                            <Title>Photo of Colette by my chair</Title>
+                            <MetaData>
+                                <LabelID>9</LabelID>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="D4562B96-092B-42C6-8982-CC244FA0D555" Type="Text" Created="2023-07-12 05:11:08 -0600" Modified="2023-07-16 10:23:46 -0600">
+                            <Title>Gillespie Therapy</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="39551DE8-7AE0-455C-8BC0-CD5D8A009547" Type="Text" Created="2023-01-24 13:48:32 -0600" Modified="2023-07-08 07:23:08 -0600">
+                            <Title>AIRBNB ONE</Title>
+                            <MetaData>
+                                <StatusID>1</StatusID>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="D53FA2A9-F1F8-488D-A6B8-232D1DB7CEBF" Type="Text" Created="2023-01-24 13:51:24 -0600" Modified="2023-07-08 07:23:08 -0600">
+                            <Title>ALEX DYING</Title>
+                            <MetaData>
+                                <StatusID>1</StatusID>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="FF465A33-F61B-4FF4-ACED-917B50EA5D77" Type="Text" Created="2023-07-08 07:34:16 -0600" Modified="2023-07-08 07:34:34 -0600">
+                            <Title>Single Dad Life</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="72E8905D-F363-4C54-9B82-7D7BA4AC3E85" Type="Text" Created="2023-01-24 13:48:38 -0600" Modified="2023-07-08 07:23:08 -0600">
+                            <Title>AIRBNB TWO</Title>
+                            <MetaData>
+                                <StatusID>1</StatusID>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="E67A06A1-5F34-4673-988A-532FBE646C3F" Type="Text" Created="2023-01-24 13:48:42 -0600" Modified="2023-07-08 07:23:08 -0600">
+                            <Title>JAKE AND RORY'S PLACE</Title>
+                            <MetaData>
+                                <StatusID>1</StatusID>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="148FC9E1-7181-4C9D-BE7B-8E66316BF63A" Type="Text" Created="2023-01-24 13:48:57 -0600" Modified="2023-07-08 07:23:08 -0600">
+                            <Title>C3W MISSOULA</Title>
+                            <MetaData>
+                                <StatusID>1</StatusID>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="A62DE6E0-9D9E-485B-9D07-FDCB50782B48" Type="Text" Created="2023-07-12 03:43:56 -0600" Modified="2023-07-16 09:46:49 -0600">
+                            <Title>Eric and Madison</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="47C9AAD6-8FC4-418C-91C9-280ADCCACF74" Type="Text" Created="2023-07-08 07:56:42 -0600" Modified="2023-07-16 09:48:47 -0600">
+                            <Title>Board Game Group</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="DF27400D-8A0C-4B66-BBDF-B3C96876A75E" Type="Text" Created="2023-07-16 09:48:55 -0600" Modified="2023-07-16 09:49:21 -0600">
+                            <Title>Sam Kulah</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="BBA8A0F8-E607-4099-AE42-54B2A0EFDDCD" Type="Text" Created="2023-01-24 13:50:15 -0600" Modified="2023-07-08 07:23:08 -0600">
+                            <Title>KITANA DRAMA</Title>
+                            <MetaData>
+                                <StatusID>1</StatusID>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="7FD66614-B552-446E-82C1-192EB5866411" Type="Text" Created="2023-07-16 09:38:28 -0600" Modified="2023-07-16 09:38:47 -0600">
+                            <Title>River St,</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="D9230057-7BD9-4228-AC4D-F670FD59BC18" Type="Text" Created="2023-07-16 11:19:57 -0600" Modified="2023-07-16 11:20:30 -0600">
+                            <Title>curled lip</Title>
+                            <MetaData>
+                                <LabelID>9</LabelID>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="7B17F98D-530B-48BA-BDC6-D2CA5984A1FB" Type="Text" Created="2023-01-24 13:49:43 -0600" Modified="2023-07-08 07:56:33 -0600">
+                            <Title>RIVER DRIVE</Title>
+                            <MetaData>
+                                <StatusID>1</StatusID>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="3E46379A-20B4-497D-AFBB-2E11B7997687" Type="Text" Created="2023-07-16 09:56:54 -0600" Modified="2023-07-16 09:57:24 -0600">
+                            <Title>Taking Colette to Homecoming game</Title>
+                            <MetaData>
+                                <LabelID>9</LabelID>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="3232319B-0B89-4B25-9D7F-FDF32CDAA44F" Type="Text" Created="2023-07-12 03:58:28 -0600" Modified="2023-07-12 05:05:00 -0600">
+                            <Title>C3W and PTSD</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="6D46379E-F5A3-45B3-AF51-686EEF7776F4" Type="Text" Created="2023-07-12 05:04:21 -0600" Modified="2023-07-12 05:04:21 -0600">
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="CC81B496-C819-4C63-AB6D-B9824F77CFA6" Type="Text" Created="2023-07-12 03:58:47 -0600" Modified="2023-07-12 03:59:26 -0600">
+                            <Title>C3W king and queen and Beaver t-shirt</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="33AC55C6-1623-40CD-8E87-342FDE3E518A" Type="Text" Created="2023-07-12 04:53:58 -0600" Modified="2023-07-12 04:54:04 -0600">
+                            <Title>BEAVER AND EAGLE 2</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="4F198EEA-364D-4DB5-A32A-F447F0738510" Type="Text" Created="2023-07-12 03:59:17 -0600" Modified="2023-07-12 05:04:03 -0600">
+                            <Title>Lucas not helping</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="1F61B12D-36F5-445C-99CB-871DFBCB35B2" Type="Text" Created="2023-07-12 03:58:04 -0600" Modified="2023-07-12 03:58:13 -0600">
+                            <Title>Kicked out of C3W</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="2A0C8117-CB72-4E79-9FFD-BAA841AF116A" Type="Text" Created="2023-07-08 07:50:41 -0600" Modified="2023-07-12 03:57:56 -0600">
+                            <Title>Madison and C3W incident.</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="F089A24D-B975-49C4-B65C-1EF68AEE25BE" Type="Text" Created="2023-01-24 13:50:01 -0600" Modified="2025-04-21 14:42:51 -0600">
+                            <Title>LEAVING MISSOULA</Title>
+                            <MetaData>
+                                <StatusID>1</StatusID>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection Caret="17">0,17</TextSelection>
+                            </TextSettings>
+                            <Bookmarks>
+                                <Bookmark BinderUUID="FF754691-EE56-472A-9179-F28BB3202871">MY LIFE SO FAR</Bookmark>
+                            </Bookmarks>
+                        </BinderItem>
+                        <BinderItem UUID="B09539EB-5D6D-4180-84EA-100BE53BDABF" Type="Text" Created="2023-07-16 10:18:16 -0600" Modified="2023-07-16 10:18:43 -0600">
+                            <Title>Video of Nudity on Whats app</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="8B001639-4255-4DE5-88DF-C4B8AC01B209" Type="Text" Created="2023-07-16 10:16:50 -0600" Modified="2023-07-16 10:17:01 -0600">
+                            <Title>Waking up Thoughts I</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="E409C36B-6A89-4C4C-A1A2-830E3725F243" Type="Text" Created="2023-01-24 13:50:29 -0600" Modified="2023-07-08 07:23:08 -0600">
+                            <Title>GARY's DAUGHTER</Title>
+                            <MetaData>
+                                <StatusID>1</StatusID>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="B92BC9B4-245F-4597-8D9B-419EF8EE0B96" Type="Text" Created="2023-07-12 03:42:42 -0600" Modified="2023-07-12 03:43:08 -0600">
+                            <Title>Nikki comes out,</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="5407C30E-D900-43E6-A08E-C0662CB5EC61" Type="Text" Created="2023-07-12 04:00:31 -0600" Modified="2023-07-12 04:02:19 -0600">
+                            <Title>Make up Colette</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="F08E84E3-F956-4B29-8D81-8E444F5D22F4" Type="Text" Created="2023-07-12 05:00:24 -0600" Modified="2023-07-12 05:00:24 -0600">
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="CEEF0A13-6B92-4C27-A116-80481E0E9EC5" Type="Text" Created="2023-07-12 05:00:48 -0600" Modified="2023-07-12 05:00:56 -0600">
+                            <Title>VISIT WITH ERIN</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="0857ED78-B5EC-49F8-9852-87314C64AAD7" Type="Text" Created="2023-08-15 06:38:31 -0600" Modified="2023-08-15 07:36:20 -0600">
+                            <Title>Carosel &quot;I LOVE YOU&quot; </Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                                <SectionType>9AFECE21-8C79-45E0-9B9F-D6D62A9729D3</SectionType>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>342,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="CC548DCD-D6D7-4B0C-B29E-C364265BA57B" Type="Text" Created="2023-08-16 08:14:29 -0600" Modified="2023-08-16 08:14:46 -0600">
+                            <Title>Neighbour David's Ghost</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="911006A8-0AB5-4000-92AC-9792B4833429" Type="Text" Created="2023-07-16 15:30:06 -0600" Modified="2023-07-16 15:30:36 -0600">
+                            <Title>routine</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="E45D13F1-7C0B-4F1D-8885-9AF9E9233F10" Type="Text" Created="2023-07-16 10:00:56 -0600" Modified="2023-07-16 10:01:54 -0600">
+                            <Title>Jenica USCIS report</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="356A0383-E4C2-418D-A0C8-CF08151BC758" Type="Text" Created="2023-07-16 10:01:35 -0600" Modified="2023-07-16 10:06:32 -0600">
+                            <Title>Jenica USCIS report II</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="10303A6D-6F73-44B2-96D2-3295CE21D013" Type="Text" Created="2023-07-12 05:01:14 -0600" Modified="2023-07-12 05:01:29 -0600">
+                            <Title>XMAS VISIT WHERE ERICA CALLED ME A PEDIPHILE</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="48BD7716-299A-4176-A0B5-553CA70BBDB5" Type="Text" Created="2023-07-12 05:01:08 -0600" Modified="2023-07-12 05:11:11 -0600">
+                            <Title>GREEN CARD</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="BEAC25D0-A87D-4927-848D-8763E7F63739" Type="Text" Created="2023-07-16 09:44:32 -0600" Modified="2023-07-16 09:44:38 -0600">
+                            <Title>Slavery</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="A904100A-C7CE-40BF-955A-4CB7B5AA49F8" Type="Text" Created="2023-07-16 10:17:22 -0600" Modified="2023-07-16 10:17:32 -0600">
+                            <Title>Waking up Thoughts II</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="DDC0B984-A829-44AD-B829-DE7402AB0AD3" Type="Text" Created="2023-07-12 05:01:33 -0600" Modified="2023-07-12 05:01:47 -0600">
+                            <Title>VISIT WHERE I STAYED AT MOTEL WITH RUGBY TEAM</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="25886207-F295-49C1-914A-5C9B2610E58B" Type="Text" Created="2023-07-12 05:08:39 -0600" Modified="2023-07-16 09:51:25 -0600">
+                            <Title>American Date / Party</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="2FB6F456-E9BA-430F-BE68-7987DD342B0F" Type="Text" Created="2023-07-16 09:51:30 -0600" Modified="2023-07-16 09:51:36 -0600">
+                            <Title>Jehanne</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="A946632C-B932-47A6-B7EB-ED2D31A2C81E" Type="Text" Created="2023-07-12 05:09:41 -0600" Modified="2023-07-12 05:09:51 -0600">
+                            <Title>Being Shocked</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="070FAC35-6936-491C-BE31-04C0DEE6CFE4" Type="Text" Created="2023-07-12 05:00:40 -0600" Modified="2023-07-12 05:00:48 -0600">
+                            <Title>VISIT WITH APPENDIX</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="6AAD1F96-76D6-43EE-A679-D856EADF73E6" Type="Text" Created="2023-07-16 09:39:45 -0600" Modified="2023-07-16 09:39:54 -0600">
+                            <Title>Appendix</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="4265CE27-A603-47C8-A5EC-94FC7B0FE350" Type="Text" Created="2023-07-12 05:01:51 -0600" Modified="2023-07-12 05:02:07 -0600">
+                            <Title>VISIT</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="49F40D08-E894-4BD5-A82A-CE40535E370E" Type="Text" Created="2023-07-12 05:12:16 -0600" Modified="2023-07-12 05:12:39 -0600">
+                            <Title> &quot;suicidal narcissist&quot;</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="3D93E79B-4A90-4C13-B8A0-43E14E652BB9" Type="Text" Created="2023-07-16 09:45:07 -0600" Modified="2023-07-16 09:45:16 -0600">
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="13F43027-FC2D-46A6-BB0B-FA1B2DF6FC86" Type="Text" Created="2023-07-12 03:50:35 -0600" Modified="2023-07-16 09:55:53 -0600">
+                            <Title>LOOSE IDEAS AFTER THIS NOTE</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="5CDE7A09-8714-4769-BA2D-DA6763127895" Type="Text" Created="2023-07-12 03:50:26 -0600" Modified="2023-07-12 03:50:33 -0600">
+                            <Title>MONSTERS</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="FBD18BBD-749F-4228-B8C8-35D5FF106246" Type="Text" Created="2023-07-12 03:51:40 -0600" Modified="2023-12-01 07:05:35 -0600">
+                            <Title>Asking Dodie for Green Card Help</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="5C34EAC3-2F75-42DE-83A3-215240D78147" Type="Text" Created="2023-07-12 03:52:06 -0600" Modified="2023-07-12 03:53:02 -0600">
+                            <Title>Missing Colette Octopus Apendage.</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="49582B62-30F4-435E-B87A-21FE84821492" Type="Text" Created="2023-07-12 03:54:00 -0600" Modified="2023-07-12 03:54:13 -0600">
+                            <Title>I want this not to be my life</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="1797071C-40BB-4DB1-A249-6D8FFD6CEAC3" Type="Text" Created="2023-06-07 10:33:18 -0600" Modified="2023-07-12 03:56:58 -0600">
+                            <Title>ANTHEM</Title>
+                            <MetaData>
+                                <StatusID>1</StatusID>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="4DE8B747-09DB-4EC3-8924-B7AB07547FB1" Type="Text" Created="2023-07-12 04:59:56 -0600" Modified="2023-07-12 05:00:05 -0600">
+                            <Title>Beaver vs Eagle</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="45BFF233-8C5D-411A-85EA-AD1B97114018" Type="Text" Created="2023-07-12 05:00:56 -0600" Modified="2023-07-12 05:01:05 -0600">
+                            <Title>LAWYERS GET INVOLVED</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="0FA93C40-50D9-45A8-8EAF-051E9440ABE1" Type="Text" Created="2023-07-12 05:05:21 -0600" Modified="2023-07-12 05:05:54 -0600">
+                            <Title>Back in Canada Musing</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>351,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="CD1B1BF2-3D2D-4FCE-B2E9-9F7E93B3A194" Type="Text" Created="2023-07-12 05:06:45 -0600" Modified="2023-07-12 05:06:55 -0600">
+                            <Title>Dedication</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>348,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="D469ED6E-45B5-49EA-9CB7-EDE64322407E" Type="Text" Created="2023-07-16 09:27:56 -0600" Modified="2023-08-15 06:37:24 -0600">
+                            <Title>Neighbourts PTSD</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>422,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="C1C15B9C-B61F-4748-8602-64A3864D9287" Type="Text" Created="2023-07-16 09:45:40 -0600" Modified="2023-07-16 09:45:48 -0600">
+                            <Title>Title?</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="B2910937-6980-42C7-B1B8-14A815F0AE63" Type="Text" Created="2023-07-16 09:52:02 -0600" Modified="2025-04-21 14:44:21 -0600">
+                            <Title>Matt Lane</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                            <Bookmarks>
+                                <Bookmark BinderUUID="FF754691-EE56-472A-9179-F28BB3202871">MY LIFE SO FAR</Bookmark>
+                            </Bookmarks>
+                        </BinderItem>
+                        <BinderItem UUID="9C02B367-039A-4B99-90C7-EE53D0C6ABBB" Type="Text" Created="2023-07-16 10:15:45 -0600" Modified="2023-07-16 10:15:59 -0600">
+                            <Title>I want to write that narcissist</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="5C640827-E3BB-4E8F-9BEE-3D858CAADF1A" Type="Text" Created="2023-07-16 09:52:41 -0600" Modified="2023-07-16 09:52:50 -0600">
+                            <Title>THEMES</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="4D808AB5-A061-4E46-97AA-5970FD407275" Type="Text" Created="2023-07-16 09:52:55 -0600" Modified="2023-07-16 09:53:05 -0600">
+                            <Title>Isolation</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                        <BinderItem UUID="DDC4A2E8-F463-4948-8B7E-5C695B4285C4" Type="Text" Created="2023-07-16 09:53:07 -0600" Modified="2023-07-16 09:53:27 -0600">
+                            <Title>Finding the Bottom</Title>
+                            <MetaData>
+                                <IncludeInCompile>Yes</IncludeInCompile>
+                            </MetaData>
+                            <TextSettings>
+                                <TextSelection>0,0</TextSelection>
+                            </TextSettings>
+                        </BinderItem>
+                    </Children>
+                </BinderItem>
+            </Children>
+        </BinderItem>
+    </Binder>
+    <Collections>
+        <Collection Type="Binder" ID="48DE1CBF-217F-4B94-944D-6D8C97396DCF" Color="0.164706 0.164706 0.164706">
+            <Title>Binder</Title>
+        </Collection>
+        <Collection Type="RecentSearch" ID="2655DDF6-4AB8-42CB-A433-1CD76FC351D2" Color="0.392157 0.392157 0.392157">
+            <Title>Search Results</Title>
+            <SearchSettings Operator="Any" Type="All" Scope="All" CompileSetting="All" CaseSensitive="No" IgnoreDiacritics="No">awkwa</SearchSettings>
+        </Collection>
+    </Collections>
+    <SectionTypes>
+        <TypeDefinitions>
+            <Type ID="D2E24F2F-E4A2-49D0-BACA-26098774C8F9">Part Heading</Type>
+            <Type ID="417A6CCE-D4E1-44BA-9A8D-038360B4B905">Chapter Heading</Type>
+            <Type ID="9AFECE21-8C79-45E0-9B9F-D6D62A9729D3">Scene</Type>
+            <Type ID="5770D705-B9A4-4798-AAB1-B2C56190B02E">Chapter</Type>
+            <Type ID="DFBFB5B6-D47F-4913-9E23-FC3950C10171">Heading</Type>
+            <Type ID="4BA429EF-6143-4FB6-9B43-D4E6E4F0CE1D">Section</Type>
+            <Type ID="F3D99402-96E3-4558-A2BE-FB83286017C8">Front Matter</Type>
+            <Type ID="235F7C42-10F1-40AB-9FC5-19AA26EABA47">Table of Contents</Type>
+            <Type ID="EA9C9DBA-B644-4EBB-BDAD-621E5455275A">N/A</Type>
+        </TypeDefinitions>
+        <LevelTypes>
+            <Folders>
+                <Type>EA9C9DBA-B644-4EBB-BDAD-621E5455275A</Type>
+                <Type>417A6CCE-D4E1-44BA-9A8D-038360B4B905</Type>
+            </Folders>
+            <Containers>
+                <Type>4BA429EF-6143-4FB6-9B43-D4E6E4F0CE1D</Type>
+            </Containers>
+            <Files>
+                <Type>4BA429EF-6143-4FB6-9B43-D4E6E4F0CE1D</Type>
+                <Type>4BA429EF-6143-4FB6-9B43-D4E6E4F0CE1D</Type>
+                <Type>9AFECE21-8C79-45E0-9B9F-D6D62A9729D3</Type>
+            </Files>
+        </LevelTypes>
+    </SectionTypes>
+    <LabelSettings>
+        <Title>Label</Title>
+        <DefaultLabelID>-1</DefaultLabelID>
+        <Labels>
+            <Label ID="-1">No Label</Label>
+            <Label ID="7" Color="0.993500 0.701213 0.732586">Red</Label>
+            <Label ID="8" Color="0.995422 0.790951 0.652384">Orange</Label>
+            <Label ID="9" Color="0.997726 0.892729 0.652567">Yellow</Label>
+            <Label ID="10" Color="0.715862 0.948714 0.697688">Green</Label>
+            <Label ID="11" Color="0.702312 0.888273 0.974258">Blue</Label>
+            <Label ID="12" Color="0.957565 0.766751 0.999619">Purple</Label>
+            <Label ID="0" Color="1.000000 0.760784 0.780392">POLITICS</Label>
+        </Labels>
+    </LabelSettings>
+    <StatusSettings>
+        <Title>Status</Title>
+        <DefaultStatusID>-1</DefaultStatusID>
+        <StatusItems>
+            <Status ID="-1">No Status</Status>
+            <Status ID="1">To Do</Status>
+            <Status ID="6">In Progress</Status>
+            <Status ID="2">First Draft</Status>
+            <Status ID="3">Revised Draft</Status>
+            <Status ID="4">Final Draft</Status>
+            <Status ID="5">Done</Status>
+        </StatusItems>
+    </StatusSettings>
+    <ProjectBookmarks>
+        <Bookmark BinderUUID="06C0455C-36DD-4F38-BB7B-F7DD2453A8A5"/>
+        <Bookmark BinderUUID="6830B6AC-686B-4370-A979-2FD1D7288BDA"/>
+        <Bookmark BinderUUID="69822417-D015-4BDD-90BD-18AAA6198D15"/>
+    </ProjectBookmarks>
+    <ProjectTargets Notify="Yes">
+        <DraftTarget Type="Words" CountIncludedOnly="Yes" CurrentCompileGroupOnly="Yes" Deadline="2023-03-24 00:00:00 -0800" IgnoreDeadline="No">0</DraftTarget>
+        <SessionTarget Type="Words" CountDraftOnly="No" AllowNegatives="Yes" ResetType="Time" ResetTime="00:00" DeterminedFromDeadline="No" CanWriteOnDeadlineDate="No" WritingDays="">1000</SessionTarget>
+        <PreviousSession Words="4" Characters="39" Date="2025-04-21 15:53:04 -0600"/>
+    </ProjectTargets>
+    <TemplateFolderUUID>5C03DE09-C285-48ED-827F-78E62B7D0F72</TemplateFolderUUID>
+    <BookmarksFolderUUID>69822417-D015-4BDD-90BD-18AAA6198D15</BookmarksFolderUUID>
+    <RecentWritingHistory Date="2025-04-21 00:00:00 -0600">
+        <DraftWordCount>0</DraftWordCount>
+        <DraftCharCount>0</DraftCharCount>
+        <OtherWordCount>4</OtherWordCount>
+        <OtherCharCount>38</OtherCharCount>
+    </RecentWritingHistory>
+    <PrintSettings PaperSize="612.0,792.0" LeftMargin="72.0" RightMargin="72.0" TopMargin="90.0" BottomMargin="90.0" PaperType="na-letter" Orientation="Portrait" ScaleFactor="1.0" HorizontallyCentered="Yes" VerticallyCentered="Yes" Collates="Yes" PagesAcross="1" PagesDown="1"/>
+</ScrivenerProject>

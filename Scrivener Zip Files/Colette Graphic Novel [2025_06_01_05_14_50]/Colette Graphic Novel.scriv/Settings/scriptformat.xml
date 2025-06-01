@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ScrivenerScriptFormat Version="1.0">
+    <Name>BBC Taped Drama</Name>
+    <Units>Inches</Units>
+    <ScriptElements>
+        <Element>
+            <Title>Scene Heading</Title>
+            <KeyEquivalent>s</KeyEquivalent>
+            <CharacterFormat>
+                <Font Name="TimesNewRomanPSMT" Size="12"/>
+                <UnderlineStyle>Single</UnderlineStyle>
+                <Bold>Yes</Bold>
+                <AllCaps>Yes</AllCaps>
+            </CharacterFormat>
+            <ParagraphFormat>
+                <Alignment>Left</Alignment>
+                <SpaceBefore>1</SpaceBefore>
+                <FirstLineIndent>1.5</FirstLineIndent>
+                <Indent>1.5</Indent>
+                <TailIndent>0</TailIndent>
+                <FirstTab>0</FirstTab>
+                <DefaultTabInterval>0</DefaultTabInterval>
+                <MinTabs>0</MinTabs>
+                <FixedLineHeight>0</FixedLineHeight>
+            </ParagraphFormat>
+            <NextElement>Scene Action</NextElement>
+            <NextElementOnEmptyLineTab>Scene Action</NextElementOnEmptyLineTab>
+            <NextElementOnTabAfterTyping>Scene Heading</NextElementOnTabAfterTyping>
+            <TextToInsertOnTab>( - )</TextToInsertOnTab>
+            <AutoCompleteList>
+                <Completions>
+                    <Completion NewLineAfter="No">EXT. </Completion>
+                    <Completion NewLineAfter="No">INT. </Completion>
+                    <Completion NewLineAfter="No">INT./EXT. </Completion>
+                    <Completion NewLineAfter="No">SC</Completion>
+                    <Completion NewLineAfter="No">DAY</Completion>
+                    <Completion NewLineAfter="No">NIGHT</Completion>
+                    <Completion NewLineAfter="No">AFTERNOON</Completion>
+                    <Completion NewLineAfter="No">MORNING</Completion>
+                </Completions>
+                <AppendProjectAutoCompleteList>Yes</AppendProjectAutoCompleteList>
+                <AutomaticallyAddPhrasesToProjectList>Yes</AutomaticallyAddPhrasesToProjectList>
+                <PhraseStartDelimiter>(.)</PhraseStartDelimiter>
+                <PhraseEndDelimiter>(-)</PhraseEndDelimiter>
+            </AutoCompleteList>
+        </Element>
+        <Element>
+            <Title>Scene Action</Title>
+            <KeyEquivalent>e</KeyEquivalent>
+            <CharacterFormat>
+                <Font Name="TimesNewRomanPSMT" Size="12"/>
+                <UnderlineStyle>None</UnderlineStyle>
+                <AllCaps>Yes</AllCaps>
+            </CharacterFormat>
+            <ParagraphFormat>
+                <Alignment>Left</Alignment>
+                <SpaceBefore>1</SpaceBefore>
+                <FirstLineIndent>2.5</FirstLineIndent>
+                <Indent>2.5</Indent>
+                <TailIndent>0</TailIndent>
+                <FirstTab>0</FirstTab>
+                <DefaultTabInterval>0</DefaultTabInterval>
+                <MinTabs>0</MinTabs>
+                <FixedLineHeight>0</FixedLineHeight>
+            </ParagraphFormat>
+            <NextElement>Scene Action</NextElement>
+            <NextElementOnEmptyLineTab>Character</NextElementOnEmptyLineTab>
+            <NextElementOnTabAfterTyping>Transition</NextElementOnTabAfterTyping>
+            <AutoCompleteList/>
+        </Element>
+        <Element>
+            <Title>Character</Title>
+            <KeyEquivalent>c</KeyEquivalent>
+            <CharacterFormat>
+                <Font Name="TimesNewRomanPSMT" Size="12"/>
+                <UnderlineStyle>Single</UnderlineStyle>
+                <Bold>Yes</Bold>
+                <AllCaps>Yes</AllCaps>
+                <StyleDelimiter>( ()</StyleDelimiter>
+            </CharacterFormat>
+            <ParagraphFormat>
+                <KeepWithNext>Yes</KeepWithNext>
+                <Alignment>Left</Alignment>
+                <SpaceBefore>1</SpaceBefore>
+                <FirstLineIndent>1.5</FirstLineIndent>
+                <Indent>1.5</Indent>
+                <TailIndent>0</TailIndent>
+                <FirstTab>0</FirstTab>
+                <DefaultTabInterval>0</DefaultTabInterval>
+                <MinTabs>0</MinTabs>
+                <FixedLineHeight>0</FixedLineHeight>
+            </ParagraphFormat>
+            <NextElement>Dialogue</NextElement>
+            <InsertColonBeforeReturn>Yes</InsertColonBeforeReturn>
+            <NextElementOnEmptyLineTab>Scene Action</NextElementOnEmptyLineTab>
+            <NextElementOnTabAfterTyping>Dialogue</NextElementOnTabAfterTyping>
+            <AutoCompleteList>
+                <Completions>
+                    <Completion NewLineAfter="Yes">(O.O.V.)</Completion>
+                    <Completion NewLineAfter="Yes">(V.O.)</Completion>
+                </Completions>
+                <AppendProjectAutoCompleteList>Yes</AppendProjectAutoCompleteList>
+                <ProjectListAutoCompleteBehavior>GoToNextLine</ProjectListAutoCompleteBehavior>
+                <AutomaticallyAddPhrasesToProjectList>Yes</AutomaticallyAddPhrasesToProjectList>
+                <PhraseEndDelimiter>(()</PhraseEndDelimiter>
+            </AutoCompleteList>
+        </Element>
+        <Element>
+            <Title>Dialogue</Title>
+            <KeyEquivalent>d</KeyEquivalent>
+            <CharacterFormat>
+                <Font Name="TimesNewRomanPSMT" Size="12"/>
+                <UnderlineStyle>None</UnderlineStyle>
+            </CharacterFormat>
+            <ParagraphFormat>
+                <Alignment>Left</Alignment>
+                <FirstLineIndent>1.5</FirstLineIndent>
+                <Indent>1.5</Indent>
+                <TailIndent>0</TailIndent>
+                <FirstTab>0</FirstTab>
+                <DefaultTabInterval>0</DefaultTabInterval>
+                <MinTabs>0</MinTabs>
+                <FixedLineHeight>0</FixedLineHeight>
+            </ParagraphFormat>
+            <NextElement>Character</NextElement>
+            <NextElementOnEmptyLineTab>Scene Heading</NextElementOnEmptyLineTab>
+            <NextElementOnTabAfterTyping>Scene Action</NextElementOnTabAfterTyping>
+            <AutoCompleteList/>
+        </Element>
+        <Element>
+            <Title>Transition</Title>
+            <CharacterFormat>
+                <Font Name="TimesNewRomanPSMT" Size="12"/>
+                <UnderlineStyle>None</UnderlineStyle>
+                <AllCaps>Yes</AllCaps>
+            </CharacterFormat>
+            <ParagraphFormat>
+                <Alignment>Left</Alignment>
+                <SpaceBefore>1</SpaceBefore>
+                <FirstLineIndent>1.5</FirstLineIndent>
+                <Indent>1.5</Indent>
+                <TailIndent>0</TailIndent>
+                <FirstTab>0</FirstTab>
+                <DefaultTabInterval>0</DefaultTabInterval>
+                <MinTabs>0</MinTabs>
+                <FixedLineHeight>0</FixedLineHeight>
+            </ParagraphFormat>
+            <NextElement>Scene Heading</NextElement>
+            <NextElementOnEmptyLineTab>Scene Heading</NextElementOnEmptyLineTab>
+            <NextElementOnTabAfterTyping>Scene Heading</NextElementOnTabAfterTyping>
+            <AutoCompleteList>
+                <Completions>
+                    <Completion NewLineAfter="No">CUT TO:</Completion>
+                    <Completion NewLineAfter="No">MIX TO:</Completion>
+                </Completions>
+            </AutoCompleteList>
+        </Element>
+    </ScriptElements>
+</ScrivenerScriptFormat>
