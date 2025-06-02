@@ -59,8 +59,22 @@ return new class extends Migration
 
             // Indexes
             $table->index(['note_id', 'item_id']);
-            $table->index('reference_position', 'writing_note_references_position_index');
         });
+
+        if (Schema::hasTable('writing_note_references')) {
+            // Remove the direct index on JSON column (if it exists)
+            if (Schema::hasIndex('writing_note_references', 'writing_note_references_position_index')) {
+                Schema::table('writing_note_references', function (Blueprint $table) {
+                    $table->dropIndex('writing_note_references_position_index');
+                });
+            }
+            // Add a generated column (for example, extract $.page from reference_position) and index it
+            Schema::table('writing_note_references', function (Blueprint $table) {
+                // (Adjust the JSON path as needed, e.g. '$.page' or '$.line')
+                $table->integer('reference_position_index')->storedAs("JSON_UNQUOTE(JSON_EXTRACT(reference_position, '$.page'))")->after('reference_position')->nullable();
+                $table->index('reference_position_index', 'writing_note_references_position_index');
+            });
+        }
     }
 
     /**
@@ -68,6 +82,16 @@ return new class extends Migration
      */
     public function down(): void
     {
+        if (Schema::hasTable('writing_note_references')) {
+            Schema::table('writing_note_references', function (Blueprint $table) {
+                // Drop the generated column (and its index) on rollback
+                if (Schema::hasColumn('writing_note_references', 'reference_position_index')) {
+                    $table->dropIndex('writing_note_references_position_index');
+                    $table->dropColumn('reference_position_index');
+                }
+            });
+        }
+
         Schema::dropIfExists('writing_note_references');
         
         Schema::table('writing_compiled_output_items', function (Blueprint $table) {

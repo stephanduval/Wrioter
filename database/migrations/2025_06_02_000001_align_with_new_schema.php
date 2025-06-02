@@ -30,11 +30,8 @@ return new class extends Migration
             }
         });
 
-        // Rename writing_items to items and modify structure
-        if (Schema::hasTable('writing_items')) {
-            Schema::rename('writing_items', 'items');
-        }
-        
+        // Remove renaming of writing_items to items
+        // Only modify items table structure
         Schema::table('items', function (Blueprint $table) {
             // Drop foreign key constraint for parent_id if it exists
             if (Schema::hasColumn('items', 'parent_id')) {
@@ -120,7 +117,7 @@ return new class extends Migration
             }
         });
 
-        // Revert items table changes
+        // Revert items table changes (do not rename back)
         Schema::table('items', function (Blueprint $table) {
             if (!Schema::hasColumn('items', 'version')) {
                 $table->integer('version')->default(1);
@@ -141,10 +138,6 @@ return new class extends Migration
                 $table->enum('type', ['text', 'image', 'link', 'file', 'mindmap'])->change();
             }
         });
-        
-        if (Schema::hasTable('items')) {
-            Schema::rename('items', 'writing_items');
-        }
 
         // Revert item_links table changes
         Schema::table('item_links', function (Blueprint $table) {
