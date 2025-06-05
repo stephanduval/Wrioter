@@ -2,11 +2,14 @@
 
 namespace App\Console\Commands;
 
+use App\Services\ScrivenerImport\FileHandler;
+use App\Services\ScrivenerImport\XmlParser;
+use App\Services\ScrivenerImport\DataTransformer;
+use App\Services\ScrivenerImport\DatabasePopulator;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
-use ZipArchive;
-use Illuminate\Support\Str;
-use App\Services\ScrivenerImport\XmlParser;
+use Illuminate\Support\Facades\Storage;
+use Symfony\Component\Console\Helper\ProgressBar;
 
 class ScrivenerImportCommand extends Command
 {
@@ -16,228 +19,185 @@ class ScrivenerImportCommand extends Command
      * @var string
      */
     protected $signature = 'scrivener:import 
-                            {filepath : The path to the .scrivx or .zip file to import (use quotes if path contains spaces)}
-                            {--validate-only : Only validate the file without importing}
-                            {--force : Force import even if validation fails}
-                            {--keep-extracted : Keep the extracted files after import (for debugging)}';
+        {file : Path to the .zip file containing the Scrivener project}
+        {--validate-only : Only validate the file}
+        {--keep-extracted : Keep extracted files for debugging}
+        {--title= : Custom manuscript title}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Import a Scrivener project file into the system';
+    protected $description = 'Import a Scrivener project from a .zip file into Wrioter';
 
-    /**
-     * Path to the extracted files
-     */
-    protected ?string $extractedPath = null;
+    private FileHandler $fileHandler;
+    private XmlParser $xmlParser;
+    private DataTransformer $dataTransformer;
+    private DatabasePopulator $databasePopulator;
+    private ?ProgressBar $progressBar = null;
+
+    public function __construct(
+        FileHandler $fileHandler,
+        XmlParser $xmlParser,
+        DataTransformer $dataTransformer,
+        DatabasePopulator $databasePopulator
+    ) {
+        parent::__construct();
+        $this->fileHandler = $fileHandler;
+        $this->xmlParser = $xmlParser;
+        $this->dataTransformer = $dataTransformer;
+        $this->databasePopulator = $databasePopulator;
+    }
 
     /**
      * Execute the console command.
      */
     public function handle()
     {
-        // Get the filepath and normalize it
-        $filePath = trim($this->argument('filepath'));
-        
-        // If the path is relative, make it absolute from the current working directory
-        if (!str_starts_with($filePath, '/')) {
-            $filePath = getcwd() . '/' . $filePath;
-        }
-        
-        $validateOnly = $this->option('validate-only');
-        $force = $this->option('force');
-        $keepExtracted = $this->option('keep-extracted');
-
-        $this->info('Starting Scrivener import process...');
-        $this->info('File path: ' . $filePath);
-        
         try {
-            // Step 1: Validate file exists and is readable
-            if (!file_exists($filePath)) {
-                throw new \Exception("File not found: {$filePath}");
+            $this->validateInput();
+            $this->info('Starting Scrivener import process...');
+
+            // Step 1: Extract and validate the .scrivx file
+            $this->info('Extracting Scrivener project file...');
+            $extractedPath = $this->fileHandler->extract($this->argument('file'));
+            
+            if (!$this->fileHandler->validate($extractedPath)) {
+                throw new \RuntimeException('Invalid Scrivener project file structure');
             }
 
-            if (!is_readable($filePath)) {
-                throw new \Exception("File is not readable: {$filePath}");
+            if ($this->option('validate-only')) {
+                $this->info('Validation successful. Exiting as requested.');
+                return 0;
             }
 
-            $this->info('File validation passed.');
-
-            // Step 2: Extract the .scrivx file if it's a zip
-            $scrivxPath = $filePath;
-            if (strtolower(pathinfo($filePath, PATHINFO_EXTENSION)) === 'zip') {
-                $this->info('Extracting zip file...');
-                $scrivxPath = $this->extractZipFile($filePath);
+            // Step 2: Parse the XML
+            $this->info('Parsing project data...');
+            $xmlData = $this->xmlParser->parse($extractedPath . '/project.scrivx');
+            
+            if (!$this->xmlParser->validate($xmlData)) {
+                throw new \RuntimeException('Invalid project data structure');
             }
 
-            // Step 3: Parse the XML
-            $this->info('Parsing Scrivener XML...');
-            try {
-                $parser = new XmlParser($scrivxPath);
-                $parsedData = $parser->parse();
-                
-                $this->info('Successfully parsed Scrivener project:');
-                $this->info('- Title: ' . $parsedData['project']['title']);
-                $this->info('- Created: ' . $parsedData['project']['created']);
-                $this->info('- Modified: ' . $parsedData['project']['modified']);
-                $this->info('- Document Count: ' . count($parsedData['binder']['items']));
-                $this->info('- Research Items: ' . count($parsedData['research']['items']));
-            } catch (\Exception $e) {
-                throw new \Exception("Failed to parse Scrivener XML: " . $e->getMessage());
-            }
-
-            // Step 4: Transform data
+            // Step 3: Transform the data
             $this->info('Transforming data...');
-            // TODO: Implement data transformation
+            $transformedData = [
+                'manuscript' => $this->dataTransformer->transformManuscript($xmlData),
+                'items' => $this->dataTransformer->transformItems($xmlData),
+                'collections' => $this->dataTransformer->transformCollections($xmlData),
+                'writing_history' => $this->dataTransformer->transformWritingHistory($xmlData),
+            ];
 
-            // Step 5: Import to database
-            if (!$validateOnly) {
-                $this->info('Importing to database...');
-                // TODO: Implement database import
+            // Validate transformed data
+            if (!$this->databasePopulator->validate(
+                $transformedData['manuscript'],
+                $transformedData['items'],
+                $transformedData['collections'],
+                $transformedData['writing_history']
+            )) {
+                throw new \RuntimeException('Transformed data validation failed');
             }
 
-            // Cleanup extracted files if not keeping them
-            if (!$keepExtracted && $this->extractedPath) {
-                $this->cleanupExtractedFiles();
+            // Step 4: Populate the database
+            $this->info('Importing data into database...');
+            $this->setupProgressBar(count($transformedData['items']));
+            
+            $result = $this->databasePopulator->populate(
+                $transformedData['manuscript'],
+                $transformedData['items'],
+                $transformedData['collections'],
+                $transformedData['writing_history']
+            );
+
+            $this->finishProgressBar();
+
+            // Step 5: Cleanup
+            if (!$this->option('keep-extracted')) {
+                $this->info('Cleaning up temporary files...');
+                $this->fileHandler->cleanup($extractedPath);
             }
 
             $this->info('Import completed successfully!');
-            return Command::SUCCESS;
+            $this->info(sprintf(
+                'Created manuscript "%s" with %d items, %d collections, and %d writing history records.',
+                $result['manuscript']->title,
+                $result['items_count'],
+                $result['collections_count'],
+                $result['writing_history_count']
+            ));
+
+            return 0;
 
         } catch (\Exception $e) {
-            // Cleanup on error
-            if ($this->extractedPath) {
-                $this->cleanupExtractedFiles();
-            }
-
             $this->error('Import failed: ' . $e->getMessage());
             Log::error('Scrivener import failed', [
-                'file' => $filePath,
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
+                'file' => $this->argument('file'),
+                'user_id' => 1, // Hardcoded user ID
             ]);
-            return Command::FAILURE;
+
+            // Attempt rollback if we have a manuscript ID
+            if (isset($result['manuscript'])) {
+                $this->info('Attempting to rollback import...');
+                if ($this->databasePopulator->rollback($result['manuscript']->id)) {
+                    $this->info('Rollback successful.');
+                } else {
+                    $this->error('Rollback failed. Manual cleanup may be required.');
+                }
+            }
+
+            return 1;
         }
     }
 
-    /**
-     * Extract the zip file and return the path to the .scrivx file
-     */
-    protected function extractZipFile(string $zipPath): string
+    private function validateInput(): void
     {
-        // Create a unique temporary directory
-        $this->extractedPath = storage_path('app/temp/scrivener-import-' . Str::random(16));
-        if (!file_exists($this->extractedPath)) {
-            mkdir($this->extractedPath, 0755, true);
+        $file = $this->argument('file');
+        if (!file_exists($file)) {
+            throw new \InvalidArgumentException("File not found: {$file}");
         }
 
-        $zip = new ZipArchive();
-        $result = $zip->open($zipPath);
-
-        if ($result !== true) {
-            throw new \Exception("Failed to open zip file: " . $this->getZipErrorMessage($result));
+        if (!str_ends_with(strtolower($file), '.zip')) {
+            throw new \InvalidArgumentException('File must be a .zip file containing a Scrivener project');
         }
 
-        // Extract the zip file
-        $zip->extractTo($this->extractedPath);
+        // Verify it's a valid ZIP file
+        $zip = new \ZipArchive();
+        if ($zip->open($file) !== true) {
+            throw new \InvalidArgumentException('Invalid or corrupted ZIP file');
+        }
         $zip->close();
 
-        // Find the .scrivx file
-        $scrivxFile = $this->findScrivxFile($this->extractedPath);
-        if (!$scrivxFile) {
-            throw new \Exception("No .scrivx file found in the zip archive");
-        }
+        // Hardcoded user ID for info@freynet-gagne.com
+        $userId = 1;
 
-        $this->info('Successfully extracted to: ' . $this->extractedPath);
-        $this->info('Found .scrivx file: ' . $scrivxFile);
-
-        return $scrivxFile;
-    }
-
-    /**
-     * Find the .scrivx file in the extracted directory
-     */
-    protected function findScrivxFile(string $directory): ?string
-    {
-        $iterator = new \RecursiveIteratorIterator(
-            new \RecursiveDirectoryIterator($directory, \RecursiveDirectoryIterator::SKIP_DOTS)
-        );
-
-        foreach ($iterator as $file) {
-            if ($file->isFile() && strtolower($file->getExtension()) === 'scrivx') {
-                return $file->getPathname();
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * Clean up extracted files
-     */
-    protected function cleanupExtractedFiles(): void
-    {
-        if ($this->extractedPath && file_exists($this->extractedPath)) {
-            $this->info('Cleaning up extracted files...');
-            $this->deleteDirectory($this->extractedPath);
+        // Verify user exists
+        if (!\App\Models\User::find($userId)) {
+            throw new \InvalidArgumentException("User not found: {$userId}");
         }
     }
 
-    /**
-     * Recursively delete a directory
-     */
-    protected function deleteDirectory(string $directory): void
+    private function setupProgressBar(int $total): void
     {
-        if (!file_exists($directory)) {
-            return;
-        }
-
-        $files = new \RecursiveIteratorIterator(
-            new \RecursiveDirectoryIterator($directory, \RecursiveDirectoryIterator::SKIP_DOTS),
-            \RecursiveIteratorIterator::CHILD_FIRST
-        );
-
-        foreach ($files as $file) {
-            if ($file->isDir()) {
-                rmdir($file->getPathname());
-            } else {
-                unlink($file->getPathname());
-            }
-        }
-
-        rmdir($directory);
+        $this->progressBar = $this->output->createProgressBar($total);
+        $this->progressBar->setFormat(' %current%/%max% [%bar%] %percent:3s%% %elapsed:6s%/%estimated:-6s% %memory:6s%');
+        $this->progressBar->start();
     }
 
-    /**
-     * Get a human-readable error message for ZipArchive errors
-     */
-    protected function getZipErrorMessage(int $errorCode): string
+    private function updateProgress(): void
     {
-        return match($errorCode) {
-            ZipArchive::ER_EXISTS => 'File already exists',
-            ZipArchive::ER_INCONS => 'Zip archive inconsistent',
-            ZipArchive::ER_INVAL => 'Invalid argument',
-            ZipArchive::ER_MEMORY => 'Memory allocation failure',
-            ZipArchive::ER_NOENT => 'No such file',
-            ZipArchive::ER_NOZIP => 'Not a zip archive',
-            ZipArchive::ER_OPEN => 'Cannot open file',
-            ZipArchive::ER_READ => 'Read error',
-            ZipArchive::ER_SEEK => 'Seek error',
-            default => 'Unknown error (' . $errorCode . ')'
-        };
+        if ($this->progressBar) {
+            $this->progressBar->advance();
+        }
     }
 
-    /**
-     * Display a progress bar for long-running operations
-     */
-    protected function showProgress($total, $current, $message = 'Processing...')
+    private function finishProgressBar(): void
     {
-        $this->output->write("\r");
-        $this->output->write($message . ' ' . $current . '/' . $total);
-        if ($current === $total) {
-            $this->output->write("\n");
+        if ($this->progressBar) {
+            $this->progressBar->finish();
+            $this->newLine();
         }
     }
 } 
