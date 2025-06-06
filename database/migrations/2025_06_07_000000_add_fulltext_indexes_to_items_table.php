@@ -12,13 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('items', function (Blueprint $table) {
-            // Drop existing indexes if they exist to avoid conflicts
-            $table->dropIndexIfExists('items_content_fulltext');
-            $table->dropIndexIfExists('items_content_markdown_fulltext');
-            $table->dropIndexIfExists('items_synopsis_fulltext');
-            $table->dropIndexIfExists('items_title_fulltext');
-
-            // Add FULLTEXT indexes
+            // Only add FULLTEXT indexes (do not drop anything)
             $table->fullText('content', 'items_content_fulltext');
             $table->fullText('content_markdown', 'items_content_markdown_fulltext');
             $table->fullText('synopsis', 'items_synopsis_fulltext');
@@ -33,10 +27,18 @@ return new class extends Migration
     {
         Schema::table('items', function (Blueprint $table) {
             // Drop FULLTEXT indexes
-            $table->dropFullText('items_content_fulltext');
-            $table->dropFullText('items_content_markdown_fulltext');
-            $table->dropFullText('items_synopsis_fulltext');
-            $table->dropFullText('items_title_fulltext');
+            try {
+                $table->dropIndex('items_content_fulltext');
+            } catch (\Exception $e) {}
+            try {
+                $table->dropIndex('items_content_markdown_fulltext');
+            } catch (\Exception $e) {}
+            try {
+                $table->dropIndex('items_synopsis_fulltext');
+            } catch (\Exception $e) {}
+            try {
+                $table->dropIndex('items_title_fulltext');
+            } catch (\Exception $e) {}
         });
     }
 }; 
