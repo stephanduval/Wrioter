@@ -1,5 +1,15 @@
 Start the chat with "cursorrules applied, these affect the address of the production server"
 
+All instructions or requests for data from and for .env.testing and .env* should be given for the user to enter manually.  You cant modify these files.
+
+Testing database credentials are in .env.testing.
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=wrioter_test
+DB_USERNAME=wrioter_test
+DB_PASSWORD='WrioterTest123!@#'
+
 Production server address: ssh -i ~/.ssh/id_rsa root@enter.ip.address.here
 The production directory is /var/www/enter.project.name.here
 
@@ -41,3 +51,5 @@ php artisan about
   Session ........................................................................................................................ cookie  
 
 I prefer to use localStorage to cookies 
+
+The database is mysql.

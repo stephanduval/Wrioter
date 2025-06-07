@@ -1,10 +1,22 @@
 import type { App } from 'vue'
-import Toast from 'vue-toast-notification'
-import 'vue-toast-notification/dist/theme-default.css'
+import Toast, { type PluginOptions, POSITION } from 'vue-toastification'
+import 'vue-toastification/dist/index.css'
 
 export default function (app: App) {
-  app.use(Toast, {
-    position: 'top-right',
-    duration: 5000,
-  })
+  const options: PluginOptions = {
+    position: POSITION.TOP_RIGHT,
+    timeout: 5000,
+    closeOnClick: true,
+    pauseOnFocusLoss: true,
+    pauseOnHover: true,
+    draggable: true,
+    draggablePercent: 0.6,
+    showCloseButtonOnHover: false,
+    hideProgressBar: false,
+    closeButton: 'button',
+    icon: true,
+    rtl: false,
+  }
+
+  app.use(Toast, options)
 } 
