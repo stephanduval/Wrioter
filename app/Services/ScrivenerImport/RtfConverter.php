@@ -38,22 +38,28 @@ class RtfConverter
         }
 
         try {
+            // Create temporary directory for media extraction
+            $tempDir = sys_get_temp_dir() . '/rtf_converter_' . uniqid();
+            if (!file_exists($tempDir)) {
+                mkdir($tempDir, 0755, true);
+            }
+            
             // Create temporary files
-            $tempDir = sys_get_temp_dir();
-            $rtfFile = tempnam($tempDir, 'rtf_');
-            $mdFile = tempnam($tempDir, 'md_');
+            $rtfFile = $tempDir . '/input.rtf';
+            $mdFile = $tempDir . '/output.md';
+            $mediaDir = $tempDir . '/media';
 
             // Write RTF content to temporary file
             file_put_contents($rtfFile, $rtf);
 
-            // Run pandoc conversion
+            // Run pandoc conversion with explicit media directory
             $process = new Process([
                 $this->pandocPath,
                 '--from', 'rtf',
                 '--to', 'markdown',
                 '--wrap=none',
                 '--standalone',
-                '--extract-media=' . dirname($mdFile),
+                '--extract-media=' . $mediaDir,
                 $rtfFile,
                 '-o', $mdFile
             ]);
@@ -73,8 +79,7 @@ class RtfConverter
             $markdown = file_get_contents($mdFile);
 
             // Cleanup temporary files
-            @unlink($rtfFile);
-            @unlink($mdFile);
+            $this->cleanupTempDir($tempDir);
 
             // Post-process the markdown
             return $this->postProcessMarkdown($markdown);
@@ -89,6 +94,68 @@ class RtfConverter
     }
 
     /**
+     * Process media files and update markdown references
+     *
+     * @param string $markdown The markdown content
+     * @param string $mediaDir The directory containing media files
+     * @return string Updated markdown content
+     */
+    private function processMediaFiles(string $markdown, string $mediaDir): string
+    {
+        // Get all media files
+        $mediaFiles = glob($mediaDir . '/*');
+        
+        // For each media file, update the markdown
+        foreach ($mediaFiles as $mediaFile) {
+            $fileName = basename($mediaFile);
+            $mediaType = mime_content_type($mediaFile);
+            
+            // If it's an image, update the markdown to include it
+            if (strpos($mediaType, 'image/') === 0) {
+                // Convert image to base64
+                $imageData = base64_encode(file_get_contents($mediaFile));
+                $base64Image = 'data:' . $mediaType . ';base64,' . $imageData;
+                
+                // Replace any image references with base64 data
+                $markdown = str_replace(
+                    '![' . $fileName . '](' . $fileName . ')',
+                    '![Image](' . $base64Image . ')',
+                    $markdown
+                );
+            }
+        }
+        
+        return $markdown;
+    }
+
+    /**
+     * Clean up temporary directory and its contents
+     *
+     * @param string $dir Directory to clean up
+     */
+    private function cleanupTempDir(string $dir): void
+    {
+        if (!file_exists($dir)) {
+            return;
+        }
+
+        $files = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($dir, \RecursiveDirectoryIterator::SKIP_DOTS),
+            \RecursiveIteratorIterator::CHILD_FIRST
+        );
+
+        foreach ($files as $file) {
+            if ($file->isDir()) {
+                rmdir($file->getPathname());
+            } else {
+                unlink($file->getPathname());
+            }
+        }
+
+        rmdir($dir);
+    }
+
+    /**
      * Fallback conversion when pandoc is not available
      *
      * @param string $rtf RTF content
@@ -100,6 +167,8 @@ class RtfConverter
         $text = preg_replace('/\\\\(?:[a-z]+|\d+)(?:\s|$)/i', '', $rtf);
         // Remove RTF groups
         $text = preg_replace('/\{[^}]*\}/', '', $text);
+        // Remove image data
+        $text = preg_replace('/\\\*\\\shppict.*?\\\pict.*?\}/s', '', $text);
         // Convert basic formatting
         $text = preg_replace('/\\\\b\s(.*?)\\\\b0\s/s', '**$1** ', $text);
         $text = preg_replace('/\\\\i\s(.*?)\\\\i0\s/s', '*$1* ', $text);

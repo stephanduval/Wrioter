@@ -16,10 +16,20 @@ class Manuscript extends Model
         'user_id',
         'title',
         'description',
-        'status'
+        'status',
+        'scrivener_uuid',
+        'manuscript_type',
+        'version',
+        'imported_at',
+        'project_settings',
+        'compile_settings',
+        'custom_metadata'
     ];
 
     protected $casts = [
+        'project_settings' => 'array',
+        'compile_settings' => 'array',
+        'custom_metadata' => 'array',
         'metadata' => 'array',
         'version' => 'integer'
     ];

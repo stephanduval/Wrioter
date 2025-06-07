@@ -6,6 +6,7 @@ use App\Models\Manuscript;
 use App\Models\ManuscriptItem;
 use App\Models\ManuscriptCollection;
 use App\Models\WritingHistory;
+use App\Models\Item;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Database\QueryException;
@@ -30,6 +31,8 @@ class DatabasePopulator
         array $writingHistoryData
     ): array {
         try {
+            // Validate data before proceeding
+            $this->validate($manuscriptData, $itemsData, $collectionsData, $writingHistoryData);
             DB::beginTransaction();
 
             // Create manuscript
@@ -82,6 +85,14 @@ class DatabasePopulator
      */
     private function createManuscript(array $data): Manuscript
     {
+        // Check for duplicate scrivener_uuid
+        if (isset($data['scrivener_uuid'])) {
+            $existing = Manuscript::where('scrivener_uuid', $data['scrivener_uuid'])->first();
+            if ($existing) {
+                throw new RuntimeException('A manuscript with this Scrivener UUID already exists');
+            }
+        }
+
         $manuscript = Manuscript::create($data);
 
         Log::info('Created manuscript', [
@@ -104,14 +115,56 @@ class DatabasePopulator
     {
         $items = [];
         $parentMap = [];
+        $itemVersions = [];
 
-        // First pass: Create all items
+        // First pass: Create Item records and their versions
         foreach ($itemsData as $itemData) {
-            $itemData['manuscript_id'] = $manuscriptId;
-            $item = ManuscriptItem::create($itemData);
+            // Create the item
+            $item = Item::create([
+                'user_id' => $itemData['user_id'],
+                'type' => $itemData['type'],
+                'title' => $itemData['title'],
+                'content' => $itemData['content'],
+                'synopsis' => $itemData['synopsis'],
+                'item_order' => $itemData['item_order'],
+                'metadata' => $itemData['metadata'],
+                'scrivener_uuid' => $itemData['scrivener_uuid'],
+                'folder_type' => $itemData['folder_type'],
+                'icon_name' => $itemData['icon_name'],
+                'format_metadata' => $itemData['format_metadata'],
+                'content_markdown' => $itemData['content_markdown'],
+                'raw_content' => $itemData['raw_content'],
+                'content_format' => $itemData['content_format'],
+                'word_count' => $itemData['word_count'],
+                'character_count' => $itemData['character_count'],
+                'created_at' => $itemData['created_at'],
+                'updated_at' => $itemData['updated_at'],
+            ]);
+
+            // Create a version for the item
+            $version = $item->versions()->create([
+                'user_id' => $itemData['user_id'],
+                'content' => $itemData['content'],
+                'synopsis' => $itemData['synopsis'],
+                'metadata' => $itemData['metadata'],
+                'version_number' => 1,
+                'is_forked' => false,
+            ]);
+
+            // Store the item and version for later use
             $items[$item->scrivener_uuid] = $item;
+            $itemVersions[$item->scrivener_uuid] = $version;
             $parentMap[$item->scrivener_uuid] = $itemData['metadata']['parent_id'] ?? null;
+
+            // Update the item's current version
+            $item->update(['current_version_id' => $version->id]);
         }
+
+        // Log counts after creation
+        Log::info('Item creation counts', [
+            'itemsData_count' => count($itemsData),
+            'items_created_count' => count($items),
+        ]);
 
         // Second pass: Update parent relationships
         foreach ($parentMap as $uuid => $parentUuid) {
@@ -120,6 +173,18 @@ class DatabasePopulator
                 $parent = $items[$parentUuid];
                 $item->update(['parent_id' => $parent->id]);
             }
+        }
+
+        // Third pass: Attach items to manuscript via pivot table
+        $manuscript = Manuscript::find($manuscriptId);
+        foreach ($items as $uuid => $item) {
+            $itemData = collect($itemsData)->firstWhere('scrivener_uuid', $uuid);
+            $manuscript->items()->attach($item->id, [
+                'item_version_id' => $itemVersions[$uuid]->id,
+                'order_index' => $itemData['item_order'] ?? 0,
+                'is_independent' => false,
+                'metadata' => $itemData['metadata'] ?? null,
+            ]);
         }
 
         Log::info('Created items', [

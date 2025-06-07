@@ -123,19 +123,30 @@ class RtfConverterTest extends TestCase
 
     public function test_rtf_with_images()
     {
-        $rtf = '{\\rtf1\\ansi{\\fonttbl{\\f0 Arial;}}\\f0\\fs24\\par{\\*\\shppict{\\pict\\pngblip\\picw100\\pich100 test}}}';
+        // Create a simple RTF with text and an image placeholder
+        $rtf = '{\\rtf1\\ansi{\\fonttbl{\\f0 Arial;}}\\f0\\fs24\\par Test text with image:\\par{\\*\\shppict{\\pict\\pngblip\\picw100\\pich100\\picwgoal100\\pichgoal100 test}}}';
+        
         $markdown = $this->converter->convert($rtf);
 
         if ($this->converter->isPandocAvailable()) {
-            // With pandoc, we expect pandoc's output (which may not be exactly "![")
-            // (For example, pandoc might output "![") or "" (empty) etc.)
-            // So we simply check that the output is not empty and does not equal the fallback output.
+            // Debug output
+            echo "\nPandoc output:\n" . $markdown . "\n";
+            
+            // With pandoc, we expect at least the text to be preserved
+            $this->assertStringContainsString('Test text with image', $markdown);
+            
+            // Verify the markdown is not empty and different from fallback
             $fallback = $this->converter->fallbackConversion($rtf);
+            echo "\nFallback output:\n" . $fallback . "\n";
             $this->assertNotEquals($fallback, $markdown, "Pandoc output should differ from fallback output.");
             $this->assertNotEmpty($markdown, "Pandoc output should not be empty.");
+            
+            // Note: We're not asserting image presence since Pandoc's RTF image handling is limited
+            // The important thing is that the text is preserved and the conversion doesn't fail
         } else {
-            // Without pandoc, we expect empty string for images (fallback)
-            $this->assertStringNotContainsString('test', $markdown);
+            // Without pandoc, we expect basic text extraction (fallback)
+            $this->assertStringContainsString('Test text with image', $markdown);
+            $this->assertStringNotContainsString('test', $markdown); // Image data should be stripped
         }
     }
 } 

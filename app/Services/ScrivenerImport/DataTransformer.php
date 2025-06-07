@@ -28,7 +28,6 @@ class DataTransformer
         $settings = $data['settings'];
 
         return [
-            'user_id' => 1,
             'title' => $project['Title'],
             'description' => $project['Synopsis'],
             'status' => 'draft',
@@ -101,7 +100,6 @@ class DataTransformer
         // This is a placeholder for future implementation
         return [
             [
-                'user_id' => 1,
                 'date' => now()->toDateString(),
                 'draft_word_count' => $this->calculateTotalWordCount($data['binder']['items']),
                 'draft_char_count' => $this->calculateTotalCharCount($data['binder']['items']),
@@ -129,7 +127,6 @@ class DataTransformer
     {
         foreach ($items as $item) {
             $transformedItems[] = [
-                'user_id' => 1,
                 'type' => $this->mapItemType($item['Type']),
                 'title' => $item['Title'],
                 'content' => $item['Content']['Text'] ?? '',
@@ -177,7 +174,6 @@ class DataTransformer
     {
         foreach ($items as $item) {
             $transformedItems[] = [
-                'user_id' => 1,
                 'type' => 'research',
                 'title' => $item['Title'],
                 'content' => $item['Content']['Text'] ?? '',
@@ -211,22 +207,19 @@ class DataTransformer
     }
 
     /**
-     * Map Scrivener item type to our type
-     *
-     * @param string $type Scrivener item type
-     * @return string Mapped type
+     * Map Scrivener item type to Wrioter item type
      */
     private function mapItemType(string $type): string
     {
-        return match(strtolower($type)) {
-            'text' => 'chapter',
+        // Scrivener types: 'folder', 'text', 'file', etc.
+        return match (strtolower($type)) {
             'folder' => 'folder',
-            'pdf' => 'pdf',
+            'text' => 'text',
+            'file' => 'file',
             'image' => 'image',
-            'webarchive' => 'web',
-            'movie' => 'video',
-            'sound' => 'audio',
-            default => 'note',
+            'mindmap' => 'mindmap',
+            'link' => 'link',
+            default => 'text', // fallback for unknown types
         };
     }
 
