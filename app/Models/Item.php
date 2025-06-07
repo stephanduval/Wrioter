@@ -22,7 +22,9 @@ class Item extends Model
         'item_order',
         'metadata',
         'is_archived',
-        'file_path_or_url'
+        'file_path_or_url',
+        'scrivener_uuid',
+        'parent_id',
     ];
 
     protected $casts = [
@@ -112,5 +114,29 @@ class Item extends Model
         return $manuscript->addItem($this, $newVersion, [
             'is_independent' => true
         ]);
+    }
+
+    /**
+     * Get the parent item.
+     */
+    public function parent(): BelongsTo
+    {
+        return $this->belongsTo(Item::class, 'parent_id');
+    }
+
+    /**
+     * Get the child items.
+     */
+    public function children(): HasMany
+    {
+        return $this->hasMany(Item::class, 'parent_id');
+    }
+
+    /**
+     * Scope a query to only include root items (no parent).
+     */
+    public function scopeRoot($query)
+    {
+        return $query->whereNull('parent_id');
     }
 } 

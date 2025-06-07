@@ -15,6 +15,8 @@ use App\Models\ManuscriptCollection;
 use App\Models\WritingHistory;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
+use App\Models\User;
+use App\Models\Role;
 
 class ImportTest extends TestCase
 {
@@ -25,10 +27,14 @@ class ImportTest extends TestCase
     private XmlParser $xmlParser;
     private DataTransformer $dataTransformer;
     private DatabasePopulator $databasePopulator;
+    private User $testUser;
 
     protected function setUp(): void
     {
         parent::setUp();
+        
+        // Create test user
+        $this->testUser = User::factory()->create();
         
         // Setup test paths
         $this->testZipPath = storage_path('app/tests/Scrivener tutorial [2025_06_01_05_17_17].zip');
@@ -143,10 +149,22 @@ class ImportTest extends TestCase
         try {
             $xmlData = $this->xmlParser->parse($extractedPath . '/project.scrivx');
             $transformedData = [
-                'manuscript' => $this->dataTransformer->transformManuscript($xmlData),
-                'items' => $this->dataTransformer->transformItems($xmlData),
+                'manuscript' => array_merge(
+                    $this->dataTransformer->transformManuscript($xmlData),
+                    ['user_id' => $this->testUser->id]
+                ),
+                'items' => array_map(function ($item) {
+                    $item['user_id'] = $this->testUser->id;
+                    return $item;
+                }, $this->dataTransformer->transformItems($xmlData)),
                 'collections' => $this->dataTransformer->transformCollections($xmlData),
             ];
+            
+            // Transform writing history and add user_id
+            $writingHistoryData = array_map(function ($history) {
+                $history['user_id'] = $this->testUser->id;
+                return $history;
+            }, $this->dataTransformer->transformWritingHistory($xmlData));
             
             // Start transaction for rollback
             DB::beginTransaction();
@@ -157,19 +175,26 @@ class ImportTest extends TestCase
                     $transformedData['manuscript'],
                     $transformedData['items'],
                     $transformedData['collections'],
-                    $this->dataTransformer->transformWritingHistory($xmlData)
+                    $writingHistoryData
                 );
                 
                 // Assert database population
-                $this->assertTrue($result);
+                $this->assertIsArray($result);
+                $this->assertArrayHasKey('manuscript', $result);
+                $this->assertArrayHasKey('items_count', $result);
+                $this->assertArrayHasKey('collections_count', $result);
+                $this->assertArrayHasKey('writing_history_count', $result);
                 
                 // Verify manuscript was created
                 $manuscript = Manuscript::where('scrivener_uuid', $transformedData['manuscript']['scrivener_uuid'])->first();
                 $this->assertNotNull($manuscript);
                 $this->assertEquals($transformedData['manuscript']['title'], $manuscript->title);
-                
+
+                // Refresh manuscript to ensure relationships are up to date
+                $manuscript->refresh();
+
                 // Verify items were created
-                $items = Item::where('manuscript_id', $manuscript->id)->get();
+                $items = $manuscript->items;
                 $this->assertCount(count($transformedData['items']), $items);
                 
                 // Verify collections were created
@@ -203,21 +228,34 @@ class ImportTest extends TestCase
         try {
             $xmlData = $this->xmlParser->parse($extractedPath . '/project.scrivx');
             $transformedData = [
-                'manuscript' => $this->dataTransformer->transformManuscript($xmlData),
-                'items' => $this->dataTransformer->transformItems($xmlData),
+                'manuscript' => array_merge(
+                    $this->dataTransformer->transformManuscript($xmlData),
+                    ['user_id' => $this->testUser->id]
+                ),
+                'items' => array_map(function ($item) {
+                    $item['user_id'] = $this->testUser->id;
+                    return $item;
+                }, $this->dataTransformer->transformItems($xmlData)),
                 'collections' => $this->dataTransformer->transformCollections($xmlData),
             ];
+            
+            // Transform writing history and add user_id
+            $writingHistoryData = array_map(function ($history) {
+                $history['user_id'] = $this->testUser->id;
+                return $history;
+            }, $this->dataTransformer->transformWritingHistory($xmlData));
             
             // Remove required field
             unset($transformedData['manuscript']['scrivener_uuid']);
             
             // Attempt to populate database
-            $this->expectException(\InvalidArgumentException::class);
+            $this->expectException(\RuntimeException::class);
+            $this->expectExceptionMessage('Invalid manuscript data: missing required fields');
             $this->databasePopulator->populate(
                 $transformedData['manuscript'],
                 $transformedData['items'],
                 $transformedData['collections'],
-                $this->dataTransformer->transformWritingHistory($xmlData)
+                $writingHistoryData
             );
         } finally {
             // Cleanup
@@ -238,10 +276,22 @@ class ImportTest extends TestCase
         try {
             $xmlData = $this->xmlParser->parse($extractedPath . '/project.scrivx');
             $transformedData = [
-                'manuscript' => $this->dataTransformer->transformManuscript($xmlData),
-                'items' => $this->dataTransformer->transformItems($xmlData),
+                'manuscript' => array_merge(
+                    $this->dataTransformer->transformManuscript($xmlData),
+                    ['user_id' => $this->testUser->id]
+                ),
+                'items' => array_map(function ($item) {
+                    $item['user_id'] = $this->testUser->id;
+                    return $item;
+                }, $this->dataTransformer->transformItems($xmlData)),
                 'collections' => $this->dataTransformer->transformCollections($xmlData),
             ];
+            
+            // Transform writing history and add user_id
+            $writingHistoryData = array_map(function ($history) {
+                $history['user_id'] = $this->testUser->id;
+                return $history;
+            }, $this->dataTransformer->transformWritingHistory($xmlData));
             
             // Start transaction for rollback
             DB::beginTransaction();
@@ -252,7 +302,7 @@ class ImportTest extends TestCase
                     $transformedData['manuscript'],
                     $transformedData['items'],
                     $transformedData['collections'],
-                    $this->dataTransformer->transformWritingHistory($xmlData)
+                    $writingHistoryData
                 );
                 
                 // Attempt second import
@@ -261,7 +311,7 @@ class ImportTest extends TestCase
                     $transformedData['manuscript'],
                     $transformedData['items'],
                     $transformedData['collections'],
-                    $this->dataTransformer->transformWritingHistory($xmlData)
+                    $writingHistoryData
                 );
                 
             } finally {
@@ -287,10 +337,22 @@ class ImportTest extends TestCase
         try {
             $xmlData = $this->xmlParser->parse($extractedPath . '/project.scrivx');
             $transformedData = [
-                'manuscript' => $this->dataTransformer->transformManuscript($xmlData),
-                'items' => $this->dataTransformer->transformItems($xmlData),
+                'manuscript' => array_merge(
+                    $this->dataTransformer->transformManuscript($xmlData),
+                    ['user_id' => $this->testUser->id]
+                ),
+                'items' => array_map(function ($item) {
+                    $item['user_id'] = $this->testUser->id;
+                    return $item;
+                }, $this->dataTransformer->transformItems($xmlData)),
                 'collections' => $this->dataTransformer->transformCollections($xmlData),
             ];
+            
+            // Transform writing history and add user_id
+            $writingHistoryData = array_map(function ($history) {
+                $history['user_id'] = $this->testUser->id;
+                return $history;
+            }, $this->dataTransformer->transformWritingHistory($xmlData));
             
             // Start transaction for rollback
             DB::beginTransaction();
@@ -301,16 +363,15 @@ class ImportTest extends TestCase
                     $transformedData['manuscript'],
                     $transformedData['items'],
                     $transformedData['collections'],
-                    $this->dataTransformer->transformWritingHistory($xmlData)
+                    $writingHistoryData
                 );
                 
                 // Get manuscript
                 $manuscript = Manuscript::where('scrivener_uuid', $transformedData['manuscript']['scrivener_uuid'])->first();
+                $manuscript->refresh();
                 
                 // Verify root items
-                $rootItems = Item::where('manuscript_id', $manuscript->id)
-                               ->whereNull('parent_id')
-                               ->get();
+                $rootItems = $manuscript->items()->whereNull('parent_id')->get();
                 
                 // Assert root items match XML structure
                 $this->assertCount(
@@ -320,7 +381,7 @@ class ImportTest extends TestCase
                 
                 // Verify child items
                 foreach ($rootItems as $rootItem) {
-                    $childItems = Item::where('parent_id', $rootItem->id)->get();
+                    $childItems = $manuscript->items()->where('parent_id', $rootItem->id)->get();
                     $this->assertGreaterThanOrEqual(0, $childItems->count());
                 }
                 

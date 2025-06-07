@@ -3,10 +3,17 @@
 require __DIR__ . '/../vendor/autoload.php';
 
 $app = require_once __DIR__ . '/../bootstrap/app.php';
+
+// Parse command line arguments
+$options = getopt('', ['env::']);
+if (isset($options['env'])) {
+    $app['env'] = $options['env'];
+}
+
 $app->make(\Illuminate\Contracts\Console\Kernel::class)->bootstrap();
 
-$outputFile = $argv[1] ?? null;
-if (!$outputFile) {
+$outputFile = end($argv);
+if (!$outputFile || strpos($outputFile, '--') === 0) {
     echo "Please provide an output file path\n";
     exit(1);
 }
