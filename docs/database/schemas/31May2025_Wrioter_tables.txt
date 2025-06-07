@@ -1,0 +1,803 @@
+Database Export: wrioter
+Generated: 2025-06-01 02:22:43
+================================================================================
+
+Table: assignments
+--------------------------------------------------------------------------------
+Table Structure:
+--------------------------------------------------------------------------------
+Column               Type            Null       Key        Default    Extra     
+--------------------------------------------------------------------------------
+id                   bigint unsigned NO         PRI        NULL       auto_increment
+title                varchar(191)    NO                    NULL                 
+description          text            YES                   NULL                 
+location             varchar(191)    YES                   NULL                 
+salary               decimal(8,2)    YES                   NULL                 
+created_at           timestamp       YES                   NULL                 
+updated_at           timestamp       YES                   NULL                 
+
+No records found
+
+Table: attachments
+--------------------------------------------------------------------------------
+Table Structure:
+--------------------------------------------------------------------------------
+Column               Type            Null       Key        Default    Extra     
+--------------------------------------------------------------------------------
+id                   bigint unsigned NO         PRI        NULL       auto_increment
+message_id           bigint unsigned YES        MUL        NULL                 
+filename             varchar(191)    NO                    NULL                 
+path                 varchar(191)    NO                    NULL                 
+mime_type            varchar(191)    NO                    NULL                 
+size                 bigint          NO                    NULL                 
+created_at           timestamp       YES                   NULL                 
+updated_at           timestamp       YES                   NULL                 
+
+No records found
+
+Table: cache
+--------------------------------------------------------------------------------
+Table Structure:
+--------------------------------------------------------------------------------
+Column               Type            Null       Key        Default    Extra     
+--------------------------------------------------------------------------------
+key                  varchar(191)    NO         PRI        NULL                 
+value                mediumtext      NO                    NULL                 
+expiration           int             NO                    NULL                 
+
+No records found
+
+Table: cache_locks
+--------------------------------------------------------------------------------
+Table Structure:
+--------------------------------------------------------------------------------
+Column               Type            Null       Key        Default    Extra     
+--------------------------------------------------------------------------------
+key                  varchar(191)    NO         PRI        NULL                 
+owner                varchar(191)    NO                    NULL                 
+expiration           int             NO                    NULL                 
+
+No records found
+
+Table: companies
+--------------------------------------------------------------------------------
+Table Structure:
+--------------------------------------------------------------------------------
+Column               Type            Null       Key        Default    Extra     
+--------------------------------------------------------------------------------
+id                   bigint unsigned NO         PRI        NULL       auto_increment
+company_name         varchar(191)    NO                    NULL                 
+created_at           timestamp       YES                   NULL                 
+updated_at           timestamp       YES                   NULL                 
+
+Table Data:
+--------------------------------------------------------------------------------
+-+
+| id  | company_name                                                                        | created_at          | updated_at |
+-+
+| 1   | Freynet-Gagné                                                                      | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 2   | Brenden Achtemiuk                                                                   | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 3   | CDEM                                                                                | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 4   | Centre de santé                                                                    | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 5   | Editing Services                                                                    | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 6   | FAJEF                                                                               | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 7   | FLMM                                                                                | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 8   | Kigaana Productions                                                                 | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 9   | LMIC                                                                                | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 10  | Magnify Digital                                                                     | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 11  | Manito LFC 2 INC.                                                                   | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 12  | Manitoba Metis Federation                                                           | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 13  | Manitoba Teachers' Society                                                          | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 14  | MANSO                                                                               | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 15  | NANB                                                                                | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 16  | National Gallery of Canada                                                          | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 17  | Peaceful Ronin Media                                                                | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 18  | Print Studio One PO 27085                                                           | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 19  | Réseau Compassion Network                                                          | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 20  | Roberto Bocangel                                                                    | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 21  | RTAM                                                                                | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 22  | RWB                                                                                 | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 23  | Santé en français                                                                 | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 24  | Tiber River                                                                         | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 25  | Travel Manitoba                                                                     | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 26  | Université de Saint-Boniface                                                       | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 27  | University of Manitoba                                                              | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 28  | Ville de Winnipeg                                                                   | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 29  | MWEC                                                                                | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 30  | WEM                                                                                 | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 31  | WEOC                                                                                | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 32  | Winnipeg Arts Council                                                               | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 33  | Centre de Renouveau Aulneau                                                         | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 34  | CFEE                                                                                | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 35  | Deposit Guarantee Corporation of Manitoba                                           | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 36  | FortWhyte Alive                                                                     | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 37  | ISED                                                                                | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 38  | Jessica Meza Resillas                                                               | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 39  | Johnston Group                                                                      | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 40  | Manitoba Housing                                                                    | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 41  | Manitoba School Boards                                                              | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 42  | Matrix Group Publishing                                                             | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 43  | NNAS                                                                                | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 44  | Patrick Lessard                                                                     | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 45  | Peak of the Market                                                                  | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 46  | Probe Research                                                                      | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 47  | SFM                                                                                 | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 48  | Taro PR                                                                             | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 49  | Wookey Films                                                                        | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 50  | Alamos Gold Inc.                                                                    | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 51  | Canadian Home Economics Fondation                                                   | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 52  | Conseil des arts                                                                    | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 53  | Enjoy Creative                                                                      | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 54  | Event Camp                                                                          | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 55  | Livres Canada Books                                                                 | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 56  | Lorraine Prefontaine (varia)                                                        | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 57  | MB School Boards                                                                    | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 58  | TR PO 465390                                                                        | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 59  | Wawanesa                                                                            | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 60  | WSP                                                                                 | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 61  | Apprentissage Illimité                                                             | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 62  | Association de la Neurofibromatose du Québec                                       | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 63  | Conseil des arts du Canada                                                          | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 64  | Creative Manitoba                                                                   | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 65  | Fondation                                                                           | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 66  | LRSD Indigenous Education Team                                                      | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 67  | Luiz Nunes                                                                          | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 68  | Matrix Group Publish                                                                | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 69  | Alberta Education                                                                   | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 70  | Assiniboine Park Conservancy                                                        | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 71  | Brodi Restaurants Ltd.                                                              | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 72  | Chronic Centre for Veterans                                                         | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 73  | FMRI                                                                                | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 74  | Heatmaster                                                                          | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 75  | Hôpital Général Saint-Boniface                                                   | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 76  | MBLL                                                                                | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 77  | Pollard                                                                             | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 78  | Richardson International                                                            | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 79  | Stantec                                                                             | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 80  | Stories for Caregivers                                                              | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 81  | The Cover Guy                                                                       | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 82  | University of Manitoba PO 468744                                                    | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 83  | Urban Shaman Contemporary Aboriginal Art                                            | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 84  | Wearecinco                                                                          | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 85  | Wilmar Ariza                                                                        | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 86  | Winnipeg School Division                                                            | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 87  | Bureau du conseil Privé                                                            | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 88  | Canada Council for the Arts                                                         | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 89  | Manitoba School Boards Association                                                  | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 90  | Musée canadien Pour les Droits de la Personne                                      | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 91  | Savoir Montfort                                                                     | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 92  | SodaStream                                                                          | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 93  | St.Amant                                                                            | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 94  | UpHouse                                                                             | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 95  | Alliance catholique canadienne de la santé                                         | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 96  | Baltic Brothers                                                                     | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 97  | Bounce Design                                                                       | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 98  | Centre national d'excellence sur la douleur chronique pour les vétérans canadiens | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 99  | EDAC                                                                                | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 100 | G3 Canada Limited                                                                   | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 101 | Guy Dumont                                                                          | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 102 | Manitoba Association of Optometrists                                                | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 103 | Paula Isaak                                                                         | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 104 | Rémi Courcelles                                                                    | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 105 | Agriculture in the Classroom-Manitoba                                               | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 106 | All Seniors Care Living Centres Inc                                                 | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 107 | Animal Health Canada                                                                | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 108 | Castle Health                                                                       | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 109 | Eupraxia Training                                                                   | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 110 | FCFM                                                                                | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 111 | Heritage Winnipeg                                                                   | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 112 | Manitoba child care association                                                     | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 113 | PADRAIG                                                                             | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 114 | Phonique média                                                                     | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 115 | pipikwan Pêhtâkwan                                                                | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 116 | PVLIP                                                                               | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 117 | Bounce                                                                              | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 118 | Chronic Pain Centre of Excellence                                                   | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 119 | Direct Focus                                                                        | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 120 | LCTaylor                                                                            | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 121 | Louisiana Department of Education                                                   | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 122 | Pembina Trails School Division                                                      | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 123 | Provincial Court of Saskatchewan                                                    | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 124 | Sapphire Springs Inc.                                                               | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 125 | Sophie Bissonnette                                                                  | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 126 | Canadian Museum Human Rights PO 1029122                                             | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 127 | Centre Scolaire Centre Nord                                                         | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 128 | MBLL - HR                                                                           | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 129 | Mustafa Elmi                                                                        | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 130 | Roadwest Pictures                                                                   | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 131 | Shared Health MB                                                                    | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 132 | ViewSource Media                                                                    | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 133 | After Caregiving                                                                    | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 134 | Génome Canada                                                                      | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 135 | NCTR                                                                                | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 136 | Urbanink                                                                            | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 137 | Roll Focus                                                                          | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 138 | Pascale Kihn                                                                        | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 139 | George & Fay Yee Centre for Healthcare Innovation                                   | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 140 | Sem Ltd.                                                                            | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 141 | Great Plains Publishing                                                             | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 142 | PROJETS EN ATTENTE                                                                  | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 143 | Louis Riel Institute                                                                | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 144 | On Screen Manitoba                                                                  | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 145 | Mangrove                                                                            | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 146 | Economic Development Winnipeg (Tourism Wpg & YES! WPG)                              | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 147 | Spadrole                                                                            | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 148 | Université du Manitoba                                                             | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+-+
+
+Table: failed_jobs
+--------------------------------------------------------------------------------
+Table Structure:
+--------------------------------------------------------------------------------
+Column               Type            Null       Key        Default    Extra     
+--------------------------------------------------------------------------------
+id                   bigint unsigned NO         PRI        NULL       auto_increment
+uuid                 varchar(191)    NO         UNI        NULL                 
+connection           text            NO                    NULL                 
+queue                text            NO                    NULL                 
+payload              longtext        NO                    NULL                 
+exception            longtext        NO                    NULL                 
+failed_at            timestamp       NO                    CURRENT_TIMESTAMP DEFAULT_GENERATED
+
+No records found
+
+Table: item_versions
+--------------------------------------------------------------------------------
+Table Structure:
+--------------------------------------------------------------------------------
+Column               Type            Null       Key        Default    Extra     
+--------------------------------------------------------------------------------
+id                   bigint unsigned NO         PRI        NULL       auto_increment
+item_id              bigint unsigned NO         MUL        NULL                 
+user_id              bigint unsigned NO         MUL        NULL                 
+content              text            NO                    NULL                 
+synopsis             text            YES                   NULL                 
+version_number       int             NO                    NULL                 
+is_forked            tinyint(1)      NO                    0                    
+parent_version_id    bigint unsigned YES        MUL        NULL                 
+metadata             json            YES                   NULL                 
+created_at           timestamp       YES                   NULL                 
+updated_at           timestamp       YES                   NULL                 
+deleted_at           timestamp       YES                   NULL                 
+
+No records found
+
+Table: items
+--------------------------------------------------------------------------------
+Table Structure:
+--------------------------------------------------------------------------------
+Column               Type            Null       Key        Default    Extra     
+--------------------------------------------------------------------------------
+id                   bigint unsigned NO         PRI        NULL       auto_increment
+user_id              bigint unsigned NO         MUL        NULL                 
+type                 varchar(191)    NO                    text                 
+title                varchar(191)    NO                    NULL                 
+content              text            YES                   NULL                 
+synopsis             text            YES                   NULL                 
+item_order           int             NO                    0                    
+metadata             json            YES                   NULL                 
+project_id           bigint unsigned YES        MUL        NULL                 
+created_at           timestamp       YES                   NULL                 
+updated_at           timestamp       YES                   NULL                 
+
+Table Data:
+--------------------------------------------------------------------------------
+-+
+| id | user_id | type    | title                        | content                                                                                                                     | synopsis                                            | item_order | metadata                                     | project_id | created_at          | updated_at |
+-+
+| 1  | 1       | text    | Chapter 1 - The Last Chapter | # Chapter 1
+
+This is the beginning of the story...                                                                          | The opening chapter that sets up the main conflict. | 1          | "{\"status\":\"draft\",\"word_count\":1500}" |            | 2025-06-01 02:22:09 | 2025-06-01 02:22:09 |
+| 2  | 1       | mindmap | Plot Outline                 | {"nodes":[{"id":1,"text":"Act 1","x":0,"y":0},{"id":2,"text":"Act 2","x":100,"y":0},{"id":3,"text":"Act 3","x":200,"y":0}]} | A mindmap outlining the plot.                       | 2          | "{\"status\":\"draft\",\"node_count\":3}"    |            | 2025-06-01 02:22:09 | 2025-06-01 02:22:09 |
+| 3  | 1       | text    | Chapter 1 - The Last Chapter | # Chapter 1
+
+This is the beginning of the story...                                                                          | The opening chapter that sets up the main conflict. | 1          | "{\"status\":\"draft\",\"word_count\":1500}" |            | 2025-06-01 02:22:09 | 2025-06-01 02:22:09 |
+| 4  | 1       | mindmap | Plot Outline                 | {"nodes":[{"id":1,"text":"Act 1","x":0,"y":0},{"id":2,"text":"Act 2","x":100,"y":0},{"id":3,"text":"Act 3","x":200,"y":0}]} | A mindmap outlining the plot.                       | 2          | "{\"status\":\"draft\",\"node_count\":3}"    |            | 2025-06-01 02:22:09 | 2025-06-01 02:22:09 |
+-+
+
+Table: job_batches
+--------------------------------------------------------------------------------
+Table Structure:
+--------------------------------------------------------------------------------
+Column               Type            Null       Key        Default    Extra     
+--------------------------------------------------------------------------------
+id                   varchar(191)    NO         PRI        NULL                 
+name                 varchar(191)    NO                    NULL                 
+total_jobs           int             NO                    NULL                 
+pending_jobs         int             NO                    NULL                 
+failed_jobs          int             NO                    NULL                 
+failed_job_ids       longtext        NO                    NULL                 
+options              mediumtext      YES                   NULL                 
+cancelled_at         int             YES                   NULL                 
+created_at           int             NO                    NULL                 
+finished_at          int             YES                   NULL                 
+
+No records found
+
+Table: jobs
+--------------------------------------------------------------------------------
+Table Structure:
+--------------------------------------------------------------------------------
+Column               Type            Null       Key        Default    Extra     
+--------------------------------------------------------------------------------
+id                   bigint unsigned NO         PRI        NULL       auto_increment
+queue                varchar(191)    NO         MUL        NULL                 
+payload              longtext        NO                    NULL                 
+attempts             tinyint unsigned NO                    NULL                 
+reserved_at          int unsigned    YES                   NULL                 
+available_at         int unsigned    NO                    NULL                 
+created_at           int unsigned    NO                    NULL                 
+
+No records found
+
+Table: labels
+--------------------------------------------------------------------------------
+Table Structure:
+--------------------------------------------------------------------------------
+Column               Type            Null       Key        Default    Extra     
+--------------------------------------------------------------------------------
+id                   bigint unsigned NO         PRI        NULL       auto_increment
+label_name           varchar(191)    NO                    NULL                 
+user_id              bigint unsigned NO         MUL        NULL                 
+colour               varchar(191)    YES                   NULL                 
+created_at           timestamp       YES                   NULL                 
+updated_at           timestamp       YES                   NULL                 
+
+No records found
+
+Table: manuscript_items
+--------------------------------------------------------------------------------
+Table Structure:
+--------------------------------------------------------------------------------
+Column               Type            Null       Key        Default    Extra     
+--------------------------------------------------------------------------------
+id                   bigint unsigned NO         PRI        NULL       auto_increment
+manuscript_id        bigint unsigned NO         MUL        NULL                 
+item_id              bigint unsigned NO         MUL        NULL                 
+item_version_id      bigint unsigned YES        MUL        NULL                 
+order_index          int             NO                    0                    
+is_independent       tinyint(1)      NO                    0                    
+forked_from_id       bigint unsigned YES        MUL        NULL                 
+metadata             json            YES                   NULL                 
+created_at           timestamp       YES                   NULL                 
+updated_at           timestamp       YES                   NULL                 
+deleted_at           timestamp       YES                   NULL                 
+
+No records found
+
+Table: manuscripts
+--------------------------------------------------------------------------------
+Table Structure:
+--------------------------------------------------------------------------------
+Column               Type            Null       Key        Default    Extra     
+--------------------------------------------------------------------------------
+id                   bigint unsigned NO         PRI        NULL       auto_increment
+user_id              bigint unsigned NO         MUL        NULL                 
+title                varchar(191)    NO                    NULL                 
+description          text            YES                   NULL                 
+status               varchar(191)    NO                    draft                
+created_at           timestamp       YES                   NULL                 
+updated_at           timestamp       YES                   NULL                 
+deleted_at           timestamp       YES                   NULL                 
+
+Table Data:
+--------------------------------------------------------------------------------
+-+
+| id | user_id | title              | description                                                                                    | status      | created_at          | updated_at          | deleted_at |
+-+
+| 1  | 1       | The Last Chapter   | A mystery novel about a writer who discovers their own story is being written by someone else. | in_progress | 2025-06-01 02:22:09 | 2025-06-01 02:22:09 |
+| 2  | 1       | Echoes of Tomorrow | A science fiction story about time travel and its consequences.                                | draft       | 2025-06-01 02:22:09 | 2025-06-01 02:22:09 |
+-+
+
+Table: message_labels
+--------------------------------------------------------------------------------
+Table Structure:
+--------------------------------------------------------------------------------
+Column               Type            Null       Key        Default    Extra     
+--------------------------------------------------------------------------------
+id                   bigint unsigned NO         PRI        NULL       auto_increment
+message_id           bigint unsigned NO         MUL        NULL                 
+label_id             bigint unsigned NO         MUL        NULL                 
+created_at           timestamp       YES                   NULL                 
+updated_at           timestamp       YES                   NULL                 
+
+No records found
+
+Table: messages
+--------------------------------------------------------------------------------
+Table Structure:
+--------------------------------------------------------------------------------
+Column               Type            Null       Key        Default    Extra     
+--------------------------------------------------------------------------------
+id                   bigint unsigned NO         PRI        NULL       auto_increment
+sender_id            bigint unsigned NO         MUL        NULL                 
+receiver_id          bigint unsigned YES        MUL        NULL                 
+company_id           bigint unsigned NO         MUL        NULL                 
+assignment_id        bigint unsigned YES        MUL        NULL                 
+project_id           bigint unsigned YES        MUL        NULL                 
+subject              varchar(255)    NO                    NULL                 
+body                 text            NO                    NULL                 
+reply_to_id          bigint unsigned YES        MUL        NULL                 
+status               enum('draft','archived','deleted','sent','read') NO                    draft                
+is_starred           tinyint(1)      NO         MUL        0                    
+task_status          varchar(191)    NO                    new                  
+due_date             date            YES                   NULL                 
+is_archived          tinyint(1)      NO                    0                    
+created_at           timestamp       YES                   NULL                 
+updated_at           timestamp       YES                   NULL                 
+
+No records found
+
+Table: migrations
+--------------------------------------------------------------------------------
+Table Structure:
+--------------------------------------------------------------------------------
+Column               Type            Null       Key        Default    Extra     
+--------------------------------------------------------------------------------
+id                   int unsigned    NO         PRI        NULL       auto_increment
+migration            varchar(191)    NO                    NULL                 
+batch                int             NO                    NULL                 
+
+Table Data:
+--------------------------------------------------------------------------------
+-+
+| id | migration                                                      | batch |
+-+
+| 1  | 0001_01_01_000000_create_users_table                           | 1 |
+| 2  | 0001_01_01_000001_create_cache_table                           | 1 |
+| 3  | 0001_01_01_000002_create_jobs_table                            | 1 |
+| 4  | 2024_03_21_000000_create_notification_recipients_table         | 1 |
+| 5  | 2024_10_14_191341_create_personal_access_tokens_table          | 1 |
+| 6  | 2024_10_31_171426_create_permissions_table                     | 1 |
+| 7  | 2024_10_31_171504_create_roles_table                           | 1 |
+| 8  | 2024_10_31_171522_create_role_permissions_table                | 1 |
+| 9  | 2024_10_31_171540_create_user_roles_table                      | 1 |
+| 10 | 2024_11_19_180625_create_companies_table                       | 1 |
+| 11 | 2024_11_19_181147_create_user_company_table                    | 1 |
+| 12 | 2024_11_19_184318_create_assignments_table                     | 1 |
+| 13 | 2024_11_19_185017_create_user_assignments_table                | 1 |
+| 14 | 2024_11_23_031504_add_password_reset_required_to_users_table   | 1 |
+| 15 | 2024_12_05_135714_create_projects_table                        | 1 |
+| 16 | 2024_12_05_135722_create_messages_table                        | 1 |
+| 17 | 2024_12_05_140737_create_message_labels_and_statuses_tables    | 1 |
+| 18 | 2025_03_12_190930_create_attachments_table                     | 1 |
+| 19 | 2025_03_12_213152_modify_assignment_id_nullable_in_messages    | 1 |
+| 20 | 2025_03_12_213511_modify_project_id_nullable_in_messages       | 1 |
+| 21 | 2025_03_15_190918_modify_status_enum_in_messages_table         | 1 |
+| 22 | 2025_03_17_195430_add_receiver_id_to_messages_table            | 1 |
+| 23 | 2025_03_17_201713_modify_messages_table_for_internal_messaging | 1 |
+| 24 | 2025_04_04_213459_add_is_starred_to_messages_table             | 1 |
+| 25 | 2025_04_04_231255_add_color_to_labels_table                    | 1 |
+| 26 | 2025_04_05_230009_add_task_fields_to_messages_table            | 1 |
+| 27 | 2025_05_06_162510_add_project_id_to_messages_table             | 1 |
+| 28 | 2025_05_07_212051_add_latest_completion_date_to_projects_table | 1 |
+| 29 | 2025_05_31_031255_create_manuscripts_table                     | 1 |
+| 30 | 2025_05_31_163635_drop_outlines_and_corkboards_tables          | 1 |
+| 31 | 2025_06_02_000000_create_items_table                           | 1 |
+| 32 | 2025_06_03_000000_create_item_versions_table                   | 1 |
+| 33 | 2025_06_03_000001_create_manuscript_items_table                | 1 |
+| 34 | 2025_06_03_010000_make_project_id_nullable_on_items_table      | 1 |
+| 35 | [timestamp]_add_department_to_users_table                      | 1 |
+-+
+
+Table: notification_recipients
+--------------------------------------------------------------------------------
+Table Structure:
+--------------------------------------------------------------------------------
+Column               Type            Null       Key        Default    Extra     
+--------------------------------------------------------------------------------
+id                   bigint unsigned NO         PRI        NULL       auto_increment
+email                varchar(191)    NO         UNI        NULL                 
+name                 varchar(191)    NO                    NULL                 
+is_active            tinyint(1)      NO                    1                    
+created_at           timestamp       YES                   NULL                 
+updated_at           timestamp       YES                   NULL                 
+
+No records found
+
+Table: password_reset_tokens
+--------------------------------------------------------------------------------
+Table Structure:
+--------------------------------------------------------------------------------
+Column               Type            Null       Key        Default    Extra     
+--------------------------------------------------------------------------------
+email                varchar(191)    NO         PRI        NULL                 
+token                varchar(191)    NO                    NULL                 
+created_at           timestamp       YES                   NULL                 
+
+No records found
+
+Table: permissions
+--------------------------------------------------------------------------------
+Table Structure:
+--------------------------------------------------------------------------------
+Column               Type            Null       Key        Default    Extra     
+--------------------------------------------------------------------------------
+id                   bigint unsigned NO         PRI        NULL       auto_increment
+action               varchar(191)    NO                    NULL                 
+subject              varchar(191)    NO                    NULL                 
+created_at           timestamp       YES                   NULL                 
+updated_at           timestamp       YES                   NULL                 
+
+Table Data:
+--------------------------------------------------------------------------------
+-+
+| id | action | subject     | created_at          | updated_at |
+-+
+| 1  | create | admin       | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 2  | read   | admin       | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 3  | update | admin       | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 4  | delete | admin       | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 5  | manage | admin       | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 6  | create | client      | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 7  | read   | client      | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 8  | update | client      | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 9  | delete | client      | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 10 | manage | client      | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 11 | create | all         | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 12 | read   | all         | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 13 | update | all         | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 14 | delete | all         | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 15 | manage | all         | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 16 | create | projects    | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 17 | read   | projects    | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 18 | update | projects    | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 19 | delete | projects    | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 20 | manage | projects    | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 21 | create | messages    | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 22 | read   | messages    | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 23 | update | messages    | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 24 | delete | messages    | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 25 | manage | messages    | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 26 | create | manuscripts | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 27 | read   | manuscripts | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 28 | update | manuscripts | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 29 | delete | manuscripts | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 30 | manage | manuscripts | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+-+
+
+Table: personal_access_tokens
+--------------------------------------------------------------------------------
+Table Structure:
+--------------------------------------------------------------------------------
+Column               Type            Null       Key        Default    Extra     
+--------------------------------------------------------------------------------
+id                   bigint unsigned NO         PRI        NULL       auto_increment
+tokenable_type       varchar(191)    NO         MUL        NULL                 
+tokenable_id         bigint unsigned NO                    NULL                 
+name                 varchar(191)    NO                    NULL                 
+token                varchar(64)     NO         UNI        NULL                 
+abilities            text            YES                   NULL                 
+last_used_at         timestamp       YES                   NULL                 
+expires_at           timestamp       YES                   NULL                 
+created_at           timestamp       YES                   NULL                 
+updated_at           timestamp       YES                   NULL                 
+
+No records found
+
+Table: projects
+--------------------------------------------------------------------------------
+Table Structure:
+--------------------------------------------------------------------------------
+Column               Type            Null       Key        Default    Extra     
+--------------------------------------------------------------------------------
+id                   bigint unsigned NO         PRI        NULL       auto_increment
+client_id            bigint unsigned NO         MUL        NULL                 
+title                varchar(191)    NO                    NULL                 
+property             varchar(191)    YES                   NULL                 
+contact_email        varchar(191)    YES                   NULL                 
+date_requested       timestamp       NO                    CURRENT_TIMESTAMP DEFAULT_GENERATED
+status               enum('received','in_progress','delivered') NO                    received             
+time_preference      enum('before_noon','before_4pm','anytime') NO                    anytime              
+deadline             date            YES                   NULL                 
+latest_completion_date date            YES                   NULL                 
+service_type         enum('translation','revision','modifications','transcription','voice_over','other') YES                   NULL                 
+service_description  text            YES                   NULL                 
+created_at           timestamp       YES                   NULL                 
+updated_at           timestamp       YES                   NULL                 
+
+No records found
+
+Table: role_permissions
+--------------------------------------------------------------------------------
+Table Structure:
+--------------------------------------------------------------------------------
+Column               Type            Null       Key        Default    Extra     
+--------------------------------------------------------------------------------
+id                   bigint unsigned NO         PRI        NULL       auto_increment
+role_id              bigint unsigned NO         MUL        NULL                 
+permission_id        bigint unsigned NO         MUL        NULL                 
+created_at           timestamp       YES                   NULL                 
+updated_at           timestamp       YES                   NULL                 
+
+Table Data:
+--------------------------------------------------------------------------------
+-+
+| id | role_id | permission_id | created_at          | updated_at |
+-+
+| 1  | 1       | 1             | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 2  | 1       | 2             | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 3  | 1       | 3             | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 4  | 1       | 4             | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 5  | 1       | 5             | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 6  | 1       | 6             | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 7  | 1       | 7             | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 8  | 1       | 8             | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 9  | 1       | 9             | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 10 | 1       | 10            | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 11 | 1       | 11            | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 12 | 1       | 12            | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 13 | 1       | 13            | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 14 | 1       | 14            | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 15 | 1       | 15            | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 16 | 1       | 16            | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 17 | 1       | 17            | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 18 | 1       | 18            | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 19 | 1       | 19            | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 20 | 1       | 20            | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 21 | 1       | 21            | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 22 | 1       | 22            | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 23 | 1       | 23            | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 24 | 1       | 24            | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 25 | 1       | 25            | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 26 | 1       | 26            | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 27 | 1       | 27            | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 28 | 1       | 28            | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 29 | 1       | 29            | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 30 | 1       | 30            | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 31 | 2       | 6             | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 32 | 2       | 7             | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 33 | 2       | 8             | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 34 | 2       | 9             | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 35 | 2       | 10            | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 36 | 2       | 16            | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 37 | 2       | 17            | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 38 | 2       | 18            | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 39 | 2       | 19            | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 40 | 2       | 20            | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 41 | 2       | 21            | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 42 | 2       | 22            | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 43 | 2       | 23            | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 44 | 2       | 24            | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 45 | 2       | 25            | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 46 | 2       | 26            | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 47 | 2       | 27            | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 48 | 2       | 28            | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 49 | 2       | 29            | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 50 | 2       | 30            | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 51 | 3       | 6             | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 52 | 3       | 7             | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 53 | 3       | 8             | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 54 | 3       | 9             | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 55 | 3       | 10            | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 56 | 3       | 26            | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 57 | 3       | 27            | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 58 | 3       | 28            | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 59 | 3       | 29            | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 60 | 3       | 30            | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+-+
+
+Table: roles
+--------------------------------------------------------------------------------
+Table Structure:
+--------------------------------------------------------------------------------
+Column               Type            Null       Key        Default    Extra     
+--------------------------------------------------------------------------------
+id                   bigint unsigned NO         PRI        NULL       auto_increment
+name                 varchar(191)    NO                    NULL                 
+created_at           timestamp       YES                   NULL                 
+updated_at           timestamp       YES                   NULL                 
+
+Table Data:
+--------------------------------------------------------------------------------
+-+
+| id | name   | created_at          | updated_at |
+-+
+| 1  | Admin  | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 2  | Client | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+| 3  | User   | 2025-06-01 02:22:08 | 2025-06-01 02:22:08 |
+-+
+
+Table: sessions
+--------------------------------------------------------------------------------
+Table Structure:
+--------------------------------------------------------------------------------
+Column               Type            Null       Key        Default    Extra     
+--------------------------------------------------------------------------------
+id                   varchar(191)    NO         PRI        NULL                 
+user_id              bigint unsigned YES        MUL        NULL                 
+ip_address           varchar(45)     YES                   NULL                 
+user_agent           text            YES                   NULL                 
+payload              longtext        NO                    NULL                 
+last_activity        int             NO         MUL        NULL                 
+
+No records found
+
+Table: user_assignments
+--------------------------------------------------------------------------------
+Table Structure:
+--------------------------------------------------------------------------------
+Column               Type            Null       Key        Default    Extra     
+--------------------------------------------------------------------------------
+id                   bigint unsigned NO         PRI        NULL       auto_increment
+user_id              bigint unsigned NO         MUL        NULL                 
+assignment_id        bigint unsigned NO         MUL        NULL                 
+created_at           timestamp       YES                   NULL                 
+updated_at           timestamp       YES                   NULL                 
+
+No records found
+
+Table: user_company
+--------------------------------------------------------------------------------
+Table Structure:
+--------------------------------------------------------------------------------
+Column               Type            Null       Key        Default    Extra     
+--------------------------------------------------------------------------------
+id                   bigint unsigned NO         PRI        NULL       auto_increment
+user_id              bigint unsigned NO         MUL        NULL                 
+company_id           bigint unsigned NO         MUL        NULL                 
+created_at           timestamp       YES                   NULL                 
+updated_at           timestamp       YES                   NULL                 
+
+Table Data:
+--------------------------------------------------------------------------------
+-+
+| id | user_id | company_id | created_at          | updated_at |
+-+
+| 1  | 1       | 1          | 2025-06-01 02:22:09 | 2025-06-01 02:22:09 |
+| 2  | 2       | 1          | 2025-06-01 02:22:09 | 2025-06-01 02:22:09 |
+| 3  | 3       | 1          | 2025-06-01 02:22:09 | 2025-06-01 02:22:09 |
+| 4  | 4       | 1          | 2025-06-01 02:22:09 | 2025-06-01 02:22:09 |
+-+
+
+Table: user_roles
+--------------------------------------------------------------------------------
+Table Structure:
+--------------------------------------------------------------------------------
+Column               Type            Null       Key        Default    Extra     
+--------------------------------------------------------------------------------
+id                   bigint unsigned NO         PRI        NULL       auto_increment
+user_id              bigint unsigned NO         MUL        NULL                 
+role_id              bigint unsigned NO         MUL        NULL                 
+created_at           timestamp       YES                   NULL                 
+updated_at           timestamp       YES                   NULL                 
+
+Table Data:
+--------------------------------------------------------------------------------
+-+
+| id | user_id | role_id | created_at          | updated_at |
+-+
+| 1  | 1       | 1       | 2025-06-01 02:22:09 | 2025-06-01 02:22:09 |
+| 2  | 2       | 2       | 2025-06-01 02:22:09 | 2025-06-01 02:22:09 |
+| 3  | 3       | 1       | 2025-06-01 02:22:09 | 2025-06-01 02:22:09 |
+| 4  | 4       | 2       | 2025-06-01 02:22:09 | 2025-06-01 02:22:09 |
+-+
+
+Table: users
+--------------------------------------------------------------------------------
+Table Structure:
+--------------------------------------------------------------------------------
+Column               Type            Null       Key        Default    Extra     
+--------------------------------------------------------------------------------
+id                   bigint unsigned NO         PRI        NULL       auto_increment
+name                 varchar(191)    NO                    NULL                 
+email                varchar(191)    NO         UNI        NULL                 
+department           varchar(191)    YES                   NULL                 
+email_verified_at    timestamp       YES                   NULL                 
+password             varchar(191)    NO                    NULL                 
+remember_token       varchar(100)    YES                   NULL                 
+created_at           timestamp       YES                   NULL                 
+updated_at           timestamp       YES                   NULL                 
+password_reset_required tinyint(1)      NO                    1                    
+
+Table Data:
+--------------------------------------------------------------------------------
+-+
+| id | name          | email                    | department | email_verified_at | password                                                     | remember_token | created_at          | updated_at          | password_reset_required |
+-+
+| 1  | Administrator | info@freynet-gagne.com   |            |                   | $2y$12$IABcTH88L53modX6JLomy.JByAESsvfLwWEgPOJpnkBO4o0ZL.uNe |                | 2025-06-01 02:22:09 | 2025-06-01 02:22:09 | 1 |
+| 2  | Sophie        | sophie@freynet-gagne.com |            |                   | $2y$12$CW7Xwwk/sy4.Z39vfSeyo.MFLdH3j2rPmRjYrzPBJVrrvRIooasAe |                | 2025-06-01 02:22:09 | 2025-06-01 02:22:09 | 1 |
+| 3  | Admin User    | admin@admin.com          |            |                   | $2y$12$rUyZI4FrjREKt166RN3y4eJI68Pjf6G7CxrU2zNWNQCp6n0I1wfJq |                | 2025-06-01 02:22:09 | 2025-06-01 02:22:09 | 1 |
+| 4  | Client User   | client@client.com        |            |                   | $2y$12$ooOJt/gJ7rq/lDm3whTouOEUaX/TDGXHnsDprwJs7dPcGmijx1ml. |                | 2025-06-01 02:22:09 | 2025-06-01 02:22:09 | 1 |
+-+
+

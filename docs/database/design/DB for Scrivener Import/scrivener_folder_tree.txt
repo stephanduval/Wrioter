@@ -1,0 +1,280 @@
+Scrivener Zip Files/Scrivener tutorial [2025_06_01_05_17_17]
+└── scrivener tutorial.scriv
+    ├── Files
+    │   ├── binder.autosave
+    │   ├── binder.backup
+    │   ├── Data
+    │   │   ├── 0B81C207-557F-45E2-A40C-533A3011B09A
+    │   │   │   ├── content.rtf
+    │   │   │   └── content.styles
+    │   │   ├── 0DC2935C-7410-46F3-98A9-91769014F867
+    │   │   │   ├── content.rtf
+    │   │   │   └── content.styles
+    │   │   ├── 0E55C8CA-8028-4B08-AEBB-32D5D19BC24D
+    │   │   │   ├── content.rtf
+    │   │   │   ├── content.styles
+    │   │   │   └── synopsis.txt
+    │   │   ├── 0EC0AC4B-5A37-4303-9152-5D83992CAA74
+    │   │   │   ├── content.rtf
+    │   │   │   ├── content.styles
+    │   │   │   └── notes.rtf
+    │   │   ├── 10EECC9A-7AA5-4598-946B-EA7576735C9C
+    │   │   │   ├── content.rtf
+    │   │   │   └── content.styles
+    │   │   ├── 12E12767-9349-4182-A5CD-598343B0CE00
+    │   │   │   ├── content.comments
+    │   │   │   ├── content.rtf
+    │   │   │   └── content.styles
+    │   │   ├── 1AD2BF1D-CBF0-4759-A0C5-69A177DFF938
+    │   │   │   ├── content.rtf
+    │   │   │   └── content.styles
+    │   │   ├── 20D24E58-72B2-4440-8228-580A392B446D
+    │   │   │   └── synopsis.txt
+    │   │   ├── 27F8D41C-85B0-44D7-93A0-4C97EE420720
+    │   │   │   ├── content.rtf
+    │   │   │   └── content.styles
+    │   │   ├── 281EBD00-4C16-4AB8-AC63-72CB1B15F349
+    │   │   │   ├── content.rtf
+    │   │   │   └── content.styles
+    │   │   ├── 295FD092-A6EA-4AD3-B3C7-E5F201655E21
+    │   │   │   ├── content.rtf
+    │   │   │   └── content.styles
+    │   │   ├── 2BCDC339-AC10-40F0-BE90-553B5BE103A1
+    │   │   │   ├── content.rtf
+    │   │   │   └── content.styles
+    │   │   ├── 2EB10504-72EC-4C03-9633-F64A91140F97
+    │   │   │   ├── content.rtf
+    │   │   │   ├── content.styles
+    │   │   │   └── synopsis.txt
+    │   │   ├── 3094BAC9-DB3E-4389-B801-1CB39C4E923B
+    │   │   │   ├── content.rtf
+    │   │   │   └── content.styles
+    │   │   ├── 3585A235-B9F8-4D14-BFB5-47CA63D4DD41
+    │   │   │   ├── content.rtf
+    │   │   │   └── content.styles
+    │   │   ├── 360A0C5A-BDB6-48C5-BFFF-0BABC7DCF868
+    │   │   │   ├── content.rtf
+    │   │   │   └── content.styles
+    │   │   ├── 39B6D7E0-8A3E-4145-B93C-E294C9FBA881
+    │   │   │   ├── content.rtf
+    │   │   │   └── content.styles
+    │   │   ├── 3BA58EA8-BCBA-43EA-A316-E42444147EE1
+    │   │   │   ├── content.rtf
+    │   │   │   └── content.styles
+    │   │   ├── 3BE8863C-BF9A-4868-B698-24149A1AA425
+    │   │   │   ├── content.rtf
+    │   │   │   └── content.styles
+    │   │   ├── 3D2A1CF2-15CC-46F8-B5A2-690124F89B1B
+    │   │   │   ├── content.rtf
+    │   │   │   └── content.styles
+    │   │   ├── 3DD828FA-5BBE-4C31-A23B-B613A2EAA8E8
+    │   │   │   ├── content.rtf
+    │   │   │   └── content.styles
+    │   │   ├── 3E354274-F01B-4FE7-8F74-0C3FDE0D7642
+    │   │   │   ├── content.pdf
+    │   │   │   └── synopsis.txt
+    │   │   ├── 423A1C1B-9A98-4849-B37A-0F75F80292C7
+    │   │   │   ├── content.rtf
+    │   │   │   └── content.styles
+    │   │   ├── 46EC1384-37DF-438C-83EF-9880EB42A589
+    │   │   │   ├── content.rtf
+    │   │   │   ├── content.styles
+    │   │   │   ├── notes.rtf
+    │   │   │   └── synopsis.txt
+    │   │   ├── 4751BEAD-F449-44FE-BE9F-D5CE39B0FDCC
+    │   │   │   └── synopsis.txt
+    │   │   ├── 558B5870-DDC0-4C80-B020-73556C71A785
+    │   │   │   └── content.rtf
+    │   │   ├── 59E0C12A-928F-4294-B335-F238966E989B
+    │   │   │   ├── content.rtf
+    │   │   │   └── content.styles
+    │   │   ├── 6242BA6B-02B4-4CAC-AECD-B74418F33F8B
+    │   │   │   ├── content.rtf
+    │   │   │   └── content.styles
+    │   │   ├── 6585B860-8A17-4022-8A32-CF7F559E5205
+    │   │   │   ├── content.rtf
+    │   │   │   └── content.styles
+    │   │   ├── 66DA4D24-B483-492F-9DBB-AC0DB40D9686
+    │   │   │   ├── content.rtf
+    │   │   │   └── content.styles
+    │   │   ├── 67721357-8FC2-437B-8B3A-D2DBDBA7CFC8
+    │   │   │   ├── content.rtf
+    │   │   │   ├── content.styles
+    │   │   │   └── synopsis.txt
+    │   │   ├── 67F50977-F38F-4A53-9D05-121373AFC2BB
+    │   │   │   ├── content.rtf
+    │   │   │   └── content.styles
+    │   │   ├── 68C54D41-3B65-43A8-AB23-8342335E9217
+    │   │   │   ├── content.rtf
+    │   │   │   └── content.styles
+    │   │   ├── 68EDD5A9-3B64-4F28-88D1-F2C843441B80
+    │   │   │   ├── content.rtf
+    │   │   │   └── content.styles
+    │   │   ├── 6E0CFDD8-90ED-4414-907D-32E368267B4E
+    │   │   │   ├── content.rtf
+    │   │   │   └── content.styles
+    │   │   ├── 71C96D90-ECBB-43E4-88F3-842933E13C6F
+    │   │   │   ├── content.rtf
+    │   │   │   └── content.styles
+    │   │   ├── 75468ABC-C50A-4CEC-AE67-62508EDE11C2
+    │   │   │   ├── content.rtf
+    │   │   │   └── content.styles
+    │   │   ├── 7A47353D-F2A9-4420-905F-42EA95BA3244
+    │   │   │   ├── content.rtf
+    │   │   │   └── content.styles
+    │   │   ├── 7C7D6ECA-9AF4-4288-9452-477A7D60202B
+    │   │   │   ├── content.rtf
+    │   │   │   └── content.styles
+    │   │   ├── 80D5D77E-9389-4E16-AF28-6362C67C44C6
+    │   │   │   └── content.wav
+    │   │   ├── 8284AFFF-C024-49EB-91D5-30C6E662A30A
+    │   │   │   ├── content.rtf
+    │   │   │   └── content.styles
+    │   │   ├── 8A74843A-CAEE-4C5C-A2CA-EABF2EF2FE37
+    │   │   │   ├── content.rtf
+    │   │   │   └── content.styles
+    │   │   ├── 8C1689F4-84C9-4949-B713-1B22A382D2A5
+    │   │   │   ├── content.rtf
+    │   │   │   └── content.styles
+    │   │   ├── 8E41DE34-0E5A-412B-9A2C-09F012C27297
+    │   │   │   ├── content.rtf
+    │   │   │   └── content.styles
+    │   │   ├── 96CD2497-D39A-400E-9FCF-71E4635EC1EE
+    │   │   │   └── synopsis.txt
+    │   │   ├── 98A9E1E6-4379-45FC-B104-85E8BF8412FC
+    │   │   │   └── synopsis.txt
+    │   │   ├── 99490349-0A50-4A4A-9F10-0EC274B005AF
+    │   │   │   ├── content.rtf
+    │   │   │   ├── content.styles
+    │   │   │   └── synopsis.txt
+    │   │   ├── 99D796F9-C09D-403D-9E7C-9F47B741C57F
+    │   │   │   ├── content.rtf
+    │   │   │   └── content.styles
+    │   │   ├── 9B7B55FA-6C49-4EED-8582-296472BD09D9
+    │   │   │   ├── content.rtf
+    │   │   │   └── content.styles
+    │   │   ├── A05F6149-6363-47F4-9C59-E380AA6A2417
+    │   │   │   ├── content.rtf
+    │   │   │   └── content.styles
+    │   │   ├── A3E81D02-CFC7-4D3B-9E59-4137E372DC2A
+    │   │   │   ├── content.rtf
+    │   │   │   └── content.styles
+    │   │   ├── A7D1AD51-D465-443A-9F34-A0E99EA316E5
+    │   │   │   ├── content.rtf
+    │   │   │   └── content.styles
+    │   │   ├── A9B383E7-994D-4280-9DDB-4B2C250A8A04
+    │   │   │   ├── content.rtf
+    │   │   │   └── content.styles
+    │   │   ├── AAB240F0-1194-439F-8952-8BE7D981AD02
+    │   │   │   ├── content.comments
+    │   │   │   ├── content.rtf
+    │   │   │   └── content.styles
+    │   │   ├── ACA19B54-5169-42EF-90A7-49DAD0E1A240
+    │   │   │   ├── content.rtf
+    │   │   │   └── content.styles
+    │   │   ├── B4D489B4-DC6C-4163-B731-4F18B26F1AE5
+    │   │   │   └── synopsis.txt
+    │   │   ├── B557346B-F681-4283-93CE-AD35370793B2
+    │   │   │   ├── content.rtf
+    │   │   │   └── content.styles
+    │   │   ├── B824A7EA-05A4-4F44-B9C6-000AFA0F864C
+    │   │   │   ├── content.rtf
+    │   │   │   └── content.styles
+    │   │   ├── BA997809-7647-44A6-96DD-EC2FB25FED19
+    │   │   │   ├── content.rtf
+    │   │   │   └── content.styles
+    │   │   ├── BDFF1718-2F85-46E7-88B0-98433164ED65
+    │   │   │   ├── content.rtf
+    │   │   │   └── content.styles
+    │   │   ├── BF5FD5CA-C654-4F79-A4CD-FC74C0E0402D
+    │   │   │   ├── content.rtf
+    │   │   │   └── content.styles
+    │   │   ├── C40AC3C3-ABC7-4A47-8D04-D831DC5D6ACB
+    │   │   │   ├── content.rtf
+    │   │   │   └── content.styles
+    │   │   ├── C6EF0AD7-5486-44EA-891C-8F51E0528684
+    │   │   │   └── synopsis.txt
+    │   │   ├── CD531760-289F-45A4-85D1-501C730AF986
+    │   │   │   └── content.jpg
+    │   │   ├── CDD828FB-D8A7-476B-9C04-42C9AE9B88FC
+    │   │   │   └── synopsis.txt
+    │   │   ├── CFB95E81-048A-4A84-BE00-1135B212DBF5
+    │   │   │   └── synopsis.txt
+    │   │   ├── D3796A92-2893-4B70-8AEA-4A8B308FB7E8
+    │   │   │   ├── content.rtf
+    │   │   │   ├── content.styles
+    │   │   │   └── synopsis.txt
+    │   │   ├── D3FC9D16-0A17-4818-8FAB-CA751C9CEE36
+    │   │   │   ├── content.rtf
+    │   │   │   └── content.styles
+    │   │   ├── D846D2EE-6293-4A13-A0EA-386B0255E552
+    │   │   │   ├── content.rtf
+    │   │   │   ├── content.styles
+    │   │   │   └── synopsis.txt
+    │   │   ├── D8C838D7-6CF2-4A57-9FF2-4A2563CFF0A2
+    │   │   │   ├── content.rtf
+    │   │   │   └── content.styles
+    │   │   ├── DB4DFBE5-DCE3-4747-BCBB-214DD0E7FFB4
+    │   │   │   ├── content.rtf
+    │   │   │   └── content.styles
+    │   │   ├── docs.checksum
+    │   │   ├── E0E09EB0-C5B4-435A-9944-99AB2864105D
+    │   │   │   ├── content.rtf
+    │   │   │   └── content.styles
+    │   │   ├── E1207FCA-2DD5-4A9C-9E34-C3CE158EBADD
+    │   │   │   ├── content.rtf
+    │   │   │   ├── content.styles
+    │   │   │   └── synopsis.txt
+    │   │   ├── E660C485-4263-4836-9E5F-D0605363AD2C
+    │   │   │   ├── content.rtf
+    │   │   │   └── content.styles
+    │   │   ├── E6B9AC0F-D1F8-4D94-B7B0-A6D5B0F60CCB
+    │   │   │   ├── content.rtf
+    │   │   │   └── content.styles
+    │   │   ├── EB44CAD4-B336-4854-B313-DC7DA552F434
+    │   │   │   └── content.rtf
+    │   │   ├── EB95836B-24F2-49E2-8B64-60C3DFBDE4B5
+    │   │   │   └── content.rtf
+    │   │   ├── ED9AB330-DA0C-4484-8A57-B096B1AF3A12
+    │   │   │   └── content.rtf
+    │   │   ├── F02A8186-DF6D-4CD4-8F00-3C2804688F0A
+    │   │   │   ├── content.rtf
+    │   │   │   └── content.styles
+    │   │   ├── F3066602-6666-4BF0-B171-7753B27D8763
+    │   │   │   ├── content.rtf
+    │   │   │   └── content.styles
+    │   │   ├── F712A1EB-2472-4998-BDB1-688B1C5F63E9
+    │   │   │   ├── content.rtf
+    │   │   │   └── content.styles
+    │   │   ├── FA2DA253-663E-44CB-B403-2B64283B6294
+    │   │   │   ├── content.rtf
+    │   │   │   └── content.styles
+    │   │   ├── FA7EDB1F-C413-446B-A494-C068DCF80E89
+    │   │   │   ├── content.rtf
+    │   │   │   └── content.styles
+    │   │   ├── FE000551-8D5E-42C0-A476-5014C0050EB7
+    │   │   │   └── synopsis.txt
+    │   │   └── FE9F0EC9-DAFE-462C-9ACC-87163C5F53BC
+    │   │       ├── content.rtf
+    │   │       └── content.styles
+    │   ├── search.indexes
+    │   ├── styles.xml
+    │   ├── version.txt
+    │   └── writing.history
+    ├── QuickLook
+    │   ├── Preview.html
+    │   └── Thumbnail.jpg
+    ├── scrivener tutorial.scrivx
+    ├── Settings
+    │   ├── compile.xml
+    │   ├── favorites.xml
+    │   ├── recents.txt
+    │   ├── ui-common.xml
+    │   └── ui.ini
+    └── Snapshots
+        └── E6B9AC0F-D1F8-4D94-B7B0-A6D5B0F60CCB.snapshots
+            ├── 2006-08-23-19-33-44+0100.rtf
+            ├── index.xml
+            └── snapshot.indexes
+
+93 directories, 185 files

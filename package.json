@@ -5,8 +5,13 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:test": "vite --mode testing",
+    "dev:test:all": "concurrently \"yarn serve:test\" \"yarn dev:test\"",
     "build": "vite build --mode production",
+    "build:test": "vite build --mode testing",
     "build:dev": "vite build --mode development",
+    "serve": "php artisan serve",
+    "serve:test": "php artisan serve --env=testing",
     "typecheck": "vue-tsc --noEmit",
     "lint": "eslint . -c .eslintrc.cjs --fix --ext .ts,.js,.cjs,.vue,.tsx,.jsx",
     "build:icons": "tsx resources/ts/plugins/iconify/build-icons.ts",
@@ -17,9 +22,10 @@
     "deploy:prod": "yarn deploy:prepare && rsync -avz --delete -e 'ssh -i ~/.ssh/id_rsa' public/build/ root@enter.ip.address.here:/var/www/Freynet-Gagne-Portal/public/build/",
     "deploy:full": "yarn deploy:prepare && rsync -avz --delete -e 'ssh -i ~/.ssh/id_rsa' --exclude-from=.deployignore ./ root@enter.ip.ADDRES.here:/var/www/Freynet-Gagne-Portal/",
     "db:fresh": "php artisan migrate:fresh --seed --force && php artisan cache:clear && php artisan config:clear && php artisan route:clear && php artisan view:clear",
-    "schema": "mkdir -p database_schemas && mysqldump -u$(php artisan tinker --execute='echo config(\"database.connections.mysql.username\");') -p$(php artisan tinker --execute='echo config(\"database.connections.mysql.password\");') $(php artisan tinker --execute='echo config(\"database.connections.mysql.database\");') > database_schemas/$(date +%d%b%Y)_Wrioter_full_dump.sql && cp database_schemas/$(date +%d%b%Y)_Wrioter_full_dump.sql database_schemas/current_schema.sql",
-    "schema:csv": "mkdir -p database_schemas/$(date +%d%b%Y)_csv && php scripts/export_tables.php database_schemas/$(date +%d%b%Y)_csv && echo 'Table,Records' > database_schemas/$(date +%d%b%Y)_csv/table_summary.csv && for f in database_schemas/$(date +%d%b%Y)_csv/*.csv; do echo \"$(basename \"$f\" .csv),$(wc -l < \"$f\" | awk '{print $1-1}')\" >> database_schemas/$(date +%d%b%Y)_csv/table_summary.csv; done && cp -r database_schemas/$(date +%d%b%Y)_csv database_schemas/current_tables_csv",
-    "schema:text": "mkdir -p database_schemas && php scripts/export_tables_text.php database_schemas/$(date +%d%b%Y)_Wrioter_tables.txt && cp database_schemas/$(date +%d%b%Y)_Wrioter_tables.txt database_schemas/current_tables.txt"
+    "db:fresh:test": "php artisan migrate:fresh --seed --force --env=testing && php artisan cache:clear --env=testing && php artisan config:clear --env=testing && php artisan route:clear --env=testing && php artisan view:clear --env=testing",
+    "schema": "mkdir -p docs/database/schemas && mysqldump --no-tablespaces -u$(php artisan tinker --execute='echo config(\"database.connections.mysql.username\");') -p$(php artisan tinker --execute='echo config(\"database.connections.mysql.password\");') $(php artisan tinker --execute='echo config(\"database.connections.mysql.database\");') > docs/database/schemas/$(date +%d%b%Y)_Wrioter_full_dump.sql && cp docs/database/schemas/$(date +%d%b%Y)_Wrioter_full_dump.sql docs/database/schemas/current_schema.sql",
+    "schema:csv": "mkdir -p docs/database/schemas/$(date +%d%b%Y)_csv && php scripts/export_tables.php docs/database/schemas/$(date +%d%b%Y)_csv && echo 'Table,Records' > docs/database/schemas/$(date +%d%b%Y)_csv/table_summary.csv && for f in docs/database/schemas/$(date +%d%b%Y)_csv/*.csv; do echo \"$(basename \"$f\" .csv),$(wc -l < \"$f\" | awk '{print $1-1}')\" >> docs/database/schemas/$(date +%d%b%Y)_csv/table_summary.csv; done && cp -r docs/database/schemas/$(date +%d%b%Y)_csv docs/database/schemas/current_tables_csv",
+    "schema:text": "mkdir -p docs/database/schemas && php scripts/export_tables_text.php docs/database/schemas/$(date +%d%b%Y)_Wrioter_tables.txt && cp docs/database/schemas/$(date +%d%b%Y)_Wrioter_tables.txt docs/database/schemas/current_tables.txt"
   },
   "dependencies": {
     "@casl/ability": "6.7.1",
@@ -57,6 +63,7 @@
     "vue-i18n": "9.13.1",
     "vue-prism-component": "2.0.0",
     "vue-router": "4.4.0",
+    "vue-toastification": "^2.0.0-rc.5",
     "vue3-apexcharts": "1.5.3",
     "vue3-perfect-scrollbar": "1.6.1",
     "vuetify": "3.6.10",
@@ -94,6 +101,7 @@
     "@videojs-player/vue": "1.0.0",
     "@vitejs/plugin-vue": "5.0.5",
     "@vitejs/plugin-vue-jsx": "3.1.0",
+    "concurrently": "^9.1.2",
     "eslint": "8.57.0",
     "eslint-config-airbnb-base": "15.0.0",
     "eslint-import-resolver-typescript": "3.6.1",

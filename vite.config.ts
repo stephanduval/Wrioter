@@ -80,6 +80,7 @@ export default defineConfig({
       VITE_API_URL: process.env.VITE_API_URL,
       VITE_API_BASE_URL: process.env.VITE_API_BASE_URL,
       NODE_ENV: process.env.NODE_ENV,
+      VITE_APP_ENV: process.env.NODE_ENV,
     },
   },
 
@@ -125,5 +126,6 @@ export default defineConfig({
     hmr: {
       host: 'localhost',
     },
+    port: process.env.NODE_ENV === 'testing' ? 5174 : 5173,
   },
 });

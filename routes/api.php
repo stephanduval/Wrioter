@@ -156,8 +156,11 @@ Route::get('/send-message-notification', function () {
             'body' => $message->body,
         ]);
 
+        // Use log driver in testing environment, mailgun in production
+        $mailer = app()->environment('testing') ? 'log' : 'mailgun';
+
         // Send email using the template with the message data
-        Mail::mailer('mailgun')
+        Mail::mailer($mailer)
             ->send('emails.new-message-alert', ['msg' => $message], function($mail) use ($message) {
                 $mail->to('stephan.duval@gmail.com')
                      ->subject('Freynet-Gagné Portal - New Message: ' . $message->subject);
