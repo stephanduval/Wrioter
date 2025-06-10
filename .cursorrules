@@ -13,6 +13,8 @@ DB_PASSWORD='WrioterTest123!@#'
 Production server address: ssh -i ~/.ssh/id_rsa root@enter.ip.address.here
 The production directory is /var/www/enter.project.name.here
 
+Dont put any secrets in the documentation.
+
 The Digital ocean server is running Ubuntu 24.10. and apache.
 
 Make any changes to the project locally and push to the production server using the deploy:prod or deploy:full command.
