@@ -184,7 +184,13 @@ const startStatusPolling = () => {
 
 const fetchRecentImports = async () => {
   try {
-    const response = await fetch('/api/scrivener/imports')
+    const response = await fetch('/api/scrivener/imports', {
+      headers: {
+        'Accept': 'application/json',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+      },
+    })
     if (!response.ok) throw new Error('Failed to fetch imports')
     recentImports.value = await response.json()
   }
@@ -253,6 +259,8 @@ const handleSubmit = async () => {
     })
 
     xhr.open('POST', '/api/scrivener/import')
+    xhr.setRequestHeader('X-CSRF-TOKEN', document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '')
+    xhr.setRequestHeader('Authorization', `Bearer ${localStorage.getItem('accessToken')}`)
     xhr.send(formData)
 
     const result = await uploadPromise
