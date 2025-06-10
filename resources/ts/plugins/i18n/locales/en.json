@@ -218,16 +218,18 @@
     "projects": "Projects",
     "messages": "Messages",
     "manuscripts": "Manuscripts",
-    "manuscripts.new": "New Manuscript",
-    "manuscripts.list": "All Manuscripts",
-    "manuscripts.view": "View Manuscript",
-    "manuscripts.items": {
+    "manuscriptNew": "New Manuscript",
+    "manuscriptList": "All Manuscripts",
+    "manuscriptView": "View Manuscript",
+    "manuscriptItems": {
       "chapter": "Chapter",
       "scene": "Scene",
       "character": "Character",
       "location": "Location",
       "research": "Research"
-    }
+    },
+    "scrivener": "Scrivener",
+    "scrivenerImport": "Import from Scrivener"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -537,6 +539,16 @@
       "noEmail": "no-email@example.com",
       "noLabels": "No labels",
       "noMessages": "No messages found"
+    }
+  },
+  "scrivener": {
+    "import": {
+      "title": "Import from Scrivener",
+      "subtitle": "Upload your Scrivener project file to import your manuscript",
+      "recentImports": "Recent Imports",
+      "fileInput": "Choose Scrivener Project File",
+      "uploadButton": "Upload Project",
+      "noImports": "No recent imports found"
     }
   }
 }

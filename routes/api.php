@@ -12,6 +12,7 @@ use App\Http\Controllers\AttachmentController;
 use App\Http\Controllers\SystemController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\ManuscriptController;
+use App\Http\Controllers\ScrivenerImportController;
 use Illuminate\Support\Facades\Mail;
 
 /*
@@ -122,6 +123,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/manuscripts/{id}', [ManuscriptController::class, 'show']);
     Route::put('/manuscripts/{id}', [ManuscriptController::class, 'update']);
     Route::delete('/manuscripts/{id}', [ManuscriptController::class, 'destroy']);
+});
+
+// Scrivener Import Routes
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/scrivener/imports', [ScrivenerImportController::class, 'index']);
+    Route::post('/scrivener/import', [ScrivenerImportController::class, 'store']);
+    Route::get('/scrivener/imports/{id}', [ScrivenerImportController::class, 'show']);
 });
 
 // Message notification route

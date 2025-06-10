@@ -218,7 +218,19 @@
     "companyList": "Liste des entreprises",
     "projects": "Projets",
     "messages": "Messages",
-    "manuscripts": "Manuscrits"
+    "manuscripts": "Manuscrits",
+    "manuscriptNew": "Nouveau Manuscrit",
+    "manuscriptList": "Tous les Manuscrits",
+    "manuscriptView": "Voir le Manuscrit",
+    "manuscriptItems": {
+      "chapter": "Chapitre",
+      "scene": "Scène",
+      "character": "Personnage",
+      "location": "Lieu",
+      "research": "Recherche"
+    },
+    "scrivener": "Scrivener",
+    "scrivenerImport": "Importer depuis Scrivener"
   },
   "nav": {
     "dashboard": "Tableau de bord",
@@ -527,6 +539,16 @@
       "noEmail": "pas-email@exemple.com",
       "noLabels": "Aucune étiquette",
       "noMessages": "Aucun message trouvé"
+    }
+  },
+  "scrivener": {
+    "import": {
+      "title": "Importer depuis Scrivener",
+      "subtitle": "Téléchargez votre fichier de projet Scrivener pour importer votre manuscrit",
+      "recentImports": "Importations Récentes",
+      "fileInput": "Choisir le Fichier de Projet Scrivener",
+      "uploadButton": "Télécharger le Projet",
+      "noImports": "Aucune importation récente trouvée"
     }
   }
 }

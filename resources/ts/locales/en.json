@@ -1,0 +1,22 @@
+{
+    "menu": {
+        "scrivener": {
+            "heading": "Scrivener",
+            "import": "Import Scrivener File"
+        }
+    },
+    "scrivener": {
+        "import": {
+            "title": "Import Scrivener File",
+            "subtitle": "Upload a Scrivener .zip file to import your manuscript",
+            "fileInput": "Choose Scrivener .zip file",
+            "uploadButton": "Upload and Import",
+            "success": "File uploaded successfully. Processing your manuscript...",
+            "errors": {
+                "invalidFileType": "Please select a valid .zip file",
+                "fileTooLarge": "File size must be less than 50MB",
+                "uploadFailed": "Failed to upload file. Please try again."
+            }
+        }
+    }
+}
