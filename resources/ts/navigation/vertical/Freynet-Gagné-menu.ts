@@ -36,17 +36,27 @@ export default [
   { heading: 'menu.manuscripts' },
   
   {
-    title: 'menu.manuscripts.new',
+    title: 'menu.manuscriptNew',
     icon: { icon: 'bx-plus' },
     to: 'manuscripts-new',
     action: 'create',
     subject: 'manuscripts',
   },
   {
-    title: 'menu.manuscripts.list',
+    title: 'menu.manuscriptList',
     icon: { icon: 'bx-book' },
     to: 'manuscripts-list',
     action: 'read',
+    subject: 'manuscripts',
+  },
+
+  // Scrivener Import Section
+  { heading: 'menu.scrivener' },
+  {
+    title: 'menu.scrivenerImport',
+    icon: { icon: 'bx-import' },
+    to: 'scrivener-import',
+    action: 'create',
     subject: 'manuscripts',
   },
   // Dynamic manuscript items will be added here by the component

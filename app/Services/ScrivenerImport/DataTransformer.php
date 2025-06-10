@@ -56,9 +56,35 @@ class DataTransformer
      */
     public function transformItems(array $data): array
     {
+        print_r("\n=== Starting Item Transformation ===\n");
+        print_r("Binder items count: " . count($data['binder']['items']) . "\n");
+        print_r("Research items count: " . count($data['research']['items']) . "\n");
+        
+        // Track unique items by UUID and their parent relationships
+        $uniqueItems = [];
+        $parentRelationships = [];
+        
+        // Process binder items
+        $this->transformBinderItemsWithRelationships($data['binder']['items'], $uniqueItems, $parentRelationships);
+        print_r("\nAfter binder transformation: " . count($uniqueItems) . " unique items\n");
+        print_r("Parent relationships: " . count($parentRelationships) . "\n");
+        
+        // Process research items
+        $researchCount = count($uniqueItems);
+        $this->transformResearchItemsWithRelationships($data['research']['items'], $uniqueItems, $parentRelationships);
+        print_r("After research transformation: " . count($uniqueItems) . " unique items\n");
+        print_r("Research items added: " . (count($uniqueItems) - $researchCount) . "\n");
+        
+        // Convert unique items to array and add parent relationships
         $items = [];
-        $this->transformBinderItems($data['binder']['items'], $items);
-        $this->transformResearchItems($data['research']['items'], $items);
+        foreach ($uniqueItems as $uuid => $item) {
+            $item['parent_relationships'] = $parentRelationships[$uuid] ?? [];
+            $items[] = $item;
+        }
+        
+        print_r("\nFinal item count: " . count($items) . "\n");
+        print_r("Total parent relationships: " . array_sum(array_map('count', $parentRelationships)) . "\n");
+        
         return $items;
     }
 
@@ -115,94 +141,123 @@ class DataTransformer
     }
 
     /**
-     * Transform binder items recursively
-     *
-     * @param array $items Binder items to transform
-     * @param array &$transformedItems Array to store transformed items
-     * @param ?string $parentId Parent item ID
-     * @param int $order Current order index
-     * @return void
+     * Transform binder items while tracking parent relationships
      */
-    private function transformBinderItems(array $items, array &$transformedItems, ?string $parentId = null, int $order = 0): void
-    {
+    private function transformBinderItemsWithRelationships(
+        array $items,
+        array &$uniqueItems,
+        array &$parentRelationships,
+        ?string $parentId = null,
+        int $order = 0
+    ): void {
         foreach ($items as $item) {
-            $transformedItems[] = [
-                'type' => $this->mapItemType($item['Type']),
-                'title' => $item['Title'],
-                'content' => $item['Content']['Text'] ?? '',
-                'synopsis' => $item['MetaData']['Synopsis'] ?? '',
-                'item_order' => $order++,
-                'metadata' => [
-                    'parent_id' => $parentId,
-                    'icon' => $item['MetaData']['Icon'] ?? null,
-                    'label' => $item['MetaData']['Label'] ?? null,
-                    'status' => $item['MetaData']['Status'] ?? null,
-                ],
-                'scrivener_uuid' => $item['UUID'],
-                'folder_type' => $item['Type'],
-                'icon_name' => $item['MetaData']['Icon'] ?? null,
-                'include_in_compile' => $item['MetaData']['IncludeInCompile'] ?? true,
-                'target_type' => $item['MetaData']['TargetType'] ?? null,
-                'target_count' => $item['MetaData']['TargetCount'] ?? null,
-                'target_notify' => $item['MetaData']['TargetNotify'] ?? false,
-                'format_metadata' => [
-                    'rtf' => $item['Content']['RTF'] ?? null,
-                ],
-                'content_markdown' => $this->convertRtfToMarkdown($item['Content']['RTF'] ?? ''),
-                'raw_content' => $this->stripContent($item['Content']['Text'] ?? ''),
-                'content_format' => 'markdown',
-                'word_count' => $this->countWords($item['Content']['Text'] ?? ''),
-                'character_count' => $this->countCharacters($item['Content']['Text'] ?? ''),
-                'created_at' => $this->parseDate($item['MetaData']['Created'] ?? null),
-                'updated_at' => $this->parseDate($item['MetaData']['Modified'] ?? null),
-            ];
+            $uuid = $item['UUID'];
+            print_r("\nProcessing binder item:\n");
+            print_r("UUID: " . ($uuid ?? 'missing') . "\n");
+            print_r("Type: " . ($item['Type'] ?? 'missing') . "\n");
+            print_r("Title: " . ($item['Title'] ?? 'missing') . "\n");
+            print_r("Parent ID: " . ($parentId ?? 'none') . "\n");
+            print_r("Order: " . $order . "\n");
+            
+            // Store parent relationship
+            if ($parentId) {
+                if (!isset($parentRelationships[$uuid])) {
+                    $parentRelationships[$uuid] = [];
+                }
+                $parentRelationships[$uuid][] = [
+                    'parent_uuid' => $parentId,
+                    'order' => $order
+                ];
+            }
+            
+            // Only store the item if we haven't seen it before
+            if (!isset($uniqueItems[$uuid])) {
+                $uniqueItems[$uuid] = [
+                    'type' => $this->mapItemType($item['Type']),
+                    'title' => $item['Title'],
+                    'content' => $item['Content']['Text'] ?? '',
+                    'synopsis' => $item['MetaData']['Synopsis'] ?? '',
+                    'item_order' => $order,
+                    'metadata' => [
+                        'icon' => $item['MetaData']['Icon'] ?? null,
+                        'label' => $item['MetaData']['Label'] ?? null,
+                        'status' => $item['MetaData']['Status'] ?? null,
+                    ],
+                    'scrivener_uuid' => $uuid,
+                    'folder_type' => $item['Type'],
+                    'icon_name' => $item['MetaData']['Icon'] ?? null,
+                    'include_in_compile' => $item['MetaData']['IncludeInCompile'] ?? true,
+                    'target_type' => $item['MetaData']['TargetType'] ?? null,
+                    'target_count' => $item['MetaData']['TargetCount'] ?? null,
+                    'target_notify' => $item['MetaData']['TargetNotify'] ?? false,
+                    'format_metadata' => [
+                        'rtf' => $item['Content']['RTF'] ?? null,
+                    ],
+                    'content_markdown' => $this->convertRtfToMarkdown($item['Content']['RTF'] ?? ''),
+                    'raw_content' => $this->stripContent($item['Content']['Text'] ?? ''),
+                    'content_format' => 'markdown',
+                    'word_count' => $this->countWords($item['Content']['Text'] ?? ''),
+                    'character_count' => $this->countCharacters($item['Content']['Text'] ?? ''),
+                    'created_at' => $this->parseDate($item['MetaData']['Created'] ?? null),
+                    'updated_at' => $this->parseDate($item['MetaData']['Modified'] ?? null),
+                ];
+            }
 
             if (!empty($item['Children'])) {
-                $this->transformBinderItems($item['Children'], $transformedItems, $item['UUID'], 0);
+                print_r("Found " . count($item['Children']) . " child items\n");
+                $this->transformBinderItemsWithRelationships($item['Children'], $uniqueItems, $parentRelationships, $uuid, 0);
             }
         }
     }
 
     /**
-     * Transform research items
-     *
-     * @param array $items Research items to transform
-     * @param array &$transformedItems Array to store transformed items
-     * @return void
+     * Transform research items while tracking parent relationships
      */
-    private function transformResearchItems(array $items, array &$transformedItems): void
-    {
+    private function transformResearchItemsWithRelationships(
+        array $items,
+        array &$uniqueItems,
+        array &$parentRelationships
+    ): void {
+        print_r("\n=== Processing Research Items ===\n");
         foreach ($items as $item) {
-            $transformedItems[] = [
-                'type' => 'research',
-                'title' => $item['Title'],
-                'content' => $item['Content']['Text'] ?? '',
-                'synopsis' => $item['MetaData']['Synopsis'] ?? '',
-                'item_order' => 0,
-                'metadata' => [
-                    'parent_id' => null,
-                    'icon' => $item['MetaData']['Icon'] ?? null,
-                    'label' => $item['MetaData']['Label'] ?? null,
-                    'status' => $item['MetaData']['Status'] ?? null,
-                    'file_type' => $this->determineFileType($item),
-                    'file_path' => $this->determineFilePath($item),
-                ],
-                'scrivener_uuid' => $item['UUID'],
-                'folder_type' => $item['Type'],
-                'icon_name' => $item['MetaData']['Icon'] ?? null,
-                'include_in_compile' => false,
-                'format_metadata' => [
-                    'rtf' => $item['Content']['RTF'] ?? null,
-                    'file_info' => $this->getFileInfo($item),
-                ],
-                'content_markdown' => $this->convertRtfToMarkdown($item['Content']['RTF'] ?? ''),
-                'raw_content' => $this->stripContent($item['Content']['Text'] ?? ''),
-                'content_format' => 'markdown',
-                'word_count' => $this->countWords($item['Content']['Text'] ?? ''),
-                'character_count' => $this->countCharacters($item['Content']['Text'] ?? ''),
-                'created_at' => $this->parseDate($item['MetaData']['Created'] ?? null),
-                'updated_at' => $this->parseDate($item['MetaData']['Modified'] ?? null),
-            ];
+            $uuid = $item['UUID'];
+            print_r("\nProcessing research item:\n");
+            print_r("UUID: " . ($uuid ?? 'missing') . "\n");
+            print_r("Type: " . ($item['Type'] ?? 'missing') . "\n");
+            print_r("Title: " . ($item['Title'] ?? 'missing') . "\n");
+            
+            // Only store the item if we haven't seen it before
+            if (!isset($uniqueItems[$uuid])) {
+                $uniqueItems[$uuid] = [
+                    'type' => 'research',
+                    'title' => $item['Title'],
+                    'content' => $item['Content']['Text'] ?? '',
+                    'synopsis' => $item['MetaData']['Synopsis'] ?? '',
+                    'item_order' => 0,
+                    'metadata' => [
+                        'icon' => $item['MetaData']['Icon'] ?? null,
+                        'label' => $item['MetaData']['Label'] ?? null,
+                        'status' => $item['MetaData']['Status'] ?? null,
+                        'file_type' => $this->determineFileType($item),
+                        'file_path' => $this->determineFilePath($item),
+                    ],
+                    'scrivener_uuid' => $uuid,
+                    'folder_type' => $item['Type'],
+                    'icon_name' => $item['MetaData']['Icon'] ?? null,
+                    'include_in_compile' => false,
+                    'format_metadata' => [
+                        'rtf' => $item['Content']['RTF'] ?? null,
+                        'file_info' => $this->getFileInfo($item),
+                    ],
+                    'content_markdown' => $this->convertRtfToMarkdown($item['Content']['RTF'] ?? ''),
+                    'raw_content' => $this->stripContent($item['Content']['Text'] ?? ''),
+                    'content_format' => 'markdown',
+                    'word_count' => $this->countWords($item['Content']['Text'] ?? ''),
+                    'character_count' => $this->countCharacters($item['Content']['Text'] ?? ''),
+                    'created_at' => $this->parseDate($item['MetaData']['Created'] ?? null),
+                    'updated_at' => $this->parseDate($item['MetaData']['Modified'] ?? null),
+                ];
+            }
         }
     }
 

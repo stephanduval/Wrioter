@@ -44,6 +44,12 @@ class DatabasePopulator
             // Create collections
             $collections = $this->createCollections($manuscript->id, $collectionsData);
 
+            // Inject manuscript_id into each writing history record
+            foreach ($writingHistoryData as &$history) {
+                $history['manuscript_id'] = $manuscript->id;
+            }
+            unset($history);
+
             // Create writing history
             $writingHistory = $this->createWritingHistory($writingHistoryData);
 
@@ -113,12 +119,23 @@ class DatabasePopulator
      */
     private function createItems(int $manuscriptId, array $itemsData): array
     {
+        print_r("=== Starting createItems ===\n");
+        print_r("Input itemsData count: " . count($itemsData) . "\n");
+        print_r("First item data sample:\n");
+        if (!empty($itemsData)) {
+            print_r(array_slice($itemsData[0], 0, 5)); // Show first 5 fields of first item
+        }
+        
         $items = [];
-        $parentMap = [];
         $itemVersions = [];
+        $manuscriptItems = [];
 
         // First pass: Create Item records and their versions
-        foreach ($itemsData as $itemData) {
+        foreach ($itemsData as $index => $itemData) {
+            print_r("\n=== Processing Item {$index} ===\n");
+            print_r("Item UUID: " . ($itemData['scrivener_uuid'] ?? 'missing') . "\n");
+            print_r("Parent relationships: " . count($itemData['parent_relationships'] ?? []) . "\n");
+            
             // Create the item
             $item = Item::create([
                 'user_id' => $itemData['user_id'],
@@ -151,45 +168,97 @@ class DatabasePopulator
                 'is_forked' => false,
             ]);
 
+            print_r("Created item ID: {$item->id}\n");
+            print_r("Created version ID: {$version->id}\n");
+
             // Store the item and version for later use
             $items[$item->scrivener_uuid] = $item;
             $itemVersions[$item->scrivener_uuid] = $version;
-            $parentMap[$item->scrivener_uuid] = $itemData['metadata']['parent_id'] ?? null;
 
-            // Update the item's current version
-            $item->update(['current_version_id' => $version->id]);
+            // Store manuscript item data for later attachment
+            $manuscriptItems[$item->scrivener_uuid] = [
+                'item' => $item,
+                'version' => $version,
+                'parent_relationships' => $itemData['parent_relationships'] ?? [],
+            ];
         }
 
         // Log counts after creation
-        Log::info('Item creation counts', [
-            'itemsData_count' => count($itemsData),
-            'items_created_count' => count($items),
-        ]);
+        print_r("\n=== After Item Creation ===\n");
+        print_r("Total items created: " . count($items) . "\n");
+        print_r("Total versions created: " . count($itemVersions) . "\n");
 
-        // Second pass: Update parent relationships
-        foreach ($parentMap as $uuid => $parentUuid) {
-            if ($parentUuid && isset($items[$parentUuid])) {
-                $item = $items[$uuid];
-                $parent = $items[$parentUuid];
-                $item->update(['parent_id' => $parent->id]);
-            }
-        }
-
-        // Third pass: Attach items to manuscript via pivot table
+        // Second pass: Update parent relationships and attach to manuscript
+        print_r("\n=== Updating Parent Relationships and Attaching to Manuscript ===\n");
         $manuscript = Manuscript::find($manuscriptId);
-        foreach ($items as $uuid => $item) {
-            $itemData = collect($itemsData)->firstWhere('scrivener_uuid', $uuid);
+        $attachedCount = 0;
+        $parentUpdateCount = 0;
+
+        foreach ($manuscriptItems as $uuid => $data) {
+            $item = $data['item'];
+            $version = $data['version'];
+            $relationships = $data['parent_relationships'];
+
+            // Determine the primary parent relationship (first one) and its order
+            $primaryParent = null;
+            $primaryOrder = 0;
+            $allParents = [];
+
+            if (!empty($relationships)) {
+                $primaryParent = $relationships[0];
+                $primaryOrder = $primaryParent['order'];
+                
+                // Collect all parent relationships for metadata
+                foreach ($relationships as $relationship) {
+                    if (isset($items[$relationship['parent_uuid']])) {
+                        $parent = $items[$relationship['parent_uuid']];
+                        $allParents[] = [
+                            'id' => $parent->id,
+                            'uuid' => $relationship['parent_uuid'],
+                            'order' => $relationship['order']
+                        ];
+                    }
+                }
+            }
+
+            // Attach item to manuscript with primary parent relationship
+            $metadata = $item->metadata ?? [];
+            if ($primaryParent && isset($items[$primaryParent['parent_uuid']])) {
+                $parent = $items[$primaryParent['parent_uuid']];
+                $metadata = array_merge($metadata, [
+                    'primary_parent_id' => $parent->id,
+                    'primary_parent_uuid' => $primaryParent['parent_uuid'],
+                    'all_parents' => $allParents
+                ]);
+            }
+
             $manuscript->items()->attach($item->id, [
-                'item_version_id' => $itemVersions[$uuid]->id,
-                'order_index' => $itemData['item_order'] ?? 0,
+                'item_version_id' => $version->id,
+                'order_index' => $primaryOrder,
                 'is_independent' => false,
-                'metadata' => $itemData['metadata'] ?? null,
+                'metadata' => $metadata
             ]);
+
+            if ($primaryParent) {
+                print_r("Attached item {$item->id} with primary parent {$primaryParent['parent_uuid']} (Order: {$primaryOrder})\n");
+            } else {
+                print_r("Attached as root item: Item {$item->id}\n");
+            }
+
+            $attachedCount++;
+            $parentUpdateCount += count($allParents);
         }
+
+        print_r("\n=== Final Item Creation Summary ===\n");
+        print_r("Total items created: " . count($items) . "\n");
+        print_r("Total parent relationships created: {$parentUpdateCount}\n");
+        print_r("Total manuscript attachments: {$attachedCount}\n");
 
         Log::info('Created items', [
             'manuscript_id' => $manuscriptId,
             'count' => count($items),
+            'parent_relationships' => $parentUpdateCount,
+            'attachments' => $attachedCount,
         ]);
 
         return $items;
