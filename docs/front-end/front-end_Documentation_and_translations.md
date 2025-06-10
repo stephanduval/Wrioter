@@ -154,4 +154,90 @@ The navigation menu uses a specific translation key structure to ensure consiste
    - Use Vue devtools to inspect i18n state
    - Verify translation loading order
 
+### Component-Specific Translations
+
+Components can have their own translation namespaces and keys. Here's an example using the Scrivener import component:
+
+1. **Component Translation Structure**
+   ```json
+   // Component-specific translations should be organized under a feature namespace
+   {
+     "scrivener": {
+       "import": {
+         "title": "Import from Scrivener",
+         "uploading": "Uploading... {progress}%",  // With parameters
+         "validation": {
+           "fileRequired": "Please select a file to upload"
+         }
+       }
+     }
+   }
+   ```
+
+2. **Using Component Translations**
+   ```vue
+   <template>
+     <!-- Basic translation -->
+     <h1>{{ $t('scrivener.import.title') }}</h1>
+     
+     <!-- Translation with parameters -->
+     <div>{{ $t('scrivener.import.uploading', { progress: uploadProgress }) }}</div>
+     
+     <!-- Validation messages -->
+     <span v-if="errors.file">{{ $t('scrivener.import.validation.fileRequired') }}</span>
+   </template>
+   ```
+
+3. **Common Component Translation Patterns**
+   - Use feature-based namespaces (e.g., `scrivener.import`)
+   - Group related translations (e.g., `validation`, `status`, `actions`)
+   - Include parameterized translations for dynamic content
+   - Maintain consistent structure across languages
+
+4. **Component Translation Best Practices**
+   - Keep translations organized by feature/component
+   - Use descriptive namespaces
+   - Include all possible states and messages
+   - Add translations for both success and error states
+   - Document any required parameters
+
+5. **Example: Scrivener Import Component**
+   ```typescript
+   // Required translation keys for the Scrivener import component
+   {
+     "scrivener": {
+       "import": {
+         // Basic information
+         "title": "Import from Scrivener",
+         "subtitle": "Upload your Scrivener project file...",
+         
+         // Status messages
+         "uploading": "Uploading... {progress}%",
+         "uploadSuccess": "File uploaded successfully",
+         "uploadError": "Error uploading file",
+         "processing": "Processing your file...",
+         
+         // Validation messages
+         "validation": {
+           "fileRequired": "Please select a file to upload",
+           "fileType": "Only .zip files are allowed",
+           "fileSize": "File size must be less than 50MB"
+         }
+       }
+     }
+   }
+   ```
+
+6. **Troubleshooting Component Translations**
+   - If a translation key is not found:
+     1. Verify the namespace structure
+     2. Check for typos in the key path
+     3. Ensure the key exists in both locale files
+     4. Verify parameter names match the translation
+   - Common errors:
+     ```
+     [intlify] Not found 'scrivener.import.uploading' key in 'en' locale messages
+     ```
+     Solution: Add the missing key to both locale files with proper structure
+
 // ... rest of the existing documentation ... 
