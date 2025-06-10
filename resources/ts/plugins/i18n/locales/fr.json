@@ -548,7 +548,16 @@
       "recentImports": "Importations Récentes",
       "fileInput": "Choisir le Fichier de Projet Scrivener",
       "uploadButton": "Télécharger le Projet",
-      "noImports": "Aucune importation récente trouvée"
+      "noImports": "Aucune importation récente trouvée",
+      "uploading": "Téléchargement... {progress}%",
+      "uploadSuccess": "Fichier téléchargé avec succès",
+      "uploadError": "Erreur lors du téléchargement du fichier",
+      "processing": "Traitement de votre fichier...",
+      "validation": {
+        "fileRequired": "Veuillez sélectionner un fichier à télécharger",
+        "fileType": "Seuls les fichiers .zip sont autorisés",
+        "fileSize": "La taille du fichier doit être inférieure à 50MB"
+      }
     }
   }
 }
