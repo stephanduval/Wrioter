@@ -1,5 +1,7 @@
 # Scrivener Import Database Design
 
+**NOTE:** In the final version, the logged-in user will be assigned as `user_id` for all imported manuscripts and items. Currently, `user_id` is optional for import to facilitate testing, but it will be required in production for proper user ownership and access control.
+
 ## Current Status
 **Phase**: Initial Design Discussion - Unified Approach
 **Last Updated**: 2024-03-21
@@ -147,7 +149,6 @@ CREATE TABLE `writing_history` (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT,
   `user_id` bigint unsigned NOT NULL COMMENT 'User who wrote the content',
   `manuscript_id` bigint unsigned NULL COMMENT 'NULL for user-level statistics',
-  `date` date NOT NULL COMMENT 'Date of the writing session',
   -- Manuscript-level statistics
   `draft_word_count` int unsigned NOT NULL DEFAULT 0 COMMENT 'Scrivener draft word count',
   `draft_char_count` int unsigned NOT NULL DEFAULT 0 COMMENT 'Scrivener draft character count',

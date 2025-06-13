@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ScrivenerImport;
+use App\Jobs\ProcessScrivenerImport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
@@ -79,4 +80,53 @@ class ScrivenerImportController extends Controller
 
         return response()->json($import);
     }
+
+    /**
+     * Cancel a pending import
+     */
+    public function cancel($id)
+    {
+        $import = ScrivenerImport::where('user_id', auth()->id())
+            ->where('status', 'pending')
+            ->findOrFail($id);
+
+        // Delete the stored file
+        if ($import->storage_path) {
+            Storage::delete($import->storage_path);
+        }
+
+        // Update the import record
+        $import->update([
+            'status' => 'failed',
+            'error_message' => 'Import cancelled by user',
+            'current_step' => 'Cancelled',
+        ]);
+
+        return response()->json(['message' => 'Import cancelled successfully']);
+    }
+
+    /**
+     * Retry a failed import
+     */
+    public function retry($id)
+    {
+        $import = ScrivenerImport::where('user_id', auth()->id())
+            ->where('status', 'failed')
+            ->findOrFail($id);
+
+        // Reset the import record
+        $import->update([
+            'status' => 'pending',
+            'error_message' => null,
+            'current_step' => null,
+            'progress' => 0,
+            'processed_items' => 0,
+        ]);
+
+        // Dispatch a new job
+        ProcessScrivenerImport::dispatch($import);
+
+        return response()->json(['message' => 'Import restarted successfully']);
+    }
 } 
+ 

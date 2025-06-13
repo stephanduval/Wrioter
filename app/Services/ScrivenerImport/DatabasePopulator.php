@@ -119,6 +119,14 @@ class DatabasePopulator
      */
     private function createItems(int $manuscriptId, array $itemsData): array
     {
+        // Ensure every item has a user_id key (even if null)
+        foreach ($itemsData as &$itemData) {
+            if (!array_key_exists('user_id', $itemData)) {
+                $itemData['user_id'] = null;
+            }
+        }
+        unset($itemData);
+
         print_r("=== Starting createItems ===\n");
         print_r("Input itemsData count: " . count($itemsData) . "\n");
         print_r("First item data sample:\n");
@@ -347,41 +355,29 @@ class DatabasePopulator
         array $collectionsData,
         array $writingHistoryData
     ): bool {
-        try {
-            // Validate manuscript data
-            if (empty($manuscriptData['title']) || empty($manuscriptData['scrivener_uuid'])) {
-                throw new RuntimeException('Invalid manuscript data: missing required fields');
-            }
-
-            // Validate items data
-            foreach ($itemsData as $item) {
-                if (empty($item['title']) || empty($item['scrivener_uuid'])) {
-                    throw new RuntimeException('Invalid item data: missing required fields');
-                }
-            }
-
-            // Validate collections data
-            foreach ($collectionsData as $collection) {
-                if (empty($collection['title']) || empty($collection['collection_id'])) {
-                    throw new RuntimeException('Invalid collection data: missing required fields');
-                }
-            }
-
-            // Validate writing history data
-            foreach ($writingHistoryData as $history) {
-                if (empty($history['date']) || !isset($history['user_id'])) {
-                    throw new RuntimeException('Invalid writing history data: missing required fields');
-                }
-            }
-
-            return true;
-        } catch (\Exception $e) {
-            Log::error('Data validation failed', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-            throw new RuntimeException('Data validation failed: ' . $e->getMessage());
+        // Validate manuscript data
+        if (empty($manuscriptData['title']) || empty($manuscriptData['scrivener_uuid'])) {
+            throw new RuntimeException('Invalid manuscript data: missing required fields');
         }
+
+        // Validate items data
+        foreach ($itemsData as $item) {
+            if (empty($item['type']) || empty($item['title'])) {
+                throw new RuntimeException('Invalid item data: missing required fields');
+            }
+        }
+
+        // Validate collections data
+        foreach ($collectionsData as $collection) {
+            if (empty($collection['title']) || empty($collection['type'])) {
+                throw new RuntimeException('Invalid collection data: missing required fields');
+            }
+        }
+
+        // Writing history is optional, so no validation needed
+        \Log::debug("Writing history data (validation skipped):", ['data' => $writingHistoryData]);
+
+        return true;
     }
 
     /**

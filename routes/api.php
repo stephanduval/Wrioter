@@ -127,9 +127,13 @@ Route::middleware('auth:sanctum')->group(function () {
 
 // Scrivener Import Routes
 Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/scrivener/imports', [ScrivenerImportController::class, 'index']);
-    Route::post('/scrivener/import', [ScrivenerImportController::class, 'store']);
-    Route::get('/scrivener/imports/{id}', [ScrivenerImportController::class, 'show']);
+    Route::prefix('scrivener')->group(function () {
+        Route::get('/imports', [ScrivenerImportController::class, 'index']);
+        Route::post('/import', [ScrivenerImportController::class, 'store']);
+        Route::get('/imports/{id}', [ScrivenerImportController::class, 'show']);
+        Route::post('/imports/{id}/cancel', [ScrivenerImportController::class, 'cancel']);
+        Route::post('/imports/{id}/retry', [ScrivenerImportController::class, 'retry']);
+    });
 });
 
 // Message notification route

@@ -152,12 +152,6 @@ class DataTransformer
     ): void {
         foreach ($items as $item) {
             $uuid = $item['UUID'];
-            print_r("\nProcessing binder item:\n");
-            print_r("UUID: " . ($uuid ?? 'missing') . "\n");
-            print_r("Type: " . ($item['Type'] ?? 'missing') . "\n");
-            print_r("Title: " . ($item['Title'] ?? 'missing') . "\n");
-            print_r("Parent ID: " . ($parentId ?? 'none') . "\n");
-            print_r("Order: " . $order . "\n");
             
             // Store parent relationship
             if ($parentId) {
@@ -204,7 +198,6 @@ class DataTransformer
             }
 
             if (!empty($item['Children'])) {
-                print_r("Found " . count($item['Children']) . " child items\n");
                 $this->transformBinderItemsWithRelationships($item['Children'], $uniqueItems, $parentRelationships, $uuid, 0);
             }
         }
@@ -221,10 +214,6 @@ class DataTransformer
         print_r("\n=== Processing Research Items ===\n");
         foreach ($items as $item) {
             $uuid = $item['UUID'];
-            print_r("\nProcessing research item:\n");
-            print_r("UUID: " . ($uuid ?? 'missing') . "\n");
-            print_r("Type: " . ($item['Type'] ?? 'missing') . "\n");
-            print_r("Title: " . ($item['Title'] ?? 'missing') . "\n");
             
             // Only store the item if we haven't seen it before
             if (!isset($uniqueItems[$uuid])) {
