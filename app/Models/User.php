@@ -82,6 +82,14 @@ class User extends Authenticatable implements CanResetPasswordContract
     }
 
     /**
+     * Get the scrivener imports for the user.
+     */
+    public function scrivenerImports()
+    {
+        return $this->hasMany(ScrivenerImport::class);
+    }
+
+    /**
      * Get all permissions for the user through their roles.
      *
      * @return \Illuminate\Support\Collection
