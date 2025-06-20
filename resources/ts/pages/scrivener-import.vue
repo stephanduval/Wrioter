@@ -6,7 +6,7 @@
     </VCardItem>
 
     <VCardText>
-      <VForm @submit.prevent="handleSubmit">
+      <VForm @submit.prevent="handleSubmit" data-test="scrivener-import-form">
         <VFileInput
           v-model="file"
           :label="$t('scrivener.import.fileInput')"
@@ -16,7 +16,13 @@
           :disabled="isUploading || isProcessing"
           prepend-icon="bx-import"
           @change="validateFile"
+          data-test="file-input"
         />
+        
+        <!-- File Error Messages -->
+        <div v-if="errorMessage" class="text-error mt-2" data-test="file-error">
+          {{ errorMessage }}
+        </div>
 
         <!-- Upload Progress -->
         <VProgressLinear
@@ -25,6 +31,7 @@
           color="primary"
           height="20"
           class="mt-4"
+          data-test="upload-progress"
         >
           <template #default>
             {{ $t('scrivener.import.uploading', { progress: uploadProgress }) }}
@@ -36,6 +43,7 @@
           v-if="isProcessing"
           class="mt-4"
           variant="outlined"
+          data-test="processing-status"
         >
           <VCardText>
             <div class="d-flex align-center">
@@ -63,6 +71,7 @@
           class="mt-4"
           closable
           @click:close="importStatus = null"
+          data-test="import-status"
         >
           {{ importStatus.message }}
         </VAlert>
@@ -73,6 +82,7 @@
             color="primary"
             :loading="isUploading"
             :disabled="!file || isUploading || isProcessing"
+            data-test="upload-button"
           >
             {{ $t('scrivener.import.uploadButton') }}
           </VBtn>
@@ -86,7 +96,7 @@
         {{ $t('scrivener.import.recentImports') }}
       </div>
 
-      <VTable v-if="recentImports.length > 0">
+      <VTable v-if="recentImports.length > 0" data-test="recent-imports-table">
         <thead>
           <tr>
             <th>{{ $t('scrivener.import.fileName') }}</th>
@@ -100,11 +110,12 @@
             v-for="{ id, filename, status, created_at, manuscript_id } in recentImports"
             :key="id"
           >
-            <td>{{ filename }}</td>
+            <td data-test="import-filename">{{ filename }}</td>
             <td>
               <VChip
                 :color="getStatusColor(status)"
                 size="small"
+                data-test="import-status"
               >
                 {{ $t(`scrivener.import.statuses.${status}`) }}
               </VChip>
@@ -116,8 +127,18 @@
                 size="small"
                 variant="text"
                 :to="{ name: 'manuscripts-view', params: { id: manuscript_id }}"
+                data-test="view-manuscript-button"
               >
                 {{ $t('scrivener.import.viewManuscript') }}
+              </VBtn>
+              <VBtn
+                v-else-if="status === 'failed'"
+                size="small"
+                variant="text"
+                color="error"
+                @click="showErrorDetails(id, filename, error_message)"
+              >
+                View Error
               </VBtn>
             </td>
           </tr>
@@ -131,13 +152,52 @@
       >
         {{ $t('scrivener.import.noImports') }}
       </VAlert>
+      
+      <!-- Clear Failed Imports Button -->
+      <div v-if="hasFailedImports" class="mt-4 text-center">
+        <VBtn
+          color="warning"
+          variant="outlined"
+          size="small"
+          @click="clearFailedImports"
+          :loading="clearingFailed"
+        >
+          Clear Failed Imports
+        </VBtn>
+      </div>
     </VCardText>
   </VCard>
+
+  <!-- Error Details Dialog -->
+  <VDialog v-model="errorDialog" max-width="600">
+    <VCard>
+      <VCardTitle class="text-h5">
+        Import Error Details
+      </VCardTitle>
+      <VCardText>
+        <div class="mb-3">
+          <strong>File:</strong> {{ errorDetails.filename }}
+        </div>
+        <div class="mb-3">
+          <strong>Error:</strong>
+        </div>
+        <VAlert type="error" variant="tonal" class="text-wrap">
+          {{ errorDetails.message }}
+        </VAlert>
+      </VCardText>
+      <VCardActions>
+        <VSpacer />
+        <VBtn color="grey" variant="text" @click="errorDialog = false">
+          Close
+        </VBtn>
+      </VCardActions>
+    </VCard>
+  </VDialog>
 </template>
 
 <script setup lang="ts">
 import { format } from 'date-fns'
-import { onMounted, onUnmounted, ref } from 'vue'
+import { onMounted, onUnmounted, ref, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useToast } from 'vue-toastification'
 
@@ -159,10 +219,21 @@ const recentImports = ref<Array<{
   status: 'pending' | 'processing' | 'completed' | 'failed'
   created_at: string
   manuscript_id?: number
+  error_message?: string
 }>>([])
+
+// Error dialog state
+const errorDialog = ref(false)
+const errorDetails = ref({ filename: '', message: '' })
+const clearingFailed = ref(false)
 
 // Polling interval for status updates
 let statusPollingInterval: number | null = null
+
+// Computed properties
+const hasFailedImports = computed(() => {
+  return recentImports.value.some(imp => imp.status === 'failed')
+})
 
 onMounted(async () => {
   await fetchRecentImports()
@@ -306,6 +377,36 @@ const getStatusColor = (status: string) => {
 
 const formatDate = (date: string) => {
   return format(new Date(date), 'PPpp')
+}
+
+const showErrorDetails = (id: number, filename: string, message: string) => {
+  errorDetails.value = { filename, message }
+  errorDialog.value = true
+}
+
+const clearFailedImports = async () => {
+  clearingFailed.value = true
+  try {
+    const failedImports = recentImports.value.filter(imp => imp.status === 'failed')
+    
+    for (const imp of failedImports) {
+      await fetch(`/api/scrivener/imports/${imp.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+        },
+      })
+    }
+    
+    await fetchRecentImports()
+    toast.success('Failed imports cleared successfully')
+  } catch (error) {
+    console.error('Error clearing failed imports:', error)
+    toast.error('Failed to clear imports')
+  } finally {
+    clearingFailed.value = false
+  }
 }
 
 // Cleanup polling on component unmount

@@ -213,6 +213,7 @@
   },
   "menu": {
     "heading": "Freynet-Gagné",
+    "adminDashboard": "Admin Dashboard",
     "userManagement": "User Management",
     "companyList": "Company List",
     "projects": "Projects",

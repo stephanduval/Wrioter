@@ -28,7 +28,11 @@
     "schema:csv": "mkdir -p docs/database/schemas/$(date +%d%b%Y)_csv && php scripts/export_tables.php docs/database/schemas/$(date +%d%b%Y)_csv && echo 'Table,Records' > docs/database/schemas/$(date +%d%b%Y)_csv/table_summary.csv && for f in docs/database/schemas/$(date +%d%b%Y)_csv/*.csv; do echo \"$(basename \"$f\" .csv),$(wc -l < \"$f\" | awk '{print $1-1}')\" >> docs/database/schemas/$(date +%d%b%Y)_csv/table_summary.csv; done && cp -r docs/database/schemas/$(date +%d%b%Y)_csv docs/database/schemas/current_tables_csv",
     "schema:csv:test": "mkdir -p docs/database/schemas/$(date +%d%b%Y)_test_csv && php --env=testing scripts/export_tables.php docs/database/schemas/$(date +%d%b%Y)_test_csv && echo 'Table,Records' > docs/database/schemas/$(date +%d%b%Y)_test_csv/table_summary.csv && for f in docs/database/schemas/$(date +%d%b%Y)_test_csv/*.csv; do echo \"$(basename \"$f\" .csv),$(wc -l < \"$f\" | awk '{print $1-1}')\" >> docs/database/schemas/$(date +%d%b%Y)_test_csv/table_summary.csv; done && cp -r docs/database/schemas/$(date +%d%b%Y)_test_csv docs/database/schemas/current_test_tables_csv",
     "schema:text": "mkdir -p docs/database/schemas && php scripts/export_tables_text.php docs/database/schemas/$(date +%d%b%Y)_Wrioter_tables.txt && cp docs/database/schemas/$(date +%d%b%Y)_Wrioter_tables.txt docs/database/schemas/current_tables.txt",
-    "schema:text:test": "mkdir -p docs/database/schemas && php scripts/export_tables_text.php --env=testing docs/database/schemas/$(date +%d%b%Y)_Wrioter_test_tables.txt && cp docs/database/schemas/$(date +%d%b%Y)_Wrioter_test_tables.txt docs/database/schemas/current_test_tables.txt"
+    "schema:text:test": "mkdir -p docs/database/schemas && php scripts/export_tables_text.php --env=testing docs/database/schemas/$(date +%d%b%Y)_Wrioter_test_tables.txt && cp docs/database/schemas/$(date +%d%b%Y)_Wrioter_test_tables.txt docs/database/schemas/current_test_tables.txt",
+    "cypress:open": "cypress open",
+    "cypress:run": "cypress run",
+    "test:e2e": "cypress run",
+    "test:e2e:open": "cypress open"
   },
   "dependencies": {
     "@casl/ability": "6.7.1",
@@ -105,6 +109,7 @@
     "@vitejs/plugin-vue": "5.0.5",
     "@vitejs/plugin-vue-jsx": "3.1.0",
     "concurrently": "^9.1.2",
+    "cypress": "^14.5.0",
     "eslint": "8.57.0",
     "eslint-config-airbnb-base": "15.0.0",
     "eslint-import-resolver-typescript": "3.6.1",

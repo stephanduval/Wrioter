@@ -240,4 +240,28 @@ export const routes: RouteRecordRaw[] = [
     name: 'apps-ecommerce-dashboard',
     component: () => import('@/pages/dashboards/ecommerce.vue'),
   },
+  // Admin Dashboard Route
+  {
+    path: '/admin/dashboard',
+    name: 'admin-dashboard',
+    component: () => import('@/pages/admin-dashboard.vue'),
+    meta: {
+      layoutWrapperClasses: 'layout-content-height-fixed',
+      action: 'read',
+      subject: 'admin',
+      requiresAuth: true,
+    },
+  },
+  // Scrivener Import Route
+  {
+    path: '/apps/scrivener/import',
+    name: 'scrivener-import',
+    component: () => import('@/pages/scrivener-import.vue'),
+    meta: {
+      layoutWrapperClasses: 'layout-content-height-fixed',
+      action: 'create',
+      subject: 'manuscripts',
+      requiresAuth: true,
+    },
+  },
 ]

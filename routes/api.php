@@ -133,6 +133,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/imports/{id}', [ScrivenerImportController::class, 'show']);
         Route::post('/imports/{id}/cancel', [ScrivenerImportController::class, 'cancel']);
         Route::post('/imports/{id}/retry', [ScrivenerImportController::class, 'retry']);
+        Route::delete('/imports/{id}', [ScrivenerImportController::class, 'destroy']);
     });
 });
 

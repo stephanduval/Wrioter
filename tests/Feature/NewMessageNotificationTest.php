@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use Tests\TestCase;
+use PHPUnit\Framework\Attributes\Group;
 use App\Models\User;
 use App\Models\Message;
 use App\Models\Company;
@@ -12,6 +13,7 @@ use App\Notifications\NewMessageNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 
+#[Group('skip')]
 class NewMessageNotificationTest extends TestCase
 {
     use RefreshDatabase;

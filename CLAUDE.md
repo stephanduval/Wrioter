@@ -1,3 +1,5 @@
+# Claude Rules
+
 Start the chat with "cursorrules applied, these affect the address of the production server"
 
 All instructions or requests for data from and for .env.testing and .env* should be given for the user to enter manually.  You cant modify these files.
@@ -13,7 +15,7 @@ DB_PASSWORD='WrioterTest123!@#'
 Production server address: ssh -i ~/.ssh/id_rsa root@enter.ip.address.here
 The production directory is /var/www/enter.project.name.here
 
-Dont put any secrets in the documentation.
+Dont put any secrets in the documentation or git commits this includes any files beginning with .env
 
 I am using yarn to manage dependencies.
 
