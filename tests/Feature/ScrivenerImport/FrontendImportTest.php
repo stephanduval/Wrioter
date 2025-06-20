@@ -11,6 +11,7 @@ use App\Jobs\ProcessScrivenerImport;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Bus;
+use PHPUnit\Framework\Attributes\Test;
 
 class FrontendImportTest extends TestCase
 {
@@ -42,7 +43,7 @@ class FrontendImportTest extends TestCase
         Bus::fake();
     }
 
-    /** @test */
+    #[Test]
     public function it_can_access_the_import_page()
     {
         $response = $this->actingAs($this->user)
@@ -52,7 +53,7 @@ class FrontendImportTest extends TestCase
             ->assertSee('<div id="app">', false);
     }
 
-    /** @test */
+    #[Test]
     public function it_shows_upload_progress_during_file_upload()
     {
         $response = $this->actingAs($this->user)
@@ -82,7 +83,7 @@ class FrontendImportTest extends TestCase
         Bus::assertDispatched(ProcessScrivenerImport::class);
     }
 
-    /** @test */
+    #[Test]
     public function it_shows_processing_status_after_upload()
     {
         // Create a pending import
@@ -106,7 +107,7 @@ class FrontendImportTest extends TestCase
             ]);
     }
 
-    /** @test */
+    #[Test]
     public function it_shows_error_message_for_invalid_file()
     {
         $invalidFile = UploadedFile::fake()->create('document.pdf', 100);
@@ -124,7 +125,7 @@ class FrontendImportTest extends TestCase
             ->assertJsonValidationErrors(['file']);
     }
 
-    /** @test */
+    #[Test]
     public function it_shows_completed_status_with_manuscript_link()
     {
         // Create a manuscript first
@@ -151,7 +152,7 @@ class FrontendImportTest extends TestCase
             ]);
     }
 
-    /** @test */
+    #[Test]
     public function it_shows_failed_status_with_error_message()
     {
         // Create a failed import
@@ -173,7 +174,7 @@ class FrontendImportTest extends TestCase
             ]);
     }
 
-    /** @test */
+    #[Test]
     public function it_updates_status_in_real_time()
     {
         // Create a pending import
@@ -213,7 +214,7 @@ class FrontendImportTest extends TestCase
             ]);
     }
 
-    /** @test */
+    #[Test]
     public function it_validates_file_size_limit()
     {
         // Create a file that exceeds the 50MB limit
@@ -232,7 +233,7 @@ class FrontendImportTest extends TestCase
             ->assertJsonValidationErrors(['file']);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_cancel_pending_import()
     {
         // Create a pending import
@@ -259,7 +260,7 @@ class FrontendImportTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_retry_failed_import()
     {
         // Create a failed import
@@ -290,7 +291,7 @@ class FrontendImportTest extends TestCase
         Bus::assertDispatched(ProcessScrivenerImport::class);
     }
 
-    /** @test */
+    #[Test]
     public function it_handles_concurrent_imports_correctly()
     {
         // Create a manuscript first

@@ -13,6 +13,7 @@ use App\Models\Manuscript;
 use App\Models\Item;
 use App\Models\ManuscriptCollection;
 use App\Models\WritingHistory;
+use PHPUnit\Framework\Attributes\Test;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use App\Models\User;
@@ -60,7 +61,7 @@ class ImportTest extends TestCase
         parent::tearDown();
     }
 
-    /** @test */
+    #[Test]
     public function it_can_extract_scrivener_zip_file()
     {
         // Copy test zip to test location
@@ -80,7 +81,7 @@ class ImportTest extends TestCase
         $this->fileHandler->cleanup($extractedPath);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_parse_scrivener_xml()
     {
         // Setup: Extract zip first
@@ -105,7 +106,7 @@ class ImportTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function it_can_transform_data_to_database_format()
     {
         // Setup: Extract and parse XML
@@ -136,7 +137,7 @@ class ImportTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function it_can_populate_database_with_transformed_data()
     {
         // Setup: Extract, parse, and transform data
@@ -215,7 +216,7 @@ class ImportTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function it_validates_required_fields()
     {
         // Setup: Extract, parse, and transform data
@@ -263,7 +264,7 @@ class ImportTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function it_handles_duplicate_manuscripts()
     {
         // Setup: Extract, parse, and transform data
@@ -324,7 +325,7 @@ class ImportTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function it_preserves_item_hierarchy()
     {
         // Setup: Extract, parse, and transform data

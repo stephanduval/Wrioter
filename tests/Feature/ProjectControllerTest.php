@@ -9,6 +9,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 use Laravel\Sanctum\Sanctum;
 use Illuminate\Support\Facades\Artisan;
+use PHPUnit\Framework\Attributes\Test;
 
 class ProjectControllerTest extends TestCase
 {
@@ -39,7 +40,7 @@ class ProjectControllerTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function it_returns_all_projects_when_per_page_is_minus_one()
     {
         // Authenticate as admin
@@ -73,7 +74,7 @@ class ProjectControllerTest extends TestCase
         $this->assertEquals(15, $responseData['to']);
     }
 
-    /** @test */
+    #[Test]
     public function it_returns_paginated_projects_when_per_page_is_valid_number()
     {
         // Authenticate as admin
@@ -107,7 +108,7 @@ class ProjectControllerTest extends TestCase
         $this->assertEquals(5, $responseData['to']);
     }
 
-    /** @test */
+    #[Test]
     public function client_can_only_see_their_own_projects()
     {
         // Authenticate as client

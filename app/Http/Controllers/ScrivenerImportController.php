@@ -47,6 +47,10 @@ class ScrivenerImportController extends Controller
                 'filename' => $originalName,
                 'status' => 'pending',
                 'storage_path' => $path,
+                'progress' => 0,
+                'total_items' => 0,
+                'processed_items' => 0,
+                'current_step' => 'Queued for processing',
             ]);
 
             // Dispatch job to process the file
@@ -127,6 +131,25 @@ class ScrivenerImportController extends Controller
         ProcessScrivenerImport::dispatch($import);
 
         return response()->json(['message' => 'Import restarted successfully']);
+    }
+
+    /**
+     * Delete a failed import record
+     */
+    public function destroy($id)
+    {
+        $import = ScrivenerImport::where('user_id', auth()->id())
+            ->where('status', 'failed')
+            ->findOrFail($id);
+
+        // Clean up the stored file if it exists
+        if ($import->storage_path && Storage::exists($import->storage_path)) {
+            Storage::delete($import->storage_path);
+        }
+
+        $import->delete();
+
+        return response()->json(['message' => 'Import deleted successfully']);
     }
 } 
  

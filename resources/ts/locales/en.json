@@ -7,11 +7,27 @@
     },
     "scrivener": {
         "import": {
-            "title": "Import Scrivener File",
-            "subtitle": "Upload a Scrivener .zip file to import your manuscript",
-            "fileInput": "Choose Scrivener .zip file",
+            "title": "Import from Scrivener",
+            "subtitle": "Upload your Scrivener project file to import your manuscript",
+            "fileInput": "Choose Scrivener Project File",
             "uploadButton": "Upload and Import",
-            "success": "File uploaded successfully. Processing your manuscript...",
+            "uploadSuccess": "File uploaded successfully",
+            "processing": "Processing your file...",
+            "processingDescription": "Your Scrivener file is being processed and imported into your manuscript library.",
+            "recentImports": "Recent Imports",
+            "fileName": "File Name",
+            "status": "Status",
+            "date": "Date",
+            "actions": "Actions",
+            "viewManuscript": "View Manuscript",
+            "noImports": "No recent imports found.",
+            "uploading": "Uploading... {progress}%",
+            "statuses": {
+                "pending": "Pending",
+                "processing": "Processing",
+                "completed": "Completed",
+                "failed": "Failed"
+            },
             "errors": {
                 "invalidFileType": "Please select a valid .zip file",
                 "fileTooLarge": "File size must be less than 50MB",

@@ -91,11 +91,18 @@ class DatabasePopulator
      */
     private function createManuscript(array $data): Manuscript
     {
-        // Check for duplicate scrivener_uuid
-        if (isset($data['scrivener_uuid'])) {
-            $existing = Manuscript::where('scrivener_uuid', $data['scrivener_uuid'])->first();
+        // Check for duplicate scrivener_uuid for this user
+        if (isset($data['scrivener_uuid']) && isset($data['user_id'])) {
+            $existing = Manuscript::where('scrivener_uuid', $data['scrivener_uuid'])
+                ->where('user_id', $data['user_id'])
+                ->first();
             if ($existing) {
-                throw new RuntimeException('A manuscript with this Scrivener UUID already exists');
+                throw new RuntimeException(
+                    "You have already imported this Scrivener project. " .
+                    "Existing manuscript: '{$existing->title}' (imported on " . 
+                    $existing->created_at->format('M j, Y') . "). " .
+                    "Please choose a different Scrivener project or delete the existing manuscript first."
+                );
             }
         }
 

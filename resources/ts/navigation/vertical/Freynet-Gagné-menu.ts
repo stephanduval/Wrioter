@@ -2,6 +2,15 @@ export default [
   // Main Menu Section
   { heading: 'menu.heading' },
   
+  // Admin Dashboard
+  {
+    title: 'menu.adminDashboard',
+    icon: { icon: 'bx-tachometer' },
+    to: 'admin-dashboard',
+    action: 'read',
+    subject: 'admin',
+  },
+  
   // User Management Section
   {
     title: 'menu.userManagement',

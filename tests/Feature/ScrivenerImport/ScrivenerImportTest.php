@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Queue;
 use App\Jobs\ProcessScrivenerImport;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\Test;
 
 class ScrivenerImportTest extends TestCase
 {
@@ -37,7 +38,7 @@ class ScrivenerImportTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function it_can_upload_a_scrivener_file()
     {
         // Do NOT fake storage or queue
@@ -75,7 +76,7 @@ class ScrivenerImportTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function it_validates_file_type()
     {
         // Create an invalid file
@@ -92,7 +93,7 @@ class ScrivenerImportTest extends TestCase
             ->assertJsonValidationErrors(['file']);
     }
 
-    /** @test */
+    #[Test]
     public function it_validates_file_size()
     {
         // Create a file that's too large
@@ -109,7 +110,7 @@ class ScrivenerImportTest extends TestCase
             ->assertJsonValidationErrors(['file']);
     }
 
-    /** @test */
+    #[Test]
     public function it_requires_authentication()
     {
         $response = $this->postJson('/api/scrivener/import', [
@@ -119,7 +120,7 @@ class ScrivenerImportTest extends TestCase
         $response->assertStatus(401);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_cancel_a_pending_import()
     {
         // Create a pending import
@@ -144,10 +145,14 @@ class ScrivenerImportTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_retry_a_failed_import()
     {
-        // Create a failed import
+        // Fake the queue for this test
+        Queue::fake();
+        
+        // Create a failed import with a valid storage path
+        Storage::disk('local')->put('scrivener/temp/test.zip', 'fake zip content');
         $import = $this->user->scrivenerImports()->create([
             'filename' => 'test.zip',
             'status' => 'failed',
@@ -171,5 +176,8 @@ class ScrivenerImportTest extends TestCase
 
         // Assert the job was queued
         Queue::assertPushed(ProcessScrivenerImport::class);
+        
+        // Cleanup
+        Storage::disk('local')->delete('scrivener/temp/test.zip');
     }
 }
