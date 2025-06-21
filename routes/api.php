@@ -121,6 +121,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/manuscripts', [ManuscriptController::class, 'index']);
     Route::post('/manuscripts', [ManuscriptController::class, 'store']);
     Route::get('/manuscripts/{id}', [ManuscriptController::class, 'show']);
+    Route::get('/manuscripts/{id}/collections', [ManuscriptController::class, 'collections']);
+    Route::get('/manuscripts/{id}/items', [ManuscriptController::class, 'items']);
     Route::put('/manuscripts/{id}', [ManuscriptController::class, 'update']);
     Route::delete('/manuscripts/{id}', [ManuscriptController::class, 'destroy']);
 });

@@ -59,3 +59,12 @@ php artisan about
 I prefer to use localStorage to cookies 
 
 The database is mysql.
+
+# Task Management Workflow
+
+For complex, multi-session projects:
+1. Always use Claude Code's built-in TodoWrite/TodoRead tools for active task management
+2. For projects spanning multiple sessions or with 5+ tasks, also create/update CLAUDETODO.md
+3. Update CLAUDETODO.md with high-level progress and any important context
+4. Clear completed tasks from CLAUDETODO.md when major milestones are reached
+5. Keep CLAUDETODO.md concise - focus on what's next, not detailed implementation steps

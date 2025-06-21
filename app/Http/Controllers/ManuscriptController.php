@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Manuscript;
+use App\Models\ManuscriptCollection;
+use App\Models\ManuscriptItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -105,5 +107,71 @@ class ManuscriptController extends Controller
         $manuscript->delete();
 
         return response()->json(['message' => 'Manuscript deleted successfully']);
+    }
+
+    /**
+     * Get collections for a specific manuscript.
+     */
+    public function collections(string $id)
+    {
+        $manuscript = Manuscript::where('id', $id)
+            ->where('user_id', Auth::id())
+            ->firstOrFail();
+
+        $collections = ManuscriptCollection::where('manuscript_id', $id)
+            ->ordered()
+            ->get();
+
+        return response()->json($collections);
+    }
+
+    /**
+     * Get items for a specific manuscript.
+     */
+    public function items(Request $request, string $id)
+    {
+        // Ensure the manuscript belongs to the authenticated user
+        $manuscript = Manuscript::where('id', $id)
+            ->where('user_id', Auth::id())
+            ->firstOrFail();
+
+        $parentId = $request->input('parent_id');
+
+        $items = ManuscriptItem::where('manuscript_id', $id)
+            // Filter root vs. child items depending on parent_id
+            ->whereHas('item', function ($q) use ($parentId) {
+                if ($parentId === null) {
+                    $q->whereNull('parent_id');
+                } else {
+                    $q->where('parent_id', $parentId);
+                }
+            })
+            ->with(['item' => function ($query) {
+                $query->select(
+                    'items.id',
+                    'items.title',
+                    'items.type',
+                    'items.parent_id'
+                );
+            }])
+            ->orderBy('order_index')
+            ->get()
+            ->map(function ($manuscriptItem) {
+                $item = $manuscriptItem->item;
+
+                if ($item) {
+                    // Propagate order index & manuscript-item id
+                    $item->order_index = $manuscriptItem->order_index;
+                    $item->manuscript_item_id = $manuscriptItem->id;
+
+                    // Compute whether the item has children
+                    $item->has_children = $item->children()->exists();
+                }
+
+                return $item;
+            })
+            ->filter(); // Remove null items (safety)
+
+        return response()->json($items->values());
     }
 } 

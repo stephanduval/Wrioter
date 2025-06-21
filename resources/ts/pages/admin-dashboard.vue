@@ -254,7 +254,7 @@
         <!-- Users Table -->
         <VCol cols="12">
           <VCard>
-            <VCardTitle class="d-flex align-center justify-space-between">
+            <VCardTitle class="d-flex align-center justify-space-between pt-6">
               <div class="d-flex align-center">
                 <VIcon icon="bx-table" class="me-2" />
                 User Details
@@ -264,7 +264,7 @@
                 placeholder="Search users..."
                 hide-details
                 density="compact"
-                style="width: 300px;"
+                style="inline-size: 300px;"
                 clearable
               >
                 <template #prepend-inner>
@@ -338,9 +338,9 @@
         </VCol>
 
         <!-- Manuscripts Table -->
-        <VCol cols="12" class="mt-6">
+        <VCol cols="12" class="mt-8">
           <VCard>
-            <VCardTitle class="d-flex align-center justify-space-between">
+            <VCardTitle class="d-flex align-center justify-space-between pt-6">
               <div class="d-flex align-center">
                 <VIcon icon="bx-book" class="me-2" />
                 Manuscripts & Content
@@ -350,7 +350,7 @@
                 placeholder="Search manuscripts..."
                 hide-details
                 density="compact"
-                style="width: 300px;"
+                style="inline-size: 300px;"
                 clearable
               >
                 <template #prepend-inner>
@@ -395,6 +395,16 @@
                 <div class="d-flex gap-1">
                   <VBtn size="small" variant="text" icon @click="viewManuscript(item)">
                     <VIcon icon="bx-show" />
+                  </VBtn>
+                  <VBtn 
+                    v-if="item.manuscript_type === 'scrivener'" 
+                    size="small" 
+                    variant="text" 
+                    icon 
+                    @click="viewManuscriptStructure(item)"
+                    title="View Text Tree Structure"
+                  >
+                    <VIcon icon="bx-sitemap" />
                   </VBtn>
                   <VBtn size="small" variant="text" icon @click="downloadManuscript(item)">
                     <VIcon icon="bx-download" />
@@ -450,6 +460,7 @@
               :loading="loading.imports"
               item-value="id"
               class="elevation-0"
+              show-expand
             >
               <template #item.status="{ item }">
                 <div class="d-flex align-center gap-2">
@@ -467,7 +478,7 @@
               </template>
 
               <template #item.progress="{ item }">
-                <div class="d-flex align-center gap-2" style="min-width: 100px;">
+                <div class="d-flex align-center gap-2" style="min-inline-size: 100px;">
                   <VProgressLinear
                     v-if="item.status === 'processing' || item.status === 'pending'"
                     :model-value="item.progress || 0"
@@ -485,6 +496,16 @@
 
               <template #item.actions="{ item }">
                 <div class="d-flex gap-1">
+                  <VBtn 
+                    v-if="item.status === 'completed' && item.manuscript_id" 
+                    size="small" 
+                    variant="text" 
+                    icon 
+                    @click="viewScrivenerContent(item)"
+                    title="View Content Structure"
+                  >
+                    <VIcon icon="bx-sitemap" />
+                  </VBtn>
                   <VBtn 
                     v-if="item.status === 'failed'" 
                     size="small" 
@@ -515,7 +536,63 @@
                   </VBtn>
                 </div>
               </template>
+
+              <template #expanded-row="{ item }">
+                <VRow class="pa-4" v-if="item.status === 'completed' && item.manuscript_id">
+                  <VCol cols="12">
+                    <div class="text-h6 mb-3">Imported Content Structure</div>
+                    <ScrivenerContentTree :manuscript-id="item.manuscript_id" />
+                  </VCol>
+                </VRow>
+                <VRow class="pa-4" v-else-if="item.status === 'failed'">
+                  <VCol cols="12">
+                    <VAlert type="error" variant="tonal">
+                      <div class="text-subtitle-2">Import Failed</div>
+                      <div class="text-body-2">{{ item.error_message || 'Unknown error occurred' }}</div>
+                    </VAlert>
+                  </VCol>
+                </VRow>
+                <VRow class="pa-4" v-else>
+                  <VCol cols="12">
+                    <div class="d-flex align-center">
+                      <VProgressCircular
+                        v-if="item.status === 'processing'"
+                        size="20"
+                        width="2"
+                        indeterminate
+                        color="primary"
+                        class="me-3"
+                      />
+                      <div>
+                        <div class="text-body-1">{{ item.current_step || 'Queued for processing' }}</div>
+                        <div class="text-caption text-medium-emphasis">
+                          {{ item.processed_items || 0 }} of {{ item.total_items || 0 }} items processed
+                        </div>
+                      </div>
+                    </div>
+                  </VCol>
+                </VRow>
+              </template>
             </VDataTable>
+          </VCard>
+        </VCol>
+
+        <!-- Scrivener Content Structure -->
+        <VCol cols="12" class="mt-6" v-if="selectedScrivenerContent">
+          <VCard>
+            <VCardTitle class="d-flex align-center justify-space-between">
+              <div class="d-flex align-center">
+                <VIcon icon="bx-sitemap" class="me-2" />
+                Scrivener Content Structure: {{ selectedScrivenerContent.title }}
+              </div>
+              <VBtn size="small" variant="text" @click="selectedScrivenerContent = null">
+                <VIcon icon="bx-x" />
+                Close
+              </VBtn>
+            </VCardTitle>
+            <VCardText>
+              <ScrivenerContentTree :manuscript-id="selectedScrivenerContent.manuscript_id" :detailed="true" />
+            </VCardText>
           </VCard>
         </VCol>
       </VRow>
@@ -563,8 +640,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
 import { format } from 'date-fns'
+import { computed, onMounted, ref } from 'vue'
 import { useToast } from 'vue-toastification'
 
 const toast = useToast()
@@ -575,6 +652,7 @@ const manuscripts = ref<any[]>([])
 const scrivenerImports = ref<any[]>([])
 const userDialog = ref(false)
 const selectedUser = ref<any>(null)
+const selectedScrivenerContent = ref<any>(null)
 
 // Search filters
 const userSearch = ref('')
@@ -681,67 +759,18 @@ const userTreeItems = computed(() => {
 })
 
 const contentTreeItems = computed(() => {
-  const items: any[] = []
-  
-  // Group manuscripts by type
-  const standardManuscripts = manuscripts.value.filter(m => m.manuscript_type !== 'scrivener')
-  const scrivenerManuscripts = manuscripts.value.filter(m => m.manuscript_type === 'scrivener')
-  
-  if (standardManuscripts.length > 0) {
-    items.push({
-      id: 'standard-manuscripts',
-      title: 'Standard Manuscripts',
-      icon: 'bx-book',
-      color: 'primary',
-      count: standardManuscripts.length,
-      children: standardManuscripts.map(manuscript => ({
-        id: `manuscript-${manuscript.id}`,
-        title: manuscript.title,
-        icon: 'bx-book-open',
-        color: 'primary',
-        status: manuscript.status
-      }))
-    })
-  }
-
-  if (scrivenerManuscripts.length > 0) {
-    items.push({
-      id: 'scrivener-manuscripts',
-      title: 'Scrivener Projects',
-      icon: 'bx-import',
-      color: 'info',
-      count: scrivenerManuscripts.length,
-      children: scrivenerManuscripts.map(manuscript => ({
-        id: `manuscript-${manuscript.id}`,
-        title: manuscript.title,
-        icon: 'bx-import',
-        color: 'info',
-        status: manuscript.status
-      }))
-    })
-  }
-
-  // Add import status summary
-  const importSummary = scrivenerImports.value.reduce((acc: any, imp) => {
-    acc[imp.status] = (acc[imp.status] || 0) + 1
-    return acc
-  }, {})
-
-  items.push({
-    id: 'import-status',
-    title: 'Import Status',
-    icon: 'bx-pulse',
-    color: 'warning',
-    children: Object.entries(importSummary).map(([status, count]) => ({
-      id: `status-${status}`,
-      title: status.charAt(0).toUpperCase() + status.slice(1),
-      icon: getStatusIcon(status),
-      color: getStatusColor(status),
-      count
-    }))
-  })
-
-  return items
+  // One flat list of manuscripts – children are loaded dynamically via loadContentChildren
+  return manuscripts.value.map(manuscript => ({
+    id: `manuscript-${manuscript.id}`,
+    title: manuscript.title,
+    icon: manuscript.manuscript_type === 'scrivener' ? 'bx-import' : 'bx-book-open',
+    color: manuscript.manuscript_type === 'scrivener' ? 'info' : 'primary',
+    status: manuscript.status,
+    nodeType: 'manuscript',
+    manuscriptId: manuscript.id,
+    // Children will be fetched lazily; keep empty array placeholder to allow expansion icon
+    children: []
+  }))
 })
 
 // Table headers
@@ -822,7 +851,7 @@ const formatDate = (date: string) => {
 const fetchUsers = async () => {
   loading.value.users = true
   try {
-    const response = await fetch('/api/users', {
+    const response = await fetch('/api/users?itemsPerPage=all', {
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
         'Accept': 'application/json'
@@ -915,6 +944,13 @@ const viewManuscript = (manuscript: any) => {
   toast.info(`View manuscript: ${manuscript.title}`)
 }
 
+const viewManuscriptStructure = (manuscript: any) => {
+  selectedScrivenerContent.value = {
+    title: manuscript.title,
+    manuscript_id: manuscript.id
+  }
+}
+
 const downloadManuscript = (manuscript: any) => {
   toast.info(`Download manuscript: ${manuscript.title}`)
 }
@@ -935,6 +971,13 @@ const deleteImport = (importItem: any) => {
   toast.warning(`Delete import: ${importItem.filename}`)
 }
 
+const viewScrivenerContent = (importItem: any) => {
+  selectedScrivenerContent.value = {
+    title: importItem.filename,
+    manuscript_id: importItem.manuscript_id
+  }
+}
+
 // Placeholder action functions
 const exportUsers = () => toast.info('Export users feature')
 const bulkPasswordReset = () => toast.info('Bulk password reset feature')
@@ -952,9 +995,70 @@ const loadUserChildren = async (item: any) => {
   return item.children || []
 }
 
+// Helper: icon for item type
+const getItemIcon = (itemType: string) => {
+  const icons: Record<string, string> = {
+    text: 'bx-file',
+    image: 'bx-image',
+    link: 'bx-link',
+    file: 'bx-file',
+    mindmap: 'bx-network-chart',
+    compiled_output: 'bx-spreadsheet',
+    folder: 'bx-folder'
+  }
+  return icons[itemType] || 'bx-file'
+}
+
+// Cache for manuscript items to avoid refetching
+const manuscriptItemCache: Record<string, any[]> = {}
+
+// Fetch manuscript items; parentId === null returns root items
+const fetchManuscriptItems = async (manuscriptId: number, parentId: number | null) => {
+  const cacheKey = `${manuscriptId}-${parentId ?? 'root'}`
+  if (manuscriptItemCache[cacheKey]) return manuscriptItemCache[cacheKey]
+
+  try {
+    const url = parentId === null
+      ? `/api/manuscripts/${manuscriptId}/items`
+      : `/api/manuscripts/${manuscriptId}/items?parent_id=${parentId}`
+    const response = await fetch(url, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+        'Accept': 'application/json'
+      }
+    })
+    const data = await response.json()
+    const treeNodes = (data.data || data).map((itm: any) => ({
+      id: `item-${itm.id}`,
+      title: itm.title,
+      icon: getItemIcon(itm.type),
+      color: itm.type === 'folder' ? 'warning' : 'grey',
+      status: itm.type,
+      nodeType: 'item',
+      manuscriptId: manuscriptId,
+      itemId: itm.id,
+      // Provide empty children array so Vuetify shows expand arrow when has_children true
+      children: itm.has_children ? [] : undefined
+    }))
+
+    manuscriptItemCache[cacheKey] = treeNodes
+    return treeNodes
+  } catch (error) {
+    console.error('Error fetching manuscript items:', error)
+    toast.error('Failed to load manuscript items')
+    return []
+  }
+}
+
+// overwrite loadContentChildren to load children dynamically via API
 const loadContentChildren = async (item: any) => {
-  // This would load children dynamically if needed
-  return item.children || []
+  if (item.nodeType === 'manuscript') {
+    return await fetchManuscriptItems(item.manuscriptId, null)
+  }
+  if (item.nodeType === 'item') {
+    return await fetchManuscriptItems(item.manuscriptId, item.itemId)
+  }
+  return []
 }
 
 // Initialize
@@ -970,8 +1074,8 @@ onMounted(() => {
 
 .action-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
 }
 
 .action-section {
@@ -982,7 +1086,7 @@ onMounted(() => {
 }
 
 .data-tree {
-  max-height: 500px;
+  max-block-size: 500px;
   overflow-y: auto;
 }
 
