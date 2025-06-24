@@ -34,8 +34,8 @@ const errors = ref<Record<string, string | undefined>>({
 const refVForm = ref<VForm>()
 
 const credentials = ref({
-  email: 'email',
-  password: 'password',
+  email: '',
+  password: '',
 })
 
 const isAuthenticated = () => {
@@ -48,11 +48,6 @@ if (isAuthenticated())
   router.replace({ name: 'dashboards-analytics' }) // Redirect to home if already logged in
 
 const rememberMe = ref(false)
-
-// Only show demo alert in development environment
-const isDevelopment = computed(() => {
-  return import.meta.env.DEV || import.meta.env.VITE_APP_ENV === 'development'
-})
 
 const login = async () => {
   try {
@@ -211,14 +206,15 @@ const onSubmit = () => {
             {{ errors.general }}
           </VAlert>
 
-          <!-- Demo credentials removed for security -->
           <VAlert
-            color="info"
+            color="primary"
             variant="tonal"
-            v-if="isDevelopment"
           >
+            <p class="text-sm mb-2">
+              Admin Email: <strong>admin@demo.com</strong> / Pass: <strong>admin</strong>
+            </p>
             <p class="text-sm mb-0">
-              Demo mode enabled. Contact your administrator for login credentials.
+              Client Email: <strong>client@demo.com</strong> / Pass: <strong>client</strong>
             </p>
           </VAlert>
         </VCardText>
