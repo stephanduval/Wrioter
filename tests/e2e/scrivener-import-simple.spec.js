@@ -10,18 +10,23 @@ test.describe('Scrivener Import Basic Test', () => {
 
   test('can access the scrivener import page', async ({ page }) => {
     // Visit the application directly
-    await page.goto('/scrivener-import');
+    await page.goto('/build/apps/scrivener/import');
     
-    // Check if we're redirected to login or already authenticated
+    // Wait for the Vue app to load
+    await page.waitForLoadState('networkidle');
+    
+    // Check if we're redirected to login or the app loaded
     const url = page.url();
     if (url.includes('/login')) {
-      // Skip login for now - this would need proper authentication setup
-      console.log('Authentication required - skipping for basic test setup');
+      // If redirected to login, verify login page is working
+      console.log('Authentication required - verifying login page');
+      await expect(page.locator('body')).toContainText('sign-in');
       return;
     }
     
-    // If we get here, we might be on the import page
-    await expect(page.locator('body')).toContainText('Import');
+    // If we're on the import page, wait for Vue to render and check for import content
+    await page.waitForSelector('[data-test="scrivener-import-form"]', { timeout: 10000 });
+    await expect(page.locator('[data-test="scrivener-import-form"]')).toBeVisible();
   });
 
   test('can check if the import API endpoint exists', async ({ request }) => {

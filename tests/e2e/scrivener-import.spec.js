@@ -12,7 +12,7 @@ test.describe('Scrivener Import E2E Tests', () => {
     // Would need to implement custom login command equivalent
     
     // Navigate to scrivener import page  
-    await page.goto('/build/scrivener-import');
+    await page.goto('/build/apps/scrivener/import');
     await expect(page).toHaveURL(/.*scrivener-import/);
     
     // Wait for page to fully load

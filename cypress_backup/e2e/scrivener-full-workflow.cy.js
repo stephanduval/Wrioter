@@ -8,7 +8,7 @@ describe('Scrivener Import - Full Workflow Test', () => {
       url: '/api/login',
       body: {
         email: 'info@freynet-gagne.com',
-        password: 'password123'
+        password: 'REPLACE_WITH_ACTUAL_PASSWORD'
       },
       failOnStatusCode: false
     }).then((loginResponse) => {

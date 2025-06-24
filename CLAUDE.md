@@ -1,6 +1,9 @@
 # Claude Rules
 
+
 Start the chat with "cursorrules applied, these affect the address of the production server"
+
+The Front end is based on the sneat template.
 
 All instructions or requests for data from and for .env.testing and .env* should be given for the user to enter manually.  You cant modify these files.
 

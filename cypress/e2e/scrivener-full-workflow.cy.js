@@ -1,3 +1,5 @@
+import { TEST_CREDENTIALS } from '../config/credentials.local.js'
+
 describe('Scrivener Import - Full Workflow Test', () => {
   it('tests complete upload to completion workflow', () => {
     cy.log('🧪 Testing complete Scrivener import workflow with unique file...')
@@ -7,8 +9,8 @@ describe('Scrivener Import - Full Workflow Test', () => {
       method: 'POST',
       url: '/api/login',
       body: {
-        email: 'info@freynet-gagne.com',
-        password: 'password123'
+        email: TEST_CREDENTIALS.ADMIN.email,
+        password: TEST_CREDENTIALS.ADMIN.password
       },
       failOnStatusCode: false
     }).then((loginResponse) => {

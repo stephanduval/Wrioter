@@ -22,7 +22,7 @@ test.describe('Manual Testing Guide for Scrivener Import', () => {
     await page.waitForTimeout(2000);
     
     // Navigate to scrivener import
-    await page.goto('/scrivener-import');
+    await page.goto('/build/apps/scrivener/import');
     
     // Wait for the form to appear
     await expect(page.locator('body')).toBeVisible({ timeout: 10000 });

@@ -9,7 +9,7 @@ describe('Scrivener Import - Working Authentication', () => {
       url: '/api/login',
       body: {
         email: 'info@freynet-gagne.com',
-        password: 'password123'
+        password: 'REPLACE_WITH_ACTUAL_PASSWORD'
       },
       failOnStatusCode: false
     }).then((loginResponse) => {
@@ -95,7 +95,7 @@ describe('Scrivener Import - Working Authentication', () => {
       url: '/api/login',
       body: {
         email: 'info@freynet-gagne.com',
-        password: 'password123'
+        password: 'REPLACE_WITH_ACTUAL_PASSWORD'
       },
       failOnStatusCode: false
     }).then((loginResponse) => {
@@ -183,7 +183,7 @@ describe('Scrivener Import - Working Authentication', () => {
       url: '/api/login',
       body: {
         email: 'info@freynet-gagne.com',
-        password: 'password123'
+        password: 'REPLACE_WITH_ACTUAL_PASSWORD'
       },
       failOnStatusCode: false
     }).then((loginResponse) => {
