@@ -116,7 +116,7 @@ test.describe('Scrivener Import E2E Test - Final', () => {
     console.log('🧪 Testing frontend application...');
     
     // Visit the scrivener import page
-    await page.goto('/scrivener-import');
+    await page.goto('/build/apps/scrivener/import');
     
     // Wait for Vue app to load
     await expect(page.locator('#app')).toBeVisible({ timeout: 10000 });

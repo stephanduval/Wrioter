@@ -17,27 +17,31 @@ class UserSeeder extends Seeder
      */
     public function run()
     {
+        // WARNING: These are seeded users for development/testing
+        // DO NOT use these credentials in production!
+        $defaultPassword = env('SEEDER_DEFAULT_PASSWORD', 'ChangeMe2024!');
+        
         $users = [
             [
                 'name' => 'Administrator',
                 'email' => 'info@freynet-gagne.com',
-                'password' => Hash::make('password123'), // Use a secure password
+                'password' => Hash::make($defaultPassword),
             ],
             [
                 'name' => 'Sophie',
                 'email' => 'sophie@freynet-gagne.com',
-                'password' => Hash::make('password123'), // Use a secure password
+                'password' => Hash::make($defaultPassword),
             ],
             
             [
                 'name' => 'Admin User',
                 'email' => 'admin@admin.com',
-                'password' => Hash::make('password123'),
+                'password' => Hash::make($defaultPassword),
             ],
             [
                 'name' => 'Client User',
                 'email' => 'client@client.com',
-                'password' => Hash::make('password123'),
+                'password' => Hash::make($defaultPassword),
             ],
         ];
 

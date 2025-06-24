@@ -1,28 +1,20 @@
 import { test, expect } from '@playwright/test';
 import { promises as fs } from 'fs';
 import path from 'path';
+import { getTestUser, loginUser } from '../config/testUsers.js';
 
 test.describe('Scrivener Import - Full Workflow Test', () => {
   test('tests complete upload to completion workflow', async ({ request }) => {
     console.log('🧪 Testing complete Scrivener import workflow with unique file...');
     
-    // Login first
-    const loginResponse = await request.post('/api/login', {
-      data: {
-        email: 'info@freynet-gagne.com',
-        password: 'password123'
-      }
-    });
+    // Login using secure credential system
+    const adminUser = await getTestUser('ADMIN');
+    const authData = await loginUser(request, adminUser);
+    const token = authData.token;
+    console.log('✅ Authentication successful');
     
-    if (loginResponse.status() === 200) {
-      const loginBody = await loginResponse.json();
-      
-      if (loginBody.access_token) {
-        const token = loginBody.access_token;
-        console.log('✅ Authentication successful');
-        
-        // Create a unique filename by copying and renaming the test file
-        const timestamp = Date.now();
+    // Create a unique filename by copying and renaming the test file
+    const timestamp = Date.now();
         const uniqueFilename = `Scrivener-test-${timestamp}.zip`;
         
         // Load the test file
@@ -120,12 +112,5 @@ test.describe('Scrivener Import - Full Workflow Test', () => {
         
         // Start status monitoring
         await checkStatus();
-        
-      } else {
-        throw new Error('Authentication failed - no access token received');
-      }
-    } else {
-      throw new Error('Authentication failed');
-    }
   });
 });

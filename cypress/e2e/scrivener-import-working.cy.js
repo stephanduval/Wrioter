@@ -1,3 +1,5 @@
+import { TEST_CREDENTIALS } from '../config/credentials.local.js'
+
 describe('Scrivener Import - Working Authentication', () => {
   
   it('tests API login and file upload with real credentials', () => {
@@ -8,8 +10,8 @@ describe('Scrivener Import - Working Authentication', () => {
       method: 'POST',
       url: '/api/login',
       body: {
-        email: 'info@freynet-gagne.com',
-        password: 'password123'
+        email: TEST_CREDENTIALS.ADMIN.email,
+        password: TEST_CREDENTIALS.ADMIN.password
       },
       failOnStatusCode: false
     }).then((loginResponse) => {
@@ -94,8 +96,8 @@ describe('Scrivener Import - Working Authentication', () => {
       method: 'POST',
       url: '/api/login',
       body: {
-        email: 'info@freynet-gagne.com',
-        password: 'password123'
+        email: TEST_CREDENTIALS.ADMIN.email,
+        password: TEST_CREDENTIALS.ADMIN.password
       },
       failOnStatusCode: false
     }).then((loginResponse) => {
@@ -108,7 +110,7 @@ describe('Scrivener Import - Working Authentication', () => {
           onBeforeLoad: (win) => {
             win.localStorage.setItem('accessToken', token)
             win.localStorage.setItem('user', JSON.stringify(loginResponse.body.user || { 
-              email: 'info@freynet-gagne.com' 
+              email: TEST_CREDENTIALS.ADMIN.email 
             }))
           }
         })
@@ -182,8 +184,8 @@ describe('Scrivener Import - Working Authentication', () => {
       method: 'POST',
       url: '/api/login',
       body: {
-        email: 'info@freynet-gagne.com',
-        password: 'password123'
+        email: TEST_CREDENTIALS.ADMIN.email,
+        password: TEST_CREDENTIALS.ADMIN.password
       },
       failOnStatusCode: false
     }).then((loginResponse) => {

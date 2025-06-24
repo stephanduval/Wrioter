@@ -126,11 +126,21 @@ const onSubmit = async () => {
   if (!valid) return
 
   try {
+    // Generate a secure random password for the new user
+    const generateSecurePassword = () => {
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*'
+      let password = ''
+      for (let i = 0; i < 12; i++) {
+        password += chars.charAt(Math.floor(Math.random() * chars.length))
+      }
+      return password
+    }
+
     const userData = {
       name: userName.value,
       email: email.value,
       department: department.value || '',
-      password: 'password123',
+      password: generateSecurePassword(),
       company_id: companies.value.find(c => c.name === company.value)?.id,
       role_id: roles.value.find(r => r.name === role.value)?.id,
     }

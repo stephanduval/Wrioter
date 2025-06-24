@@ -47,6 +47,13 @@ database_schemas/*.sql
 
 # 👉 Custom Git ignores
 
+# Test environment files with credentials
+.env.testing.local
+.env.e2e.local
+tests/config/credentials.local.js
+cypress/config/credentials.local.js
+test-credentials.json
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

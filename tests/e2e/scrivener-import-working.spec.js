@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { promises as fs } from 'fs';
 import path from 'path';
+import { TEST_CREDENTIALS } from '../config/credentials.local.js';
 
 test.describe('Scrivener Import - Working Authentication', () => {
   
@@ -10,8 +11,8 @@ test.describe('Scrivener Import - Working Authentication', () => {
     // Test API login first
     const loginResponse = await request.post('/api/login', {
       data: {
-        email: 'info@freynet-gagne.com',
-        password: 'password123'
+        email: TEST_CREDENTIALS.ADMIN.email,
+        password: TEST_CREDENTIALS.ADMIN.password
       }
     });
     
@@ -98,8 +99,8 @@ test.describe('Scrivener Import - Working Authentication', () => {
     // Login via API first
     const loginResponse = await request.post('/api/login', {
       data: {
-        email: 'info@freynet-gagne.com',
-        password: 'password123'
+        email: TEST_CREDENTIALS.ADMIN.email,
+        password: TEST_CREDENTIALS.ADMIN.password
       }
     });
     
@@ -117,7 +118,7 @@ test.describe('Scrivener Import - Working Authentication', () => {
           }));
         }, token, loginBody.user);
         
-        await page.goto('/scrivener-import');
+        await page.goto('/build/apps/scrivener/import');
         
         // Wait for Vue app to load
         await expect(page.locator('#app')).toBeVisible({ timeout: 15000 });
@@ -193,8 +194,8 @@ test.describe('Scrivener Import - Working Authentication', () => {
     // Login first
     const loginResponse = await request.post('/api/login', {
       data: {
-        email: 'info@freynet-gagne.com',
-        password: 'password123'
+        email: TEST_CREDENTIALS.ADMIN.email,
+        password: TEST_CREDENTIALS.ADMIN.password
       }
     });
     

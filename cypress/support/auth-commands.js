@@ -1,7 +1,8 @@
 // Authentication helpers for Cypress testing
+import { TEST_CREDENTIALS } from '../config/credentials.local.js'
 
 // Method 1: Direct API login and token storage
-Cypress.Commands.add('loginViaAPI', (email = 'info@freynet-gagne.com', password = 'password123') => {
+Cypress.Commands.add('loginViaAPI', (email = TEST_CREDENTIALS.ADMIN.email, password = TEST_CREDENTIALS.ADMIN.password) => {
   cy.request({
     method: 'POST',
     url: '/api/login',

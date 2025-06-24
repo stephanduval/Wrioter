@@ -36,6 +36,13 @@
     "playwright:test": "playwright test",
     "playwright:test:ui": "playwright test --ui",
     "playwright:test:headed": "playwright test --headed",
+    "playwright:test:failed": "playwright test --last-failed",
+    "playwright:test:retries": "playwright test --last-failed --retries=2",
+    "playwright:test:scrivener": "playwright test tests/e2e/scrivener-import",
+    "playwright:test:permissions": "playwright test tests/e2e/scrivener-import-permissions.spec.js",
+    "playwright:test:auth": "playwright test tests/e2e/scrivener-import-with-auth.spec.js",
+    "playwright:test:debug": "playwright test --debug",
+    "playwright:test:report": "playwright show-report",
     "test:e2e:playwright": "playwright test"
   },
   "dependencies": {

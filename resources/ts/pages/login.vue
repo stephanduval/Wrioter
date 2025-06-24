@@ -49,6 +49,11 @@ if (isAuthenticated())
 
 const rememberMe = ref(false)
 
+// Only show demo alert in development environment
+const isDevelopment = computed(() => {
+  return import.meta.env.DEV || import.meta.env.VITE_APP_ENV === 'development'
+})
+
 const login = async () => {
   try {
     const { accessToken, userData, abilityRules } = await $api('/auth/login', {
@@ -206,15 +211,14 @@ const onSubmit = () => {
             {{ errors.general }}
           </VAlert>
 
+          <!-- Demo credentials removed for security -->
           <VAlert
-            color="primary"
+            color="info"
             variant="tonal"
+            v-if="isDevelopment"
           >
-            <p class="text-sm mb-2">
-              Admin Email: <strong>admin@demo.com</strong> / Pass: <strong>admin</strong>
-            </p>
             <p class="text-sm mb-0">
-              Client Email: <strong>client@demo.com</strong> / Pass: <strong>client</strong>
+              Demo mode enabled. Contact your administrator for login credentials.
             </p>
           </VAlert>
         </VCardText>

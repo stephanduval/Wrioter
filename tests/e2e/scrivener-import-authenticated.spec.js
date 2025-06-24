@@ -10,7 +10,7 @@ test.describe('Scrivener Import E2E Test (Authenticated)', () => {
 
   test('successfully uploads and processes a Scrivener zip file', async ({ page, request }) => {
     // Visit the scrivener import page directly
-    await page.goto('/build/scrivener-import');
+    await page.goto('/build/apps/scrivener/import');
     
     // Check if we need authentication - if so, use API approach
     const bodyText = await page.locator('body').textContent();
@@ -120,7 +120,7 @@ test.describe('Scrivener Import E2E Test (Authenticated)', () => {
   });
 
   test('validates file types correctly', async ({ page }) => {
-    await page.goto('/build/scrivener-import');
+    await page.goto('/build/apps/scrivener/import');
     
     // Create a test invalid file
     const invalidFilePath = path.join(process.cwd(), 'tests/fixtures/invalid-file.txt');
