@@ -14,6 +14,8 @@
             "uploadSuccess": "File uploaded successfully",
             "processing": "Processing your file...",
             "processingDescription": "Your Scrivener file is being processed and imported into your manuscript library.",
+            "processingComplete": "Processing completed successfully",
+            "processingFailed": "Processing failed",
             "recentImports": "Recent Imports",
             "fileName": "File Name",
             "status": "Status",

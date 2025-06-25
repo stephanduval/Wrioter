@@ -7,6 +7,7 @@ use DOMElement;
 use DOMNodeList;
 use RuntimeException;
 use Illuminate\Support\Str;
+use App\Services\ScrivenerImport\RtfConverter;
 
 class XmlParser
 {
@@ -24,6 +25,14 @@ class XmlParser
         'Title',
     ];
 
+    private string $projectPath;
+    private RtfConverter $rtfConverter;
+
+    public function __construct(RtfConverter $rtfConverter)
+    {
+        $this->rtfConverter = $rtfConverter;
+    }
+
     /**
      * Parse the Scrivener project XML file
      *
@@ -36,6 +45,9 @@ class XmlParser
         if (!file_exists($xmlPath) || !is_readable($xmlPath)) {
             throw new RuntimeException("XML file not found or not readable: {$xmlPath}");
         }
+
+        // Store project directory path for content loading
+        $this->projectPath = dirname($xmlPath);
 
         $dom = new DOMDocument();
         $dom->preserveWhiteSpace = false;
@@ -310,22 +322,69 @@ class XmlParser
     }
 
     /**
-     * Parse Content element
+     * Parse Content element and load content from RTF files
      *
      * @param DOMElement $item BinderItem element
      * @return array Content data
      */
     private function parseContent(DOMElement $item): array
     {
+        // Get UUID for file lookup
+        $uuid = $item->hasAttribute('UUID') ? $item->getAttribute('UUID') : $this->getElementText($item, 'UUID');
+        
+        // Try to load content from RTF file first
+        $rtfContent = $this->loadContentFromFile($uuid);
+        
+        // Fallback to XML content if no file found
         $content = $item->getElementsByTagName('Content')->item(0);
-        if (!$content) {
-            return [];
+        if (!$content && !$rtfContent) {
+            return ['Text' => '', 'RTF' => ''];
         }
 
         return [
-            'Text' => $this->getElementText($content, 'Text'),
-            'RTF' => $this->getElementText($content, 'RTF'),
+            'Text' => $rtfContent['Text'] ?? ($content ? $this->getElementText($content, 'Text') : ''),
+            'RTF' => $rtfContent['RTF'] ?? ($content ? $this->getElementText($content, 'RTF') : ''),
         ];
+    }
+
+    /**
+     * Load content from RTF file in Files/Docs directory
+     *
+     * @param string $uuid Item UUID
+     * @return array|null Content data or null if file not found
+     */
+    private function loadContentFromFile(string $uuid): ?array
+    {
+        $rtfPath = $this->projectPath . '/Files/Data/' . $uuid . '/content.rtf';
+        
+        if (!file_exists($rtfPath) || !is_readable($rtfPath)) {
+            return null;
+        }
+
+        $rtfContent = file_get_contents($rtfPath);
+        if ($rtfContent === false) {
+            return null;
+        }
+
+        // Extract plain text from RTF
+        $plainText = $this->extractTextFromRtf($rtfContent);
+
+        return [
+            'Text' => $plainText,
+            'RTF' => $rtfContent,
+        ];
+    }
+
+    /**
+     * Extract plain text from RTF content using the RtfConverter
+     *
+     * @param string $rtfContent RTF content
+     * @return string Plain text
+     */
+    private function extractTextFromRtf(string $rtfContent): string
+    {
+        // Use the fallback conversion method which extracts plain text
+        return $this->rtfConverter->fallbackConversion($rtfContent);
     }
 
     /**
