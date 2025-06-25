@@ -63,6 +63,99 @@ I prefer to use localStorage to cookies
 
 The database is mysql.
 
+# Queue Worker Management
+
+Queue workers are essential for processing background jobs like Scrivener imports.
+
+## Local Development
+
+Use these package.json scripts to run both server and queue worker:
+
+```bash
+# Run vite dev + server + queue worker
+yarn dev:full
+
+# Run only server + queue worker  
+yarn serve:full
+
+# Run only queue worker
+yarn serve:queue
+
+# Test environment versions
+yarn dev:full:test
+yarn serve:full:test
+```
+
+## Production Server Setup
+
+Queue workers MUST be running on production for file processing to work.
+
+### Option 1: Systemd Service (Recommended)
+
+Create `/etc/systemd/system/wrioter-queue.service`:
+
+```ini
+[Unit]
+Description=Wrioter Queue Worker
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+Restart=always
+ExecStart=/usr/bin/php /var/www/enter.project.name.here/artisan queue:work --sleep=3 --tries=3 --max-time=3600
+WorkingDirectory=/var/www/enter.project.name.here
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Enable and start:
+```bash
+sudo systemctl enable wrioter-queue.service
+sudo systemctl start wrioter-queue.service
+sudo systemctl status wrioter-queue.service
+```
+
+### Option 2: Supervisor (Alternative)
+
+Install supervisor and create `/etc/supervisor/conf.d/wrioter-queue.conf`:
+
+```ini
+[program:wrioter-queue]
+process_name=%(program_name)s_%(process_num)02d
+command=php /var/www/enter.project.name.here/artisan queue:work --sleep=3 --tries=3 --max-time=3600
+directory=/var/www/enter.project.name.here
+autostart=true
+autorestart=true
+user=www-data
+numprocs=1
+redirect_stderr=true
+stdout_logfile=/var/log/wrioter-queue.log
+```
+
+### Option 3: Cron Job (Simple but less reliable)
+
+Add to crontab:
+```bash
+* * * * * cd /var/www/enter.project.name.here && php artisan schedule:run >> /dev/null 2>&1
+* * * * * cd /var/www/enter.project.name.here && php artisan queue:work --stop-when-empty --max-time=60 >> /dev/null 2>&1
+```
+
+### Check Queue Status
+
+```bash
+# Check for failed jobs
+php artisan queue:failed
+
+# Monitor queue in real-time
+php artisan queue:monitor
+
+# Restart all queue workers (after code changes)
+php artisan queue:restart
+```
+
 # Task Management Workflow
 
 For complex, multi-session projects:

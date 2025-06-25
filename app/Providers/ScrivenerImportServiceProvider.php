@@ -25,7 +25,7 @@ class ScrivenerImportServiceProvider extends ServiceProvider
         });
 
         $this->app->singleton(XmlParser::class, function ($app) {
-            return new XmlParser();
+            return new XmlParser($app->make(RtfConverter::class));
         });
 
         $this->app->singleton(DataTransformer::class, function ($app) {

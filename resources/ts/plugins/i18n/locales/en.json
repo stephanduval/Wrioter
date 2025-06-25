@@ -209,6 +209,10 @@
       "ariaLabel": {
         "item": "Item"
       }
+    },
+    "dataIterator": {
+      "loadingText": "Loading...",
+      "noResultsText": "No matching records found"
     }
   },
   "menu": {
@@ -554,6 +558,18 @@
       "uploadSuccess": "File uploaded successfully",
       "uploadError": "Error uploading file",
       "processing": "Processing your file...",
+      "processingComplete": "Processing completed successfully",
+      "processingFailed": "Processing failed",
+      "fileName": "File Name",
+      "status": "Status",
+      "date": "Date",
+      "actions": "Actions",
+      "statuses": {
+        "pending": "Pending",
+        "processing": "Processing",
+        "completed": "Completed",
+        "failed": "Failed"
+      },
       "validation": {
         "fileRequired": "Please select a file to upload",
         "fileType": "Only .zip files are allowed",

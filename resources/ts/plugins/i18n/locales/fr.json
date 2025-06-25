@@ -210,6 +210,10 @@
       "ariaLabel": {
         "item": "Objet"
       }
+    },
+    "dataIterator": {
+      "loadingText": "Chargement...",
+      "noResultsText": "Aucun résultat trouvé"
     }
   },
   "menu": {
@@ -553,6 +557,18 @@
       "uploadSuccess": "Fichier téléchargé avec succès",
       "uploadError": "Erreur lors du téléchargement du fichier",
       "processing": "Traitement de votre fichier...",
+      "processingComplete": "Traitement terminé avec succès",
+      "processingFailed": "Échec du traitement",
+      "fileName": "Nom du fichier",
+      "status": "Statut",
+      "date": "Date",
+      "actions": "Actions",
+      "statuses": {
+        "pending": "En attente",
+        "processing": "En cours",
+        "completed": "Terminé",
+        "failed": "Échoué"
+      },
       "validation": {
         "fileRequired": "Veuillez sélectionner un fichier à télécharger",
         "fileType": "Seuls les fichiers .zip sont autorisés",

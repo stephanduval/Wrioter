@@ -123,7 +123,7 @@
             <td>{{ formatDate(created_at) }}</td>
             <td>
               <VBtn
-                v-if="status === 'completed'"
+                v-if="status === 'completed' && manuscript_id"
                 size="small"
                 variant="text"
                 :to="{ name: 'manuscripts-view', params: { id: manuscript_id }}"
@@ -230,6 +230,9 @@ const clearingFailed = ref(false)
 // Polling interval for status updates
 let statusPollingInterval: number | null = null
 
+// Track the current upload ID for processing status
+const currentUploadId = ref<number | null>(null)
+
 // Computed properties
 const hasFailedImports = computed(() => {
   return recentImports.value.some(imp => imp.status === 'failed')
@@ -249,6 +252,34 @@ const startStatusPolling = () => {
     
     if (pendingImports.length > 0) {
       await fetchRecentImports()
+      
+      // Check if current upload is complete
+      if (currentUploadId.value && isProcessing.value) {
+        const currentImport = recentImports.value.find(imp => imp.id === currentUploadId.value)
+        if (currentImport && (currentImport.status === 'completed' || currentImport.status === 'failed')) {
+          isProcessing.value = false
+          currentUploadId.value = null
+          
+          if (currentImport.status === 'completed') {
+            toast.success(t('scrivener.import.processingComplete'))
+          } else {
+            toast.error(t('scrivener.import.processingFailed'))
+          }
+        }
+      }
+    } else if (isProcessing.value && currentUploadId.value) {
+      // If no pending imports but we're still processing, check our specific upload
+      const currentImport = recentImports.value.find(imp => imp.id === currentUploadId.value)
+      if (currentImport && (currentImport.status === 'completed' || currentImport.status === 'failed')) {
+        isProcessing.value = false
+        currentUploadId.value = null
+        
+        if (currentImport.status === 'completed') {
+          toast.success(t('scrivener.import.processingComplete'))
+        } else {
+          toast.error(t('scrivener.import.processingFailed'))
+        }
+      }
     }
   }, 5000)
 }
@@ -344,6 +375,11 @@ const handleSubmit = async () => {
     // Refresh the imports list
     await fetchRecentImports()
     
+    // Set the current upload ID to track processing status
+    if (result && result.id) {
+      currentUploadId.value = result.id
+    }
+    
     // Reset form
     file.value = null
   }
@@ -353,6 +389,8 @@ const handleSubmit = async () => {
       message: error instanceof Error ? error.message : t('scrivener.import.errors.uploadFailed')
     }
     toast.error(importStatus.value.message)
+    isProcessing.value = false
+    currentUploadId.value = null
   }
   finally {
     isUploading.value = false

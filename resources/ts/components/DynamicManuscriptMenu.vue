@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import axios from 'axios'
-import { onMounted, ref } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 interface ManuscriptItem {
@@ -23,15 +23,26 @@ const manuscripts = ref<Manuscript[]>([])
 const loading = ref(true)
 const error = ref<string | null>(null)
 
+let abortController: AbortController | null = null
+
 const fetchManuscripts = async () => {
   try {
     loading.value = true
-    const response = await axios.get('/api/manuscripts?with=items')
+    
+    // Create new abort controller for this request
+    abortController = new AbortController()
+    
+    const response = await axios.get('/api/manuscripts?with=items', {
+      signal: abortController.signal
+    })
     manuscripts.value = response.data
     console.log('Fetched manuscripts:', manuscripts.value) // Debug log
   } catch (err) {
-    console.error('Error fetching manuscripts:', err)
-    error.value = 'Failed to load manuscripts'
+    // Only set error if request wasn't aborted
+    if (!axios.isCancel(err)) {
+      console.error('Error fetching manuscripts:', err)
+      error.value = 'Failed to load manuscripts'
+    }
   } finally {
     loading.value = false
   }
@@ -52,7 +63,30 @@ const getItemTypeTranslation = (type: string) => {
   return t(`menu.manuscripts.items.${type}`)
 }
 
+// Validate manuscript data before using in navigation
+const isValidManuscript = (manuscript: Manuscript) => {
+  return manuscript && 
+         typeof manuscript.id === 'number' && 
+         manuscript.id > 0 &&
+         manuscript.title
+}
+
+// Validate item data before using in navigation  
+const isValidItem = (item: ManuscriptItem) => {
+  return item && 
+         typeof item.id === 'number' && 
+         item.id > 0 &&
+         item.title
+}
+
 onMounted(fetchManuscripts)
+
+// Cleanup on unmount to prevent memory leaks and component state issues
+onUnmounted(() => {
+  if (abortController) {
+    abortController.abort()
+  }
+})
 </script>
 
 <template>
@@ -77,6 +111,7 @@ onMounted(fetchManuscripts)
       <template v-for="manuscript in manuscripts" :key="manuscript.id">
         <!-- Manuscript Title -->
         <VListItem
+          v-if="isValidManuscript(manuscript)"
           :to="{ name: 'manuscripts-view', params: { id: manuscript.id }}"
           :title="manuscript.title"
           :prepend-icon="'bx-book'"
@@ -88,7 +123,8 @@ onMounted(fetchManuscripts)
           <VListItem
             v-for="item in [...manuscript.items].sort((a, b) => a.pivot.order_index - b.pivot.order_index)"
             :key="item.id"
-            :to="{ name: 'items-view', params: { id: item.id }}"
+            v-if="isValidManuscript(manuscript) && isValidItem(item)"
+            :to="{ name: 'manuscripts-view', params: { id: manuscript.id }, hash: `#item-${item.id}` }"
             :title="item.title"
             :prepend-icon="getItemTypeIcon(item.type)"
             class="ms-4"
