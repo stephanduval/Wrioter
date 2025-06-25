@@ -44,6 +44,10 @@ export default {
       ariaLabel: {
         item: 'Item'
       }
+    },
+    dataIterator: {
+      loadingText: 'Loading...',
+      noResultsText: 'No matching records found'
     }
   },
   // ... existing translations ...
