@@ -564,6 +564,8 @@
       "status": "Status",
       "date": "Date",
       "actions": "Actions",
+      "viewManuscript": "View Manuscript",
+      "processingDescription": "Your file is being processed. You can navigate away; we'll notify you when it's finished.",
       "statuses": {
         "pending": "Pending",
         "processing": "Processing",

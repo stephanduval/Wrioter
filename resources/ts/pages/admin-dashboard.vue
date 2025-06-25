@@ -163,39 +163,58 @@
               <VChip size="small" color="primary">{{ users.length }}</VChip>
             </VCardTitle>
             <VCardText>
-              <VTreeView
-                :items="userTreeItems"
-                item-title="title"
-                item-value="id"
-                :load-children="loadUserChildren"
-                open-strategy="multiple"
-                density="compact"
-                class="data-tree"
-              >
-                <template #prepend="{ item }">
-                  <VIcon :icon="item.icon" :color="item.color" size="small" class="me-2" />
+              <VList class="data-tree" density="compact">
+                <template v-for="item in userTreeItems" :key="item.id">
+                  <VListGroup>
+                    <template #activator="{ props }">
+                      <VListItem v-bind="props">
+                        <template #prepend>
+                          <VIcon :icon="item.icon" :color="item.color" size="small" class="me-2" />
+                        </template>
+                        <VListItemTitle>{{ item.title }}</VListItemTitle>
+                        <template #append>
+                          <VChip
+                            v-if="item.count !== undefined"
+                            color="grey"
+                            size="x-small"
+                            variant="outlined"
+                          >
+                            {{ item.count }}
+                          </VChip>
+                        </template>
+                      </VListItem>
+                    </template>
+                    <template v-for="child in item.children" :key="child.id">
+                      <VListItem class="ps-8">
+                        <template #prepend>
+                          <VIcon :icon="child.icon" :color="child.color" size="small" class="me-2" />
+                        </template>
+                        <VListItemTitle>{{ child.title }}</VListItemTitle>
+                        <template #append>
+                          <div class="d-flex align-center gap-1">
+                            <VChip
+                              v-if="child.status"
+                              :color="getStatusColor(child.status)"
+                              size="x-small"
+                              variant="tonal"
+                            >
+                              {{ child.status }}
+                            </VChip>
+                            <VChip
+                              v-if="child.count !== undefined"
+                              color="grey"
+                              size="x-small"
+                              variant="outlined"
+                            >
+                              {{ child.count }}
+                            </VChip>
+                          </div>
+                        </template>
+                      </VListItem>
+                    </template>
+                  </VListGroup>
                 </template>
-                <template #append="{ item }">
-                  <div class="d-flex align-center gap-1">
-                    <VChip
-                      v-if="item.status"
-                      :color="getStatusColor(item.status)"
-                      size="x-small"
-                      variant="tonal"
-                    >
-                      {{ item.status }}
-                    </VChip>
-                    <VChip
-                      v-if="item.count !== undefined"
-                      color="grey"
-                      size="x-small"
-                      variant="outlined"
-                    >
-                      {{ item.count }}
-                    </VChip>
-                  </div>
-                </template>
-              </VTreeView>
+              </VList>
             </VCardText>
           </VCard>
         </VCol>
@@ -211,39 +230,64 @@
               <VChip size="small" color="success">{{ manuscripts.length }}</VChip>
             </VCardTitle>
             <VCardText>
-              <VTreeView
-                :items="contentTreeItems"
-                item-title="title"
-                item-value="id"
-                :load-children="loadContentChildren"
-                open-strategy="multiple"
-                density="compact"
-                class="data-tree"
-              >
-                <template #prepend="{ item }">
-                  <VIcon :icon="item.icon" :color="item.color" size="small" class="me-2" />
+              <VList class="data-tree" density="compact">
+                <template v-for="item in contentTreeItems" :key="item.id">
+                  <VListGroup v-if="item.children && item.children.length > 0">
+                    <template #activator="{ props }">
+                      <VListItem v-bind="props" @click="loadContentChildrenForItem(item)">
+                        <template #prepend>
+                          <VIcon :icon="item.icon" :color="item.color" size="small" class="me-2" />
+                        </template>
+                        <VListItemTitle>{{ item.title }}</VListItemTitle>
+                        <template #append>
+                          <VChip
+                            v-if="item.status"
+                            :color="getStatusColor(item.status)"
+                            size="x-small"
+                            variant="tonal"
+                          >
+                            {{ item.status }}
+                          </VChip>
+                        </template>
+                      </VListItem>
+                    </template>
+                    <template v-for="child in item.children" :key="child.id">
+                      <VListItem class="ps-8">
+                        <template #prepend>
+                          <VIcon :icon="child.icon" :color="child.color" size="small" class="me-2" />
+                        </template>
+                        <VListItemTitle>{{ child.title }}</VListItemTitle>
+                        <template #append>
+                          <VChip
+                            v-if="child.status"
+                            :color="getStatusColor(child.status)"
+                            size="x-small"
+                            variant="tonal"
+                          >
+                            {{ child.status }}
+                          </VChip>
+                        </template>
+                      </VListItem>
+                    </template>
+                  </VListGroup>
+                  <VListItem v-else>
+                    <template #prepend>
+                      <VIcon :icon="item.icon" :color="item.color" size="small" class="me-2" />
+                    </template>
+                    <VListItemTitle>{{ item.title }}</VListItemTitle>
+                    <template #append>
+                      <VChip
+                        v-if="item.status"
+                        :color="getStatusColor(item.status)"
+                        size="x-small"
+                        variant="tonal"
+                      >
+                        {{ item.status }}
+                      </VChip>
+                    </template>
+                  </VListItem>
                 </template>
-                <template #append="{ item }">
-                  <div class="d-flex align-center gap-1">
-                    <VChip
-                      v-if="item.status"
-                      :color="getStatusColor(item.status)"
-                      size="x-small"
-                      variant="tonal"
-                    >
-                      {{ item.status }}
-                    </VChip>
-                    <VChip
-                      v-if="item.count !== undefined"
-                      color="grey"
-                      size="x-small"
-                      variant="outlined"
-                    >
-                      {{ item.count }}
-                    </VChip>
-                  </div>
-                </template>
-              </VTreeView>
+              </VList>
             </VCardText>
           </VCard>
         </VCol>
@@ -768,8 +812,8 @@ const contentTreeItems = computed(() => {
     status: manuscript.status,
     nodeType: 'manuscript',
     manuscriptId: manuscript.id,
-    // Children will be fetched lazily; keep empty array placeholder to allow expansion icon
-    children: []
+    // Children will be fetched lazily; start with placeholder to allow expansion
+    children: manuscript.itemsCount > 0 ? [] : undefined
   }))
 })
 
@@ -993,6 +1037,13 @@ const clearCaches = () => toast.info('Clear caches feature')
 const loadUserChildren = async (item: any) => {
   // This would load children dynamically if needed
   return item.children || []
+}
+
+const loadContentChildrenForItem = async (item: any) => {
+  if (!item.children || item.children.length === 0) {
+    const children = await loadContentChildren(item)
+    item.children = children
+  }
 }
 
 // Helper: icon for item type

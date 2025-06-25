@@ -163,18 +163,36 @@ class RtfConverter
      */
     public function fallbackConversion(string $rtf): string
     {
-        // Remove RTF control words and groups
-        $text = preg_replace('/\\\\(?:[a-z]+|\d+)(?:\s|$)/i', '', $rtf);
-        // Remove RTF groups
-        $text = preg_replace('/\{[^}]*\}/', '', $text);
-        // Remove image data
-        $text = preg_replace('/\\\*\\\shppict.*?\\\pict.*?\}/s', '', $text);
-        // Convert basic formatting
-        $text = preg_replace('/\\\\b\s(.*?)\\\\b0\s/s', '**$1** ', $text);
-        $text = preg_replace('/\\\\i\s(.*?)\\\\i0\s/s', '*$1* ', $text);
-        // Clean up extra spaces and newlines
+        // First, remove hex-encoded binary data (images, etc.)
+        $text = preg_replace('/[0-9a-fA-F]{32,}/', '', $rtf);
+        
+        // Remove RTF picture data blocks
+        $text = preg_replace('/\\\*\\\shppict.*?\}/', '', $text);
+        $text = preg_replace('/\\\pict.*?\}/', '', $text);
+        
+        // Remove RTF groups with control words first (most complex structures)
+        $text = preg_replace('/\{\\\\[^}]*\}/', '', $text);
+        
+        // Remove remaining RTF control words
+        $text = preg_replace('/\\\\[a-z]+[0-9]*\s?/i', '', $text);
+        $text = preg_replace('/\\\\[^a-z0-9]/i', '', $text);
+        
+        // Remove any remaining braces
+        $text = str_replace(['{', '}'], '', $text);
+        
+        // Convert paragraph markers
+        $text = preg_replace('/\\\\par\s*/', "\n", $text);
+        
+        // Clean up whitespace
         $text = preg_replace('/\s+/', ' ', $text);
+        $text = preg_replace('/\n\s*\n\s*\n/', "\n\n", $text);
         $text = trim($text);
+        
+        // If the result is still mostly non-text characters, return empty string
+        if (strlen($text) > 0 && (strlen(preg_replace('/[a-zA-Z0-9\s\.\,\!\?\-]/', '', $text)) / strlen($text)) > 0.3) {
+            return '';
+        }
+        
         return $text;
     }
 
