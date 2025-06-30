@@ -56,9 +56,10 @@ class DataTransformer
      */
     public function transformItems(array $data): array
     {
-        print_r("\n=== Starting Item Transformation ===\n");
-        print_r("Binder items count: " . count($data['binder']['items']) . "\n");
-        print_r("Research items count: " . count($data['research']['items']) . "\n");
+        \Log::debug('Starting Item Transformation', [
+            'binder_items_count' => count($data['binder']['items']),
+            'research_items_count' => count($data['research']['items'])
+        ]);
         
         // Track unique items by UUID and their parent relationships
         $uniqueItems = [];
@@ -66,14 +67,18 @@ class DataTransformer
         
         // Process binder items
         $this->transformBinderItemsWithRelationships($data['binder']['items'], $uniqueItems, $parentRelationships);
-        print_r("\nAfter binder transformation: " . count($uniqueItems) . " unique items\n");
-        print_r("Parent relationships: " . count($parentRelationships) . "\n");
+        \Log::debug('After binder transformation', [
+            'unique_items_count' => count($uniqueItems),
+            'parent_relationships_count' => count($parentRelationships)
+        ]);
         
         // Process research items
         $researchCount = count($uniqueItems);
         $this->transformResearchItemsWithRelationships($data['research']['items'], $uniqueItems, $parentRelationships);
-        print_r("After research transformation: " . count($uniqueItems) . " unique items\n");
-        print_r("Research items added: " . (count($uniqueItems) - $researchCount) . "\n");
+        \Log::debug('After research transformation', [
+            'unique_items_count' => count($uniqueItems),
+            'research_items_added' => count($uniqueItems) - $researchCount
+        ]);
         
         // Convert unique items to array and add parent relationships
         $items = [];
@@ -82,8 +87,10 @@ class DataTransformer
             $items[] = $item;
         }
         
-        print_r("\nFinal item count: " . count($items) . "\n");
-        print_r("Total parent relationships: " . array_sum(array_map('count', $parentRelationships)) . "\n");
+        \Log::debug('Item transformation completed', [
+            'final_item_count' => count($items),
+            'total_parent_relationships' => array_sum(array_map('count', $parentRelationships))
+        ]);
         
         return $items;
     }
@@ -211,7 +218,7 @@ class DataTransformer
         array &$uniqueItems,
         array &$parentRelationships
     ): void {
-        print_r("\n=== Processing Research Items ===\n");
+        \Log::debug('Processing Research Items');
         foreach ($items as $item) {
             $uuid = $item['UUID'];
             
