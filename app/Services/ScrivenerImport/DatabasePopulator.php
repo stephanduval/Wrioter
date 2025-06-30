@@ -91,30 +91,35 @@ class DatabasePopulator
      */
     private function createManuscript(array $data): Manuscript
     {
-        // Check for duplicate scrivener_uuid for this user
+        // Generate unique scrivener_uuid if duplicate exists
         if (isset($data['scrivener_uuid']) && isset($data['user_id'])) {
-            $existing = Manuscript::where('scrivener_uuid', $data['scrivener_uuid'])
-                ->where('user_id', $data['user_id'])
-                ->first();
-            if ($existing) {
-                // For development/testing: Update existing manuscript instead of throwing error
-                $existing->update([
+            $originalUuid = $data['scrivener_uuid'];
+            $counter = 1;
+            
+            // Keep checking until we find a unique UUID
+            while (Manuscript::where('scrivener_uuid', $data['scrivener_uuid'])
+                    ->where('user_id', $data['user_id'])
+                    ->exists()) {
+                
+                $data['scrivener_uuid'] = $originalUuid . '-copy-' . $counter;
+                $counter++;
+                
+                // Also update the title to indicate it's a copy
+                if (!str_contains($data['title'], '(Copy')) {
+                    $data['title'] = $data['title'] . ' (Copy ' . $counter . ')';
+                } else {
+                    // Replace existing copy number
+                    $data['title'] = preg_replace('/\(Copy \d+\)$/', '(Copy ' . $counter . ')', $data['title']);
+                }
+            }
+            
+            if ($counter > 1) {
+                Log::info('Generated unique UUID for duplicate manuscript', [
+                    'original_uuid' => $originalUuid,
+                    'new_uuid' => $data['scrivener_uuid'],
                     'title' => $data['title'],
-                    'description' => $data['description'],
-                    'version' => $data['version'],
-                    'imported_at' => now(),
-                    'project_settings' => $data['project_settings'],
-                    'compile_settings' => $data['compile_settings'],
-                    'custom_metadata' => $data['custom_metadata'],
+                    'copy_number' => $counter,
                 ]);
-                
-                Log::info('Updated existing manuscript', [
-                    'id' => $existing->id,
-                    'title' => $existing->title,
-                    'scrivener_uuid' => $existing->scrivener_uuid,
-                ]);
-                
-                return $existing;
             }
         }
 
@@ -176,6 +181,35 @@ class DatabasePopulator
                 $content = substr($content, 0, 65000) . '... [Content truncated - view full content in raw_content field]';
             }
             
+            // Generate unique scrivener_uuid if duplicate exists
+            $originalUuid = $itemData['scrivener_uuid'];
+            $originalTitle = $itemData['title'];
+            $counter = 1;
+            
+            // Keep checking until we find a unique UUID
+            while (Item::where('scrivener_uuid', $itemData['scrivener_uuid'])->exists()) {
+                $itemData['scrivener_uuid'] = $originalUuid . '-copy-' . $counter;
+                $counter++;
+                
+                // Also update the title to indicate it's a copy
+                if (!str_contains($itemData['title'], '(Copy')) {
+                    $itemData['title'] = $originalTitle . ' (Copy ' . $counter . ')';
+                } else {
+                    // Replace existing copy number
+                    $itemData['title'] = preg_replace('/\(Copy \d+\)$/', '(Copy ' . $counter . ')', $originalTitle);
+                }
+            }
+            
+            if ($counter > 1) {
+                Log::debug('Generated unique UUID for duplicate item', [
+                    'original_uuid' => $originalUuid,
+                    'new_uuid' => $itemData['scrivener_uuid'],
+                    'original_title' => $originalTitle,
+                    'new_title' => $itemData['title'],
+                    'copy_number' => $counter,
+                ]);
+            }
+
             // Create the item
             $item = Item::create([
                 'user_id' => $itemData['user_id'],
