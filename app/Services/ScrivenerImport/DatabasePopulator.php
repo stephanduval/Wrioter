@@ -91,21 +91,32 @@ class DatabasePopulator
      */
     private function createManuscript(array $data): Manuscript
     {
-        // DUPLICATE CHECK DISABLED FOR TESTING - allows faster iteration
         // Check for duplicate scrivener_uuid for this user
-        // if (isset($data['scrivener_uuid']) && isset($data['user_id'])) {
-        //     $existing = Manuscript::where('scrivener_uuid', $data['scrivener_uuid'])
-        //         ->where('user_id', $data['user_id'])
-        //         ->first();
-        //     if ($existing) {
-        //         throw new RuntimeException(
-        //             "You have already imported this Scrivener project. " .
-        //             "Existing manuscript: '{$existing->title}' (imported on " . 
-        //             $existing->created_at->format('M j, Y') . "). " .
-        //             "Please choose a different Scrivener project or delete the existing manuscript first."
-        //         );
-        //     }
-        // }
+        if (isset($data['scrivener_uuid']) && isset($data['user_id'])) {
+            $existing = Manuscript::where('scrivener_uuid', $data['scrivener_uuid'])
+                ->where('user_id', $data['user_id'])
+                ->first();
+            if ($existing) {
+                // For development/testing: Update existing manuscript instead of throwing error
+                $existing->update([
+                    'title' => $data['title'],
+                    'description' => $data['description'],
+                    'version' => $data['version'],
+                    'imported_at' => now(),
+                    'project_settings' => $data['project_settings'],
+                    'compile_settings' => $data['compile_settings'],
+                    'custom_metadata' => $data['custom_metadata'],
+                ]);
+                
+                Log::info('Updated existing manuscript', [
+                    'id' => $existing->id,
+                    'title' => $existing->title,
+                    'scrivener_uuid' => $existing->scrivener_uuid,
+                ]);
+                
+                return $existing;
+            }
+        }
 
         $manuscript = Manuscript::create($data);
 
@@ -135,12 +146,10 @@ class DatabasePopulator
         }
         unset($itemData);
 
-        print_r("=== Starting createItems ===\n");
-        print_r("Input itemsData count: " . count($itemsData) . "\n");
-        print_r("First item data sample:\n");
-        if (!empty($itemsData)) {
-            print_r(array_slice($itemsData[0], 0, 5)); // Show first 5 fields of first item
-        }
+        Log::debug('Starting createItems', [
+            'itemsData_count' => count($itemsData),
+            'first_item_sample' => !empty($itemsData) ? array_slice($itemsData[0], 0, 5) : null
+        ]);
         
         $items = [];
         $itemVersions = [];
@@ -148,9 +157,11 @@ class DatabasePopulator
 
         // First pass: Create Item records and their versions
         foreach ($itemsData as $index => $itemData) {
-            print_r("\n=== Processing Item {$index} ===\n");
-            print_r("Item UUID: " . ($itemData['scrivener_uuid'] ?? 'missing') . "\n");
-            print_r("Parent relationships: " . count($itemData['parent_relationships'] ?? []) . "\n");
+            Log::debug('Processing item', [
+                'index' => $index,
+                'uuid' => $itemData['scrivener_uuid'] ?? 'missing',
+                'parent_relationships_count' => count($itemData['parent_relationships'] ?? [])
+            ]);
             
             // Prepare content fields to handle size limits
             $content = $itemData['content'] ?? '';
@@ -197,8 +208,10 @@ class DatabasePopulator
                 'is_forked' => false,
             ]);
 
-            print_r("Created item ID: {$item->id}\n");
-            print_r("Created version ID: {$version->id}\n");
+            Log::debug('Created item and version', [
+                'item_id' => $item->id,
+                'version_id' => $version->id
+            ]);
 
             // Store the item and version for later use
             $items[$item->scrivener_uuid] = $item;
@@ -213,12 +226,13 @@ class DatabasePopulator
         }
 
         // Log counts after creation
-        print_r("\n=== After Item Creation ===\n");
-        print_r("Total items created: " . count($items) . "\n");
-        print_r("Total versions created: " . count($itemVersions) . "\n");
+        Log::debug('Item creation completed', [
+            'total_items_created' => count($items),
+            'total_versions_created' => count($itemVersions)
+        ]);
 
         // Second pass: Update parent relationships and attach to manuscript
-        print_r("\n=== Updating Parent Relationships and Attaching to Manuscript ===\n");
+        Log::debug('Starting parent relationships update and manuscript attachment');
         $manuscript = Manuscript::find($manuscriptId);
         $attachedCount = 0;
         $parentUpdateCount = 0;
@@ -268,20 +282,22 @@ class DatabasePopulator
                 'metadata' => $metadata
             ]);
 
-            if ($primaryParent) {
-                print_r("Attached item {$item->id} with primary parent {$primaryParent['parent_uuid']} (Order: {$primaryOrder})\n");
-            } else {
-                print_r("Attached as root item: Item {$item->id}\n");
-            }
+            Log::debug('Attached item to manuscript', [
+                'item_id' => $item->id,
+                'is_root' => !$primaryParent,
+                'primary_parent_uuid' => $primaryParent['parent_uuid'] ?? null,
+                'order' => $primaryOrder
+            ]);
 
             $attachedCount++;
             $parentUpdateCount += count($allParents);
         }
 
-        print_r("\n=== Final Item Creation Summary ===\n");
-        print_r("Total items created: " . count($items) . "\n");
-        print_r("Total parent relationships created: {$parentUpdateCount}\n");
-        print_r("Total manuscript attachments: {$attachedCount}\n");
+        Log::debug('Final item creation summary', [
+            'total_items_created' => count($items),
+            'parent_relationships_created' => $parentUpdateCount,
+            'manuscript_attachments' => $attachedCount
+        ]);
 
         Log::info('Created items', [
             'manuscript_id' => $manuscriptId,
@@ -329,11 +345,38 @@ class DatabasePopulator
         $history = [];
 
         foreach ($writingHistoryData as $historyData) {
-            $record = WritingHistory::create($historyData);
-            $history[] = $record;
+            // Check for existing writing history record for this user, date, and manuscript
+            $existing = WritingHistory::where('user_id', $historyData['user_id'])
+                ->where('date', $historyData['date'])
+                ->where('manuscript_id', $historyData['manuscript_id'])
+                ->first();
+
+            if ($existing) {
+                // Update existing record instead of creating duplicate
+                $existing->update($historyData);
+                $history[] = $existing;
+                
+                Log::debug('Updated existing writing history record', [
+                    'id' => $existing->id,
+                    'user_id' => $historyData['user_id'],
+                    'date' => $historyData['date'],
+                    'manuscript_id' => $historyData['manuscript_id'],
+                ]);
+            } else {
+                // Create new record
+                $record = WritingHistory::create($historyData);
+                $history[] = $record;
+                
+                Log::debug('Created new writing history record', [
+                    'id' => $record->id,
+                    'user_id' => $historyData['user_id'],
+                    'date' => $historyData['date'],
+                    'manuscript_id' => $historyData['manuscript_id'],
+                ]);
+            }
         }
 
-        Log::info('Created writing history records', [
+        Log::info('Processed writing history records', [
             'count' => count($history),
         ]);
 
@@ -396,7 +439,7 @@ class DatabasePopulator
         }
 
         // Writing history is optional, so no validation needed
-        \Log::debug("Writing history data (validation skipped):", ['data' => $writingHistoryData]);
+        Log::debug('Writing history validation skipped', ['count' => count($writingHistoryData)]);
 
         return true;
     }
