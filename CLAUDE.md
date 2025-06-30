@@ -63,6 +63,47 @@ I prefer to use localStorage to cookies
 
 The database is mysql.
 
+# Development Environment Setup
+
+## Testing Environment
+
+When working with testing, ALWAYS use the test environment to avoid database conflicts:
+
+### Start Test Environment
+```bash
+# Kill any existing servers first
+yarn dev:test:all
+```
+
+This runs:
+- Laravel server in test mode: `php artisan serve --env=testing`
+- Vite in test mode: `vite --mode testing`
+
+### Test Database Setup
+```bash
+# Fresh test database with seeds
+yarn db:fresh:test
+```
+
+### Default Test Credentials
+- **Email**: `info@freynet-gagne.com`
+- **Password**: `ChangeMe2024!` (from SEEDER_DEFAULT_PASSWORD in .env.testing)
+
+### Available Test Users
+All test users use the same password (`ChangeMe2024!`):
+- `info@freynet-gagne.com` (Admin)
+- `sophie@freynet-gagne.com` (Client)
+- `admin@admin.com` (Admin)
+- `client@client.com` (Client)
+
+## Production vs Development vs Testing
+
+- **Development**: `yarn serve` + `yarn dev` (uses .env)
+- **Testing**: `yarn dev:test:all` (uses .env.testing)
+- **Production**: Deploy commands (uses .env.production on server)
+
+**Important**: Always verify which environment you're running by checking the browser URL and database being used.
+
 # Queue Worker Management
 
 Queue workers are essential for processing background jobs like Scrivener imports.
@@ -155,6 +196,14 @@ php artisan queue:monitor
 # Restart all queue workers (after code changes)
 php artisan queue:restart
 ```
+
+# Documentation Reference
+
+Project documentation located at: `/home/rogers/Code/Wrioter/docs`
+Key documentation for LLMs:
+- Database schemas: `docs/database/schemas/`
+- Scrivener import: `docs/modules/scrivener-import/scrivener_import_module_Documentation.md`
+- Frontend docs: `docs/front-end/`
 
 # Task Management Workflow
 
