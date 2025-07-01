@@ -205,11 +205,38 @@ php artisan queue:restart
 
 # Documentation Reference
 
-Project documentation located at: `/home/rogers/Code/Wrioter/docs`
-Key documentation for LLMs:
-- Database schemas: `docs/database/schemas/`
-- Scrivener import: `docs/modules/scrivener-import/scrivener_import_module_Documentation.md`
-- Frontend docs: `docs/front-end/`
+For detailed system documentation, ALWAYS start with:
+- **`docs/LLM_GUIDE.md`** - Main documentation entry point for LLMs
+- **`docs/database/schemas/current_tables.txt`** - Current database structure
+- **`docs/database/schemas/current_schema.sql`** - Full SQL schema
+
+When working on specific areas:
+- Frontend: `docs/frontend/`
+- Modules: `docs/modules/`
+- API: `docs/api/`
+- Architecture: `docs/architecture/`
+
+## Database Schema Documentation
+
+The database schema is automatically documented in `docs/database/schemas/`:
+- `current_schema.sql` - Full SQL dump
+- `current_tables.txt` - Human-readable table structure
+- `current_tables_csv/` - CSV exports with data
+
+### Refreshing Schema Documentation
+```bash
+# Production database
+yarn schema:text    # Quick text overview
+yarn schema        # Full SQL dump
+yarn schema:csv    # CSV exports with data
+
+# Test database
+yarn schema:text:test
+yarn schema:test
+yarn schema:csv:test
+```
+
+When making database changes, always run `yarn schema:text` to update documentation.
 
 # Task Management Workflow
 
