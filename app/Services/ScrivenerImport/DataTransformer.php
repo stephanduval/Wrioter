@@ -174,6 +174,7 @@ class DataTransformer
             // Only store the item if we haven't seen it before
             if (!isset($uniqueItems[$uuid])) {
                 $uniqueItems[$uuid] = [
+                    'user_id' => null, // Will be set by calling code
                     'type' => $this->mapItemType($item['Type']),
                     'title' => $item['Title'],
                     'content' => $item['Content']['Text'] ?? '',
@@ -195,7 +196,7 @@ class DataTransformer
                         'rtf' => $item['Content']['RTF'] ?? null,
                     ],
                     'content_markdown' => $this->convertRtfToMarkdown($item['Content']['RTF'] ?? ''),
-                    'raw_content' => $this->stripContent($item['Content']['Text'] ?? ''),
+                    'raw_content' => $item['Content']['RTF'] ?? '',
                     'content_format' => 'markdown',
                     'word_count' => $this->countWords($item['Content']['Text'] ?? ''),
                     'character_count' => $this->countCharacters($item['Content']['Text'] ?? ''),
@@ -225,6 +226,7 @@ class DataTransformer
             // Only store the item if we haven't seen it before
             if (!isset($uniqueItems[$uuid])) {
                 $uniqueItems[$uuid] = [
+                    'user_id' => null, // Will be set by calling code
                     'type' => 'research',
                     'title' => $item['Title'],
                     'content' => $item['Content']['Text'] ?? '',
@@ -246,7 +248,7 @@ class DataTransformer
                         'file_info' => $this->getFileInfo($item),
                     ],
                     'content_markdown' => $this->convertRtfToMarkdown($item['Content']['RTF'] ?? ''),
-                    'raw_content' => $this->stripContent($item['Content']['Text'] ?? ''),
+                    'raw_content' => $item['Content']['RTF'] ?? '',
                     'content_format' => 'markdown',
                     'word_count' => $this->countWords($item['Content']['Text'] ?? ''),
                     'character_count' => $this->countCharacters($item['Content']['Text'] ?? ''),
@@ -300,6 +302,15 @@ class DataTransformer
      */
     private function convertRtfToMarkdown(string $rtf): string
     {
+        if (empty($rtf)) {
+            return '';
+        }
+        
+        // Only convert if we have actual RTF content
+        if (!str_starts_with($rtf, '{\rtf')) {
+            return $rtf; // Return as-is if not RTF format
+        }
+        
         return $this->rtfConverter->convert($rtf);
     }
 
@@ -453,6 +464,126 @@ class DataTransformer
             'movie' => 'video/mp4',
             'sound' => 'audio/mpeg',
             default => 'application/octet-stream',
+        };
+    }
+
+    /**
+     * Transform manuscript-level raw files
+     *
+     * @param array $files Array of file info from FileScanner
+     * @return array Transformed manuscript raw files data
+     */
+    public function transformManuscriptRawFiles(array $files): array
+    {
+        $transformedFiles = [];
+
+        foreach ($files as $file) {
+            if ($file['process_type'] !== 'manuscript_raw') {
+                continue;
+            }
+
+            $transformedFiles[] = [
+                'file_type' => $file['type'],
+                'file_name' => $file['file_name'],
+                'file_path' => $file['file_path'],
+                'file_size' => $file['file_size'],
+                'scrivener_path' => $file['relative_path'] ?? $file['file_name'],
+                'metadata' => [
+                    'folder_type' => $file['folder_type'] ?? null,
+                    'original_path' => $file['file_path'],
+                ],
+            ];
+        }
+
+        return $transformedFiles;
+    }
+
+    /**
+     * Transform item attachments and special files
+     *
+     * @param array $files Array of file info from FileScanner
+     * @param string $itemUuid Item UUID
+     * @return array Transformed attachment data
+     */
+    public function transformItemAttachments(array $files, string $itemUuid): array
+    {
+        $attachments = [];
+
+        foreach ($files as $file) {
+            if ($file['process_type'] === 'attachment') {
+                $attachments[] = [
+                    'file_type' => $file['type'],
+                    'file_name' => $file['file_name'],
+                    'file_path' => $file['file_path'],
+                    'file_size' => $file['file_size'],
+                    'mime_type' => $file['mime_type'],
+                    'scrivener_path' => "Files/Data/{$itemUuid}/{$file['file_name']}",
+                    'metadata' => $this->extractFileMetadata($file),
+                ];
+            } elseif ($file['process_type'] === 'special') {
+                $attachments[] = [
+                    'file_type' => $file['type'],
+                    'file_name' => $file['file_name'],
+                    'file_path' => $file['file_path'],
+                    'file_size' => $file['file_size'],
+                    'mime_type' => $this->getSpecialFileMimeType($file['type']),
+                    'scrivener_path' => "Files/Data/{$itemUuid}/{$file['file_name']}",
+                    'metadata' => [
+                        'is_special_file' => true,
+                        'special_type' => $file['type'],
+                    ],
+                ];
+            }
+        }
+
+        return $attachments;
+    }
+
+    /**
+     * Extract metadata from file based on type
+     */
+    private function extractFileMetadata(array $file): array
+    {
+        $metadata = ['file_type' => $file['type']];
+
+        // Add specific metadata based on file type
+        switch ($file['type']) {
+            case 'jpg':
+            case 'jpeg':
+            case 'png':
+            case 'gif':
+                // Could add image dimensions here in the future
+                $metadata['media_type'] = 'image';
+                break;
+            case 'wav':
+            case 'mp3':
+                // Could add audio duration here in the future
+                $metadata['media_type'] = 'audio';
+                break;
+            case 'mp4':
+                // Could add video duration/dimensions here in the future
+                $metadata['media_type'] = 'video';
+                break;
+            case 'pdf':
+                // Could add page count here in the future
+                $metadata['media_type'] = 'document';
+                break;
+        }
+
+        return $metadata;
+    }
+
+    /**
+     * Get MIME type for special files
+     */
+    private function getSpecialFileMimeType(string $type): string
+    {
+        return match($type) {
+            'styles' => 'application/x-scrivener-styles',
+            'comments' => 'application/x-scrivener-comments',
+            'synopsis' => 'text/plain',
+            'notes' => 'application/rtf',
+            default => 'text/plain',
         };
     }
 } 

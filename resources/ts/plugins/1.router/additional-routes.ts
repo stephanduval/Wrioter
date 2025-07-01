@@ -264,4 +264,16 @@ export const routes: RouteRecordRaw[] = [
       requiresAuth: true,
     },
   },
+  // Manuscript Raw Files Viewer Route
+  {
+    path: '/admin/manuscripts/:id/raw-files',
+    name: 'manuscript-raw-files',
+    component: () => import('@/pages/manuscript-raw-files.vue'),
+    meta: {
+      layoutWrapperClasses: 'layout-content-height-fixed',
+      action: 'read',
+      subject: 'admin',
+      requiresAuth: true,
+    },
+  },
 ]

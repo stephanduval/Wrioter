@@ -7,6 +7,7 @@ use App\Services\ScrivenerImport\FileHandler;
 use App\Services\ScrivenerImport\XmlParser;
 use App\Services\ScrivenerImport\DataTransformer;
 use App\Services\ScrivenerImport\DatabasePopulator;
+use App\Services\ScrivenerImport\FileScanner;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -58,7 +59,8 @@ class ProcessScrivenerImport implements ShouldQueue
         FileHandler $fileHandler,
         XmlParser $xmlParser,
         DataTransformer $dataTransformer,
-        DatabasePopulator $databasePopulator
+        DatabasePopulator $databasePopulator,
+        FileScanner $fileScanner
     ): void {
         try {
             // Update status to processing
@@ -93,20 +95,41 @@ class ProcessScrivenerImport implements ShouldQueue
 
             // Step 3: Transform the data
             Log::info('Transforming data...', ['import_id' => $this->import->id]);
+            
+            // Transform manuscript raw files
+            $manuscriptRawFiles = $dataTransformer->transformManuscriptRawFiles($xmlData['project_files'] ?? []);
+            
+            // Transform items with their attachments
+            $items = $dataTransformer->transformItems($xmlData);
+            foreach ($items as &$item) {
+                $item['user_id'] = $this->import->user_id;
+                
+                // Transform item attachments if they exist in the XML
+                if (isset($xmlData['binder']['items'])) {
+                    $itemAttachments = [];
+                    foreach ($xmlData['binder']['items'] as $binderItem) {
+                        if ($binderItem['UUID'] === $item['scrivener_uuid'] && !empty($binderItem['Content']['Files'])) {
+                            $itemAttachments = $dataTransformer->transformItemAttachments($binderItem['Content']['Files'], $item['scrivener_uuid']);
+                            break;
+                        }
+                    }
+                    $item['attachments'] = $itemAttachments;
+                }
+            }
+            unset($item);
+            
             $transformedData = [
                 'manuscript' => array_merge(
                     $dataTransformer->transformManuscript($xmlData),
                     ['user_id' => $this->import->user_id]
                 ),
-                'items' => array_map(function ($item) {
-                    $item['user_id'] = $this->import->user_id;
-                    return $item;
-                }, $dataTransformer->transformItems($xmlData)),
+                'items' => $items,
                 'collections' => $dataTransformer->transformCollections($xmlData),
                 'writing_history' => array_map(function ($history) {
                     $history['user_id'] = $this->import->user_id;
                     return $history;
                 }, $dataTransformer->transformWritingHistory($xmlData)),
+                'manuscript_raw_files' => $manuscriptRawFiles,
             ];
 
             // Validate transformed data
@@ -131,6 +154,7 @@ class ProcessScrivenerImport implements ShouldQueue
                 $transformedData['items'],
                 $transformedData['collections'],
                 $transformedData['writing_history'],
+                $transformedData['manuscript_raw_files'],
                 function() use (&$processedItems) {
                     $processedItems++;
                     $this->updateProgress('Importing items...', $processedItems);
@@ -156,6 +180,7 @@ class ProcessScrivenerImport implements ShouldQueue
                 'items_count' => $result['items_count'],
                 'collections_count' => $result['collections_count'],
                 'writing_history_count' => $result['writing_history_count'],
+                'raw_files_count' => $result['raw_files_count'],
             ]);
 
         } catch (\Exception $e) {

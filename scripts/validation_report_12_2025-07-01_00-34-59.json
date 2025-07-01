@@ -1,0 +1,1226 @@
+{
+    "manuscript": {
+        "id": 12,
+        "title": "START HERE",
+        "scrivener_uuid": "35ECC13E-D10C-4251-BC8E-1FD23DF5B168",
+        "imported_at": "2025-07-01 00:34:14"
+    },
+    "summary": {
+        "total_original_files": 73,
+        "total_database_items": 81,
+        "perfect_matches": 69,
+        "good_matches": 0,
+        "poor_matches": 0,
+        "failed_matches": 12,
+        "issues_found": 23
+    },
+    "detailed_results": {
+        "CFB95E81-048A-4A84-BE00-1135B212DBF5": {
+            "status": "no_original",
+            "item_title": "The Basics",
+            "issues": [
+                "No original RTF file found for this UUID"
+            ]
+        },
+        "26297251-553C-4B51-B9CF-2CC3D7EE6F97": {
+            "status": "no_original",
+            "item_title": "Get Oriented",
+            "issues": [
+                "No original RTF file found for this UUID"
+            ]
+        },
+        "59E0C12A-928F-4294-B335-F238966E989B": {
+            "status": "perfect",
+            "item_title": "Main Interface",
+            "uuid": "59E0C12A-928F-4294-B335-F238966E989B",
+            "original_size": 2139,
+            "database_raw_size": 2139,
+            "database_content_size": 4,
+            "content_match": true,
+            "similarity_score": 1,
+            "issues": [],
+            "details": [
+                "Raw RTF content matches perfectly",
+                "Content field contains readable text",
+                "Markdown conversion completed"
+            ]
+        },
+        "8A74843A-CAEE-4C5C-A2CA-EABF2EF2FE37": {
+            "status": "perfect",
+            "item_title": "The Binder",
+            "uuid": "8A74843A-CAEE-4C5C-A2CA-EABF2EF2FE37",
+            "original_size": 40599,
+            "database_raw_size": 40599,
+            "database_content_size": 44,
+            "content_match": true,
+            "similarity_score": 1,
+            "issues": [],
+            "details": [
+                "Raw RTF content matches perfectly",
+                "Content field contains readable text",
+                "Markdown conversion completed"
+            ]
+        },
+        "FE9F0EC9-DAFE-462C-9ACC-87163C5F53BC": {
+            "status": "perfect",
+            "item_title": "The Editor",
+            "uuid": "FE9F0EC9-DAFE-462C-9ACC-87163C5F53BC",
+            "original_size": 18193,
+            "database_raw_size": 18193,
+            "database_content_size": 62,
+            "content_match": true,
+            "similarity_score": 1,
+            "issues": [],
+            "details": [
+                "Raw RTF content matches perfectly",
+                "Content field contains readable text",
+                "Markdown conversion completed"
+            ]
+        },
+        "E0E09EB0-C5B4-435A-9944-99AB2864105D": {
+            "status": "perfect",
+            "item_title": "The Inspector",
+            "uuid": "E0E09EB0-C5B4-435A-9944-99AB2864105D",
+            "original_size": 7537,
+            "database_raw_size": 7537,
+            "database_content_size": 4,
+            "content_match": true,
+            "similarity_score": 1,
+            "issues": [],
+            "details": [
+                "Raw RTF content matches perfectly",
+                "Content field contains readable text",
+                "Markdown conversion completed"
+            ]
+        },
+        "46EC1384-37DF-438C-83EF-9880EB42A589": {
+            "status": "perfect",
+            "item_title": "Synopsis & Notes",
+            "uuid": "46EC1384-37DF-438C-83EF-9880EB42A589",
+            "original_size": 2295,
+            "database_raw_size": 2295,
+            "database_content_size": 0,
+            "content_match": true,
+            "similarity_score": 1,
+            "issues": [
+                "Content field is empty"
+            ],
+            "details": [
+                "Raw RTF content matches perfectly",
+                "Markdown conversion completed"
+            ]
+        },
+        "A7D1AD51-D465-443A-9F34-A0E99EA316E5": {
+            "status": "perfect",
+            "item_title": "Label & Status",
+            "uuid": "A7D1AD51-D465-443A-9F34-A0E99EA316E5",
+            "original_size": 2480,
+            "database_raw_size": 2480,
+            "database_content_size": 8,
+            "content_match": true,
+            "similarity_score": 1,
+            "issues": [],
+            "details": [
+                "Raw RTF content matches perfectly",
+                "Content field contains readable text",
+                "Markdown conversion completed"
+            ]
+        },
+        "99D796F9-C09D-403D-9E7C-9F47B741C57F": {
+            "status": "perfect",
+            "item_title": "Bookmarks",
+            "uuid": "99D796F9-C09D-403D-9E7C-9F47B741C57F",
+            "original_size": 34825,
+            "database_raw_size": 34825,
+            "database_content_size": 19,
+            "content_match": true,
+            "similarity_score": 1,
+            "issues": [],
+            "details": [
+                "Raw RTF content matches perfectly",
+                "Content field contains readable text",
+                "Markdown conversion completed"
+            ]
+        },
+        "8E41DE34-0E5A-412B-9A2C-09F012C27297": {
+            "status": "perfect",
+            "item_title": "Metadata",
+            "uuid": "8E41DE34-0E5A-412B-9A2C-09F012C27297",
+            "original_size": 23742,
+            "database_raw_size": 23742,
+            "database_content_size": 9,
+            "content_match": true,
+            "similarity_score": 1,
+            "issues": [],
+            "details": [
+                "Raw RTF content matches perfectly",
+                "Content field contains readable text",
+                "Markdown conversion completed"
+            ]
+        },
+        "E6B9AC0F-D1F8-4D94-B7B0-A6D5B0F60CCB": {
+            "status": "perfect",
+            "item_title": "Snapshots",
+            "uuid": "E6B9AC0F-D1F8-4D94-B7B0-A6D5B0F60CCB",
+            "original_size": 34927,
+            "database_raw_size": 34927,
+            "database_content_size": 37,
+            "content_match": true,
+            "similarity_score": 1,
+            "issues": [],
+            "details": [
+                "Raw RTF content matches perfectly",
+                "Content field contains readable text",
+                "Markdown conversion completed"
+            ]
+        },
+        "12E12767-9349-4182-A5CD-598343B0CE00": {
+            "status": "perfect",
+            "item_title": "Comments & Footnotes",
+            "uuid": "12E12767-9349-4182-A5CD-598343B0CE00",
+            "original_size": 7803,
+            "database_raw_size": 7803,
+            "database_content_size": 41,
+            "content_match": true,
+            "similarity_score": 1,
+            "issues": [],
+            "details": [
+                "Raw RTF content matches perfectly",
+                "Content field contains readable text",
+                "Markdown conversion completed"
+            ]
+        },
+        "67721357-8FC2-437B-8B3A-D2DBDBA7CFC8": {
+            "status": "perfect",
+            "item_title": "Composition Mode",
+            "uuid": "67721357-8FC2-437B-8B3A-D2DBDBA7CFC8",
+            "original_size": 10692,
+            "database_raw_size": 10692,
+            "database_content_size": 24,
+            "content_match": true,
+            "similarity_score": 1,
+            "issues": [],
+            "details": [
+                "Raw RTF content matches perfectly",
+                "Content field contains readable text",
+                "Markdown conversion completed"
+            ]
+        },
+        "D846D2EE-6293-4A13-A0EA-386B0255E552": {
+            "status": "perfect",
+            "item_title": "Get Organised",
+            "uuid": "D846D2EE-6293-4A13-A0EA-386B0255E552",
+            "original_size": 2722,
+            "database_raw_size": 2722,
+            "database_content_size": 14,
+            "content_match": true,
+            "similarity_score": 1,
+            "issues": [],
+            "details": [
+                "Raw RTF content matches perfectly",
+                "Content field contains readable text",
+                "Markdown conversion completed"
+            ]
+        },
+        "D3796A92-2893-4B70-8AEA-4A8B308FB7E8": {
+            "status": "perfect",
+            "item_title": "Splitting the Editor",
+            "uuid": "D3796A92-2893-4B70-8AEA-4A8B308FB7E8",
+            "original_size": 10591,
+            "database_raw_size": 10591,
+            "database_content_size": 23,
+            "content_match": true,
+            "similarity_score": 1,
+            "issues": [],
+            "details": [
+                "Raw RTF content matches perfectly",
+                "Content field contains readable text",
+                "Markdown conversion completed"
+            ]
+        },
+        "2EB10504-72EC-4C03-9633-F64A91140F97": {
+            "status": "perfect",
+            "item_title": "Editor View Modes",
+            "uuid": "2EB10504-72EC-4C03-9633-F64A91140F97",
+            "original_size": 26933,
+            "database_raw_size": 26933,
+            "database_content_size": 77,
+            "content_match": true,
+            "similarity_score": 1,
+            "issues": [],
+            "details": [
+                "Raw RTF content matches perfectly",
+                "Content field contains readable text",
+                "Markdown conversion completed"
+            ]
+        },
+        "68EDD5A9-3B64-4F28-88D1-F2C843441B80": {
+            "status": "perfect",
+            "item_title": "The Corkboard",
+            "uuid": "68EDD5A9-3B64-4F28-88D1-F2C843441B80",
+            "original_size": 39417,
+            "database_raw_size": 39417,
+            "database_content_size": 27,
+            "content_match": true,
+            "similarity_score": 1,
+            "issues": [],
+            "details": [
+                "Raw RTF content matches perfectly",
+                "Content field contains readable text",
+                "Markdown conversion completed"
+            ]
+        },
+        "D8C838D7-6CF2-4A57-9FF2-4A2563CFF0A2": {
+            "status": "perfect",
+            "item_title": "The Outliner",
+            "uuid": "D8C838D7-6CF2-4A57-9FF2-4A2563CFF0A2",
+            "original_size": 16926,
+            "database_raw_size": 16926,
+            "database_content_size": 58,
+            "content_match": true,
+            "similarity_score": 1,
+            "issues": [],
+            "details": [
+                "Raw RTF content matches perfectly",
+                "Content field contains readable text",
+                "Markdown conversion completed"
+            ]
+        },
+        "A3E81D02-CFC7-4D3B-9E59-4137E372DC2A": {
+            "status": "perfect",
+            "item_title": "Scrivenings",
+            "uuid": "A3E81D02-CFC7-4D3B-9E59-4137E372DC2A",
+            "original_size": 27700,
+            "database_raw_size": 27700,
+            "database_content_size": 37,
+            "content_match": true,
+            "similarity_score": 1,
+            "issues": [],
+            "details": [
+                "Raw RTF content matches perfectly",
+                "Content field contains readable text",
+                "Markdown conversion completed"
+            ]
+        },
+        "2B6CBA33-D29D-4534-84DE-E9C760036785": {
+            "status": "no_original",
+            "item_title": "Get It Out There",
+            "issues": [
+                "No original RTF file found for this UUID"
+            ]
+        },
+        "E1207FCA-2DD5-4A9C-9E34-C3CE158EBADD": {
+            "status": "perfect",
+            "item_title": "Section Types",
+            "uuid": "E1207FCA-2DD5-4A9C-9E34-C3CE158EBADD",
+            "original_size": 21133,
+            "database_raw_size": 21133,
+            "database_content_size": 67,
+            "content_match": true,
+            "similarity_score": 1,
+            "issues": [],
+            "details": [
+                "Raw RTF content matches perfectly",
+                "Content field contains readable text",
+                "Markdown conversion completed"
+            ]
+        },
+        "0E55C8CA-8028-4B08-AEBB-32D5D19BC24D": {
+            "status": "perfect",
+            "item_title": "Compiling the Draft",
+            "uuid": "0E55C8CA-8028-4B08-AEBB-32D5D19BC24D",
+            "original_size": 17297,
+            "database_raw_size": 17297,
+            "database_content_size": 96,
+            "content_match": true,
+            "similarity_score": 1,
+            "issues": [],
+            "details": [
+                "Raw RTF content matches perfectly",
+                "Content field contains readable text",
+                "Markdown conversion completed"
+            ]
+        },
+        "0FD8532D-E423-4B61-B714-144E872B082A": {
+            "status": "no_original",
+            "item_title": "Get Going",
+            "issues": [
+                "No original RTF file found for this UUID"
+            ]
+        },
+        "B824A7EA-05A4-4F44-B9C6-000AFA0F864C": {
+            "status": "perfect",
+            "item_title": "Creating a New Project",
+            "uuid": "B824A7EA-05A4-4F44-B9C6-000AFA0F864C",
+            "original_size": 3079,
+            "database_raw_size": 3079,
+            "database_content_size": 13,
+            "content_match": true,
+            "similarity_score": 1,
+            "issues": [],
+            "details": [
+                "Raw RTF content matches perfectly",
+                "Content field contains readable text",
+                "Markdown conversion completed"
+            ]
+        },
+        "6585B860-8A17-4022-8A32-CF7F559E5205": {
+            "status": "perfect",
+            "item_title": "All Set",
+            "uuid": "6585B860-8A17-4022-8A32-CF7F559E5205",
+            "original_size": 3578,
+            "database_raw_size": 3578,
+            "database_content_size": 0,
+            "content_match": true,
+            "similarity_score": 1,
+            "issues": [
+                "Content field is empty"
+            ],
+            "details": [
+                "Raw RTF content matches perfectly",
+                "Markdown conversion completed"
+            ]
+        },
+        "FE000551-8D5E-42C0-A476-5014C0050EB7": {
+            "status": "no_original",
+            "item_title": "Going Further",
+            "issues": [
+                "No original RTF file found for this UUID"
+            ]
+        },
+        "EB95836B-24F2-49E2-8B64-60C3DFBDE4B5": {
+            "status": "perfect",
+            "item_title": "Remember...",
+            "uuid": "EB95836B-24F2-49E2-8B64-60C3DFBDE4B5",
+            "original_size": 798,
+            "database_raw_size": 798,
+            "database_content_size": 0,
+            "content_match": true,
+            "similarity_score": 1,
+            "issues": [
+                "Content field is empty"
+            ],
+            "details": [
+                "Raw RTF content matches perfectly",
+                "Markdown conversion completed"
+            ]
+        },
+        "99490349-0A50-4A4A-9F10-0EC274B005AF": {
+            "status": "perfect",
+            "item_title": "Searching",
+            "uuid": "99490349-0A50-4A4A-9F10-0EC274B005AF",
+            "original_size": 67054,
+            "database_raw_size": 67054,
+            "database_content_size": 24,
+            "content_match": true,
+            "similarity_score": 1,
+            "issues": [],
+            "details": [
+                "Raw RTF content matches perfectly",
+                "Content field contains readable text",
+                "Markdown conversion completed",
+                "Large file properly truncated in content field"
+            ]
+        },
+        "96CD2497-D39A-400E-9FCF-71E4635EC1EE": {
+            "status": "no_original",
+            "item_title": "Referring to More Documents",
+            "issues": [
+                "No original RTF file found for this UUID"
+            ]
+        },
+        "0EC0AC4B-5A37-4303-9152-5D83992CAA74": {
+            "status": "perfect",
+            "item_title": "Quick Reference Panels",
+            "uuid": "0EC0AC4B-5A37-4303-9152-5D83992CAA74",
+            "original_size": 25421,
+            "database_raw_size": 25421,
+            "database_content_size": 24,
+            "content_match": true,
+            "similarity_score": 1,
+            "issues": [],
+            "details": [
+                "Raw RTF content matches perfectly",
+                "Content field contains readable text",
+                "Markdown conversion completed"
+            ]
+        },
+        "3BE8863C-BF9A-4868-B698-24149A1AA425": {
+            "status": "perfect",
+            "item_title": "Copyholders",
+            "uuid": "3BE8863C-BF9A-4868-B698-24149A1AA425",
+            "original_size": 3521,
+            "database_raw_size": 3521,
+            "database_content_size": 13,
+            "content_match": true,
+            "similarity_score": 1,
+            "issues": [],
+            "details": [
+                "Raw RTF content matches perfectly",
+                "Content field contains readable text",
+                "Markdown conversion completed"
+            ]
+        },
+        "B4D489B4-DC6C-4163-B731-4F18B26F1AE5": {
+            "status": "no_original",
+            "item_title": "Writing and Editing",
+            "issues": [
+                "No original RTF file found for this UUID"
+            ]
+        },
+        "360A0C5A-BDB6-48C5-BFFF-0BABC7DCF868": {
+            "status": "perfect",
+            "item_title": "Styles",
+            "uuid": "360A0C5A-BDB6-48C5-BFFF-0BABC7DCF868",
+            "original_size": 19882,
+            "database_raw_size": 19882,
+            "database_content_size": 58,
+            "content_match": true,
+            "similarity_score": 1,
+            "issues": [],
+            "details": [
+                "Raw RTF content matches perfectly",
+                "Content field contains readable text",
+                "Markdown conversion completed"
+            ]
+        },
+        "7A47353D-F2A9-4420-905F-42EA95BA3244": {
+            "status": "perfect",
+            "item_title": "Page View",
+            "uuid": "7A47353D-F2A9-4420-905F-42EA95BA3244",
+            "original_size": 13435,
+            "database_raw_size": 13435,
+            "database_content_size": 14,
+            "content_match": true,
+            "similarity_score": 1,
+            "issues": [],
+            "details": [
+                "Raw RTF content matches perfectly",
+                "Content field contains readable text",
+                "Markdown conversion completed"
+            ]
+        },
+        "281EBD00-4C16-4AB8-AC63-72CB1B15F349": {
+            "status": "perfect",
+            "item_title": "Revision Mode",
+            "uuid": "281EBD00-4C16-4AB8-AC63-72CB1B15F349",
+            "original_size": 1511,
+            "database_raw_size": 1511,
+            "database_content_size": 4,
+            "content_match": true,
+            "similarity_score": 1,
+            "issues": [],
+            "details": [
+                "Raw RTF content matches perfectly",
+                "Content field contains readable text",
+                "Markdown conversion completed"
+            ]
+        },
+        "FA7EDB1F-C413-446B-A494-C068DCF80E89": {
+            "status": "perfect",
+            "item_title": "Document Links",
+            "uuid": "FA7EDB1F-C413-446B-A494-C068DCF80E89",
+            "original_size": 3489,
+            "database_raw_size": 3489,
+            "database_content_size": 24,
+            "content_match": true,
+            "similarity_score": 1,
+            "issues": [],
+            "details": [
+                "Raw RTF content matches perfectly",
+                "Content field contains readable text",
+                "Markdown conversion completed"
+            ]
+        },
+        "C40AC3C3-ABC7-4A47-8D04-D831DC5D6ACB": {
+            "status": "perfect",
+            "item_title": "Inline Notes",
+            "uuid": "C40AC3C3-ABC7-4A47-8D04-D831DC5D6ACB",
+            "original_size": 3169,
+            "database_raw_size": 3169,
+            "database_content_size": 128,
+            "content_match": true,
+            "similarity_score": 1,
+            "issues": [],
+            "details": [
+                "Raw RTF content matches perfectly",
+                "Content field contains readable text",
+                "Markdown conversion completed"
+            ]
+        },
+        "27F8D41C-85B0-44D7-93A0-4C97EE420720": {
+            "status": "perfect",
+            "item_title": "Setting Targets",
+            "uuid": "27F8D41C-85B0-44D7-93A0-4C97EE420720",
+            "original_size": 36025,
+            "database_raw_size": 36025,
+            "database_content_size": 49,
+            "content_match": true,
+            "similarity_score": 1,
+            "issues": [],
+            "details": [
+                "Raw RTF content matches perfectly",
+                "Content field contains readable text",
+                "Markdown conversion completed"
+            ]
+        },
+        "ACA19B54-5169-42EF-90A7-49DAD0E1A240": {
+            "status": "perfect",
+            "item_title": "Scriptwriting Mode",
+            "uuid": "ACA19B54-5169-42EF-90A7-49DAD0E1A240",
+            "original_size": 4642,
+            "database_raw_size": 4642,
+            "database_content_size": 29,
+            "content_match": true,
+            "similarity_score": 1,
+            "issues": [],
+            "details": [
+                "Raw RTF content matches perfectly",
+                "Content field contains readable text",
+                "Markdown conversion completed"
+            ]
+        },
+        "FA2DA253-663E-44CB-B403-2B64283B6294": {
+            "status": "perfect",
+            "item_title": "Typewriter Scrolling",
+            "uuid": "FA2DA253-663E-44CB-B403-2B64283B6294",
+            "original_size": 2154,
+            "database_raw_size": 2154,
+            "database_content_size": 0,
+            "content_match": true,
+            "similarity_score": 1,
+            "issues": [
+                "Content field is empty"
+            ],
+            "details": [
+                "Raw RTF content matches perfectly",
+                "Markdown conversion completed"
+            ]
+        },
+        "20D24E58-72B2-4440-8228-580A392B446D": {
+            "status": "no_original",
+            "item_title": "Organisation Tools",
+            "issues": [
+                "No original RTF file found for this UUID"
+            ]
+        },
+        "423A1C1B-9A98-4849-B37A-0F75F80292C7": {
+            "status": "perfect",
+            "item_title": "Collections",
+            "uuid": "423A1C1B-9A98-4849-B37A-0F75F80292C7",
+            "original_size": 224699,
+            "database_raw_size": 224699,
+            "database_content_size": 74,
+            "content_match": true,
+            "similarity_score": 1,
+            "issues": [],
+            "details": [
+                "Raw RTF content matches perfectly",
+                "Content field contains readable text",
+                "Markdown conversion completed",
+                "Large file properly truncated in content field"
+            ]
+        },
+        "295FD092-A6EA-4AD3-B3C7-E5F201655E21": {
+            "status": "perfect",
+            "item_title": "Using Bookmarks for Project Notes",
+            "uuid": "295FD092-A6EA-4AD3-B3C7-E5F201655E21",
+            "original_size": 8493,
+            "database_raw_size": 8493,
+            "database_content_size": 33,
+            "content_match": true,
+            "similarity_score": 1,
+            "issues": [],
+            "details": [
+                "Raw RTF content matches perfectly",
+                "Content field contains readable text",
+                "Markdown conversion completed"
+            ]
+        },
+        "BDFF1718-2F85-46E7-88B0-98433164ED65": {
+            "status": "perfect",
+            "item_title": "Splitting and Merging Documents",
+            "uuid": "BDFF1718-2F85-46E7-88B0-98433164ED65",
+            "original_size": 2849,
+            "database_raw_size": 2849,
+            "database_content_size": 9,
+            "content_match": true,
+            "similarity_score": 1,
+            "issues": [],
+            "details": [
+                "Raw RTF content matches perfectly",
+                "Content field contains readable text",
+                "Markdown conversion completed"
+            ]
+        },
+        "673C3004-E668-44A0-BCDB-92C6F3B4F6FB": {
+            "status": "no_original",
+            "item_title": "Corkboard and Outliner Tricks",
+            "issues": [
+                "No original RTF file found for this UUID"
+            ]
+        },
+        "8284AFFF-C024-49EB-91D5-30C6E662A30A": {
+            "status": "perfect",
+            "item_title": "View Multiple Groups",
+            "uuid": "8284AFFF-C024-49EB-91D5-30C6E662A30A",
+            "original_size": 4940,
+            "database_raw_size": 4940,
+            "database_content_size": 0,
+            "content_match": true,
+            "similarity_score": 1,
+            "issues": [
+                "Content field is empty"
+            ],
+            "details": [
+                "Raw RTF content matches perfectly",
+                "Markdown conversion completed"
+            ]
+        },
+        "3094BAC9-DB3E-4389-B801-1CB39C4E923B": {
+            "status": "perfect",
+            "item_title": "Control the Other Editor",
+            "uuid": "3094BAC9-DB3E-4389-B801-1CB39C4E923B",
+            "original_size": 1263986,
+            "database_raw_size": 1263986,
+            "database_content_size": 14,
+            "content_match": true,
+            "similarity_score": 1,
+            "issues": [],
+            "details": [
+                "Raw RTF content matches perfectly",
+                "Content field contains readable text",
+                "Markdown conversion completed",
+                "Large file properly truncated in content field"
+            ]
+        },
+        "3585A235-B9F8-4D14-BFB5-47CA63D4DD41": {
+            "status": "perfect",
+            "item_title": "Freeform Corkboard Mode",
+            "uuid": "3585A235-B9F8-4D14-BFB5-47CA63D4DD41",
+            "original_size": 5351,
+            "database_raw_size": 5351,
+            "database_content_size": 4,
+            "content_match": true,
+            "similarity_score": 1,
+            "issues": [],
+            "details": [
+                "Raw RTF content matches perfectly",
+                "Content field contains readable text",
+                "Markdown conversion completed"
+            ]
+        },
+        "E660C485-4263-4836-9E5F-D0605363AD2C": {
+            "status": "perfect",
+            "item_title": "Tracking Threads with Labels",
+            "uuid": "E660C485-4263-4836-9E5F-D0605363AD2C",
+            "original_size": 5262,
+            "database_raw_size": 5262,
+            "database_content_size": 9,
+            "content_match": true,
+            "similarity_score": 1,
+            "issues": [],
+            "details": [
+                "Raw RTF content matches perfectly",
+                "Content field contains readable text",
+                "Markdown conversion completed"
+            ]
+        },
+        "C6EF0AD7-5486-44EA-891C-8F51E0528684": {
+            "status": "no_original",
+            "item_title": "Getting Work In and Out",
+            "issues": [
+                "No original RTF file found for this UUID"
+            ]
+        },
+        "A9B383E7-994D-4280-9DDB-4B2C250A8A04": {
+            "status": "perfect",
+            "item_title": "Importing Files",
+            "uuid": "A9B383E7-994D-4280-9DDB-4B2C250A8A04",
+            "original_size": 5649,
+            "database_raw_size": 5649,
+            "database_content_size": 23,
+            "content_match": true,
+            "similarity_score": 1,
+            "issues": [],
+            "details": [
+                "Raw RTF content matches perfectly",
+                "Content field contains readable text",
+                "Markdown conversion completed"
+            ]
+        },
+        "67F50977-F38F-4A53-9D05-121373AFC2BB": {
+            "status": "perfect",
+            "item_title": "Exporting Files",
+            "uuid": "67F50977-F38F-4A53-9D05-121373AFC2BB",
+            "original_size": 4058,
+            "database_raw_size": 4058,
+            "database_content_size": 29,
+            "content_match": true,
+            "similarity_score": 1,
+            "issues": [],
+            "details": [
+                "Raw RTF content matches perfectly",
+                "Content field contains readable text",
+                "Markdown conversion completed"
+            ]
+        },
+        "9B7B55FA-6C49-4EED-8582-296472BD09D9": {
+            "status": "perfect",
+            "item_title": "Syncing with iOS",
+            "uuid": "9B7B55FA-6C49-4EED-8582-296472BD09D9",
+            "original_size": 19035,
+            "database_raw_size": 19035,
+            "database_content_size": 72,
+            "content_match": true,
+            "similarity_score": 1,
+            "issues": [],
+            "details": [
+                "Raw RTF content matches perfectly",
+                "Content field contains readable text",
+                "Markdown conversion completed"
+            ]
+        },
+        "4751BEAD-F449-44FE-BE9F-D5CE39B0FDCC": {
+            "status": "no_original",
+            "item_title": "Customising Projects",
+            "issues": [
+                "No original RTF file found for this UUID"
+            ]
+        },
+        "3D2A1CF2-15CC-46F8-B5A2-690124F89B1B": {
+            "status": "perfect",
+            "item_title": "Custom Icons",
+            "uuid": "3D2A1CF2-15CC-46F8-B5A2-690124F89B1B",
+            "original_size": 3868,
+            "database_raw_size": 3868,
+            "database_content_size": 9,
+            "content_match": true,
+            "similarity_score": 1,
+            "issues": [],
+            "details": [
+                "Raw RTF content matches perfectly",
+                "Content field contains readable text",
+                "Markdown conversion completed"
+            ]
+        },
+        "B557346B-F681-4283-93CE-AD35370793B2": {
+            "status": "perfect",
+            "item_title": "Document Templates",
+            "uuid": "B557346B-F681-4283-93CE-AD35370793B2",
+            "original_size": 10118,
+            "database_raw_size": 10118,
+            "database_content_size": 19,
+            "content_match": true,
+            "similarity_score": 1,
+            "issues": [],
+            "details": [
+                "Raw RTF content matches perfectly",
+                "Content field contains readable text",
+                "Markdown conversion completed"
+            ]
+        },
+        "8C1689F4-84C9-4949-B713-1B22A382D2A5": {
+            "status": "perfect",
+            "item_title": "Project Templates",
+            "uuid": "8C1689F4-84C9-4949-B713-1B22A382D2A5",
+            "original_size": 3918,
+            "database_raw_size": 3918,
+            "database_content_size": 9,
+            "content_match": true,
+            "similarity_score": 1,
+            "issues": [],
+            "details": [
+                "Raw RTF content matches perfectly",
+                "Content field contains readable text",
+                "Markdown conversion completed"
+            ]
+        },
+        "3DD828FA-5BBE-4C31-A23B-B613A2EAA8E8": {
+            "status": "perfect",
+            "item_title": "Scrivener's File Format",
+            "uuid": "3DD828FA-5BBE-4C31-A23B-B613A2EAA8E8",
+            "original_size": 2041,
+            "database_raw_size": 2041,
+            "database_content_size": 4,
+            "content_match": true,
+            "similarity_score": 1,
+            "issues": [],
+            "details": [
+                "Raw RTF content matches perfectly",
+                "Content field contains readable text",
+                "Markdown conversion completed"
+            ]
+        },
+        "CDD828FB-D8A7-476B-9C04-42C9AE9B88FC": {
+            "status": "no_original",
+            "item_title": "Tips",
+            "issues": [
+                "No original RTF file found for this UUID"
+            ]
+        },
+        "39B6D7E0-8A3E-4145-B93C-E294C9FBA881": {
+            "status": "perfect",
+            "item_title": "Default Formatting",
+            "uuid": "39B6D7E0-8A3E-4145-B93C-E294C9FBA881",
+            "original_size": 4390,
+            "database_raw_size": 4390,
+            "database_content_size": 14,
+            "content_match": true,
+            "similarity_score": 1,
+            "issues": [],
+            "details": [
+                "Raw RTF content matches perfectly",
+                "Content field contains readable text",
+                "Markdown conversion completed"
+            ]
+        },
+        "F712A1EB-2472-4998-BDB1-688B1C5F63E9": {
+            "status": "perfect",
+            "item_title": "Inserting Images",
+            "uuid": "F712A1EB-2472-4998-BDB1-688B1C5F63E9",
+            "original_size": 1763,
+            "database_raw_size": 1763,
+            "database_content_size": 4,
+            "content_match": true,
+            "similarity_score": 1,
+            "issues": [],
+            "details": [
+                "Raw RTF content matches perfectly",
+                "Content field contains readable text",
+                "Markdown conversion completed"
+            ]
+        },
+        "F3066602-6666-4BF0-B171-7753B27D8763": {
+            "status": "perfect",
+            "item_title": "Chapter Numbering and Placeholders",
+            "uuid": "F3066602-6666-4BF0-B171-7753B27D8763",
+            "original_size": 4216,
+            "database_raw_size": 4216,
+            "database_content_size": 4,
+            "content_match": true,
+            "similarity_score": 1,
+            "issues": [],
+            "details": [
+                "Raw RTF content matches perfectly",
+                "Content field contains readable text",
+                "Markdown conversion completed"
+            ]
+        },
+        "10EECC9A-7AA5-4598-946B-EA7576735C9C": {
+            "status": "perfect",
+            "item_title": "Editor Text Width",
+            "uuid": "10EECC9A-7AA5-4598-946B-EA7576735C9C",
+            "original_size": 1533,
+            "database_raw_size": 1533,
+            "database_content_size": 4,
+            "content_match": true,
+            "similarity_score": 1,
+            "issues": [],
+            "details": [
+                "Raw RTF content matches perfectly",
+                "Content field contains readable text",
+                "Markdown conversion completed"
+            ]
+        },
+        "7C7D6ECA-9AF4-4288-9452-477A7D60202B": {
+            "status": "perfect",
+            "item_title": "Color Themes",
+            "uuid": "7C7D6ECA-9AF4-4288-9452-477A7D60202B",
+            "original_size": 1771,
+            "database_raw_size": 1771,
+            "database_content_size": 4,
+            "content_match": true,
+            "similarity_score": 1,
+            "issues": [],
+            "details": [
+                "Raw RTF content matches perfectly",
+                "Content field contains readable text",
+                "Markdown conversion completed"
+            ]
+        },
+        "71C96D90-ECBB-43E4-88F3-842933E13C6F": {
+            "status": "perfect",
+            "item_title": "Locking the Editor",
+            "uuid": "71C96D90-ECBB-43E4-88F3-842933E13C6F",
+            "original_size": 7216,
+            "database_raw_size": 7216,
+            "database_content_size": 14,
+            "content_match": true,
+            "similarity_score": 1,
+            "issues": [],
+            "details": [
+                "Raw RTF content matches perfectly",
+                "Content field contains readable text",
+                "Markdown conversion completed"
+            ]
+        },
+        "AAB240F0-1194-439F-8952-8BE7D981AD02": {
+            "status": "perfect",
+            "item_title": "Transcription",
+            "uuid": "AAB240F0-1194-439F-8952-8BE7D981AD02",
+            "original_size": 10357,
+            "database_raw_size": 10357,
+            "database_content_size": 4,
+            "content_match": true,
+            "similarity_score": 1,
+            "issues": [],
+            "details": [
+                "Raw RTF content matches perfectly",
+                "Content field contains readable text",
+                "Markdown conversion completed"
+            ]
+        },
+        "68C54D41-3B65-43A8-AB23-8342335E9217": {
+            "status": "perfect",
+            "item_title": "Name Generator",
+            "uuid": "68C54D41-3B65-43A8-AB23-8342335E9217",
+            "original_size": 737,
+            "database_raw_size": 737,
+            "database_content_size": 0,
+            "content_match": true,
+            "similarity_score": 1,
+            "issues": [
+                "Content field is empty"
+            ],
+            "details": [
+                "Raw RTF content matches perfectly",
+                "Markdown conversion completed"
+            ]
+        },
+        "0B81C207-557F-45E2-A40C-533A3011B09A": {
+            "status": "perfect",
+            "item_title": "Printing",
+            "uuid": "0B81C207-557F-45E2-A40C-533A3011B09A",
+            "original_size": 1220,
+            "database_raw_size": 1220,
+            "database_content_size": 4,
+            "content_match": true,
+            "similarity_score": 1,
+            "issues": [],
+            "details": [
+                "Raw RTF content matches perfectly",
+                "Content field contains readable text",
+                "Markdown conversion completed"
+            ]
+        },
+        "A05F6149-6363-47F4-9C59-E380AA6A2417": {
+            "status": "perfect",
+            "item_title": "Writing History",
+            "uuid": "A05F6149-6363-47F4-9C59-E380AA6A2417",
+            "original_size": 842,
+            "database_raw_size": 842,
+            "database_content_size": 0,
+            "content_match": true,
+            "similarity_score": 1,
+            "issues": [
+                "Content field is empty"
+            ],
+            "details": [
+                "Raw RTF content matches perfectly",
+                "Markdown conversion completed"
+            ]
+        },
+        "EB44CAD4-B336-4854-B313-DC7DA552F434": {
+            "status": "perfect",
+            "item_title": "Dragging in the Binder & Outliner",
+            "uuid": "EB44CAD4-B336-4854-B313-DC7DA552F434",
+            "original_size": 821,
+            "database_raw_size": 821,
+            "database_content_size": 0,
+            "content_match": true,
+            "similarity_score": 1,
+            "issues": [
+                "Content field is empty"
+            ],
+            "details": [
+                "Raw RTF content matches perfectly",
+                "Markdown conversion completed"
+            ]
+        },
+        "6E0CFDD8-90ED-4414-907D-32E368267B4E": {
+            "status": "perfect",
+            "item_title": "Drag Text to and from Binder",
+            "uuid": "6E0CFDD8-90ED-4414-907D-32E368267B4E",
+            "original_size": 2544,
+            "database_raw_size": 2544,
+            "database_content_size": 9,
+            "content_match": true,
+            "similarity_score": 1,
+            "issues": [],
+            "details": [
+                "Raw RTF content matches perfectly",
+                "Content field contains readable text",
+                "Markdown conversion completed"
+            ]
+        },
+        "6242BA6B-02B4-4CAC-AECD-B74418F33F8B": {
+            "status": "perfect",
+            "item_title": "Adding Project Bookmarks",
+            "uuid": "6242BA6B-02B4-4CAC-AECD-B74418F33F8B",
+            "original_size": 807,
+            "database_raw_size": 807,
+            "database_content_size": 0,
+            "content_match": true,
+            "similarity_score": 1,
+            "issues": [
+                "Content field is empty"
+            ],
+            "details": [
+                "Raw RTF content matches perfectly",
+                "Markdown conversion completed"
+            ]
+        },
+        "66DA4D24-B483-492F-9DBB-AC0DB40D9686": {
+            "status": "perfect",
+            "item_title": "Opening Bookmarks and Links",
+            "uuid": "66DA4D24-B483-492F-9DBB-AC0DB40D9686",
+            "original_size": 1605,
+            "database_raw_size": 1605,
+            "database_content_size": 4,
+            "content_match": true,
+            "similarity_score": 1,
+            "issues": [],
+            "details": [
+                "Raw RTF content matches perfectly",
+                "Content field contains readable text",
+                "Markdown conversion completed"
+            ]
+        },
+        "3BA58EA8-BCBA-43EA-A316-E42444147EE1": {
+            "status": "perfect",
+            "item_title": "Keywords",
+            "uuid": "3BA58EA8-BCBA-43EA-A316-E42444147EE1",
+            "original_size": 1850,
+            "database_raw_size": 1850,
+            "database_content_size": 4,
+            "content_match": true,
+            "similarity_score": 1,
+            "issues": [],
+            "details": [
+                "Raw RTF content matches perfectly",
+                "Content field contains readable text",
+                "Markdown conversion completed"
+            ]
+        },
+        "BF5FD5CA-C654-4F79-A4CD-FC74C0E0402D": {
+            "status": "perfect",
+            "item_title": "Index Card Images",
+            "uuid": "BF5FD5CA-C654-4F79-A4CD-FC74C0E0402D",
+            "original_size": 1825,
+            "database_raw_size": 1825,
+            "database_content_size": 4,
+            "content_match": true,
+            "similarity_score": 1,
+            "issues": [],
+            "details": [
+                "Raw RTF content matches perfectly",
+                "Content field contains readable text",
+                "Markdown conversion completed"
+            ]
+        },
+        "1AD2BF1D-CBF0-4759-A0C5-69A177DFF938": {
+            "status": "perfect",
+            "item_title": "Multiple Books in One Project",
+            "uuid": "1AD2BF1D-CBF0-4759-A0C5-69A177DFF938",
+            "original_size": 3016,
+            "database_raw_size": 3016,
+            "database_content_size": 9,
+            "content_match": true,
+            "similarity_score": 1,
+            "issues": [],
+            "details": [
+                "Raw RTF content matches perfectly",
+                "Content field contains readable text",
+                "Markdown conversion completed"
+            ]
+        },
+        "0DC2935C-7410-46F3-98A9-91769014F867": {
+            "status": "perfect",
+            "item_title": "Name & Address in Templates",
+            "uuid": "0DC2935C-7410-46F3-98A9-91769014F867",
+            "original_size": 711,
+            "database_raw_size": 711,
+            "database_content_size": 0,
+            "content_match": true,
+            "similarity_score": 1,
+            "issues": [
+                "Content field is empty"
+            ],
+            "details": [
+                "Raw RTF content matches perfectly",
+                "Markdown conversion completed"
+            ]
+        },
+        "2BCDC339-AC10-40F0-BE90-553B5BE103A1": {
+            "status": "perfect",
+            "item_title": "Saving UI Settings with Layouts",
+            "uuid": "2BCDC339-AC10-40F0-BE90-553B5BE103A1",
+            "original_size": 1326,
+            "database_raw_size": 1326,
+            "database_content_size": 0,
+            "content_match": true,
+            "similarity_score": 1,
+            "issues": [
+                "Content field is empty"
+            ],
+            "details": [
+                "Raw RTF content matches perfectly",
+                "Markdown conversion completed"
+            ]
+        },
+        "75468ABC-C50A-4CEC-AE67-62508EDE11C2": {
+            "status": "perfect",
+            "item_title": "Scratch Pad",
+            "uuid": "75468ABC-C50A-4CEC-AE67-62508EDE11C2",
+            "original_size": 9362,
+            "database_raw_size": 9362,
+            "database_content_size": 8,
+            "content_match": true,
+            "similarity_score": 1,
+            "issues": [],
+            "details": [
+                "Raw RTF content matches perfectly",
+                "Content field contains readable text",
+                "Markdown conversion completed"
+            ]
+        },
+        "F02A8186-DF6D-4CD4-8F00-3C2804688F0A": {
+            "status": "perfect",
+            "item_title": "Backing Up",
+            "uuid": "F02A8186-DF6D-4CD4-8F00-3C2804688F0A",
+            "original_size": 3494,
+            "database_raw_size": 3494,
+            "database_content_size": 9,
+            "content_match": true,
+            "similarity_score": 1,
+            "issues": [],
+            "details": [
+                "Raw RTF content matches perfectly",
+                "Content field contains readable text",
+                "Markdown conversion completed"
+            ]
+        },
+        "DB4DFBE5-DCE3-4747-BCBB-214DD0E7FFB4": {
+            "status": "perfect",
+            "item_title": "Resetting the Tutorial",
+            "uuid": "DB4DFBE5-DCE3-4747-BCBB-214DD0E7FFB4",
+            "original_size": 1395,
+            "database_raw_size": 1395,
+            "database_content_size": 4,
+            "content_match": true,
+            "similarity_score": 1,
+            "issues": [],
+            "details": [
+                "Raw RTF content matches perfectly",
+                "Content field contains readable text",
+                "Markdown conversion completed"
+            ]
+        }
+    },
+    "recommendations": [
+        "Fix 12 items with failed content preservation",
+        "Address 23 total issues found during validation"
+    ],
+    "timestamp": "2025-07-01 00:34:59"
+}

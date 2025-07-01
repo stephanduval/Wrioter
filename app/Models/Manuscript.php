@@ -103,6 +103,14 @@ class Manuscript extends Model
         return $this->hasMany(ExportConfiguration::class);
     }
 
+    /**
+     * Get the raw files for the manuscript.
+     */
+    public function rawFiles(): HasMany
+    {
+        return $this->hasMany(ManuscriptRawFile::class);
+    }
+
     public function createNewVersion(): Manuscript
     {
         $newVersion = $this->replicate();

@@ -8,6 +8,7 @@ use App\Services\ScrivenerImport\FileHandler;
 use App\Services\ScrivenerImport\XmlParser;
 use App\Services\ScrivenerImport\DataTransformer;
 use App\Services\ScrivenerImport\DatabasePopulator;
+use App\Services\ScrivenerImport\FileScanner;
 
 class ScrivenerImportServiceProvider extends ServiceProvider
 {
@@ -24,8 +25,15 @@ class ScrivenerImportServiceProvider extends ServiceProvider
             return new FileHandler();
         });
 
+        $this->app->singleton(FileScanner::class, function ($app) {
+            return new FileScanner();
+        });
+
         $this->app->singleton(XmlParser::class, function ($app) {
-            return new XmlParser($app->make(RtfConverter::class));
+            return new XmlParser(
+                $app->make(RtfConverter::class),
+                $app->make(FileScanner::class)
+            );
         });
 
         $this->app->singleton(DataTransformer::class, function ($app) {
@@ -33,7 +41,7 @@ class ScrivenerImportServiceProvider extends ServiceProvider
         });
 
         $this->app->singleton(DatabasePopulator::class, function ($app) {
-            return new DatabasePopulator();
+            return new DatabasePopulator($app->make(FileScanner::class));
         });
     }
 

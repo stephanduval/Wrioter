@@ -450,6 +450,16 @@
                   >
                     <VIcon icon="bx-sitemap" />
                   </VBtn>
+                  <VBtn 
+                    v-if="item.manuscript_type === 'scrivener'" 
+                    size="small" 
+                    variant="text" 
+                    icon 
+                    @click="viewManuscriptRawFiles(item)"
+                    title="View Raw Files"
+                  >
+                    <VIcon icon="bx-folder-open" />
+                  </VBtn>
                   <VBtn size="small" variant="text" icon @click="downloadManuscript(item)">
                     <VIcon icon="bx-download" />
                   </VBtn>
@@ -627,15 +637,23 @@
             <VCardTitle class="d-flex align-center justify-space-between">
               <div class="d-flex align-center">
                 <VIcon icon="bx-sitemap" class="me-2" />
-                Scrivener Content Structure: {{ selectedScrivenerContent.title }}
+                Scrivener Content Structure: {{ selectedScrivenerContent?.title || 'Unknown' }}
               </div>
-              <VBtn size="small" variant="text" @click="selectedScrivenerContent = null">
+              <VBtn size="small" variant="text" @click="closeScrivenerContent">
                 <VIcon icon="bx-x" />
                 Close
               </VBtn>
             </VCardTitle>
             <VCardText>
-              <ScrivenerContentTree :manuscript-id="selectedScrivenerContent.manuscript_id" :detailed="true" />
+              <ScrivenerContentTree 
+                v-if="selectedScrivenerContent?.manuscript_id"
+                :key="`scrivener-content-${selectedScrivenerContent.manuscript_id}`"
+                :manuscript-id="selectedScrivenerContent.manuscript_id" 
+                :detailed="true" 
+              />
+              <VAlert v-else type="warning" variant="tonal">
+                No manuscript ID available for this content structure.
+              </VAlert>
             </VCardText>
           </VCard>
         </VCol>
@@ -687,8 +705,11 @@
 import { format } from 'date-fns'
 import { computed, onMounted, ref } from 'vue'
 import { useToast } from 'vue-toastification'
+import { useRouter } from 'vue-router'
+import ScrivenerContentTree from '@/components/ScrivenerContentTree.vue'
 
 const toast = useToast()
+const router = useRouter()
 
 // Data refs
 const users = ref<any[]>([])
@@ -995,6 +1016,10 @@ const viewManuscriptStructure = (manuscript: any) => {
   }
 }
 
+const viewManuscriptRawFiles = (manuscript: any) => {
+  router.push(`/admin/manuscripts/${manuscript.id}/raw-files`)
+}
+
 const downloadManuscript = (manuscript: any) => {
   toast.info(`Download manuscript: ${manuscript.title}`)
 }
@@ -1020,6 +1045,10 @@ const viewScrivenerContent = (importItem: any) => {
     title: importItem.filename,
     manuscript_id: importItem.manuscript_id
   }
+}
+
+const closeScrivenerContent = () => {
+  selectedScrivenerContent.value = null
 }
 
 // Placeholder action functions

@@ -12,6 +12,7 @@ use App\Http\Controllers\AttachmentController;
 use App\Http\Controllers\SystemController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\ManuscriptController;
+use App\Http\Controllers\AdminController;
 use App\Http\Controllers\ScrivenerImportController;
 use Illuminate\Support\Facades\Mail;
 
@@ -125,6 +126,22 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/manuscripts/{id}/items', [ManuscriptController::class, 'items']);
     Route::put('/manuscripts/{id}', [ManuscriptController::class, 'update']);
     Route::delete('/manuscripts/{id}', [ManuscriptController::class, 'destroy']);
+});
+
+// Admin Routes for Raw Files
+Route::middleware('auth:sanctum')->group(function () {
+    Route::prefix('admin')->group(function () {
+        // Manuscript structure and raw files
+        Route::get('/manuscripts/{manuscriptId}/structure', [AdminController::class, 'getManuscriptStructure']);
+        Route::get('/manuscripts/{manuscriptId}/raw-files', [AdminController::class, 'getManuscriptRawFiles']);
+        Route::get('/manuscripts/{manuscriptId}/raw-files/{fileId}', [AdminController::class, 'getRawFileContent']);
+        Route::get('/manuscripts/{manuscriptId}/raw-files/{fileId}/download', [AdminController::class, 'downloadRawFile']);
+        
+        // Item attachments
+        Route::get('/items/{itemId}/attachments', [AdminController::class, 'getItemAttachments']);
+        Route::get('/items/{itemId}/attachments/{attachmentId}', [AdminController::class, 'getAttachmentContent']);
+        Route::get('/items/{itemId}/attachments/{attachmentId}/download', [AdminController::class, 'downloadAttachment']);
+    });
 });
 
 // Scrivener Import Routes

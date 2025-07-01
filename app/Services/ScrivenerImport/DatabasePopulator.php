@@ -7,6 +7,9 @@ use App\Models\ManuscriptItem;
 use App\Models\ManuscriptCollection;
 use App\Models\WritingHistory;
 use App\Models\Item;
+use App\Models\ManuscriptRawFile;
+use App\Models\ItemAttachment;
+use App\Services\ScrivenerImport\FileScanner;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Database\QueryException;
@@ -14,6 +17,13 @@ use RuntimeException;
 
 class DatabasePopulator
 {
+    private FileScanner $fileScanner;
+
+    public function __construct(FileScanner $fileScanner)
+    {
+        $this->fileScanner = $fileScanner;
+    }
+
     /**
      * Populate database with transformed data
      *
@@ -21,6 +31,8 @@ class DatabasePopulator
      * @param array $itemsData Transformed items data
      * @param array $collectionsData Transformed collections data
      * @param array $writingHistoryData Transformed writing history data
+     * @param array $manuscriptRawFiles Manuscript-level raw files
+     * @param callable|null $progressCallback Progress callback
      * @return array Import results
      * @throws RuntimeException
      */
@@ -28,7 +40,9 @@ class DatabasePopulator
         array $manuscriptData,
         array $itemsData,
         array $collectionsData,
-        array $writingHistoryData
+        array $writingHistoryData,
+        array $manuscriptRawFiles = [],
+        ?callable $progressCallback = null
     ): array {
         try {
             // Validate data before proceeding
@@ -53,6 +67,9 @@ class DatabasePopulator
             // Create writing history
             $writingHistory = $this->createWritingHistory($writingHistoryData);
 
+            // Create manuscript raw files
+            $rawFilesCount = $this->createManuscriptRawFiles($manuscript->id, $manuscriptRawFiles);
+
             // Update collection item references
             $this->updateCollectionItems($collections, $items);
 
@@ -63,6 +80,7 @@ class DatabasePopulator
                 'items_count' => count($items),
                 'collections_count' => count($collections),
                 'writing_history_count' => count($writingHistory),
+                'raw_files_count' => $rawFilesCount,
             ];
         } catch (QueryException $e) {
             DB::rollBack();
@@ -173,13 +191,17 @@ class DatabasePopulator
             $rawContent = $itemData['raw_content'] ?? '';
             $contentMarkdown = $itemData['content_markdown'] ?? '';
             
-            // If content is too large for TEXT field (64KB), truncate it and ensure we have it in raw_content
+            // If content is too large for TEXT field (65KB), truncate it but preserve full content in raw_content
             if (strlen($content) > 65000) {
+                // Ensure raw content contains the original unmodified content
                 if (empty($rawContent)) {
                     $rawContent = $content; // Store full content in raw_content
                 }
                 $content = substr($content, 0, 65000) . '... [Content truncated - view full content in raw_content field]';
             }
+            
+            // If raw_content is too large for TEXT field, store it as-is (LONGTEXT can handle it)
+            // The raw_content field should contain the original RTF without any modifications
             
             // Generate unique scrivener_uuid if duplicate exists
             $originalUuid = $itemData['scrivener_uuid'];
@@ -234,10 +256,10 @@ class DatabasePopulator
 
             // Create a version for the item
             $version = $item->versions()->create([
-                'user_id' => $itemData['user_id'],
-                'content' => $itemData['content'],
-                'synopsis' => $itemData['synopsis'],
-                'metadata' => $itemData['metadata'],
+                'user_id' => $itemData['user_id'] ?? $item->user_id,
+                'content' => $itemData['content'] ?? '',
+                'synopsis' => $itemData['synopsis'] ?? '',
+                'metadata' => $itemData['metadata'] ?? [],
                 'version_number' => 1,
                 'is_forked' => false,
             ]);
@@ -246,6 +268,11 @@ class DatabasePopulator
                 'item_id' => $item->id,
                 'version_id' => $version->id
             ]);
+
+            // Create item attachments if they exist
+            if (!empty($itemData['attachments'])) {
+                $this->createItemAttachments($item->id, $itemData['attachments']);
+            }
 
             // Store the item and version for later use
             $items[$item->scrivener_uuid] = $item;
@@ -526,5 +553,93 @@ class DatabasePopulator
             ]);
             return false;
         }
+    }
+
+    /**
+     * Create manuscript raw files
+     */
+    private function createManuscriptRawFiles(int $manuscriptId, array $rawFilesData): int
+    {
+        $createdCount = 0;
+
+        foreach ($rawFilesData as $fileData) {
+            // Read file content
+            $content = $this->fileScanner->readFileContent($fileData['file_path']);
+            if ($content === null) {
+                Log::warning('Could not read manuscript raw file', [
+                    'file_path' => $fileData['file_path'],
+                ]);
+                continue;
+            }
+
+            ManuscriptRawFile::create([
+                'manuscript_id' => $manuscriptId,
+                'file_type' => $fileData['file_type'],
+                'file_name' => $fileData['file_name'],
+                'file_content' => $content,
+                'file_size' => $fileData['file_size'],
+                'scrivener_path' => $fileData['scrivener_path'],
+                'metadata' => $fileData['metadata'],
+            ]);
+
+            $createdCount++;
+        }
+
+        Log::info('Created manuscript raw files', [
+            'manuscript_id' => $manuscriptId,
+            'count' => $createdCount,
+        ]);
+
+        return $createdCount;
+    }
+
+    /**
+     * Create item attachments
+     */
+    private function createItemAttachments(int $itemId, array $attachmentsData): int
+    {
+        $createdCount = 0;
+
+        foreach ($attachmentsData as $attachmentData) {
+            // Read file content
+            $isBinary = $this->fileScanner->isBinaryFile($attachmentData['file_name']);
+            $content = $this->fileScanner->readFileContent($attachmentData['file_path'], $isBinary);
+            
+            if ($content === null) {
+                Log::warning('Could not read item attachment file', [
+                    'file_path' => $attachmentData['file_path'],
+                ]);
+                continue;
+            }
+
+            // For special files, also store raw content
+            $rawContent = null;
+            if (isset($attachmentData['metadata']['is_special_file'])) {
+                $rawContent = $this->fileScanner->readFileContent($attachmentData['file_path'], false);
+            }
+
+            ItemAttachment::create([
+                'item_id' => $itemId,
+                'file_type' => $attachmentData['file_type'],
+                'file_name' => $attachmentData['file_name'],
+                'file_content' => $content,
+                'raw_content' => $rawContent,
+                'file_size' => $attachmentData['file_size'],
+                'mime_type' => $attachmentData['mime_type'],
+                'scrivener_path' => $attachmentData['scrivener_path'],
+                'metadata' => $attachmentData['metadata'],
+            ]);
+
+            $createdCount++;
+        }
+
+        if ($createdCount > 0) {
+            Log::debug('Created item attachments', [
+                'item_id' => $itemId,
+                'count' => $createdCount,
+            ]);
+        }
+
+        return $createdCount;
     }
 } 

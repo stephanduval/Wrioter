@@ -1,0 +1,2418 @@
+{
+    "timestamp": "2025-06-30 21:17:29",
+    "data_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data",
+    "total_items": 85,
+    "results": {
+        "0B81C207-557F-45E2-A40C-533A3011B09A": {
+            "uuid": "0B81C207-557F-45E2-A40C-533A3011B09A",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/0B81C207-557F-45E2-A40C-533A3011B09A",
+            "has_rtf": true,
+            "has_synopsis": false,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 2,
+            "rtf_size": 1220,
+            "rtf_lines": 8,
+            "content_preview": "Cambria;SegoeUI-Bold; ;;;;; You can print individual documents, the contents of the outliner, and index cards from the corkboard, by using <$Scr_Cs::0>File > Print Current Document85<!$Scr_Cs::0> in t...",
+            "rtf_encoding": "UTF-8",
+            "files": [
+                {
+                    "name": "content.rtf",
+                    "size": 1220,
+                    "size_formatted": "1.19 KB"
+                },
+                {
+                    "name": "content.styles",
+                    "size": 73,
+                    "size_formatted": "73.00 B"
+                }
+            ],
+            "rtf_issues": [],
+            "rtf_control_words": 141
+        },
+        "0DC2935C-7410-46F3-98A9-91769014F867": {
+            "uuid": "0DC2935C-7410-46F3-98A9-91769014F867",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/0DC2935C-7410-46F3-98A9-91769014F867",
+            "has_rtf": true,
+            "has_synopsis": false,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 3,
+            "rtf_size": 711,
+            "rtf_lines": 5,
+            "content_preview": "Cambria;SegoeUI-Bold; ;;;;; Go to <$Scr_Cs::0>File > Options85<!$Scr_Cs::0> and enter your details in the 93Author Information94 section of the 93General94 tab.",
+            "rtf_encoding": "UTF-8",
+            "files": [
+                {
+                    "name": ".~lock.content.rtf#",
+                    "size": 78,
+                    "size_formatted": "78.00 B"
+                },
+                {
+                    "name": "content.rtf",
+                    "size": 711,
+                    "size_formatted": "711.00 B"
+                },
+                {
+                    "name": "content.styles",
+                    "size": 36,
+                    "size_formatted": "36.00 B"
+                }
+            ],
+            "rtf_issues": [],
+            "rtf_control_words": 90
+        },
+        "0E55C8CA-8028-4B08-AEBB-32D5D19BC24D": {
+            "uuid": "0E55C8CA-8028-4B08-AEBB-32D5D19BC24D",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/0E55C8CA-8028-4B08-AEBB-32D5D19BC24D",
+            "has_rtf": true,
+            "has_synopsis": true,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 3,
+            "rtf_size": 17297,
+            "rtf_lines": 57,
+            "content_preview": "Cambria;SegoeUI-Bold;SegoeUI-BoldItalic;Calibri;Calibri-Italic;Cambria;Cambria; ;;;;;; We92ve seen that one of the key concepts of Scrivener is that you work on your manuscript in pieces, but this wou...",
+            "rtf_encoding": "UTF-8",
+            "files": [
+                {
+                    "name": "content.rtf",
+                    "size": 17297,
+                    "size_formatted": "16.89 KB"
+                },
+                {
+                    "name": "content.styles",
+                    "size": 221,
+                    "size_formatted": "221.00 B"
+                },
+                {
+                    "name": "synopsis.txt",
+                    "size": 109,
+                    "size_formatted": "109.00 B"
+                }
+            ],
+            "rtf_issues": [],
+            "rtf_control_words": 1562
+        },
+        "0EC0AC4B-5A37-4303-9152-5D83992CAA74": {
+            "uuid": "0EC0AC4B-5A37-4303-9152-5D83992CAA74",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/0EC0AC4B-5A37-4303-9152-5D83992CAA74",
+            "has_rtf": true,
+            "has_synopsis": false,
+            "has_notes": true,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 3,
+            "rtf_size": 25421,
+            "rtf_lines": 32,
+            "content_preview": "Cambria;SegoeUI-Bold;Cambria; ;;;;;; isc'0195;;-667; As well as being able to split the editor to view more than one document, you can open documents in their own windows, allowing you to have as many...",
+            "rtf_encoding": "UTF-8",
+            "files": [
+                {
+                    "name": "content.rtf",
+                    "size": 25421,
+                    "size_formatted": "24.83 KB"
+                },
+                {
+                    "name": "content.styles",
+                    "size": 110,
+                    "size_formatted": "110.00 B"
+                },
+                {
+                    "name": "notes.rtf",
+                    "size": 468,
+                    "size_formatted": "468.00 B"
+                }
+            ],
+            "rtf_issues": [
+                "Contains embedded images"
+            ],
+            "rtf_control_words": 665
+        },
+        "10EECC9A-7AA5-4598-946B-EA7576735C9C": {
+            "uuid": "10EECC9A-7AA5-4598-946B-EA7576735C9C",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/10EECC9A-7AA5-4598-946B-EA7576735C9C",
+            "has_rtf": true,
+            "has_synopsis": false,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 2,
+            "rtf_size": 1533,
+            "rtf_lines": 11,
+            "content_preview": "Cambria;SegoeUI-Bold; ;;;;; By default, Scrivener92s editor uses a 93fixed width94, so that when the editor is expanded beyond a certain width, the text will appear as a column in its centre. If you w...",
+            "rtf_encoding": "UTF-8",
+            "files": [
+                {
+                    "name": "content.rtf",
+                    "size": 1533,
+                    "size_formatted": "1.50 KB"
+                },
+                {
+                    "name": "content.styles",
+                    "size": 73,
+                    "size_formatted": "73.00 B"
+                }
+            ],
+            "rtf_issues": [],
+            "rtf_control_words": 173
+        },
+        "12E12767-9349-4182-A5CD-598343B0CE00": {
+            "uuid": "12E12767-9349-4182-A5CD-598343B0CE00",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/12E12767-9349-4182-A5CD-598343B0CE00",
+            "has_rtf": true,
+            "has_synopsis": false,
+            "has_notes": false,
+            "has_comments": true,
+            "has_media": false,
+            "file_count": 3,
+            "rtf_size": 7803,
+            "rtf_lines": 33,
+            "content_preview": "Cambria;Cambria;Cambria;SegoeUI-BoldItalic;Calibri;SegoeUI-Bold;Cambria; ;;;;;; Now we92ll look at the 93Comments & Footnotes94 tabdon92t worry about clicking on the button in the inspector header bar...",
+            "rtf_encoding": "UTF-8",
+            "files": [
+                {
+                    "name": "content.comments",
+                    "size": 1832,
+                    "size_formatted": "1.79 KB"
+                },
+                {
+                    "name": "content.rtf",
+                    "size": 7803,
+                    "size_formatted": "7.62 KB"
+                },
+                {
+                    "name": "content.styles",
+                    "size": 184,
+                    "size_formatted": "184.00 B"
+                }
+            ],
+            "rtf_issues": [],
+            "rtf_control_words": 774
+        },
+        "1AD2BF1D-CBF0-4759-A0C5-69A177DFF938": {
+            "uuid": "1AD2BF1D-CBF0-4759-A0C5-69A177DFF938",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/1AD2BF1D-CBF0-4759-A0C5-69A177DFF938",
+            "has_rtf": true,
+            "has_synopsis": false,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 2,
+            "rtf_size": 3016,
+            "rtf_lines": 15,
+            "content_preview": "Cambria;SegoeUI-Bold; ;;;;; Generally, Scrivener is set up to assume that each project contains a single book (or writing project): when you compile, you compile the entire Draft folder into a single ...",
+            "rtf_encoding": "UTF-8",
+            "files": [
+                {
+                    "name": "content.rtf",
+                    "size": 3016,
+                    "size_formatted": "2.95 KB"
+                },
+                {
+                    "name": "content.styles",
+                    "size": 73,
+                    "size_formatted": "73.00 B"
+                }
+            ],
+            "rtf_issues": [],
+            "rtf_control_words": 256
+        },
+        "20D24E58-72B2-4440-8228-580A392B446D": {
+            "uuid": "20D24E58-72B2-4440-8228-580A392B446D",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/20D24E58-72B2-4440-8228-580A392B446D",
+            "has_rtf": false,
+            "has_synopsis": true,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 1,
+            "rtf_size": 0,
+            "rtf_lines": 0,
+            "content_preview": "",
+            "rtf_encoding": "",
+            "files": [
+                {
+                    "name": "synopsis.txt",
+                    "size": 121,
+                    "size_formatted": "121.00 B"
+                }
+            ]
+        },
+        "27F8D41C-85B0-44D7-93A0-4C97EE420720": {
+            "uuid": "27F8D41C-85B0-44D7-93A0-4C97EE420720",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/27F8D41C-85B0-44D7-93A0-4C97EE420720",
+            "has_rtf": true,
+            "has_synopsis": false,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 2,
+            "rtf_size": 36025,
+            "rtf_lines": 38,
+            "content_preview": "Cambria;Cambria;SegoeUI-Bold;Cambria; ;;;;;; You can set three types of word and character count targets in Scrivener: -475<$Scr_Ps::0>1.Draft target: the total number of words, characters or pages yo...",
+            "rtf_encoding": "UTF-8",
+            "files": [
+                {
+                    "name": "content.rtf",
+                    "size": 36025,
+                    "size_formatted": "35.18 KB"
+                },
+                {
+                    "name": "content.styles",
+                    "size": 147,
+                    "size_formatted": "147.00 B"
+                }
+            ],
+            "rtf_issues": [
+                "Contains embedded images"
+            ],
+            "rtf_control_words": 857
+        },
+        "281EBD00-4C16-4AB8-AC63-72CB1B15F349": {
+            "uuid": "281EBD00-4C16-4AB8-AC63-72CB1B15F349",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/281EBD00-4C16-4AB8-AC63-72CB1B15F349",
+            "has_rtf": true,
+            "has_synopsis": false,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 2,
+            "rtf_size": 1511,
+            "rtf_lines": 10,
+            "content_preview": "Cambria;SegoeUI-Bold; ;;;;; Revision mode allows you to use a different text colour while editing or revising your text, without having to change the colour again every time you click into a different...",
+            "rtf_encoding": "UTF-8",
+            "files": [
+                {
+                    "name": "content.rtf",
+                    "size": 1511,
+                    "size_formatted": "1.48 KB"
+                },
+                {
+                    "name": "content.styles",
+                    "size": 73,
+                    "size_formatted": "73.00 B"
+                }
+            ],
+            "rtf_issues": [],
+            "rtf_control_words": 145
+        },
+        "295FD092-A6EA-4AD3-B3C7-E5F201655E21": {
+            "uuid": "295FD092-A6EA-4AD3-B3C7-E5F201655E21",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/295FD092-A6EA-4AD3-B3C7-E5F201655E21",
+            "has_rtf": true,
+            "has_synopsis": false,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 2,
+            "rtf_size": 8493,
+            "rtf_lines": 27,
+            "content_preview": "Cambria;SegoeUI-Bold;SegoeUI-BoldItalic;Calibri;Calibri-Italic; ;;;;; In 93The Basics94, we learned about how HYPERLINK \"scrivlnk:\/\/99D796F9-C09D-403D-9E7C-9F47B741C57F\"Bookmarks can be used to store ...",
+            "rtf_encoding": "UTF-8",
+            "files": [
+                {
+                    "name": "content.rtf",
+                    "size": 8493,
+                    "size_formatted": "8.29 KB"
+                },
+                {
+                    "name": "content.styles",
+                    "size": 184,
+                    "size_formatted": "184.00 B"
+                }
+            ],
+            "rtf_issues": [],
+            "rtf_control_words": 731
+        },
+        "2BCDC339-AC10-40F0-BE90-553B5BE103A1": {
+            "uuid": "2BCDC339-AC10-40F0-BE90-553B5BE103A1",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/2BCDC339-AC10-40F0-BE90-553B5BE103A1",
+            "has_rtf": true,
+            "has_synopsis": false,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 2,
+            "rtf_size": 1326,
+            "rtf_lines": 10,
+            "content_preview": "Cambria;SegoeUI-Bold; ;;;;; If you find yourself opening and closing the binder and inspector frequently, or spending a lot of time setting up the corkboard or outliner view to appear in the right pla...",
+            "rtf_encoding": "UTF-8",
+            "files": [
+                {
+                    "name": "content.rtf",
+                    "size": 1326,
+                    "size_formatted": "1.29 KB"
+                },
+                {
+                    "name": "content.styles",
+                    "size": 36,
+                    "size_formatted": "36.00 B"
+                }
+            ],
+            "rtf_issues": [],
+            "rtf_control_words": 110
+        },
+        "2EB10504-72EC-4C03-9633-F64A91140F97": {
+            "uuid": "2EB10504-72EC-4C03-9633-F64A91140F97",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/2EB10504-72EC-4C03-9633-F64A91140F97",
+            "has_rtf": true,
+            "has_synopsis": true,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 3,
+            "rtf_size": 26933,
+            "rtf_lines": 59,
+            "content_preview": "Cambria;SegoeUI-Bold;Cambria;Cambria;SegoeUI-BoldItalic;Calibri; ;;;;;; Scrivener92s editor has four possible modesfour different ways of viewing your work. Learning how and when to switch between the...",
+            "rtf_encoding": "UTF-8",
+            "files": [
+                {
+                    "name": "content.rtf",
+                    "size": 26933,
+                    "size_formatted": "26.30 KB"
+                },
+                {
+                    "name": "content.styles",
+                    "size": 221,
+                    "size_formatted": "221.00 B"
+                },
+                {
+                    "name": "synopsis.txt",
+                    "size": 127,
+                    "size_formatted": "127.00 B"
+                }
+            ],
+            "rtf_issues": [
+                "Contains embedded images"
+            ],
+            "rtf_control_words": 1600
+        },
+        "3094BAC9-DB3E-4389-B801-1CB39C4E923B": {
+            "uuid": "3094BAC9-DB3E-4389-B801-1CB39C4E923B",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/3094BAC9-DB3E-4389-B801-1CB39C4E923B",
+            "has_rtf": true,
+            "has_synopsis": false,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 2,
+            "rtf_size": 1263986,
+            "rtf_lines": 28,
+            "content_preview": "Cambria;Cambria;SegoeUI-BoldItalic;Cambria;SegoeUI-Bold; ;;;;;; The outliner and corkboard are not only great organisational tools: they can also be used to navigate, just like the binder, using the 9...",
+            "rtf_encoding": "UTF-8",
+            "files": [
+                {
+                    "name": "content.rtf",
+                    "size": 1263986,
+                    "size_formatted": "1.21 MB"
+                },
+                {
+                    "name": "content.styles",
+                    "size": 147,
+                    "size_formatted": "147.00 B"
+                }
+            ],
+            "rtf_issues": [
+                "File larger than 65KB (may be truncated in database)",
+                "Contains embedded images"
+            ],
+            "rtf_control_words": 545
+        },
+        "3585A235-B9F8-4D14-BFB5-47CA63D4DD41": {
+            "uuid": "3585A235-B9F8-4D14-BFB5-47CA63D4DD41",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/3585A235-B9F8-4D14-BFB5-47CA63D4DD41",
+            "has_rtf": true,
+            "has_synopsis": false,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 2,
+            "rtf_size": 5351,
+            "rtf_lines": 16,
+            "content_preview": "Cambria;SegoeUI-Bold;Cambria; ;;;;; Scrivener92s corkboard is not like a real corkboard: on a real corkboard, you can pin cards anywhere; in Scrivener, the corkboard is a linear list of of a group92s ...",
+            "rtf_encoding": "UTF-8",
+            "files": [
+                {
+                    "name": "content.rtf",
+                    "size": 5351,
+                    "size_formatted": "5.23 KB"
+                },
+                {
+                    "name": "content.styles",
+                    "size": 73,
+                    "size_formatted": "73.00 B"
+                }
+            ],
+            "rtf_issues": [
+                "Contains embedded images"
+            ],
+            "rtf_control_words": 312
+        },
+        "360A0C5A-BDB6-48C5-BFFF-0BABC7DCF868": {
+            "uuid": "360A0C5A-BDB6-48C5-BFFF-0BABC7DCF868",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/360A0C5A-BDB6-48C5-BFFF-0BABC7DCF868",
+            "has_rtf": true,
+            "has_synopsis": false,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 2,
+            "rtf_size": 19882,
+            "rtf_lines": 39,
+            "content_preview": "Cambria;Cambria;SegoeUI-Bold;Cambria;SegoeUI-BoldItalic;Calibri; ;;;;;; Styles allow you to save and apply formatting to text. For example, you could create a 93Block Quote94 style with an indent and ...",
+            "rtf_encoding": "UTF-8",
+            "files": [
+                {
+                    "name": "content.rtf",
+                    "size": 19882,
+                    "size_formatted": "19.42 KB"
+                },
+                {
+                    "name": "content.styles",
+                    "size": 221,
+                    "size_formatted": "221.00 B"
+                }
+            ],
+            "rtf_issues": [
+                "Contains embedded images"
+            ],
+            "rtf_control_words": 971
+        },
+        "39B6D7E0-8A3E-4145-B93C-E294C9FBA881": {
+            "uuid": "39B6D7E0-8A3E-4145-B93C-E294C9FBA881",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/39B6D7E0-8A3E-4145-B93C-E294C9FBA881",
+            "has_rtf": true,
+            "has_synopsis": false,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 2,
+            "rtf_size": 4390,
+            "rtf_lines": 26,
+            "content_preview": "Cambria;Cambria;SegoeUI-Bold;SegoeUI-BoldItalic; ;;;;;; <$Scr_Ps::0>Changing the Default Formatting for New Documents<!$Scr_Ps::0> You can change the default formatting used for new documents like thi...",
+            "rtf_encoding": "UTF-8",
+            "files": [
+                {
+                    "name": "content.rtf",
+                    "size": 4390,
+                    "size_formatted": "4.29 KB"
+                },
+                {
+                    "name": "content.styles",
+                    "size": 147,
+                    "size_formatted": "147.00 B"
+                }
+            ],
+            "rtf_issues": [],
+            "rtf_control_words": 423
+        },
+        "3BA58EA8-BCBA-43EA-A316-E42444147EE1": {
+            "uuid": "3BA58EA8-BCBA-43EA-A316-E42444147EE1",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/3BA58EA8-BCBA-43EA-A316-E42444147EE1",
+            "has_rtf": true,
+            "has_synopsis": false,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 2,
+            "rtf_size": 1850,
+            "rtf_lines": 11,
+            "content_preview": "Cambria;SegoeUI-Bold; ;;;;; When assigning keywords to documents from the keywords dialog, you can simultaneously assign the groups to which they belong by holding down the Alt key while dragging. Try...",
+            "rtf_encoding": "UTF-8",
+            "files": [
+                {
+                    "name": "content.rtf",
+                    "size": 1850,
+                    "size_formatted": "1.81 KB"
+                },
+                {
+                    "name": "content.styles",
+                    "size": 73,
+                    "size_formatted": "73.00 B"
+                }
+            ],
+            "rtf_issues": [],
+            "rtf_control_words": 171
+        },
+        "3BE8863C-BF9A-4868-B698-24149A1AA425": {
+            "uuid": "3BE8863C-BF9A-4868-B698-24149A1AA425",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/3BE8863C-BF9A-4868-B698-24149A1AA425",
+            "has_rtf": true,
+            "has_synopsis": false,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 2,
+            "rtf_size": 3521,
+            "rtf_lines": 16,
+            "content_preview": "Cambria;SegoeUI-Bold;SegoeUI-BoldItalic;Calibri; ;;;;; In 93The Basics94, we saw that you can split Scrivener92s editor in two to view two documents alongside one another. However, each of the two edi...",
+            "rtf_encoding": "UTF-8",
+            "files": [
+                {
+                    "name": "content.rtf",
+                    "size": 3521,
+                    "size_formatted": "3.44 KB"
+                },
+                {
+                    "name": "content.styles",
+                    "size": 147,
+                    "size_formatted": "147.00 B"
+                }
+            ],
+            "rtf_issues": [],
+            "rtf_control_words": 283
+        },
+        "3D2A1CF2-15CC-46F8-B5A2-690124F89B1B": {
+            "uuid": "3D2A1CF2-15CC-46F8-B5A2-690124F89B1B",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/3D2A1CF2-15CC-46F8-B5A2-690124F89B1B",
+            "has_rtf": true,
+            "has_synopsis": false,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 2,
+            "rtf_size": 3868,
+            "rtf_lines": 19,
+            "content_preview": "Cambria;SegoeUI-Bold; ;;;;; You can assign any file or folder a custom icon via <$Scr_Cs::0>Documents > Change Icon<!$Scr_Cs::0>. Some of the documents in this project have custom icons assigned, such...",
+            "rtf_encoding": "UTF-8",
+            "files": [
+                {
+                    "name": "content.rtf",
+                    "size": 3868,
+                    "size_formatted": "3.78 KB"
+                },
+                {
+                    "name": "content.styles",
+                    "size": 73,
+                    "size_formatted": "73.00 B"
+                }
+            ],
+            "rtf_issues": [],
+            "rtf_control_words": 383
+        },
+        "3DD828FA-5BBE-4C31-A23B-B613A2EAA8E8": {
+            "uuid": "3DD828FA-5BBE-4C31-A23B-B613A2EAA8E8",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/3DD828FA-5BBE-4C31-A23B-B613A2EAA8E8",
+            "has_rtf": true,
+            "has_synopsis": false,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 2,
+            "rtf_size": 2041,
+            "rtf_lines": 12,
+            "content_preview": "Cambria;Cambria; ;;;; Scrivener projects are saved on disk as folders with the extension 93.scriv94. To see what I mean, try the following: -475<$Scr_Ps::0>1.Double-click on a .scriv folder in File Ex...",
+            "rtf_encoding": "UTF-8",
+            "files": [
+                {
+                    "name": "content.rtf",
+                    "size": 2041,
+                    "size_formatted": "1.99 KB"
+                },
+                {
+                    "name": "content.styles",
+                    "size": 36,
+                    "size_formatted": "36.00 B"
+                }
+            ],
+            "rtf_issues": [],
+            "rtf_control_words": 174
+        },
+        "3E354274-F01B-4FE7-8F74-0C3FDE0D7642": {
+            "uuid": "3E354274-F01B-4FE7-8F74-0C3FDE0D7642",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/3E354274-F01B-4FE7-8F74-0C3FDE0D7642",
+            "has_rtf": false,
+            "has_synopsis": true,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": true,
+            "file_count": 2,
+            "rtf_size": 0,
+            "rtf_lines": 0,
+            "content_preview": "",
+            "rtf_encoding": "",
+            "files": [
+                {
+                    "name": "content.pdf",
+                    "size": 840553,
+                    "size_formatted": "820.85 KB"
+                },
+                {
+                    "name": "synopsis.txt",
+                    "size": 45,
+                    "size_formatted": "45.00 B"
+                }
+            ]
+        },
+        "423A1C1B-9A98-4849-B37A-0F75F80292C7": {
+            "uuid": "423A1C1B-9A98-4849-B37A-0F75F80292C7",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/423A1C1B-9A98-4849-B37A-0F75F80292C7",
+            "has_rtf": true,
+            "has_synopsis": false,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 2,
+            "rtf_size": 224699,
+            "rtf_lines": 66,
+            "content_preview": "Cambria;Cambria;Cambria;SegoeUI-Bold; ;;;;;; Collections provide a way of keeping different lists of binder documents around. There are two types of collection: -475<$Scr_Ps::0>1.Arbitrary collections...",
+            "rtf_encoding": "UTF-8",
+            "files": [
+                {
+                    "name": "content.rtf",
+                    "size": 224699,
+                    "size_formatted": "219.43 KB"
+                },
+                {
+                    "name": "content.styles",
+                    "size": 147,
+                    "size_formatted": "147.00 B"
+                }
+            ],
+            "rtf_issues": [
+                "File larger than 65KB (may be truncated in database)",
+                "Contains embedded images"
+            ],
+            "rtf_control_words": 1667
+        },
+        "46EC1384-37DF-438C-83EF-9880EB42A589": {
+            "uuid": "46EC1384-37DF-438C-83EF-9880EB42A589",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/46EC1384-37DF-438C-83EF-9880EB42A589",
+            "has_rtf": true,
+            "has_synopsis": true,
+            "has_notes": true,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 4,
+            "rtf_size": 2295,
+            "rtf_lines": 13,
+            "content_preview": "Cambria;Cambria; ;;;;; <$Scr_Ps::0>Synopsis Index Card<!$Scr_Ps::0> At the top of the Notes tab of the inspector is a virtual index card, in which you can type a synopsis of your document (the header ...",
+            "rtf_encoding": "UTF-8",
+            "files": [
+                {
+                    "name": "content.rtf",
+                    "size": 2295,
+                    "size_formatted": "2.24 KB"
+                },
+                {
+                    "name": "content.styles",
+                    "size": 36,
+                    "size_formatted": "36.00 B"
+                },
+                {
+                    "name": "notes.rtf",
+                    "size": 600,
+                    "size_formatted": "600.00 B"
+                },
+                {
+                    "name": "synopsis.txt",
+                    "size": 21,
+                    "size_formatted": "21.00 B"
+                }
+            ],
+            "rtf_issues": [],
+            "rtf_control_words": 188
+        },
+        "4751BEAD-F449-44FE-BE9F-D5CE39B0FDCC": {
+            "uuid": "4751BEAD-F449-44FE-BE9F-D5CE39B0FDCC",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/4751BEAD-F449-44FE-BE9F-D5CE39B0FDCC",
+            "has_rtf": false,
+            "has_synopsis": true,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 1,
+            "rtf_size": 0,
+            "rtf_lines": 0,
+            "content_preview": "",
+            "rtf_encoding": "",
+            "files": [
+                {
+                    "name": "synopsis.txt",
+                    "size": 54,
+                    "size_formatted": "54.00 B"
+                }
+            ]
+        },
+        "558B5870-DDC0-4C80-B020-73556C71A785": {
+            "uuid": "558B5870-DDC0-4C80-B020-73556C71A785",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/558B5870-DDC0-4C80-B020-73556C71A785",
+            "has_rtf": true,
+            "has_synopsis": false,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 1,
+            "rtf_size": 1371,
+            "rtf_lines": 33,
+            "content_preview": "Cambria; ;;;; Name of Setting Role in Story Related Characters Season Unique Features Description Sights Sounds Smell Notes",
+            "rtf_encoding": "UTF-8",
+            "files": [
+                {
+                    "name": "content.rtf",
+                    "size": 1371,
+                    "size_formatted": "1.34 KB"
+                }
+            ],
+            "rtf_issues": [],
+            "rtf_control_words": 232
+        },
+        "59E0C12A-928F-4294-B335-F238966E989B": {
+            "uuid": "59E0C12A-928F-4294-B335-F238966E989B",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/59E0C12A-928F-4294-B335-F238966E989B",
+            "has_rtf": true,
+            "has_synopsis": false,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 2,
+            "rtf_size": 2139,
+            "rtf_lines": 10,
+            "content_preview": "Cambria;SegoeUI-Bold; ;;;;; Scrivener92s main interface comprises the following: -475<$Scr_Ps::0>The list on the left is called the <$Scr_Cs::1>binder<!$Scr_Cs::1>, because it acts as the project92s r...",
+            "rtf_encoding": "UTF-8",
+            "files": [
+                {
+                    "name": "content.rtf",
+                    "size": 2139,
+                    "size_formatted": "2.09 KB"
+                },
+                {
+                    "name": "content.styles",
+                    "size": 73,
+                    "size_formatted": "73.00 B"
+                }
+            ],
+            "rtf_issues": [],
+            "rtf_control_words": 221
+        },
+        "6242BA6B-02B4-4CAC-AECD-B74418F33F8B": {
+            "uuid": "6242BA6B-02B4-4CAC-AECD-B74418F33F8B",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/6242BA6B-02B4-4CAC-AECD-B74418F33F8B",
+            "has_rtf": true,
+            "has_synopsis": false,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 2,
+            "rtf_size": 807,
+            "rtf_lines": 6,
+            "content_preview": "Cambria;SegoeUI-Bold; ;;;;; A quick way of adding documents to the project bookmarks list is right-clicking selected document in the binder and selecting 93<$Scr_Cs::0>Add to Project Bookmarks<!$Scr_C...",
+            "rtf_encoding": "UTF-8",
+            "files": [
+                {
+                    "name": "content.rtf",
+                    "size": 807,
+                    "size_formatted": "807.00 B"
+                },
+                {
+                    "name": "content.styles",
+                    "size": 36,
+                    "size_formatted": "36.00 B"
+                }
+            ],
+            "rtf_issues": [],
+            "rtf_control_words": 96
+        },
+        "6585B860-8A17-4022-8A32-CF7F559E5205": {
+            "uuid": "6585B860-8A17-4022-8A32-CF7F559E5205",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/6585B860-8A17-4022-8A32-CF7F559E5205",
+            "has_rtf": true,
+            "has_synopsis": false,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 2,
+            "rtf_size": 3578,
+            "rtf_lines": 17,
+            "content_preview": "Cambria;SegoeUI-Bold;Cambria; ;;;;;; One last thing to note before I leave you to it: Scrivener auto-saves your work so you don92t have to worry about saving manually. Every time you make an edit to t...",
+            "rtf_encoding": "UTF-8",
+            "files": [
+                {
+                    "name": "content.rtf",
+                    "size": 3578,
+                    "size_formatted": "3.49 KB"
+                },
+                {
+                    "name": "content.styles",
+                    "size": 73,
+                    "size_formatted": "73.00 B"
+                }
+            ],
+            "rtf_issues": [],
+            "rtf_control_words": 279
+        },
+        "66DA4D24-B483-492F-9DBB-AC0DB40D9686": {
+            "uuid": "66DA4D24-B483-492F-9DBB-AC0DB40D9686",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/66DA4D24-B483-492F-9DBB-AC0DB40D9686",
+            "has_rtf": true,
+            "has_synopsis": false,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 2,
+            "rtf_size": 1605,
+            "rtf_lines": 12,
+            "content_preview": "Cambria;SegoeUI-Bold; ;;;;; By default, clicking on a HYPERLINK \"scrivlnk:\/\/FA7EDB1F-C413-446B-A494-C068DCF80E89\"document link opens it in the other editor. You can change this behaviour and determine...",
+            "rtf_encoding": "UTF-8",
+            "files": [
+                {
+                    "name": "content.rtf",
+                    "size": 1605,
+                    "size_formatted": "1.57 KB"
+                },
+                {
+                    "name": "content.styles",
+                    "size": 73,
+                    "size_formatted": "73.00 B"
+                }
+            ],
+            "rtf_issues": [],
+            "rtf_control_words": 177
+        },
+        "67721357-8FC2-437B-8B3A-D2DBDBA7CFC8": {
+            "uuid": "67721357-8FC2-437B-8B3A-D2DBDBA7CFC8",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/67721357-8FC2-437B-8B3A-D2DBDBA7CFC8",
+            "has_rtf": true,
+            "has_synopsis": true,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 3,
+            "rtf_size": 10692,
+            "rtf_lines": 21,
+            "content_preview": "Cambria;SegoeUI-Bold; ;;;;; Composition mode blocks everything else out so that it92s just you and your words. To enter composition mode, try one of the following: -475<$Scr_Ps::0>Click on the square,...",
+            "rtf_encoding": "UTF-8",
+            "files": [
+                {
+                    "name": "content.rtf",
+                    "size": 10692,
+                    "size_formatted": "10.44 KB"
+                },
+                {
+                    "name": "content.styles",
+                    "size": 73,
+                    "size_formatted": "73.00 B"
+                },
+                {
+                    "name": "synopsis.txt",
+                    "size": 45,
+                    "size_formatted": "45.00 B"
+                }
+            ],
+            "rtf_issues": [
+                "Contains embedded images"
+            ],
+            "rtf_control_words": 495
+        },
+        "67F50977-F38F-4A53-9D05-121373AFC2BB": {
+            "uuid": "67F50977-F38F-4A53-9D05-121373AFC2BB",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/67F50977-F38F-4A53-9D05-121373AFC2BB",
+            "has_rtf": true,
+            "has_synopsis": false,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 2,
+            "rtf_size": 4058,
+            "rtf_lines": 19,
+            "content_preview": "Cambria;SegoeUI-Bold;SegoeUI-BoldItalic; ;;;;; There are three ways of getting work out in Scrivener: -475<$Scr_Ps::0>1.HYPERLINK \"scrivlnk:\/\/0E55C8CA-8028-4B08-AEBB-32D5D19BC24D\"Compile the Draft fol...",
+            "rtf_encoding": "UTF-8",
+            "files": [
+                {
+                    "name": "content.rtf",
+                    "size": 4058,
+                    "size_formatted": "3.96 KB"
+                },
+                {
+                    "name": "content.styles",
+                    "size": 147,
+                    "size_formatted": "147.00 B"
+                }
+            ],
+            "rtf_issues": [],
+            "rtf_control_words": 423
+        },
+        "68C54D41-3B65-43A8-AB23-8342335E9217": {
+            "uuid": "68C54D41-3B65-43A8-AB23-8342335E9217",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/68C54D41-3B65-43A8-AB23-8342335E9217",
+            "has_rtf": true,
+            "has_synopsis": false,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 2,
+            "rtf_size": 737,
+            "rtf_lines": 6,
+            "content_preview": "Cambria;SegoeUI-Bold; ;;;;; Having problems coming up with character names? Scrivener comes with a name generator, available from <$Scr_Cs::0>Edit > Writing Tools > Name Generator85<!$Scr_Cs::0>",
+            "rtf_encoding": "UTF-8",
+            "files": [
+                {
+                    "name": "content.rtf",
+                    "size": 737,
+                    "size_formatted": "737.00 B"
+                },
+                {
+                    "name": "content.styles",
+                    "size": 36,
+                    "size_formatted": "36.00 B"
+                }
+            ],
+            "rtf_issues": [],
+            "rtf_control_words": 83
+        },
+        "68EDD5A9-3B64-4F28-88D1-F2C843441B80": {
+            "uuid": "68EDD5A9-3B64-4F28-88D1-F2C843441B80",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/68EDD5A9-3B64-4F28-88D1-F2C843441B80",
+            "has_rtf": true,
+            "has_synopsis": false,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 2,
+            "rtf_size": 39417,
+            "rtf_lines": 25,
+            "content_preview": "Cambria;SegoeUI-Bold;SegoeUI-BoldItalic;Calibri;Cambria; ;;;;;; The corkboard shows the immediate subdocuments of the selected document. To see this in action: -475<$Scr_Ps::0>1.Split the editor again...",
+            "rtf_encoding": "UTF-8",
+            "files": [
+                {
+                    "name": "content.rtf",
+                    "size": 39417,
+                    "size_formatted": "38.49 KB"
+                },
+                {
+                    "name": "content.styles",
+                    "size": 184,
+                    "size_formatted": "184.00 B"
+                }
+            ],
+            "rtf_issues": [
+                "Contains embedded images"
+            ],
+            "rtf_control_words": 501
+        },
+        "6E0CFDD8-90ED-4414-907D-32E368267B4E": {
+            "uuid": "6E0CFDD8-90ED-4414-907D-32E368267B4E",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/6E0CFDD8-90ED-4414-907D-32E368267B4E",
+            "has_rtf": true,
+            "has_synopsis": false,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 2,
+            "rtf_size": 2544,
+            "rtf_lines": 18,
+            "content_preview": "Cambria;Cambria;SegoeUI-Bold; ;;;;;; <$Scr_Ps::0>Drag Text to the Binder<!$Scr_Ps::0> You can create new documents from sections of text in the editor as follows: -475<$Scr_Ps::1> 1.Select some text i...",
+            "rtf_encoding": "UTF-8",
+            "files": [
+                {
+                    "name": "content.rtf",
+                    "size": 2544,
+                    "size_formatted": "2.48 KB"
+                },
+                {
+                    "name": "content.styles",
+                    "size": 110,
+                    "size_formatted": "110.00 B"
+                }
+            ],
+            "rtf_issues": [],
+            "rtf_control_words": 281
+        },
+        "71C96D90-ECBB-43E4-88F3-842933E13C6F": {
+            "uuid": "71C96D90-ECBB-43E4-88F3-842933E13C6F",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/71C96D90-ECBB-43E4-88F3-842933E13C6F",
+            "has_rtf": true,
+            "has_synopsis": false,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 2,
+            "rtf_size": 7216,
+            "rtf_lines": 12,
+            "content_preview": "Cambria; ;;;; Sometimes you will want to navigate through the binder while keeping the document in the editor pinned in place. 93Lock in Place94 allows this: -475<$Scr_Ps::0> 1.Right-click on the head...",
+            "rtf_encoding": "UTF-8",
+            "files": [
+                {
+                    "name": "content.rtf",
+                    "size": 7216,
+                    "size_formatted": "7.05 KB"
+                },
+                {
+                    "name": "content.styles",
+                    "size": 36,
+                    "size_formatted": "36.00 B"
+                }
+            ],
+            "rtf_issues": [
+                "Contains embedded images"
+            ],
+            "rtf_control_words": 213
+        },
+        "75468ABC-C50A-4CEC-AE67-62508EDE11C2": {
+            "uuid": "75468ABC-C50A-4CEC-AE67-62508EDE11C2",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/75468ABC-C50A-4CEC-AE67-62508EDE11C2",
+            "has_rtf": true,
+            "has_synopsis": false,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 2,
+            "rtf_size": 9362,
+            "rtf_lines": 9,
+            "content_preview": "Cambria;SegoeUI-Bold;Cambria;SegoeUI-BoldItalic;Calibri;Calibri-Bold; ;;;;;; If you have to gather a lot of research in other applications and find yourself doing a lot of copying and pasting into Scr...",
+            "rtf_encoding": "UTF-8",
+            "files": [
+                {
+                    "name": "content.rtf",
+                    "size": 9362,
+                    "size_formatted": "9.14 KB"
+                },
+                {
+                    "name": "content.styles",
+                    "size": 147,
+                    "size_formatted": "147.00 B"
+                }
+            ],
+            "rtf_issues": [
+                "Contains embedded images"
+            ],
+            "rtf_control_words": 245
+        },
+        "7A47353D-F2A9-4420-905F-42EA95BA3244": {
+            "uuid": "7A47353D-F2A9-4420-905F-42EA95BA3244",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/7A47353D-F2A9-4420-905F-42EA95BA3244",
+            "has_rtf": true,
+            "has_synopsis": false,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 2,
+            "rtf_size": 13435,
+            "rtf_lines": 11,
+            "content_preview": "Cambria;SegoeUI-Bold; ;;;;; You can switch to page layout view to view your text on virtual pages in one of the following ways: -475<$Scr_Ps::0>Click on the 93View94 toolbar item and select 93Page Vie...",
+            "rtf_encoding": "UTF-8",
+            "files": [
+                {
+                    "name": "content.rtf",
+                    "size": 13435,
+                    "size_formatted": "13.12 KB"
+                },
+                {
+                    "name": "content.styles",
+                    "size": 73,
+                    "size_formatted": "73.00 B"
+                }
+            ],
+            "rtf_issues": [
+                "Contains embedded images"
+            ],
+            "rtf_control_words": 205
+        },
+        "7C7D6ECA-9AF4-4288-9452-477A7D60202B": {
+            "uuid": "7C7D6ECA-9AF4-4288-9452-477A7D60202B",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/7C7D6ECA-9AF4-4288-9452-477A7D60202B",
+            "has_rtf": true,
+            "has_synopsis": false,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 2,
+            "rtf_size": 1771,
+            "rtf_lines": 11,
+            "content_preview": "Cambria;SegoeUI-Bold; ;;;;; Scrivener has eight themes including 93Dark Mode94 that just might be easier on your eyes. To switch to the Dark Mode theme: -475<$Scr_Ps::0> From <$Scr_Cs::1>Window > Them...",
+            "rtf_encoding": "UTF-8",
+            "files": [
+                {
+                    "name": "content.rtf",
+                    "size": 1771,
+                    "size_formatted": "1.73 KB"
+                },
+                {
+                    "name": "content.styles",
+                    "size": 73,
+                    "size_formatted": "73.00 B"
+                }
+            ],
+            "rtf_issues": [],
+            "rtf_control_words": 203
+        },
+        "80D5D77E-9389-4E16-AF28-6362C67C44C6": {
+            "uuid": "80D5D77E-9389-4E16-AF28-6362C67C44C6",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/80D5D77E-9389-4E16-AF28-6362C67C44C6",
+            "has_rtf": false,
+            "has_synopsis": false,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": true,
+            "file_count": 1,
+            "rtf_size": 0,
+            "rtf_lines": 0,
+            "content_preview": "",
+            "rtf_encoding": "",
+            "files": [
+                {
+                    "name": "content.wav",
+                    "size": 492200,
+                    "size_formatted": "480.66 KB"
+                }
+            ]
+        },
+        "8284AFFF-C024-49EB-91D5-30C6E662A30A": {
+            "uuid": "8284AFFF-C024-49EB-91D5-30C6E662A30A",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/8284AFFF-C024-49EB-91D5-30C6E662A30A",
+            "has_rtf": true,
+            "has_synopsis": false,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 2,
+            "rtf_size": 4940,
+            "rtf_lines": 18,
+            "content_preview": "Cambria;SegoeUI-Bold; ;;;;; You aren92t limited to displaying the contents of only one group in the corkboard or outlineryou can show the subdocuments of several groups by 93stacking94 them. This is r...",
+            "rtf_encoding": "UTF-8",
+            "files": [
+                {
+                    "name": "content.rtf",
+                    "size": 4940,
+                    "size_formatted": "4.82 KB"
+                },
+                {
+                    "name": "content.styles",
+                    "size": 36,
+                    "size_formatted": "36.00 B"
+                }
+            ],
+            "rtf_issues": [
+                "Contains embedded images"
+            ],
+            "rtf_control_words": 276
+        },
+        "8A74843A-CAEE-4C5C-A2CA-EABF2EF2FE37": {
+            "uuid": "8A74843A-CAEE-4C5C-A2CA-EABF2EF2FE37",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/8A74843A-CAEE-4C5C-A2CA-EABF2EF2FE37",
+            "has_rtf": true,
+            "has_synopsis": false,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 2,
+            "rtf_size": 40599,
+            "rtf_lines": 42,
+            "content_preview": "Cambria;Cambria;SegoeUI-BoldItalic;Cambria;SegoeUI-Bold; ;;;;;; <$Scr_Ps::0>Using the Binder<!$Scr_Ps::0> The binder is the main navigation tool in Scrivener. You use it to access different parts of y...",
+            "rtf_encoding": "UTF-8",
+            "files": [
+                {
+                    "name": "content.rtf",
+                    "size": 40599,
+                    "size_formatted": "39.65 KB"
+                },
+                {
+                    "name": "content.styles",
+                    "size": 184,
+                    "size_formatted": "184.00 B"
+                }
+            ],
+            "rtf_issues": [
+                "Contains embedded images"
+            ],
+            "rtf_control_words": 1110
+        },
+        "8C1689F4-84C9-4949-B713-1B22A382D2A5": {
+            "uuid": "8C1689F4-84C9-4949-B713-1B22A382D2A5",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/8C1689F4-84C9-4949-B713-1B22A382D2A5",
+            "has_rtf": true,
+            "has_synopsis": false,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 3,
+            "rtf_size": 3918,
+            "rtf_lines": 18,
+            "content_preview": "Cambria;SegoeUI-Bold;Cambria; ;;;;; Scrivener comes with a range of project templates that can be used as the basis for new projects. To create a new project from a template: -475<$Scr_Ps::0>1.From th...",
+            "rtf_encoding": "UTF-8",
+            "files": [
+                {
+                    "name": ".~lock.content.rtf#",
+                    "size": 78,
+                    "size_formatted": "78.00 B"
+                },
+                {
+                    "name": "content.rtf",
+                    "size": 3918,
+                    "size_formatted": "3.83 KB"
+                },
+                {
+                    "name": "content.styles",
+                    "size": 73,
+                    "size_formatted": "73.00 B"
+                }
+            ],
+            "rtf_issues": [],
+            "rtf_control_words": 377
+        },
+        "8E41DE34-0E5A-412B-9A2C-09F012C27297": {
+            "uuid": "8E41DE34-0E5A-412B-9A2C-09F012C27297",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/8E41DE34-0E5A-412B-9A2C-09F012C27297",
+            "has_rtf": true,
+            "has_synopsis": false,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 2,
+            "rtf_size": 23742,
+            "rtf_lines": 29,
+            "content_preview": "Cambria;Cambria;SegoeUI-Bold;Cambria; ;;;;;; Click on the third button in the inspector header bar, the one containing the tag icon, to open the Metadata tab. Each document in Scrivener can be associa...",
+            "rtf_encoding": "UTF-8",
+            "files": [
+                {
+                    "name": "content.rtf",
+                    "size": 23742,
+                    "size_formatted": "23.19 KB"
+                },
+                {
+                    "name": "content.styles",
+                    "size": 110,
+                    "size_formatted": "110.00 B"
+                }
+            ],
+            "rtf_issues": [
+                "Contains embedded images"
+            ],
+            "rtf_control_words": 573
+        },
+        "96CD2497-D39A-400E-9FCF-71E4635EC1EE": {
+            "uuid": "96CD2497-D39A-400E-9FCF-71E4635EC1EE",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/96CD2497-D39A-400E-9FCF-71E4635EC1EE",
+            "has_rtf": false,
+            "has_synopsis": true,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 1,
+            "rtf_size": 0,
+            "rtf_lines": 0,
+            "content_preview": "",
+            "rtf_encoding": "",
+            "files": [
+                {
+                    "name": "synopsis.txt",
+                    "size": 51,
+                    "size_formatted": "51.00 B"
+                }
+            ]
+        },
+        "98A9E1E6-4379-45FC-B104-85E8BF8412FC": {
+            "uuid": "98A9E1E6-4379-45FC-B104-85E8BF8412FC",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/98A9E1E6-4379-45FC-B104-85E8BF8412FC",
+            "has_rtf": false,
+            "has_synopsis": true,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 1,
+            "rtf_size": 0,
+            "rtf_lines": 0,
+            "content_preview": "",
+            "rtf_encoding": "",
+            "files": [
+                {
+                    "name": "synopsis.txt",
+                    "size": 80,
+                    "size_formatted": "80.00 B"
+                }
+            ]
+        },
+        "99490349-0A50-4A4A-9F10-0EC274B005AF": {
+            "uuid": "99490349-0A50-4A4A-9F10-0EC274B005AF",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/99490349-0A50-4A4A-9F10-0EC274B005AF",
+            "has_rtf": true,
+            "has_synopsis": true,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 3,
+            "rtf_size": 67054,
+            "rtf_lines": 30,
+            "content_preview": "Cambria;Cambria;SegoeUI-Bold;Cambria; ;;;;;; There are several ways of searching in Scrivener. Most commonly, you92ll use the following searching methods: -475<$Scr_Ps::0> When you want to open a part...",
+            "rtf_encoding": "UTF-8",
+            "files": [
+                {
+                    "name": "content.rtf",
+                    "size": 67054,
+                    "size_formatted": "65.48 KB"
+                },
+                {
+                    "name": "content.styles",
+                    "size": 147,
+                    "size_formatted": "147.00 B"
+                },
+                {
+                    "name": "synopsis.txt",
+                    "size": 60,
+                    "size_formatted": "60.00 B"
+                }
+            ],
+            "rtf_issues": [
+                "File larger than 65KB (may be truncated in database)",
+                "Contains embedded images"
+            ],
+            "rtf_control_words": 859
+        },
+        "99D796F9-C09D-403D-9E7C-9F47B741C57F": {
+            "uuid": "99D796F9-C09D-403D-9E7C-9F47B741C57F",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/99D796F9-C09D-403D-9E7C-9F47B741C57F",
+            "has_rtf": true,
+            "has_synopsis": false,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 2,
+            "rtf_size": 34825,
+            "rtf_lines": 24,
+            "content_preview": "Cambria;Cambria; ;;;;; Click on the Bookmarks button in the inspector header bar (the second icon). The Bookmarks tab allows you to store references to other documents in the project, on your hard-dis...",
+            "rtf_encoding": "UTF-8",
+            "files": [
+                {
+                    "name": "content.rtf",
+                    "size": 34825,
+                    "size_formatted": "34.01 KB"
+                },
+                {
+                    "name": "content.styles",
+                    "size": 73,
+                    "size_formatted": "73.00 B"
+                }
+            ],
+            "rtf_issues": [
+                "Contains embedded images"
+            ],
+            "rtf_control_words": 424
+        },
+        "9B7B55FA-6C49-4EED-8582-296472BD09D9": {
+            "uuid": "9B7B55FA-6C49-4EED-8582-296472BD09D9",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/9B7B55FA-6C49-4EED-8582-296472BD09D9",
+            "has_rtf": true,
+            "has_synopsis": false,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 2,
+            "rtf_size": 19035,
+            "rtf_lines": 38,
+            "content_preview": "Cambria;Cambria;SegoeUI-BoldItalic;SegoeUI-Bold;Cambria;Calibri; ;;;;;; Scrivener is also available for iOS so that you can write and structure while on your iPhone or iPad. The iOS version is availab...",
+            "rtf_encoding": "UTF-8",
+            "files": [
+                {
+                    "name": "content.rtf",
+                    "size": 19035,
+                    "size_formatted": "18.59 KB"
+                },
+                {
+                    "name": "content.styles",
+                    "size": 221,
+                    "size_formatted": "221.00 B"
+                }
+            ],
+            "rtf_issues": [
+                "Contains embedded images"
+            ],
+            "rtf_control_words": 1051
+        },
+        "A05F6149-6363-47F4-9C59-E380AA6A2417": {
+            "uuid": "A05F6149-6363-47F4-9C59-E380AA6A2417",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/A05F6149-6363-47F4-9C59-E380AA6A2417",
+            "has_rtf": true,
+            "has_synopsis": false,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 2,
+            "rtf_size": 842,
+            "rtf_lines": 6,
+            "content_preview": "Cambria;SegoeUI-Bold; ;;;;; Scrivener keeps track of how many words and characters you write every day. To see a breakdown of how many words you92ve written each day and month for a particular project...",
+            "rtf_encoding": "UTF-8",
+            "files": [
+                {
+                    "name": "content.rtf",
+                    "size": 842,
+                    "size_formatted": "842.00 B"
+                },
+                {
+                    "name": "content.styles",
+                    "size": 36,
+                    "size_formatted": "36.00 B"
+                }
+            ],
+            "rtf_issues": [],
+            "rtf_control_words": 92
+        },
+        "A3E81D02-CFC7-4D3B-9E59-4137E372DC2A": {
+            "uuid": "A3E81D02-CFC7-4D3B-9E59-4137E372DC2A",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/A3E81D02-CFC7-4D3B-9E59-4137E372DC2A",
+            "has_rtf": true,
+            "has_synopsis": false,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 2,
+            "rtf_size": 27700,
+            "rtf_lines": 28,
+            "content_preview": "Cambria;Cambria;SegoeUI-BoldItalic;Calibri;SegoeUI-Bold;Calibri-Italic;Cambria; ;;;;;; The whole point of Scrivener is to make working on a long text easier by allowing you to break it up into smaller...",
+            "rtf_encoding": "UTF-8",
+            "files": [
+                {
+                    "name": "content.rtf",
+                    "size": 27700,
+                    "size_formatted": "27.05 KB"
+                },
+                {
+                    "name": "content.styles",
+                    "size": 147,
+                    "size_formatted": "147.00 B"
+                }
+            ],
+            "rtf_issues": [
+                "Contains embedded images"
+            ],
+            "rtf_control_words": 579
+        },
+        "A7D1AD51-D465-443A-9F34-A0E99EA316E5": {
+            "uuid": "A7D1AD51-D465-443A-9F34-A0E99EA316E5",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/A7D1AD51-D465-443A-9F34-A0E99EA316E5",
+            "has_rtf": true,
+            "has_synopsis": false,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 2,
+            "rtf_size": 2480,
+            "rtf_lines": 11,
+            "content_preview": "Cambria;SegoeUI-Bold;SegoeUI-BoldItalic;Calibri; ;;;;; At the bottom of the inspector are the label and status pop-up buttons. (This document92s label is 93Blue94 and its status is 93To Do94.) Label a...",
+            "rtf_encoding": "UTF-8",
+            "files": [
+                {
+                    "name": "content.rtf",
+                    "size": 2480,
+                    "size_formatted": "2.42 KB"
+                },
+                {
+                    "name": "content.styles",
+                    "size": 110,
+                    "size_formatted": "110.00 B"
+                }
+            ],
+            "rtf_issues": [],
+            "rtf_control_words": 222
+        },
+        "A9B383E7-994D-4280-9DDB-4B2C250A8A04": {
+            "uuid": "A9B383E7-994D-4280-9DDB-4B2C250A8A04",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/A9B383E7-994D-4280-9DDB-4B2C250A8A04",
+            "has_rtf": true,
+            "has_synopsis": false,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 2,
+            "rtf_size": 5649,
+            "rtf_lines": 25,
+            "content_preview": "Cambria;Cambria;SegoeUI-Bold;SegoeUI-BoldItalic;Calibri; ;;;;;; <$Scr_Ps::0>Importing Files<!$Scr_Ps::0> To bring in writing and research from other apps: -475<$Scr_Ps::1>1.In Scrivener92s binder, sel...",
+            "rtf_encoding": "UTF-8",
+            "files": [
+                {
+                    "name": "content.rtf",
+                    "size": 5649,
+                    "size_formatted": "5.52 KB"
+                },
+                {
+                    "name": "content.styles",
+                    "size": 184,
+                    "size_formatted": "184.00 B"
+                }
+            ],
+            "rtf_issues": [],
+            "rtf_control_words": 534
+        },
+        "AAB240F0-1194-439F-8952-8BE7D981AD02": {
+            "uuid": "AAB240F0-1194-439F-8952-8BE7D981AD02",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/AAB240F0-1194-439F-8952-8BE7D981AD02",
+            "has_rtf": true,
+            "has_synopsis": false,
+            "has_notes": false,
+            "has_comments": true,
+            "has_media": false,
+            "file_count": 3,
+            "rtf_size": 10357,
+            "rtf_lines": 13,
+            "content_preview": "Cambria;SegoeUI;ArialMT;SegoeUI-Bold; ;;;;; Transcribing audio and media files in Scrivener is easy with the split view. Try the following: -475<$Scr_Ps::0> 1.HYPERLINK \"scrivlnk:\/\/D3796A92-2893-4B70-...",
+            "rtf_encoding": "UTF-8",
+            "files": [
+                {
+                    "name": "content.comments",
+                    "size": 679,
+                    "size_formatted": "679.00 B"
+                },
+                {
+                    "name": "content.rtf",
+                    "size": 10357,
+                    "size_formatted": "10.11 KB"
+                },
+                {
+                    "name": "content.styles",
+                    "size": 73,
+                    "size_formatted": "73.00 B"
+                }
+            ],
+            "rtf_issues": [
+                "Contains embedded images"
+            ],
+            "rtf_control_words": 282
+        },
+        "ACA19B54-5169-42EF-90A7-49DAD0E1A240": {
+            "uuid": "ACA19B54-5169-42EF-90A7-49DAD0E1A240",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/ACA19B54-5169-42EF-90A7-49DAD0E1A240",
+            "has_rtf": true,
+            "has_synopsis": false,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 2,
+            "rtf_size": 4642,
+            "rtf_lines": 23,
+            "content_preview": "Cambria;SegoeUI-Bold; ;;;;; Scriptwriting mode is available from <$Scr_Cs::0>Format > Scriptwriting > Script Mode<!$Scr_Cs::0> (<$Scr_Cs::0>Ctrl+8<!$Scr_Cs::0>). When in script mode, the footer view w...",
+            "rtf_encoding": "UTF-8",
+            "files": [
+                {
+                    "name": "content.rtf",
+                    "size": 4642,
+                    "size_formatted": "4.53 KB"
+                },
+                {
+                    "name": "content.styles",
+                    "size": 110,
+                    "size_formatted": "110.00 B"
+                }
+            ],
+            "rtf_issues": [],
+            "rtf_control_words": 414
+        },
+        "B4D489B4-DC6C-4163-B731-4F18B26F1AE5": {
+            "uuid": "B4D489B4-DC6C-4163-B731-4F18B26F1AE5",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/B4D489B4-DC6C-4163-B731-4F18B26F1AE5",
+            "has_rtf": false,
+            "has_synopsis": true,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 1,
+            "rtf_size": 0,
+            "rtf_lines": 0,
+            "content_preview": "",
+            "rtf_encoding": "",
+            "files": [
+                {
+                    "name": "synopsis.txt",
+                    "size": 45,
+                    "size_formatted": "45.00 B"
+                }
+            ]
+        },
+        "B557346B-F681-4283-93CE-AD35370793B2": {
+            "uuid": "B557346B-F681-4283-93CE-AD35370793B2",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/B557346B-F681-4283-93CE-AD35370793B2",
+            "has_rtf": true,
+            "has_synopsis": false,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 2,
+            "rtf_size": 10118,
+            "rtf_lines": 31,
+            "content_preview": "Cambria;SegoeUI-BoldItalic;SegoeUI-Bold;Cambria;Cambria; ;;;;;; <$Scr_Cs::0>Note<!$Scr_Cs::0>: Make sure you go through the HYPERLINK \"scrivlnk:\/\/3D2A1CF2-15CC-46F8-B5A2-690124F89B1B\"Custom Icons sect...",
+            "rtf_encoding": "UTF-8",
+            "files": [
+                {
+                    "name": "content.rtf",
+                    "size": 10118,
+                    "size_formatted": "9.88 KB"
+                },
+                {
+                    "name": "content.styles",
+                    "size": 147,
+                    "size_formatted": "147.00 B"
+                }
+            ],
+            "rtf_issues": [],
+            "rtf_control_words": 916
+        },
+        "B824A7EA-05A4-4F44-B9C6-000AFA0F864C": {
+            "uuid": "B824A7EA-05A4-4F44-B9C6-000AFA0F864C",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/B824A7EA-05A4-4F44-B9C6-000AFA0F864C",
+            "has_rtf": true,
+            "has_synopsis": false,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 2,
+            "rtf_size": 3079,
+            "rtf_lines": 12,
+            "content_preview": "Cambria;SegoeUI-Bold;SegoeUI-BoldItalic;Calibri; ;;;;; Phew! We92ve now covered all major features of Scrivener. If you haven92t done so already, then soon you are going to want to create your own pro...",
+            "rtf_encoding": "UTF-8",
+            "files": [
+                {
+                    "name": "content.rtf",
+                    "size": 3079,
+                    "size_formatted": "3.01 KB"
+                },
+                {
+                    "name": "content.styles",
+                    "size": 147,
+                    "size_formatted": "147.00 B"
+                }
+            ],
+            "rtf_issues": [],
+            "rtf_control_words": 257
+        },
+        "BA997809-7647-44A6-96DD-EC2FB25FED19": {
+            "uuid": "BA997809-7647-44A6-96DD-EC2FB25FED19",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/BA997809-7647-44A6-96DD-EC2FB25FED19",
+            "has_rtf": true,
+            "has_synopsis": false,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 2,
+            "rtf_size": 76139,
+            "rtf_lines": 22,
+            "content_preview": "Cambria;Cambria;SegoeUI-Bold;Cambria;SegoeUI-BoldItalic;Calibri; ;;;;;; 3F <$Scr_Ps::0>Scrivener89504e470d0a1a0a0000000d49484452000002bc000000b8080600000001b43f7c00000009704859730000162500001625014952...",
+            "rtf_encoding": "UTF-8",
+            "files": [
+                {
+                    "name": "content.rtf",
+                    "size": 76139,
+                    "size_formatted": "74.35 KB"
+                },
+                {
+                    "name": "content.styles",
+                    "size": 184,
+                    "size_formatted": "184.00 B"
+                }
+            ],
+            "rtf_issues": [
+                "File larger than 65KB (may be truncated in database)",
+                "Contains embedded images"
+            ],
+            "rtf_control_words": 591
+        },
+        "BDFF1718-2F85-46E7-88B0-98433164ED65": {
+            "uuid": "BDFF1718-2F85-46E7-88B0-98433164ED65",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/BDFF1718-2F85-46E7-88B0-98433164ED65",
+            "has_rtf": true,
+            "has_synopsis": false,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 2,
+            "rtf_size": 2849,
+            "rtf_lines": 15,
+            "content_preview": "Cambria;Cambria;SegoeUI-Bold; ;;;;;; <$Scr_Ps::0>Splitting Documents<!$Scr_Ps::0> Suppose you start out creating a single document for each chapter. Then, after your first draft, you realise that you ...",
+            "rtf_encoding": "UTF-8",
+            "files": [
+                {
+                    "name": "content.rtf",
+                    "size": 2849,
+                    "size_formatted": "2.78 KB"
+                },
+                {
+                    "name": "content.styles",
+                    "size": 110,
+                    "size_formatted": "110.00 B"
+                }
+            ],
+            "rtf_issues": [],
+            "rtf_control_words": 288
+        },
+        "BF5FD5CA-C654-4F79-A4CD-FC74C0E0402D": {
+            "uuid": "BF5FD5CA-C654-4F79-A4CD-FC74C0E0402D",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/BF5FD5CA-C654-4F79-A4CD-FC74C0E0402D",
+            "has_rtf": true,
+            "has_synopsis": false,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 2,
+            "rtf_size": 1825,
+            "rtf_lines": 13,
+            "content_preview": "Cambria; ;;;; The index card in the inspector can be used to show an image instead of a synopsis. If an image is used instead of a synopsis, then the image will also be used on the corkboard. This cou...",
+            "rtf_encoding": "UTF-8",
+            "files": [
+                {
+                    "name": "content.rtf",
+                    "size": 1825,
+                    "size_formatted": "1.78 KB"
+                },
+                {
+                    "name": "content.styles",
+                    "size": 36,
+                    "size_formatted": "36.00 B"
+                }
+            ],
+            "rtf_issues": [],
+            "rtf_control_words": 150
+        },
+        "C40AC3C3-ABC7-4A47-8D04-D831DC5D6ACB": {
+            "uuid": "C40AC3C3-ABC7-4A47-8D04-D831DC5D6ACB",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/C40AC3C3-ABC7-4A47-8D04-D831DC5D6ACB",
+            "has_rtf": true,
+            "has_synopsis": false,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 2,
+            "rtf_size": 3169,
+            "rtf_lines": 17,
+            "content_preview": "Cambria;Cambria;SegoeUI-Bold;SegoeUI-BoldItalic; ;;;;; When covering 93The Basics94, we saw how we could add comments and footnotes to text that are displayed in the inspector. Another way of adding f...",
+            "rtf_encoding": "UTF-8",
+            "files": [
+                {
+                    "name": "content.rtf",
+                    "size": 3169,
+                    "size_formatted": "3.09 KB"
+                },
+                {
+                    "name": "content.styles",
+                    "size": 110,
+                    "size_formatted": "110.00 B"
+                }
+            ],
+            "rtf_issues": [],
+            "rtf_control_words": 264
+        },
+        "C6EF0AD7-5486-44EA-891C-8F51E0528684": {
+            "uuid": "C6EF0AD7-5486-44EA-891C-8F51E0528684",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/C6EF0AD7-5486-44EA-891C-8F51E0528684",
+            "has_rtf": false,
+            "has_synopsis": true,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 1,
+            "rtf_size": 0,
+            "rtf_lines": 0,
+            "content_preview": "",
+            "rtf_encoding": "",
+            "files": [
+                {
+                    "name": "synopsis.txt",
+                    "size": 24,
+                    "size_formatted": "24.00 B"
+                }
+            ]
+        },
+        "CD531760-289F-45A4-85D1-501C730AF986": {
+            "uuid": "CD531760-289F-45A4-85D1-501C730AF986",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/CD531760-289F-45A4-85D1-501C730AF986",
+            "has_rtf": false,
+            "has_synopsis": false,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": true,
+            "file_count": 1,
+            "rtf_size": 0,
+            "rtf_lines": 0,
+            "content_preview": "",
+            "rtf_encoding": "",
+            "files": [
+                {
+                    "name": "content.jpg",
+                    "size": 1529350,
+                    "size_formatted": "1.46 MB"
+                }
+            ]
+        },
+        "CDD828FB-D8A7-476B-9C04-42C9AE9B88FC": {
+            "uuid": "CDD828FB-D8A7-476B-9C04-42C9AE9B88FC",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/CDD828FB-D8A7-476B-9C04-42C9AE9B88FC",
+            "has_rtf": false,
+            "has_synopsis": true,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 1,
+            "rtf_size": 0,
+            "rtf_lines": 0,
+            "content_preview": "",
+            "rtf_encoding": "",
+            "files": [
+                {
+                    "name": "synopsis.txt",
+                    "size": 55,
+                    "size_formatted": "55.00 B"
+                }
+            ]
+        },
+        "CFB95E81-048A-4A84-BE00-1135B212DBF5": {
+            "uuid": "CFB95E81-048A-4A84-BE00-1135B212DBF5",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/CFB95E81-048A-4A84-BE00-1135B212DBF5",
+            "has_rtf": false,
+            "has_synopsis": true,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 1,
+            "rtf_size": 0,
+            "rtf_lines": 0,
+            "content_preview": "",
+            "rtf_encoding": "",
+            "files": [
+                {
+                    "name": "synopsis.txt",
+                    "size": 103,
+                    "size_formatted": "103.00 B"
+                }
+            ]
+        },
+        "D3796A92-2893-4B70-8AEA-4A8B308FB7E8": {
+            "uuid": "D3796A92-2893-4B70-8AEA-4A8B308FB7E8",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/D3796A92-2893-4B70-8AEA-4A8B308FB7E8",
+            "has_rtf": true,
+            "has_synopsis": true,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 3,
+            "rtf_size": 10591,
+            "rtf_lines": 26,
+            "content_preview": "Cambria;SegoeUI-Bold;Cambria;Cambria;SegoeUI-BoldItalic;Calibri; ;;;;; When working on a long piece of writing, you may want to refer to research or other parts of the manuscript. In Scrivener, you ca...",
+            "rtf_encoding": "UTF-8",
+            "files": [
+                {
+                    "name": "content.rtf",
+                    "size": 10591,
+                    "size_formatted": "10.34 KB"
+                },
+                {
+                    "name": "content.styles",
+                    "size": 147,
+                    "size_formatted": "147.00 B"
+                },
+                {
+                    "name": "synopsis.txt",
+                    "size": 41,
+                    "size_formatted": "41.00 B"
+                }
+            ],
+            "rtf_issues": [
+                "Contains embedded images"
+            ],
+            "rtf_control_words": 499
+        },
+        "D3FC9D16-0A17-4818-8FAB-CA751C9CEE36": {
+            "uuid": "D3FC9D16-0A17-4818-8FAB-CA751C9CEE36",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/D3FC9D16-0A17-4818-8FAB-CA751C9CEE36",
+            "has_rtf": true,
+            "has_synopsis": false,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 2,
+            "rtf_size": 6879,
+            "rtf_lines": 20,
+            "content_preview": "Cambria;Cambria;Cambria; ;;;;; <$Scr_Ps::0>What is Scrivener?<!$Scr_Ps::0> Scrivener is aimed at writers of all stripesnovelists, journalists, academics, screenwriters, playwrightswho need to structur...",
+            "rtf_encoding": "UTF-8",
+            "files": [
+                {
+                    "name": "content.rtf",
+                    "size": 6879,
+                    "size_formatted": "6.72 KB"
+                },
+                {
+                    "name": "content.styles",
+                    "size": 36,
+                    "size_formatted": "36.00 B"
+                }
+            ],
+            "rtf_issues": [],
+            "rtf_control_words": 476
+        },
+        "D846D2EE-6293-4A13-A0EA-386B0255E552": {
+            "uuid": "D846D2EE-6293-4A13-A0EA-386B0255E552",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/D846D2EE-6293-4A13-A0EA-386B0255E552",
+            "has_rtf": true,
+            "has_synopsis": true,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 3,
+            "rtf_size": 2722,
+            "rtf_lines": 14,
+            "content_preview": "Cambria;Cambria; ;;;; The document you are reading now is a folder. As mentioned, there92s no significant difference between text and folder documents. The differences are as follows: -475<$Scr_Ps::0>...",
+            "rtf_encoding": "UTF-8",
+            "files": [
+                {
+                    "name": "content.rtf",
+                    "size": 2722,
+                    "size_formatted": "2.66 KB"
+                },
+                {
+                    "name": "content.styles",
+                    "size": 73,
+                    "size_formatted": "73.00 B"
+                },
+                {
+                    "name": "synopsis.txt",
+                    "size": 41,
+                    "size_formatted": "41.00 B"
+                }
+            ],
+            "rtf_issues": [],
+            "rtf_control_words": 270
+        },
+        "D8C838D7-6CF2-4A57-9FF2-4A2563CFF0A2": {
+            "uuid": "D8C838D7-6CF2-4A57-9FF2-4A2563CFF0A2",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/D8C838D7-6CF2-4A57-9FF2-4A2563CFF0A2",
+            "has_rtf": true,
+            "has_synopsis": false,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 2,
+            "rtf_size": 16926,
+            "rtf_lines": 28,
+            "content_preview": "Cambria;Cambria;Cambria;SegoeUI-Bold;SegoeUI-BoldItalic;Calibri; ;;;;;; The outliner allows you to see sections of the binder in more detail. It works like the binder, showing an indented list of docu...",
+            "rtf_encoding": "UTF-8",
+            "files": [
+                {
+                    "name": "content.rtf",
+                    "size": 16926,
+                    "size_formatted": "16.53 KB"
+                },
+                {
+                    "name": "content.styles",
+                    "size": 221,
+                    "size_formatted": "221.00 B"
+                }
+            ],
+            "rtf_issues": [
+                "Contains embedded images"
+            ],
+            "rtf_control_words": 702
+        },
+        "DB4DFBE5-DCE3-4747-BCBB-214DD0E7FFB4": {
+            "uuid": "DB4DFBE5-DCE3-4747-BCBB-214DD0E7FFB4",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/DB4DFBE5-DCE3-4747-BCBB-214DD0E7FFB4",
+            "has_rtf": true,
+            "has_synopsis": false,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 2,
+            "rtf_size": 1395,
+            "rtf_lines": 9,
+            "content_preview": "Cambria;SegoeUI-Bold; ;;;;; If at any time you decide you want to wipe all of your edits and restore the tutorial to its original state, follow these steps: -475<$Scr_Ps::0> 1.Selecting <$Scr_Cs::1>Fi...",
+            "rtf_encoding": "UTF-8",
+            "files": [
+                {
+                    "name": "content.rtf",
+                    "size": 1395,
+                    "size_formatted": "1.36 KB"
+                },
+                {
+                    "name": "content.styles",
+                    "size": 73,
+                    "size_formatted": "73.00 B"
+                }
+            ],
+            "rtf_issues": [],
+            "rtf_control_words": 133
+        },
+        "E0E09EB0-C5B4-435A-9944-99AB2864105D": {
+            "uuid": "E0E09EB0-C5B4-435A-9944-99AB2864105D",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/E0E09EB0-C5B4-435A-9944-99AB2864105D",
+            "has_rtf": true,
+            "has_synopsis": false,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 2,
+            "rtf_size": 7537,
+            "rtf_lines": 18,
+            "content_preview": "Cambria;SegoeUI-Bold; ;;;;; Click the blue 93i94 icon on the right of the toolbar to open the inspector. The inspector will appear as a third pane on the right of the window, and it shows extra inform...",
+            "rtf_encoding": "UTF-8",
+            "files": [
+                {
+                    "name": "content.rtf",
+                    "size": 7537,
+                    "size_formatted": "7.36 KB"
+                },
+                {
+                    "name": "content.styles",
+                    "size": 73,
+                    "size_formatted": "73.00 B"
+                }
+            ],
+            "rtf_issues": [
+                "Contains embedded images"
+            ],
+            "rtf_control_words": 301
+        },
+        "E1207FCA-2DD5-4A9C-9E34-C3CE158EBADD": {
+            "uuid": "E1207FCA-2DD5-4A9C-9E34-C3CE158EBADD",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/E1207FCA-2DD5-4A9C-9E34-C3CE158EBADD",
+            "has_rtf": true,
+            "has_synopsis": true,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 3,
+            "rtf_size": 21133,
+            "rtf_lines": 63,
+            "content_preview": "Cambria;Cambria;Cambria;SegoeUI-BoldItalic;Calibri;SegoeUI-Bold; ;;;;;; Scrivener is designed to be flexible, allowing you to organise your writing however you want. You grow your manuscript in the Dr...",
+            "rtf_encoding": "UTF-8",
+            "files": [
+                {
+                    "name": "content.rtf",
+                    "size": 21133,
+                    "size_formatted": "20.64 KB"
+                },
+                {
+                    "name": "content.styles",
+                    "size": 221,
+                    "size_formatted": "221.00 B"
+                },
+                {
+                    "name": "synopsis.txt",
+                    "size": 73,
+                    "size_formatted": "73.00 B"
+                }
+            ],
+            "rtf_issues": [
+                "Contains embedded images"
+            ],
+            "rtf_control_words": 1804
+        },
+        "E660C485-4263-4836-9E5F-D0605363AD2C": {
+            "uuid": "E660C485-4263-4836-9E5F-D0605363AD2C",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/E660C485-4263-4836-9E5F-D0605363AD2C",
+            "has_rtf": true,
+            "has_synopsis": false,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 2,
+            "rtf_size": 5262,
+            "rtf_lines": 16,
+            "content_preview": "Cambria;SegoeUI-Bold; ;;;;; In 93The Basics94, we covered how HYPERLINK \"scrivlnk:\/\/A7D1AD51-D465-443A-9F34-A0E99EA316E5\"coloured labels can be assigned to documents, and how they can be used for anyt...",
+            "rtf_encoding": "UTF-8",
+            "files": [
+                {
+                    "name": "content.rtf",
+                    "size": 5262,
+                    "size_formatted": "5.14 KB"
+                },
+                {
+                    "name": "content.styles",
+                    "size": 73,
+                    "size_formatted": "73.00 B"
+                }
+            ],
+            "rtf_issues": [
+                "Contains embedded images"
+            ],
+            "rtf_control_words": 309
+        },
+        "E6B9AC0F-D1F8-4D94-B7B0-A6D5B0F60CCB": {
+            "uuid": "E6B9AC0F-D1F8-4D94-B7B0-A6D5B0F60CCB",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/E6B9AC0F-D1F8-4D94-B7B0-A6D5B0F60CCB",
+            "has_rtf": true,
+            "has_synopsis": false,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 2,
+            "rtf_size": 34927,
+            "rtf_lines": 29,
+            "content_preview": "Cambria;SegoeUI-Bold;SegoeUI-BoldItalic;Calibri;Cambria; ;;;;; Scrivener92s Snapshots feature keeps older versions of your documents around for reference. To capture a version before embarking on a ma...",
+            "rtf_encoding": "UTF-8",
+            "files": [
+                {
+                    "name": "content.rtf",
+                    "size": 34927,
+                    "size_formatted": "34.11 KB"
+                },
+                {
+                    "name": "content.styles",
+                    "size": 184,
+                    "size_formatted": "184.00 B"
+                }
+            ],
+            "rtf_issues": [
+                "Contains embedded images"
+            ],
+            "rtf_control_words": 542
+        },
+        "EB44CAD4-B336-4854-B313-DC7DA552F434": {
+            "uuid": "EB44CAD4-B336-4854-B313-DC7DA552F434",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/EB44CAD4-B336-4854-B313-DC7DA552F434",
+            "has_rtf": true,
+            "has_synopsis": false,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 1,
+            "rtf_size": 821,
+            "rtf_lines": 7,
+            "content_preview": "Cambria;Cambria; ;;;; By default, when you drag items around in the binder or outliner, you can drop them on other items as well as between them. Dropping 93on94 an item places the dropped document in...",
+            "rtf_encoding": "UTF-8",
+            "files": [
+                {
+                    "name": "content.rtf",
+                    "size": 821,
+                    "size_formatted": "821.00 B"
+                }
+            ],
+            "rtf_issues": [],
+            "rtf_control_words": 85
+        },
+        "EB95836B-24F2-49E2-8B64-60C3DFBDE4B5": {
+            "uuid": "EB95836B-24F2-49E2-8B64-60C3DFBDE4B5",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/EB95836B-24F2-49E2-8B64-60C3DFBDE4B5",
+            "has_rtf": true,
+            "has_synopsis": false,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 1,
+            "rtf_size": 798,
+            "rtf_lines": 7,
+            "content_preview": "Cambria; ;;;; Remember that you don92t need to read anything in this section to start using Scrivener93The Basics94 will get you up and running with everything you need to know. Just dip into this sec...",
+            "rtf_encoding": "UTF-8",
+            "files": [
+                {
+                    "name": "content.rtf",
+                    "size": 798,
+                    "size_formatted": "798.00 B"
+                }
+            ],
+            "rtf_issues": [],
+            "rtf_control_words": 77
+        },
+        "ED9AB330-DA0C-4484-8A57-B096B1AF3A12": {
+            "uuid": "ED9AB330-DA0C-4484-8A57-B096B1AF3A12",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/ED9AB330-DA0C-4484-8A57-B096B1AF3A12",
+            "has_rtf": true,
+            "has_synopsis": false,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 1,
+            "rtf_size": 1495,
+            "rtf_lines": 36,
+            "content_preview": "Cambria; ;;;; Character Name Role in Story Goal Physical Description Personality Occupation Habits\/Mannerisms Background Internal Conflicts External Conflicts Notes",
+            "rtf_encoding": "UTF-8",
+            "files": [
+                {
+                    "name": "content.rtf",
+                    "size": 1495,
+                    "size_formatted": "1.46 KB"
+                }
+            ],
+            "rtf_issues": [],
+            "rtf_control_words": 250
+        },
+        "F02A8186-DF6D-4CD4-8F00-3C2804688F0A": {
+            "uuid": "F02A8186-DF6D-4CD4-8F00-3C2804688F0A",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/F02A8186-DF6D-4CD4-8F00-3C2804688F0A",
+            "has_rtf": true,
+            "has_synopsis": false,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 2,
+            "rtf_size": 3494,
+            "rtf_lines": 15,
+            "content_preview": "Cambria;Cambria;SegoeUI-Bold; ;;;;;; Although Scrivener is designed to be as stable as possible, and its auto-save should ensure your work is constantly saved, with important writing projects it92s al...",
+            "rtf_encoding": "UTF-8",
+            "files": [
+                {
+                    "name": "content.rtf",
+                    "size": 3494,
+                    "size_formatted": "3.41 KB"
+                },
+                {
+                    "name": "content.styles",
+                    "size": 110,
+                    "size_formatted": "110.00 B"
+                }
+            ],
+            "rtf_issues": [],
+            "rtf_control_words": 325
+        },
+        "F3066602-6666-4BF0-B171-7753B27D8763": {
+            "uuid": "F3066602-6666-4BF0-B171-7753B27D8763",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/F3066602-6666-4BF0-B171-7753B27D8763",
+            "has_rtf": true,
+            "has_synopsis": false,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 2,
+            "rtf_size": 4216,
+            "rtf_lines": 22,
+            "content_preview": "Cambria;SegoeUI-Bold;Consolas; ;;;;; Sometimes you will want numbers to appear in the text whose value may change depending on the arrangement of the text. For instance, you might want to title a docu...",
+            "rtf_encoding": "UTF-8",
+            "files": [
+                {
+                    "name": "content.rtf",
+                    "size": 4216,
+                    "size_formatted": "4.12 KB"
+                },
+                {
+                    "name": "content.styles",
+                    "size": 110,
+                    "size_formatted": "110.00 B"
+                }
+            ],
+            "rtf_issues": [],
+            "rtf_control_words": 444
+        },
+        "F712A1EB-2472-4998-BDB1-688B1C5F63E9": {
+            "uuid": "F712A1EB-2472-4998-BDB1-688B1C5F63E9",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/F712A1EB-2472-4998-BDB1-688B1C5F63E9",
+            "has_rtf": true,
+            "has_synopsis": false,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 2,
+            "rtf_size": 1763,
+            "rtf_lines": 10,
+            "content_preview": "Cambria;SegoeUI-Bold;Cambria; ;;;;; To insert an image into your manuscript: -475<$Scr_Ps::0> 1.Click into the editor and place the cursor where you would like the image to be inserted. 2.Go to <$Scr_...",
+            "rtf_encoding": "UTF-8",
+            "files": [
+                {
+                    "name": "content.rtf",
+                    "size": 1763,
+                    "size_formatted": "1.72 KB"
+                },
+                {
+                    "name": "content.styles",
+                    "size": 73,
+                    "size_formatted": "73.00 B"
+                }
+            ],
+            "rtf_issues": [],
+            "rtf_control_words": 182
+        },
+        "FA2DA253-663E-44CB-B403-2B64283B6294": {
+            "uuid": "FA2DA253-663E-44CB-B403-2B64283B6294",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/FA2DA253-663E-44CB-B403-2B64283B6294",
+            "has_rtf": true,
+            "has_synopsis": false,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 2,
+            "rtf_size": 2154,
+            "rtf_lines": 13,
+            "content_preview": "Cambria;SegoeUI-Bold;Cambria; ;;;;; By default, composition mode uses 93typewriter scrolling94. With this enabled, newly-typed text will remain in the vertical centre of the screen so that you don92t ...",
+            "rtf_encoding": "UTF-8",
+            "files": [
+                {
+                    "name": "content.rtf",
+                    "size": 2154,
+                    "size_formatted": "2.10 KB"
+                },
+                {
+                    "name": "content.styles",
+                    "size": 36,
+                    "size_formatted": "36.00 B"
+                }
+            ],
+            "rtf_issues": [],
+            "rtf_control_words": 167
+        },
+        "FA7EDB1F-C413-446B-A494-C068DCF80E89": {
+            "uuid": "FA7EDB1F-C413-446B-A494-C068DCF80E89",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/FA7EDB1F-C413-446B-A494-C068DCF80E89",
+            "has_rtf": true,
+            "has_synopsis": false,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 2,
+            "rtf_size": 3489,
+            "rtf_lines": 18,
+            "content_preview": "Cambria;SegoeUI-Bold; ;;;;; Document links work much like web hyperlinks, except that they link to other documents in the project. To create a document link: -475<$Scr_Ps::0>1.Select the text to which...",
+            "rtf_encoding": "UTF-8",
+            "files": [
+                {
+                    "name": "content.rtf",
+                    "size": 3489,
+                    "size_formatted": "3.41 KB"
+                },
+                {
+                    "name": "content.styles",
+                    "size": 110,
+                    "size_formatted": "110.00 B"
+                }
+            ],
+            "rtf_issues": [],
+            "rtf_control_words": 379
+        },
+        "FE000551-8D5E-42C0-A476-5014C0050EB7": {
+            "uuid": "FE000551-8D5E-42C0-A476-5014C0050EB7",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/FE000551-8D5E-42C0-A476-5014C0050EB7",
+            "has_rtf": false,
+            "has_synopsis": true,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 1,
+            "rtf_size": 0,
+            "rtf_lines": 0,
+            "content_preview": "",
+            "rtf_encoding": "",
+            "files": [
+                {
+                    "name": "synopsis.txt",
+                    "size": 81,
+                    "size_formatted": "81.00 B"
+                }
+            ]
+        },
+        "FE9F0EC9-DAFE-462C-9ACC-87163C5F53BC": {
+            "uuid": "FE9F0EC9-DAFE-462C-9ACC-87163C5F53BC",
+            "folder_path": "\/home\/rogers\/Code\/Wrioter\/Scrivener Zip Files\/Scrivener tutorial [2025_06_01_05_17_17]\/scrivener tutorial.scriv\/Files\/Data\/FE9F0EC9-DAFE-462C-9ACC-87163C5F53BC",
+            "has_rtf": true,
+            "has_synopsis": false,
+            "has_notes": false,
+            "has_comments": false,
+            "has_media": false,
+            "file_count": 2,
+            "rtf_size": 18193,
+            "rtf_lines": 39,
+            "content_preview": "Cambria;Cambria;SegoeUI-Bold;SegoeUI-BoldItalic;Calibri;Cambria; ;;;;;; The text you are reading now is contained in the editor. There are several ways to load a document into the editor, but the one ...",
+            "rtf_encoding": "UTF-8",
+            "files": [
+                {
+                    "name": "content.rtf",
+                    "size": 18193,
+                    "size_formatted": "17.77 KB"
+                },
+                {
+                    "name": "content.styles",
+                    "size": 221,
+                    "size_formatted": "221.00 B"
+                }
+            ],
+            "rtf_issues": [
+                "Contains embedded images"
+            ],
+            "rtf_control_words": 987
+        }
+    }
+}

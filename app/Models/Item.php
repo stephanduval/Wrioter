@@ -25,12 +25,23 @@ class Item extends Model
         'file_path_or_url',
         'scrivener_uuid',
         'parent_id',
+        'folder_type',
+        'icon_name',
+        'format_metadata',
+        'content_markdown',
+        'raw_content',
+        'content_format',
+        'word_count',
+        'character_count',
     ];
 
     protected $casts = [
         'metadata' => 'array',
+        'format_metadata' => 'array',
         'is_archived' => 'boolean',
-        'item_order' => 'integer'
+        'item_order' => 'integer',
+        'word_count' => 'integer',
+        'character_count' => 'integer',
     ];
 
     /**
@@ -138,5 +149,13 @@ class Item extends Model
     public function scopeRoot($query)
     {
         return $query->whereNull('parent_id');
+    }
+
+    /**
+     * Get the attachments for the item.
+     */
+    public function attachments(): HasMany
+    {
+        return $this->hasMany(ItemAttachment::class);
     }
 } 

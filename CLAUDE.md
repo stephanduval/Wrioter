@@ -104,6 +104,12 @@ All test users use the same password (`ChangeMe2024!`):
 
 **Important**: Always verify which environment you're running by checking the browser URL and database being used.
 
+## Development Workflow Notes
+
+- **Build Commands**: Use `yarn build:test` when in testing mode, `yarn build:dev` for development
+- **Server Management**: The user typically runs the server while developing, so Claude doesn't need to start/stop servers
+- **Frontend Testing**: After making Vue.js changes, run `yarn build:test` to test component fixes
+
 # Queue Worker Management
 
 Queue workers are essential for processing background jobs like Scrivener imports.
