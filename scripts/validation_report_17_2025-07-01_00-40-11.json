@@ -1,0 +1,63 @@
+{
+    "manuscript": {
+        "id": 17,
+        "title": "Novel Format",
+        "scrivener_uuid": "F101AD8E-09AC-4698-9380-3580DC648872",
+        "imported_at": "2025-07-01 00:40:00"
+    },
+    "summary": {
+        "total_original_files": 23,
+        "total_database_items": 4,
+        "perfect_matches": 1,
+        "good_matches": 0,
+        "poor_matches": 0,
+        "failed_matches": 3,
+        "issues_found": 4
+    },
+    "detailed_results": {
+        "FD75AC3C-F304-4EA6-ADCC-2C32D6589969": {
+            "status": "no_original",
+            "item_title": "SECTION - COVID SUMMER",
+            "issues": [
+                "No original RTF file found for this UUID"
+            ]
+        },
+        "F6436213-3C5A-4910-9E76-2D4A454E05BC": {
+            "status": "perfect",
+            "item_title": "Synposis of Chapter",
+            "uuid": "F6436213-3C5A-4910-9E76-2D4A454E05BC",
+            "original_size": 636,
+            "database_raw_size": 636,
+            "database_content_size": 0,
+            "content_match": true,
+            "similarity_score": 1,
+            "issues": [
+                "Content field is empty"
+            ],
+            "details": [
+                "Raw RTF content matches perfectly",
+                "Markdown conversion completed"
+            ]
+        },
+        "0A7EDD9F-9DE0-4CC9-9AC1-EE0E3769B6A8": {
+            "status": "no_original",
+            "item_title": "Scene",
+            "issues": [
+                "No original RTF file found for this UUID"
+            ]
+        },
+        "1EBAC3EA-A71D-4FEC-AF73-8893F084B95E": {
+            "status": "no_original",
+            "item_title": "SECTION - LOVE HARD",
+            "issues": [
+                "No original RTF file found for this UUID"
+            ]
+        }
+    },
+    "recommendations": [
+        "Fix 3 items with failed content preservation",
+        "Address 4 total issues found during validation",
+        "Import success rate is low (25%) - review import process"
+    ],
+    "timestamp": "2025-07-01 00:40:11"
+}

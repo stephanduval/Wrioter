@@ -8,6 +8,7 @@ use DOMNodeList;
 use RuntimeException;
 use Illuminate\Support\Str;
 use App\Services\ScrivenerImport\RtfConverter;
+use App\Services\ScrivenerImport\FileScanner;
 
 class XmlParser
 {
@@ -27,10 +28,12 @@ class XmlParser
 
     private string $projectPath;
     private RtfConverter $rtfConverter;
+    private FileScanner $fileScanner;
 
-    public function __construct(RtfConverter $rtfConverter)
+    public function __construct(RtfConverter $rtfConverter, FileScanner $fileScanner)
     {
         $this->rtfConverter = $rtfConverter;
+        $this->fileScanner = $fileScanner;
     }
 
     /**
@@ -61,12 +64,16 @@ class XmlParser
             throw new RuntimeException("Invalid root element: {$root->nodeName}");
         }
 
+        // Scan project for all files
+        $projectFiles = $this->fileScanner->scanProjectFolders($this->projectPath);
+
         return [
             'project' => $this->parseProject($root),
             'binder' => $this->parseBinder($root),
             'settings' => $this->parseSettings($root),
             'research' => $this->parseResearch($root),
             'collections' => $this->parseCollections($root),
+            'project_files' => $projectFiles,
         ];
     }
 
@@ -332,18 +339,27 @@ class XmlParser
         // Get UUID for file lookup
         $uuid = $item->hasAttribute('UUID') ? $item->getAttribute('UUID') : $this->getElementText($item, 'UUID');
         
+        // Scan the item's folder for all files
+        $folderPath = $this->projectPath . '/Files/Data/' . $uuid;
+        $itemFiles = $this->fileScanner->scanItemFolder($folderPath, $uuid);
+        
         // Try to load content from RTF file first
         $rtfContent = $this->loadContentFromFile($uuid);
         
         // Fallback to XML content if no file found
         $content = $item->getElementsByTagName('Content')->item(0);
         if (!$content && !$rtfContent) {
-            return ['Text' => '', 'RTF' => ''];
+            return [
+                'Text' => '', 
+                'RTF' => '',
+                'Files' => $itemFiles,
+            ];
         }
 
         return [
             'Text' => $rtfContent['Text'] ?? ($content ? $this->getElementText($content, 'Text') : ''),
             'RTF' => $rtfContent['RTF'] ?? ($content ? $this->getElementText($content, 'RTF') : ''),
+            'Files' => $itemFiles,
         ];
     }
 
@@ -383,7 +399,12 @@ class XmlParser
      */
     private function extractTextFromRtf(string $rtfContent): string
     {
+        if (empty($rtfContent)) {
+            return '';
+        }
+        
         // Use the fallback conversion method which extracts plain text
+        // This only affects the Text field, not the RTF field
         return $this->rtfConverter->fallbackConversion($rtfContent);
     }
 

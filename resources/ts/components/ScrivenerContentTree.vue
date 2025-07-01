@@ -213,7 +213,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { format } from 'date-fns'
 import ScrivenerItemTree from './ScrivenerItemTree.vue'
 
@@ -232,13 +232,14 @@ const error = ref('')
 const manuscriptData = ref<any>(null)
 const collections = ref<any[]>([])
 const manuscriptItems = ref<any[]>([])
+const isUnmounting = ref(false)
 
 // Computed properties
 const stats = computed(() => {
-  if (!manuscriptItems.value.length) {
+  if (isUnmounting.value || !manuscriptItems.value?.length) {
     return {
       totalItems: 0,
-      collections: collections.value.length,
+      collections: collections.value?.length || 0,
       totalWords: 0,
       includedInCompile: 0
     }
@@ -246,24 +247,30 @@ const stats = computed(() => {
   
   return {
     totalItems: manuscriptItems.value.length,
-    collections: collections.value.length,
-    totalWords: manuscriptItems.value.reduce((sum, item) => sum + (item.word_count || 0), 0),
-    includedInCompile: manuscriptItems.value.filter(item => item.include_in_compile).length
+    collections: collections.value?.length || 0,
+    totalWords: manuscriptItems.value.reduce((sum, item) => sum + (item?.word_count || 0), 0),
+    includedInCompile: manuscriptItems.value.filter(item => item?.include_in_compile).length
   }
 })
 
 const orphanedItems = computed(() => {
+  if (isUnmounting.value || !manuscriptItems.value?.length || !collections.value?.length) {
+    return []
+  }
+  
   // Items that are not in any collection
   const collectionItemIds = new Set()
   collections.value.forEach(collection => {
-    if (collection.items) {
+    if (collection?.items) {
       collection.items.forEach((item: any) => {
-        collectionItemIds.add(item.id)
+        if (item?.id) {
+          collectionItemIds.add(item.id)
+        }
       })
     }
   })
   
-  return manuscriptItems.value.filter(item => !collectionItemIds.has(item.id))
+  return manuscriptItems.value.filter(item => item?.id && !collectionItemIds.has(item.id))
 })
 
 // Helper functions
@@ -320,6 +327,10 @@ const convertScrivenerColor = (color: string) => {
 
 // API functions
 const fetchManuscriptData = async () => {
+  if (isUnmounting.value) {
+    return
+  }
+  
   loading.value = true
   error.value = ''
   
@@ -340,10 +351,14 @@ const fetchManuscriptData = async () => {
     
     const responseText = await manuscriptResponse.text()
     try {
-      manuscriptData.value = JSON.parse(responseText)
+      if (!isUnmounting.value) {
+        manuscriptData.value = JSON.parse(responseText)
+      }
     } catch (parseError) {
       console.error('JSON Parse Error:', parseError, 'Response:', responseText)
-      throw new Error('Invalid JSON response from manuscript API')
+      if (!isUnmounting.value) {
+        throw new Error('Invalid JSON response from manuscript API')
+      }
     }
     
     // Fetch collections for this manuscript
@@ -355,15 +370,19 @@ const fetchManuscriptData = async () => {
         }
       })
       
-      if (collectionsResponse.ok) {
+      if (collectionsResponse.ok && !isUnmounting.value) {
         const collectionsText = await collectionsResponse.text()
         try {
-          collections.value = JSON.parse(collectionsText)
+          if (!isUnmounting.value) {
+            collections.value = JSON.parse(collectionsText)
+          }
         } catch (parseError) {
           console.warn('Collections JSON Parse Error:', parseError)
-          collections.value = []
+          if (!isUnmounting.value) {
+            collections.value = []
+          }
         }
-      } else {
+      } else if (!isUnmounting.value) {
         console.warn('Collections API failed:', collectionsResponse.status)
         collections.value = []
       }
@@ -381,17 +400,21 @@ const fetchManuscriptData = async () => {
         }
       })
       
-      if (itemsResponse.ok) {
+      if (itemsResponse.ok && !isUnmounting.value) {
         const itemsText = await itemsResponse.text()
         try {
-          manuscriptItems.value = JSON.parse(itemsText)
-          // Organize items into collections
-          organizeItemsIntoCollections()
+          if (!isUnmounting.value) {
+            manuscriptItems.value = JSON.parse(itemsText)
+            // Organize items into collections
+            organizeItemsIntoCollections()
+          }
         } catch (parseError) {
           console.warn('Items JSON Parse Error:', parseError)
-          manuscriptItems.value = []
+          if (!isUnmounting.value) {
+            manuscriptItems.value = []
+          }
         }
-      } else {
+      } else if (!isUnmounting.value) {
         console.warn('Items API failed:', itemsResponse.status)
         manuscriptItems.value = []
       }
@@ -402,13 +425,21 @@ const fetchManuscriptData = async () => {
     
   } catch (err) {
     console.error('fetchManuscriptData Error:', err)
-    error.value = err instanceof Error ? err.message : 'Failed to load manuscript data'
+    if (!isUnmounting.value) {
+      error.value = err instanceof Error ? err.message : 'Failed to load manuscript data'
+    }
   } finally {
-    loading.value = false
+    if (!isUnmounting.value) {
+      loading.value = false
+    }
   }
 }
 
 const organizeItemsIntoCollections = () => {
+  if (isUnmounting.value) {
+    return
+  }
+  
   // Create a map of items by their UUID for quick lookup
   const itemsMap = new Map()
   manuscriptItems.value.forEach(item => {
@@ -431,7 +462,20 @@ const organizeItemsIntoCollections = () => {
 
 // Initialize
 onMounted(() => {
-  fetchManuscriptData()
+  if (!isUnmounting.value) {
+    fetchManuscriptData()
+  }
+})
+
+// Cleanup
+onBeforeUnmount(() => {
+  isUnmounting.value = true
+  // Clear all reactive data to prevent unmount issues
+  manuscriptData.value = null
+  collections.value = []
+  manuscriptItems.value = []
+  loading.value = false
+  error.value = ''
 })
 </script>
 
