@@ -222,8 +222,11 @@
     "companyList": "Company List",
     "projects": "Projects",
     "messages": "Messages",
-    "manuscripts": "Manuscripts",
-    "selectManuscript": "Select Manuscript",
+    "manuscripts": {
+      "new": "New Manuscript"
+    },
+    "selectManuscript": "Select Manuscript", 
+    "manuscriptSection": "Manuscripts",
     "manuscriptNew": "New Manuscript",
     "manuscriptList": "All Manuscripts",
     "manuscriptView": "Manuscript View",

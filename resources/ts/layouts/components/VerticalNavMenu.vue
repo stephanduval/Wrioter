@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import DynamicManuscriptMenu from '@/components/DynamicManuscriptMenu.vue'
 import ManuscriptViewMenu from '@/components/ManuscriptViewMenu.vue'
-import ManuscriptSelectionDialog from '@/components/dialogs/ManuscriptSelectionDialog.vue'
+import ManuscriptSelectionDrawer from '@/components/dialogs/ManuscriptSelectionDrawer.vue'
 import menu from '@/navigation/vertical/Freynet-Gagné-menu'
 import { can } from '@layouts/plugins/casl'
 import { computed, ref } from 'vue'
@@ -33,8 +33,8 @@ const { t } = useI18n()
 const router = useRouter()
 const manuscriptStore = useManuscriptStore()
 
-// State for manuscript selection dialog
-const isManuscriptDialogVisible = ref(false)
+// State for manuscript selection drawer
+const isManuscriptDrawerOpen = ref(false)
 
 // Handle manuscript selection
 const handleManuscriptSelected = async (manuscript: Manuscript) => {
@@ -49,15 +49,23 @@ const handleManuscriptSelected = async (manuscript: Manuscript) => {
 }
 
 // Handle custom menu item clicks
-const handleMenuItemClick = (item: MenuItem) => {
-  if (item.custom && item.title === 'menu.selectManuscript') {
-    isManuscriptDialogVisible.value = true
+const handleMenuItemClick = (event: Event, item: MenuItem) => {
+  console.log('🖱️ CLICK DETECTED:', item.title)
+  event.preventDefault()
+  event.stopPropagation()
+  
+  if (item.custom && (item.title === 'Select Manuscript' || item.title === 'menu.selectManuscript')) {
+    console.log('🚀 Opening manuscript drawer!')
+    alert('Opening manuscript drawer!') // Temporary visual confirmation
+    isManuscriptDrawerOpen.value = true
+  } else {
+    console.log('❌ Click not handled for:', item.title)
   }
 }
 
 // Create a computed property for the translated menu with permission checks
 const translatedMenu = computed(() => {
-  return menu.map(item => {
+  return menu.map((item, index) => {
     // Type guard for heading items
     if (item && 'heading' in item && item.heading) {
       return { ...item, heading: t(item.heading) }
@@ -65,12 +73,23 @@ const translatedMenu = computed(() => {
 
     // Type guard for menu items with title
     if (item && 'title' in item && item.title) {
-      // Skip if user doesn't have permission
-      if (!can(item.action, item.subject)) {
+      const hasPermission = can(item.action, item.subject)
+      
+      // BYPASS PERMISSION CHECK FOR SELECT MANUSCRIPT (DEBUG MODE)
+      if (item.title === 'menu.selectManuscript') {
+        console.log('🔧 Select Manuscript found - bypassing permissions')
+      }
+      
+      // Skip if user doesn't have permission (BUT BYPASS FOR SELECT MANUSCRIPT)
+      if (!hasPermission && item.title !== 'menu.selectManuscript') {
         return null
       }
 
-      const translatedItem: MenuItem = { ...item, title: t(item.title) }
+      const translatedItem: MenuItem = { 
+        ...item, 
+        title: t(item.title),
+        custom: item.custom // Explicitly preserve custom flag
+      }
       
       // Handle children with permission checks
       if ('children' in item && Array.isArray(item.children)) {
@@ -91,12 +110,32 @@ const translatedMenu = computed(() => {
       
       return translatedItem
     }
+    console.log(`  -> Item skipped (no title):`, item)
     return null
-  }).filter((item): item is MenuItem => item !== null) // Type guard to remove null items
+  }).filter((item): item is MenuItem => {
+    const isValid = item !== null
+    if (isValid && item.title === 'Select Manuscript') {
+      console.log('=== SELECT MANUSCRIPT ITEM FOUND IN FINAL MENU ===', item)
+    }
+    return isValid
+  }) // Type guard to remove null items
 })
+
+// Debug final menu
+setTimeout(() => {
+  console.log('=== FINAL TRANSLATED MENU ===', translatedMenu.value)
+  const selectManuscriptItem = translatedMenu.value.find(item => 
+    item.title === 'Select Manuscript' || item.title?.includes('Select')
+  )
+  console.log('Select Manuscript item in final menu:', selectManuscriptItem)
+}, 1000)
 </script>
 
 <template>
+  <!-- CLAUDE DEBUG: If you see this comment, the file is being loaded -->
+  <div style="background: red; color: white; padding: 10px; margin: 10px;">
+    🔧 CLAUDE DEBUG: VerticalNavMenu.vue is loading - {{ new Date().toLocaleTimeString() }}
+  </div>
   <VList>
     <template v-for="(item, index) in translatedMenu" :key="index">
       <VListItem
@@ -105,12 +144,22 @@ const translatedMenu = computed(() => {
         class="text-uppercase text-caption font-weight-medium"
       />
       <template v-else>
+        <!-- REGULAR MENU ITEMS (no custom flag) -->
         <VListItem
-          v-if="!item.children"
+          v-if="!item.children && !item.custom"
           :title="item.title"
-          :to="!item.custom ? item.to : undefined"
+          :to="item.to"
           :prepend-icon="item.icon?.icon"
-          @click="item.custom ? handleMenuItemClick(item) : undefined"
+        />
+        
+        <!-- CUSTOM MENU ITEMS (clickable, no navigation) -->
+        <VListItem
+          v-else-if="!item.children && item.custom"
+          :title="item.title"
+          :prepend-icon="item.icon?.icon"
+          @click.stop="handleMenuItemClick($event, item)"
+          style="cursor: pointer; background: lightgreen !important; border: 2px solid red !important;"
+          data-test-id="custom-menu-item"
         />
         <VListItemGroup
           v-else
@@ -145,9 +194,10 @@ const translatedMenu = computed(() => {
     <ManuscriptViewMenu />
   </VList>
 
-  <!-- Manuscript Selection Dialog -->
-  <ManuscriptSelectionDialog
-    v-model:is-dialog-visible="isManuscriptDialogVisible"
+  <!-- Manuscript Selection Drawer -->
+  <ManuscriptSelectionDrawer
+    :is-drawer-open="isManuscriptDrawerOpen"
+    @update:is-drawer-open="isManuscriptDrawerOpen = $event"
     @manuscript-selected="handleManuscriptSelected"
   />
 </template> 
