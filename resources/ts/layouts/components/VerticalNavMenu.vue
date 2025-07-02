@@ -1,9 +1,13 @@
 <script setup lang="ts">
 import DynamicManuscriptMenu from '@/components/DynamicManuscriptMenu.vue'
+import ManuscriptViewMenu from '@/components/ManuscriptViewMenu.vue'
+import ManuscriptSelectionDialog from '@/components/dialogs/ManuscriptSelectionDialog.vue'
 import menu from '@/navigation/vertical/Freynet-Gagné-menu'
 import { can } from '@layouts/plugins/casl'
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRouter } from 'vue-router'
+import { useManuscriptStore } from '@/stores/manuscript'
 
 interface MenuItem {
   heading?: string
@@ -13,9 +17,43 @@ interface MenuItem {
   action?: string
   subject?: string
   children?: MenuItem[]
+  custom?: boolean
+}
+
+interface Manuscript {
+  id: number
+  title: string
+  manuscript_type: 'standard' | 'scrivener'
+  created_at: string
+  updated_at: string
+  description?: string
 }
 
 const { t } = useI18n()
+const router = useRouter()
+const manuscriptStore = useManuscriptStore()
+
+// State for manuscript selection dialog
+const isManuscriptDialogVisible = ref(false)
+
+// Handle manuscript selection
+const handleManuscriptSelected = async (manuscript: Manuscript) => {
+  // Store the selected manuscript
+  manuscriptStore.selectManuscript(manuscript)
+  
+  // Fetch manuscript with items for navigation
+  await manuscriptStore.fetchManuscript(manuscript.id, true)
+  
+  // Navigate to manuscript view
+  router.push(`/manuscripts/${manuscript.id}`)
+}
+
+// Handle custom menu item clicks
+const handleMenuItemClick = (item: MenuItem) => {
+  if (item.custom && item.title === 'menu.selectManuscript') {
+    isManuscriptDialogVisible.value = true
+  }
+}
 
 // Create a computed property for the translated menu with permission checks
 const translatedMenu = computed(() => {
@@ -70,8 +108,9 @@ const translatedMenu = computed(() => {
         <VListItem
           v-if="!item.children"
           :title="item.title"
-          :to="item.to"
+          :to="!item.custom ? item.to : undefined"
           :prepend-icon="item.icon?.icon"
+          @click="item.custom ? handleMenuItemClick(item) : undefined"
         />
         <VListItemGroup
           v-else
@@ -99,7 +138,16 @@ const translatedMenu = computed(() => {
       </template>
     </template>
 
-    <!-- Dynamic Manuscript Menu -->
+    <!-- Dynamic Manuscript Menu (Original functionality) -->
     <DynamicManuscriptMenu />
+
+    <!-- Manuscript View Menu (New functionality) -->
+    <ManuscriptViewMenu />
   </VList>
+
+  <!-- Manuscript Selection Dialog -->
+  <ManuscriptSelectionDialog
+    v-model:is-dialog-visible="isManuscriptDialogVisible"
+    @manuscript-selected="handleManuscriptSelected"
+  />
 </template> 
