@@ -1,5 +1,6 @@
 # Claude Rules
 
+**IMPORTANT**: At the start of each new chat session, read CLAUDETODO.md first to understand any pending work or context from previous sessions. After reading it, clear CLAUDETODO.md by overwriting it with a fresh template for the new session.
 
 Start the chat with "cursorrules applied, these affect the address of the production server"
 
