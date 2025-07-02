@@ -42,7 +42,7 @@ export default [
   },
 
   // Manuscript Section
-  { heading: 'menu.manuscripts' },
+  { heading: 'menu.manuscriptSection' },
   
   {
     title: 'menu.manuscriptNew',
