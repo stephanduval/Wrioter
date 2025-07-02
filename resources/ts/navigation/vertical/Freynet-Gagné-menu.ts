@@ -59,6 +59,17 @@ export default [
     subject: 'manuscripts',
   },
 
+  // Manuscript View Section
+  { heading: 'menu.manuscriptView' },
+  
+  {
+    title: 'menu.selectManuscript',
+    icon: { icon: 'bx-navigation' },
+    action: 'read',
+    subject: 'manuscripts',
+    custom: true,  // Flag to handle click differently
+  },
+
   // Scrivener Import Section
   { heading: 'menu.scrivener' },
   {

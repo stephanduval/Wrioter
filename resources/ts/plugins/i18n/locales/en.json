@@ -223,9 +223,10 @@
     "projects": "Projects",
     "messages": "Messages",
     "manuscripts": "Manuscripts",
+    "selectManuscript": "Select Manuscript",
     "manuscriptNew": "New Manuscript",
     "manuscriptList": "All Manuscripts",
-    "manuscriptView": "View Manuscript",
+    "manuscriptView": "Manuscript View",
     "manuscriptItems": {
       "chapter": "Chapter",
       "scene": "Scene",
@@ -233,6 +234,8 @@
       "location": "Location",
       "research": "Research"
     },
+    "sections": "Sections",
+    "content": "Content",
     "scrivener": "Scrivener",
     "scrivenerImport": "Import from Scrivener"
   },

@@ -148,4 +148,4 @@ onUnmounted(() => {
   background-color: rgb(var(--v-theme-surface-variant));
   font-weight: 600;
 }
-</style> 
+</style>
