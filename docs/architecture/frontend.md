@@ -189,19 +189,41 @@ const { can } = useAbility()
 
 ## Navigation System
 
+### Key Navigation Files
+- **`/resources/ts/@layouts/components/VerticalNavLink.vue`** - Renders individual navigation items (this is the actual component used)
+- **`/resources/ts/navigation/vertical/Freynet-Gagné-menu.ts`** - Menu configuration and structure
+- **`/resources/ts/layouts/components/DefaultLayoutWithVerticalNav.vue`** - Main layout wrapper
+
+⚠️ **Important**: The app uses the `@layouts` system. The `VerticalNavMenu.vue` file in `/resources/ts/layouts/components/` is NOT used.
+
 ### Menu Configuration
 ```typescript
-// resources/ts/navigation/vertical/index.ts
+// resources/ts/navigation/vertical/Freynet-Gagné-menu.ts
 export default [
   {
-    title: 'Manuscripts',
+    title: 'menu.manuscripts',
     to: '/manuscripts',
-    icon: 'mdi-file-document',
+    icon: { icon: 'bx-file' },
     action: 'read',
     subject: 'manuscripts'
+  },
+  // Custom navigation items (no routing, custom click handlers)
+  {
+    title: 'menu.selectManuscript',
+    icon: { icon: 'bx-navigation' },
+    action: 'read',
+    subject: 'manuscripts',
+    custom: true  // Enables custom click handling
   }
 ]
 ```
+
+### Custom Navigation Items
+Items with `custom: true` are handled differently by `VerticalNavLink.vue`:
+- Bypass normal routing behavior
+- Use custom click handlers instead of navigation
+- Can bypass permission checks if needed
+- Useful for drawer/modal triggers
 
 ### Dynamic Menu Filtering
 Routes and menu items are automatically filtered based on user permissions using CASL.
