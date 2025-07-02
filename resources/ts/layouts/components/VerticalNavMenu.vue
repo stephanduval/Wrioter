@@ -133,8 +133,8 @@ setTimeout(() => {
 
 <template>
   <!-- CLAUDE DEBUG: If you see this comment, the file is being loaded -->
-  <div style="background: red; color: white; padding: 10px; margin: 10px;">
-    🔧 CLAUDE DEBUG: VerticalNavMenu.vue is loading - {{ new Date().toLocaleTimeString() }}
+  <div style="background: red; color: white; padding: 20px; margin: 20px; font-size: 24px; text-align: center; z-index: 9999; position: relative;">
+    🚨 CLAUDE DEBUG: VerticalNavMenu.vue UPDATED AT {{ new Date().toLocaleTimeString() }} 🚨
   </div>
   <VList>
     <template v-for="(item, index) in translatedMenu" :key="index">
