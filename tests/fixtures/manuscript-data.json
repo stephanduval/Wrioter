@@ -1,0 +1,298 @@
+{
+  "manuscripts": [
+    {
+      "id": 1,
+      "title": "The Great Novel",
+      "manuscript_type": "standard",
+      "description": "A compelling story about adventure and discovery",
+      "user_id": 1,
+      "created_at": "2025-01-01T00:00:00Z",
+      "updated_at": "2025-01-15T10:30:00Z",
+      "scrivener_uuid": null,
+      "items": [
+        {
+          "id": 1,
+          "manuscript_id": 1,
+          "parent_id": null,
+          "title": "Chapter 1: The Beginning",
+          "content": "It was a dark and stormy night...",
+          "type": "text",
+          "order_index": 1,
+          "scrivener_uuid": null
+        },
+        {
+          "id": 2,
+          "manuscript_id": 1,
+          "parent_id": null,
+          "title": "Chapter 2: The Journey",
+          "content": "The adventure continues...",
+          "type": "text",
+          "order_index": 2,
+          "scrivener_uuid": null
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Research Project",
+      "manuscript_type": "scrivener",
+      "description": "Academic research on manuscript organization",
+      "user_id": 1,
+      "created_at": "2025-01-10T00:00:00Z",
+      "updated_at": "2025-01-20T14:45:00Z",
+      "scrivener_uuid": "12345678-1234-5678-9012-123456789012",
+      "items": [
+        {
+          "id": 3,
+          "manuscript_id": 2,
+          "parent_id": null,
+          "title": "Research Notes",
+          "content": null,
+          "type": "folder",
+          "order_index": 1,
+          "scrivener_uuid": "12345678-1234-5678-9012-123456789013"
+        },
+        {
+          "id": 4,
+          "manuscript_id": 2,
+          "parent_id": 3,
+          "title": "Literature Review",
+          "content": "Comprehensive review of existing literature...",
+          "type": "research",
+          "order_index": 1,
+          "scrivener_uuid": "12345678-1234-5678-9012-123456789014"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Client Manuscript",
+      "manuscript_type": "standard",
+      "description": "A manuscript owned by a client user",
+      "user_id": 2,
+      "created_at": "2025-01-05T00:00:00Z",
+      "updated_at": "2025-01-18T09:15:00Z",
+      "scrivener_uuid": null,
+      "items": [
+        {
+          "id": 5,
+          "manuscript_id": 3,
+          "parent_id": null,
+          "title": "Introduction",
+          "content": "This is the introduction to my work...",
+          "type": "text",
+          "order_index": 1,
+          "scrivener_uuid": null
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Empty Manuscript",
+      "manuscript_type": "standard",
+      "description": "A manuscript with no content items",
+      "user_id": 1,
+      "created_at": "2025-01-20T00:00:00Z",
+      "updated_at": "2025-01-20T00:00:00Z",
+      "scrivener_uuid": null,
+      "items": []
+    },
+    {
+      "id": 5,
+      "title": "Large Manuscript",
+      "manuscript_type": "standard",
+      "description": "A manuscript with many items for testing performance",
+      "user_id": 1,
+      "created_at": "2025-01-01T00:00:00Z",
+      "updated_at": "2025-01-22T16:20:00Z",
+      "scrivener_uuid": null,
+      "items": [
+        {
+          "id": 6,
+          "manuscript_id": 5,
+          "parent_id": null,
+          "title": "Part I",
+          "content": null,
+          "type": "folder",
+          "order_index": 1,
+          "scrivener_uuid": null
+        },
+        {
+          "id": 7,
+          "manuscript_id": 5,
+          "parent_id": 6,
+          "title": "Chapter 1",
+          "content": "First chapter content...",
+          "type": "text",
+          "order_index": 1,
+          "scrivener_uuid": null
+        },
+        {
+          "id": 8,
+          "manuscript_id": 5,
+          "parent_id": 6,
+          "title": "Chapter 2",
+          "content": "Second chapter content...",
+          "type": "text",
+          "order_index": 2,
+          "scrivener_uuid": null
+        },
+        {
+          "id": 9,
+          "manuscript_id": 5,
+          "parent_id": 6,
+          "title": "Chapter 3",
+          "content": "Third chapter content...",
+          "type": "text",
+          "order_index": 3,
+          "scrivener_uuid": null
+        }
+      ]
+    }
+  ],
+  "users": [
+    {
+      "id": 1,
+      "name": "Admin User",
+      "email": "info@freynet-gagne.com",
+      "role": "admin",
+      "permissions": ["read", "write", "delete"],
+      "subjects": ["manuscripts", "users", "admin"]
+    },
+    {
+      "id": 2,
+      "name": "Client User",
+      "email": "client@client.com",
+      "role": "client",
+      "permissions": ["read", "write"],
+      "subjects": ["manuscripts"]
+    },
+    {
+      "id": 3,
+      "name": "Sophie Client",
+      "email": "sophie@freynet-gagne.com",
+      "role": "client",
+      "permissions": ["read", "write"],
+      "subjects": ["manuscripts"]
+    }
+  ],
+  "api_responses": {
+    "manuscripts_list_success": {
+      "status": 200,
+      "data": {
+        "data": [
+          {
+            "id": 1,
+            "title": "The Great Novel",
+            "manuscript_type": "standard",
+            "description": "A compelling story about adventure and discovery",
+            "created_at": "2025-01-01T00:00:00Z",
+            "updated_at": "2025-01-15T10:30:00Z"
+          },
+          {
+            "id": 2,
+            "title": "Research Project",
+            "manuscript_type": "scrivener",
+            "description": "Academic research on manuscript organization",
+            "created_at": "2025-01-10T00:00:00Z",
+            "updated_at": "2025-01-20T14:45:00Z"
+          }
+        ]
+      }
+    },
+    "manuscripts_list_empty": {
+      "status": 200,
+      "data": {
+        "data": []
+      }
+    },
+    "manuscripts_list_error": {
+      "status": 500,
+      "error": {
+        "message": "Internal Server Error",
+        "details": "Database connection failed"
+      }
+    },
+    "manuscript_detail_success": {
+      "status": 200,
+      "data": {
+        "data": {
+          "id": 1,
+          "title": "The Great Novel",
+          "manuscript_type": "standard",
+          "description": "A compelling story about adventure and discovery",
+          "created_at": "2025-01-01T00:00:00Z",
+          "updated_at": "2025-01-15T10:30:00Z",
+          "items": [
+            {
+              "id": 1,
+              "manuscript_id": 1,
+              "parent_id": null,
+              "title": "Chapter 1: The Beginning",
+              "content": "It was a dark and stormy night...",
+              "type": "text",
+              "order_index": 1
+            }
+          ]
+        }
+      }
+    },
+    "manuscript_not_found": {
+      "status": 404,
+      "error": {
+        "message": "Manuscript not found",
+        "details": "The requested manuscript does not exist or you don't have permission to access it"
+      }
+    },
+    "unauthorized": {
+      "status": 401,
+      "error": {
+        "message": "Unauthorized",
+        "details": "Authentication required"
+      }
+    },
+    "forbidden": {
+      "status": 403,
+      "error": {
+        "message": "Forbidden",
+        "details": "You don't have permission to access this manuscript"
+      }
+    }
+  },
+  "test_scenarios": {
+    "basic_functionality": {
+      "name": "Basic Button Functionality",
+      "description": "Test basic button click and response",
+      "user": "admin",
+      "expected_manuscripts": 4,
+      "expected_behavior": "Button shows alert on click"
+    },
+    "empty_state": {
+      "name": "Empty Manuscript List",
+      "description": "Test behavior when no manuscripts exist",
+      "user": "admin",
+      "api_response": "manuscripts_list_empty",
+      "expected_behavior": "Shows empty state message"
+    },
+    "error_handling": {
+      "name": "API Error Handling",
+      "description": "Test behavior when API returns error",
+      "user": "admin",
+      "api_response": "manuscripts_list_error",
+      "expected_behavior": "Shows error message"
+    },
+    "permission_test": {
+      "name": "Permission Bypass Test",
+      "description": "Test that button is visible for all user roles",
+      "users": ["admin", "client"],
+      "expected_behavior": "Button visible for all users"
+    },
+    "performance_test": {
+      "name": "Performance Test",
+      "description": "Test with large manuscript list",
+      "user": "admin",
+      "manuscript_count": 50,
+      "expected_load_time": 2000
+    }
+  }
+}
