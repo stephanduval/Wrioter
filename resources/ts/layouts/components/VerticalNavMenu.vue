@@ -4,7 +4,7 @@ import ManuscriptViewMenu from '@/components/ManuscriptViewMenu.vue'
 import ManuscriptSelectionDrawer from '@/components/dialogs/ManuscriptSelectionDrawer.vue'
 import menu from '@/navigation/vertical/Freynet-Gagné-menu'
 import { can } from '@layouts/plugins/casl'
-import { computed, ref } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { useManuscriptStore } from '@/stores/manuscript'
@@ -36,6 +36,47 @@ const manuscriptStore = useManuscriptStore()
 // State for manuscript selection drawer
 const isManuscriptDrawerOpen = ref(false)
 
+// State for manuscripts dropdown
+const manuscripts = ref<Manuscript[]>([])
+const loadingManuscripts = ref(true)
+
+// Fetch manuscripts for dropdown
+const fetchManuscripts = async () => {
+  try {
+    loadingManuscripts.value = true
+    const accessToken = localStorage.getItem('accessToken')
+    
+    if (!accessToken) {
+      console.warn('No access token found, skipping manuscript fetch')
+      return
+    }
+    
+    const response = await fetch('/api/manuscripts', {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Accept': 'application/json'
+      }
+    })
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch manuscripts: ${response.status}`)
+    }
+    
+    const data = await response.json()
+    manuscripts.value = data
+    console.log('📚 Loaded manuscripts for dropdown:', manuscripts.value.length)
+  } catch (error) {
+    console.error('Error fetching manuscripts:', error)
+  } finally {
+    loadingManuscripts.value = false
+  }
+}
+
+// Fetch manuscripts on mount
+onMounted(() => {
+  fetchManuscripts()
+})
+
 // Handle manuscript selection
 const handleManuscriptSelected = async (manuscript: Manuscript) => {
   // Store the selected manuscript
@@ -56,7 +97,6 @@ const handleMenuItemClick = (event: Event, item: MenuItem) => {
   
   if (item.custom && (item.title === 'Select Manuscript' || item.title === 'menu.selectManuscript')) {
     console.log('🚀 Opening manuscript drawer!')
-    alert('Opening manuscript drawer!') // Temporary visual confirmation
     isManuscriptDrawerOpen.value = true
   } else {
     console.log('❌ Click not handled for:', item.title)
@@ -75,11 +115,6 @@ const translatedMenu = computed(() => {
     if (item && 'title' in item && item.title) {
       const hasPermission = can(item.action, item.subject)
       
-      // BYPASS PERMISSION CHECK FOR SELECT MANUSCRIPT (DEBUG MODE)
-      if (item.title === 'menu.selectManuscript') {
-        console.log('🔧 Select Manuscript found - bypassing permissions')
-      }
-      
       // Skip if user doesn't have permission (BUT BYPASS FOR SELECT MANUSCRIPT)
       if (!hasPermission && item.title !== 'menu.selectManuscript') {
         return null
@@ -89,6 +124,39 @@ const translatedMenu = computed(() => {
         ...item, 
         title: t(item.title),
         custom: item.custom // Explicitly preserve custom flag
+      }
+      
+      // Add manuscripts as children to Select Manuscript item
+      if (item.title === 'menu.selectManuscript') {
+        const manuscriptChildren: MenuItem[] = []
+        
+        if (!loadingManuscripts.value && manuscripts.value.length > 0) {
+          manuscripts.value.forEach(manuscript => {
+            manuscriptChildren.push({
+              title: manuscript.title,
+              icon: { icon: manuscript.manuscript_type === 'scrivener' ? 'bx-import' : 'bx-book' },
+              to: `/manuscripts/${manuscript.id}`,
+              action: 'read',
+              subject: 'manuscripts'
+            })
+          })
+        } else if (loadingManuscripts.value) {
+          manuscriptChildren.push({
+            title: 'Loading manuscripts...',
+            icon: { icon: 'bx-loader-alt' },
+            action: 'read',
+            subject: 'manuscripts'
+          })
+        } else {
+          manuscriptChildren.push({
+            title: 'No manuscripts found',
+            icon: { icon: 'bx-info-circle' },
+            action: 'read',
+            subject: 'manuscripts'
+          })
+        }
+        
+        translatedItem.children = manuscriptChildren
       }
       
       // Handle children with permission checks
@@ -121,21 +189,18 @@ const translatedMenu = computed(() => {
   }) // Type guard to remove null items
 })
 
-// Debug final menu
+// Debug final menu (only show manuscript count)
 setTimeout(() => {
-  console.log('=== FINAL TRANSLATED MENU ===', translatedMenu.value)
   const selectManuscriptItem = translatedMenu.value.find(item => 
     item.title === 'Select Manuscript' || item.title?.includes('Select')
   )
-  console.log('Select Manuscript item in final menu:', selectManuscriptItem)
+  if (selectManuscriptItem && selectManuscriptItem.children) {
+    console.log(`📚 Select Manuscript dropdown loaded with ${selectManuscriptItem.children.length} items`)
+  }
 }, 1000)
 </script>
 
 <template>
-  <!-- CLAUDE DEBUG: If you see this comment, the file is being loaded -->
-  <div style="background: red; color: white; padding: 20px; margin: 20px; font-size: 24px; text-align: center; z-index: 9999; position: relative;">
-    🚨 CLAUDE DEBUG: VerticalNavMenu.vue UPDATED AT {{ new Date().toLocaleTimeString() }} 🚨
-  </div>
   <VList>
     <template v-for="(item, index) in translatedMenu" :key="index">
       <VListItem
@@ -152,17 +217,9 @@ setTimeout(() => {
           :prepend-icon="item.icon?.icon"
         />
         
-        <!-- CUSTOM MENU ITEMS (clickable, no navigation) -->
-        <VListItem
-          v-else-if="!item.children && item.custom"
-          :title="item.title"
-          :prepend-icon="item.icon?.icon"
-          @click.stop="handleMenuItemClick($event, item)"
-          style="cursor: pointer; background: lightgreen !important; border: 2px solid red !important;"
-          data-test-id="custom-menu-item"
-        />
+        <!-- GROUP MENU ITEMS WITH CHILDREN (including Select Manuscript with manuscripts dropdown) -->
         <VListItemGroup
-          v-else
+          v-else-if="item.children && item.children.length > 0"
           :value="false"
         >
           <VListItem
@@ -181,9 +238,20 @@ setTimeout(() => {
             :key="child.title"
             :title="child.title"
             :to="child.to"
-            class="pl-4"
+            :prepend-icon="child.icon?.icon"
+            class="pl-6"
           />
         </VListItemGroup>
+        
+        <!-- CUSTOM MENU ITEMS (clickable, no navigation) - fallback for items without children -->
+        <VListItem
+          v-else-if="item.custom"
+          :title="item.title"
+          :prepend-icon="item.icon?.icon"
+          @click.stop="handleMenuItemClick($event, item)"
+          style="cursor: pointer;"
+          data-test-id="custom-menu-item"
+        />
       </template>
     </template>
 
