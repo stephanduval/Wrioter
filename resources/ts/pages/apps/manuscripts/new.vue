@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
+import { $api } from '@/utils/api'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -9,6 +10,7 @@ const router = useRouter()
 const form = ref({
   title: '',
   description: '',
+  status: 'draft', // Default status required by backend
 })
 
 const loading = ref(false)
@@ -18,27 +20,28 @@ const handleSubmit = async () => {
   try {
     loading.value = true
     error.value = ''
-    
-    // TODO: Implement manuscript creation API call
-    const response = await fetch('/api/manuscripts', {
+
+    // Use $api from utils/api.ts
+    const data = await $api('/manuscripts', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-      body: JSON.stringify(form.value),
+      body: form.value,
     })
 
-    if (!response.ok) {
-      throw new Error('Failed to create manuscript')
-    }
+    console.log('Manuscript created successfully:', data)
 
-    const data = await response.json()
-    
-    // Redirect to the new manuscript's view page
-    router.push({ name: 'manuscripts-view', params: { id: data.id } })
-  } catch (e) {
-    error.value = e instanceof Error ? e.message : 'An error occurred'
+    // Redirect to the manuscripts list page
+    router.push({ name: 'manuscripts-list' })
+  } catch (e: any) {
+    console.error('Manuscript creation error:', e)
+    // Handle validation errors
+    if (e.data?.errors) {
+      const errors = Object.values(e.data.errors).flat()
+      error.value = errors.join(', ')
+    } else if (e.data?.message) {
+      error.value = e.data.message
+    } else {
+      error.value = e.message || 'Failed to create manuscript'
+    }
   } finally {
     loading.value = false
   }
@@ -57,12 +60,27 @@ const handleSubmit = async () => {
           v-model="form.title"
           :label="t('projects.details.title')"
           required
+          class="mb-4"
         />
 
         <VTextarea
           v-model="form.description"
           :label="t('projects.details.description')"
           rows="4"
+          class="mb-4"
+        />
+
+        <VSelect
+          v-model="form.status"
+          :label="t('projects.details.status')"
+          :items="[
+            { title: 'Draft', value: 'draft' },
+            { title: 'In Progress', value: 'in_progress' },
+            { title: 'Completed', value: 'completed' }
+          ]"
+          item-title="title"
+          item-value="value"
+          class="mb-4"
         />
 
         <VAlert

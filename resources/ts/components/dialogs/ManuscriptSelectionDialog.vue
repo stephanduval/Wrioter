@@ -40,12 +40,23 @@ const updateModelValue = (val: boolean) => {
 const fetchManuscripts = async () => {
   loading.value = true
   error.value = null
-  
+
   try {
     const response = await api.get('/manuscripts')
-    manuscripts.value = response.data.data
+    console.log('Manuscripts API response:', response.data)
+
+    // Handle different response structures
+    if (response.data && Array.isArray(response.data.data)) {
+      manuscripts.value = response.data.data
+    } else if (response.data && Array.isArray(response.data)) {
+      manuscripts.value = response.data
+    } else {
+      manuscripts.value = []
+      console.warn('Unexpected API response structure:', response.data)
+    }
   } catch (err: any) {
     console.error('Failed to fetch manuscripts:', err)
+    manuscripts.value = []
     error.value = err.response?.data?.message || 'Failed to load manuscripts'
   } finally {
     loading.value = false
@@ -111,7 +122,7 @@ watch(() => props.isDialogVisible, (newVal) => {
         </VAlert>
 
         <!-- Empty State -->
-        <div v-else-if="manuscripts.length === 0" class="text-center pa-6">
+        <div v-else-if="!manuscripts || manuscripts.length === 0" class="text-center pa-6">
           <VIcon icon="bx-book" size="48" color="grey" />
           <p class="mt-3 text-body-1">No manuscripts found</p>
           <p class="text-body-2 text-grey">Create a manuscript to get started</p>
@@ -119,7 +130,7 @@ watch(() => props.isDialogVisible, (newVal) => {
 
         <!-- Manuscript List -->
         <VList
-          v-else
+          v-else-if="manuscripts && manuscripts.length > 0"
           lines="two"
           class="manuscript-list"
           style="max-height: 450px; overflow-y: auto;"

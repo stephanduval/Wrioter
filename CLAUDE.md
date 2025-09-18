@@ -108,8 +108,11 @@ All test users use the same password (`ChangeMe2024!`):
 ## Development Workflow Notes
 
 - **Build Commands**: Use `yarn build:test` when in testing mode, `yarn build:dev` for development
-- **Server Management**: The user typically runs the server while developing, so Claude doesn't need to start/stop servers
-- **Frontend Testing**: After making Vue.js changes, run `yarn build:test` to test component fixes
+- **Server Management**: ALWAYS ASSUME the following are already running:
+  - `yarn dev:test` (Vite development server in test mode)
+  - `php artisan serve --env=testing` (Laravel server in test mode)
+  - DO NOT start or stop these servers - they are always running
+- **Frontend Testing**: Vue.js changes are automatically hot-reloaded via Vite, no build needed during development
 
 # Queue Worker Management
 

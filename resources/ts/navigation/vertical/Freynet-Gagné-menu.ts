@@ -67,7 +67,7 @@ export default [
     icon: { icon: 'bx-navigation' },
     action: 'read',
     subject: 'manuscripts',
-    custom: true,  // Flag to handle click differently
+    to: 'select-manuscript',
   },
 
   // Scrivener Import Section

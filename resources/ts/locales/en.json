@@ -1,5 +1,6 @@
 {
     "menu": {
+        "selectManuscript": "Select Manuscript",
         "scrivener": {
             "heading": "Scrivener",
             "import": "Import Scrivener File"
