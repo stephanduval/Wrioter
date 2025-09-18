@@ -264,6 +264,18 @@ export const routes: RouteRecordRaw[] = [
       requiresAuth: true,
     },
   },
+  // Select Manuscript Route (opens drawer)
+  {
+    path: '/select-manuscript',
+    name: 'select-manuscript',
+    component: () => import('@/pages/select-manuscript.vue'),
+    meta: {
+      layoutWrapperClasses: 'layout-content-height-fixed',
+      action: 'read',
+      subject: 'manuscripts',
+      requiresAuth: true,
+    },
+  },
   // Manuscript Raw Files Viewer Route
   {
     path: '/admin/manuscripts/:id/raw-files',

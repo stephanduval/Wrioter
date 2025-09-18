@@ -9,6 +9,7 @@ import NavbarShortcuts from '@/layouts/components/NavbarShortcuts.vue'
 import NavbarThemeSwitcher from '@/layouts/components/NavbarThemeSwitcher.vue'
 import UserProfile from '@/layouts/components/UserProfile.vue'
 import NavBarI18n from '@core/components/I18n.vue'
+import VerticalNavMenu from '@/layouts/components/VerticalNavMenu.vue'
 
 // @layouts plugin
 import { useConfigStore } from '@/@core/stores/config'

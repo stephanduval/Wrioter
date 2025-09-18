@@ -1,44 +1,49 @@
-import { createFetch } from '@vueuse/core';
-import { destr } from 'destr';
+export function useApi() {
+  const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api'
 
-export const useApi = createFetch({
-  baseUrl: import.meta.env.VITE_API_BASE_URL || '/api',
-  fetchOptions: {
-    headers: {
+  async function request(url: string, options: RequestInit = {}) {
+    const accessToken = localStorage.getItem('accessToken')
+
+    const headers: Record<string, string> = {
       Accept: 'application/json',
-    },
-    credentials: 'include', // Ensures cookies & tokens are sent
+      'Content-Type': 'application/json',
+      ...options.headers as Record<string, string>,
+    }
 
-  },
-  options: {
-    refetch: true,
-    async beforeFetch({ options }) {
-      // const accessToken = useCookie('accessToken').value
-      const accessToken = localStorage.getItem('accessToken');
+    if (accessToken) {
+      headers['Authorization'] = `Bearer ${accessToken}`
+    }
 
-      if (accessToken) {
-        options.headers = {
-          ...options.headers,
-          Authorization: `Bearer ${accessToken}`,
-        }
-      }
+    const fullUrl = url.startsWith('http') ? url : `${baseUrl}${url}`
 
-      return { options }
-    },
-    afterFetch(ctx) {
-      const { data, response } = ctx
+    const response = await fetch(fullUrl, {
+      credentials: 'include',
+      ...options,
+      headers,
+    })
 
-      // Parse data if it's JSON
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
 
-      let parsedData = null
-      try {
-        parsedData = destr(data)
-      }
-      catch (error) {
-        console.error(error)
-      }
+    const data = await response.json()
+    return { data, response }
+  }
 
-      return { data: parsedData, response }
-    },
-  },
-})
+  return {
+    api: {
+      get: (url: string, options?: RequestInit) => request(url, { ...options, method: 'GET' }),
+      post: (url: string, body?: any, options?: RequestInit) => request(url, {
+        ...options,
+        method: 'POST',
+        body: body ? JSON.stringify(body) : undefined
+      }),
+      put: (url: string, body?: any, options?: RequestInit) => request(url, {
+        ...options,
+        method: 'PUT',
+        body: body ? JSON.stringify(body) : undefined
+      }),
+      delete: (url: string, options?: RequestInit) => request(url, { ...options, method: 'DELETE' }),
+    }
+  }
+}

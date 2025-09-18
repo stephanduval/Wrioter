@@ -36,47 +36,6 @@ const manuscriptStore = useManuscriptStore()
 // State for manuscript selection drawer
 const isManuscriptDrawerOpen = ref(false)
 
-// State for manuscripts dropdown
-const manuscripts = ref<Manuscript[]>([])
-const loadingManuscripts = ref(true)
-
-// Fetch manuscripts for dropdown
-const fetchManuscripts = async () => {
-  try {
-    loadingManuscripts.value = true
-    const accessToken = localStorage.getItem('accessToken')
-    
-    if (!accessToken) {
-      console.warn('No access token found, skipping manuscript fetch')
-      return
-    }
-    
-    const response = await fetch('/api/manuscripts', {
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Accept': 'application/json'
-      }
-    })
-    
-    if (!response.ok) {
-      throw new Error(`Failed to fetch manuscripts: ${response.status}`)
-    }
-    
-    const data = await response.json()
-    manuscripts.value = data
-    console.log('📚 Loaded manuscripts for dropdown:', manuscripts.value.length)
-  } catch (error) {
-    console.error('Error fetching manuscripts:', error)
-  } finally {
-    loadingManuscripts.value = false
-  }
-}
-
-// Fetch manuscripts on mount
-onMounted(() => {
-  fetchManuscripts()
-})
-
 // Handle manuscript selection
 const handleManuscriptSelected = async (manuscript: Manuscript) => {
   // Store the selected manuscript
@@ -120,43 +79,10 @@ const translatedMenu = computed(() => {
         return null
       }
 
-      const translatedItem: MenuItem = { 
-        ...item, 
+      const translatedItem: MenuItem = {
+        ...item,
         title: t(item.title),
         custom: item.custom // Explicitly preserve custom flag
-      }
-      
-      // Add manuscripts as children to Select Manuscript item
-      if (item.title === 'menu.selectManuscript') {
-        const manuscriptChildren: MenuItem[] = []
-        
-        if (!loadingManuscripts.value && manuscripts.value.length > 0) {
-          manuscripts.value.forEach(manuscript => {
-            manuscriptChildren.push({
-              title: manuscript.title,
-              icon: { icon: manuscript.manuscript_type === 'scrivener' ? 'bx-import' : 'bx-book' },
-              to: `/manuscripts/${manuscript.id}`,
-              action: 'read',
-              subject: 'manuscripts'
-            })
-          })
-        } else if (loadingManuscripts.value) {
-          manuscriptChildren.push({
-            title: 'Loading manuscripts...',
-            icon: { icon: 'bx-loader-alt' },
-            action: 'read',
-            subject: 'manuscripts'
-          })
-        } else {
-          manuscriptChildren.push({
-            title: 'No manuscripts found',
-            icon: { icon: 'bx-info-circle' },
-            action: 'read',
-            subject: 'manuscripts'
-          })
-        }
-        
-        translatedItem.children = manuscriptChildren
       }
       
       // Handle children with permission checks
@@ -182,22 +108,18 @@ const translatedMenu = computed(() => {
     return null
   }).filter((item): item is MenuItem => {
     const isValid = item !== null
-    if (isValid && item.title === 'Select Manuscript') {
-      console.log('=== SELECT MANUSCRIPT ITEM FOUND IN FINAL MENU ===', item)
+    if (isValid && (item.title === 'Select Manuscript' || item.title === 'menu.selectManuscript')) {
+      console.log('=== SELECT MANUSCRIPT ITEM FOUND IN FINAL MENU ===', {
+        title: item.title,
+        custom: item.custom,
+        children: item.children,
+        to: item.to,
+        fullItem: item
+      })
     }
     return isValid
   }) // Type guard to remove null items
 })
-
-// Debug final menu (only show manuscript count)
-setTimeout(() => {
-  const selectManuscriptItem = translatedMenu.value.find(item => 
-    item.title === 'Select Manuscript' || item.title?.includes('Select')
-  )
-  if (selectManuscriptItem && selectManuscriptItem.children) {
-    console.log(`📚 Select Manuscript dropdown loaded with ${selectManuscriptItem.children.length} items`)
-  }
-}, 1000)
 </script>
 
 <template>
@@ -209,15 +131,28 @@ setTimeout(() => {
         class="text-uppercase text-caption font-weight-medium"
       />
       <template v-else>
-        <!-- REGULAR MENU ITEMS (no custom flag) -->
+        <!-- Debug: Log item properties -->
+        {{ item.title === 'Select Manuscript' ? console.log('TEMPLATE: Select Manuscript item:', { custom: item.custom, children: item.children, to: item.to }) : null }}
+
+        <!-- CUSTOM MENU ITEMS (clickable, no navigation) - CHECK FIRST -->
         <VListItem
-          v-if="!item.children && !item.custom"
+          v-if="item.custom && !item.children"
+          :title="item.title"
+          :prepend-icon="item.icon?.icon"
+          @click.stop="handleMenuItemClick($event, item)"
+          style="cursor: pointer;"
+          data-test-id="custom-menu-item"
+        />
+
+        <!-- REGULAR MENU ITEMS (no custom flag, no children) -->
+        <VListItem
+          v-else-if="!item.children && !item.custom"
           :title="item.title"
           :to="item.to"
           :prepend-icon="item.icon?.icon"
         />
-        
-        <!-- GROUP MENU ITEMS WITH CHILDREN (including Select Manuscript with manuscripts dropdown) -->
+
+        <!-- GROUP MENU ITEMS WITH CHILDREN -->
         <VListItemGroup
           v-else-if="item.children && item.children.length > 0"
           :value="false"
@@ -242,16 +177,6 @@ setTimeout(() => {
             class="pl-6"
           />
         </VListItemGroup>
-        
-        <!-- CUSTOM MENU ITEMS (clickable, no navigation) - fallback for items without children -->
-        <VListItem
-          v-else-if="item.custom"
-          :title="item.title"
-          :prepend-icon="item.icon?.icon"
-          @click.stop="handleMenuItemClick($event, item)"
-          style="cursor: pointer;"
-          data-test-id="custom-menu-item"
-        />
       </template>
     </template>
 
