@@ -33,15 +33,18 @@
                   {{ manuscript.title }}
                 </h2>
                 <VChip
-                  :color="manuscript.status === 'completed' ? 'success' : manuscript.status === 'in_progress' ? 'warning' : 'info'"
+                  :color="manuscript.manuscript_type === 'scrivener' ? 'primary' : 'secondary'"
                   size="small"
                 >
-                  {{ manuscript.status }}
+                  {{ manuscript.manuscript_type }}
                 </VChip>
               </div>
               <p class="text-body-1 mb-4">
-                {{ manuscript.description }}
+                {{ manuscript.description || 'No description available' }}
               </p>
+              <div class="text-caption">
+                Created: {{ new Date(manuscript.created_at).toLocaleDateString() }}
+              </div>
             </VCardText>
           </VCard>
         </div>
@@ -104,8 +107,11 @@ axiosInstance.interceptors.response.use(
 interface Manuscript {
   id: number
   title: string
-  description: string
-  status: string
+  description?: string
+  manuscript_type: 'standard' | 'scrivener'
+  created_at: string
+  updated_at: string
+  user_id: number
 }
 
 const manuscripts = ref<Manuscript[]>([])
@@ -115,8 +121,20 @@ const error = ref<string | null>(null)
 const fetchManuscripts = async () => {
   try {
     loading.value = true
+    console.log('Fetching manuscripts...')
     const response = await axiosInstance.get('/manuscripts')
-    manuscripts.value = response.data
+    console.log('API Response:', response.data)
+
+    // Handle the response structure from the Laravel API
+    if (response.data && response.data.data) {
+      manuscripts.value = response.data.data
+    } else if (Array.isArray(response.data)) {
+      manuscripts.value = response.data
+    } else {
+      manuscripts.value = []
+    }
+
+    console.log('Manuscripts loaded:', manuscripts.value)
   } catch (e) {
     error.value = 'Failed to load manuscripts'
     console.error('Error loading manuscripts:', e)
