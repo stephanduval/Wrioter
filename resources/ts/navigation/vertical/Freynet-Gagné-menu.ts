@@ -1,5 +1,44 @@
 export default [
-  // Main Menu Section
+   // Manuscript Section
+  { heading: 'menu.manuscriptSection' },
+  
+  {
+    title: 'menu.manuscriptNew',
+    icon: { icon: 'bx-plus' },
+    to: 'manuscripts-new',
+    action: 'create',
+    subject: 'manuscripts',
+  },
+  {
+    title: 'menu.manuscriptList',
+    icon: { icon: 'bx-book' },
+    to: 'manuscripts-list',
+    action: 'read',
+    subject: 'manuscripts',
+  },
+
+  // Manuscript View Section
+  { heading: 'menu.manuscriptView' },
+  
+  {
+    title: 'menu.selectManuscript',
+    icon: { icon: 'bx-navigation' },
+    action: 'read',
+    subject: 'manuscripts',
+    to: 'select-manuscript',
+  },
+
+  // Scrivener Import Section
+  { heading: 'menu.scrivener' },
+  {
+    title: 'menu.scrivenerImport',
+    icon: { icon: 'bx-import' },
+    to: 'scrivener-import',
+    action: 'create',
+    subject: 'manuscripts',
+  },
+  // Dynamic manuscript items will be added here by the component
+ // Main Menu Section
   { heading: 'menu.heading' },
   
   // Admin Dashboard
@@ -41,43 +80,5 @@ export default [
     subject: 'messages',
   },
 
-  // Manuscript Section
-  { heading: 'menu.manuscriptSection' },
-  
-  {
-    title: 'menu.manuscriptNew',
-    icon: { icon: 'bx-plus' },
-    to: 'manuscripts-new',
-    action: 'create',
-    subject: 'manuscripts',
-  },
-  {
-    title: 'menu.manuscriptList',
-    icon: { icon: 'bx-book' },
-    to: 'manuscripts-list',
-    action: 'read',
-    subject: 'manuscripts',
-  },
 
-  // Manuscript View Section
-  { heading: 'menu.manuscriptView' },
-  
-  {
-    title: 'menu.selectManuscript',
-    icon: { icon: 'bx-navigation' },
-    action: 'read',
-    subject: 'manuscripts',
-    to: 'select-manuscript',
-  },
-
-  // Scrivener Import Section
-  { heading: 'menu.scrivener' },
-  {
-    title: 'menu.scrivenerImport',
-    icon: { icon: 'bx-import' },
-    to: 'scrivener-import',
-    action: 'create',
-    subject: 'manuscripts',
-  },
-  // Dynamic manuscript items will be added here by the component
 ]
