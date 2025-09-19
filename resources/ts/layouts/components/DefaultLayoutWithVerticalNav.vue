@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import { ref, watch } from 'vue'
 import navItems from '@/navigation/vertical'
 import { themeConfig } from '@themeConfig'
 
@@ -9,7 +10,7 @@ import NavbarShortcuts from '@/layouts/components/NavbarShortcuts.vue'
 import NavbarThemeSwitcher from '@/layouts/components/NavbarThemeSwitcher.vue'
 import UserProfile from '@/layouts/components/UserProfile.vue'
 import NavBarI18n from '@core/components/I18n.vue'
-import VerticalNavMenu from '@/layouts/components/VerticalNavMenu.vue'
+import DynamicManuscriptNavigation from '@/components/manuscript/DynamicManuscriptNavigation.vue'
 
 // @layouts plugin
 import { useConfigStore } from '@/@core/stores/config'
@@ -35,6 +36,11 @@ const actionArrowInitialRotation = configStore.isVerticalNavCollapsed ? '180deg'
 
 <template>
   <VerticalNavLayout :nav-items="navItems">
+    <!-- 👉 Dynamic Manuscript Navigation -->
+    <template #before-vertical-nav-items>
+      <DynamicManuscriptNavigation />
+    </template>
+
     <!-- 👉 navbar -->
     <template #navbar="{ toggleVerticalOverlayNavActive }">
       <div class="d-flex h-100 align-center">

@@ -33,7 +33,13 @@ class ManuscriptController extends Controller
 
         Log::info("Found {" . $manuscripts->count() . "} manuscripts for user {$userId}");
 
-        return response()->json($manuscripts);
+        return response()->json([
+            'data' => $manuscripts,
+            'meta' => [
+                'total' => $manuscripts->count(),
+                'user_id' => $userId
+            ]
+        ]);
     }
 
     /**
@@ -56,7 +62,9 @@ class ManuscriptController extends Controller
             'status' => $validated['status'],
         ]);
 
-        return response()->json($manuscript, 201);
+        return response()->json([
+            'data' => $manuscript
+        ], 201);
     }
 
     /**
@@ -68,7 +76,9 @@ class ManuscriptController extends Controller
             ->where('user_id', Auth::id())
             ->firstOrFail();
 
-        return response()->json($manuscript);
+        return response()->json([
+            'data' => $manuscript
+        ]);
     }
 
     /**
@@ -90,7 +100,9 @@ class ManuscriptController extends Controller
 
         $manuscript->update($validated);
 
-        return response()->json($manuscript);
+        return response()->json([
+            'data' => $manuscript
+        ]);
     }
 
     /**
@@ -122,56 +134,92 @@ class ManuscriptController extends Controller
             ->ordered()
             ->get();
 
-        return response()->json($collections);
+        return response()->json([
+            'data' => $collections
+        ]);
     }
 
     /**
-     * Get items for a specific manuscript.
+     * Get items for a specific manuscript - enhanced for navigation.
      */
     public function items(Request $request, string $id)
     {
-        // Ensure the manuscript belongs to the authenticated user
-        $manuscript = Manuscript::where('id', $id)
-            ->where('user_id', Auth::id())
-            ->firstOrFail();
+        try {
+            // Ensure the manuscript belongs to the authenticated user
+            $manuscript = Manuscript::where('id', $id)
+                ->where('user_id', Auth::id())
+                ->firstOrFail();
 
-        $parentId = $request->input('parent_id');
+            Log::info("Fetching items for manuscript navigation: {$id}");
 
-        $items = ManuscriptItem::where('manuscript_id', $id)
-            // Filter root vs. child items depending on parent_id
-            ->whereHas('item', function ($q) use ($parentId) {
-                if ($parentId === null) {
-                    $q->whereNull('parent_id');
-                } else {
-                    $q->where('parent_id', $parentId);
-                }
-            })
-            ->with(['item' => function ($query) {
-                $query->select(
-                    'items.id',
-                    'items.title',
-                    'items.type',
-                    'items.parent_id'
-                );
-            }])
-            ->orderBy('order_index')
-            ->get()
-            ->map(function ($manuscriptItem) {
-                $item = $manuscriptItem->item;
+            // Fetch all items at once for efficient tree building
+            $items = ManuscriptItem::where('manuscript_id', $id)
+                ->with([
+                    'item' => function ($query) {
+                        $query->select([
+                            'items.id',
+                            'items.parent_id',
+                            'items.title',
+                            'items.type',
+                            'items.word_count',
+                            'items.character_count',
+                            'items.synopsis',
+                            'items.metadata',
+                            'items.include_in_compile',
+                            'items.updated_at'
+                        ])
+                        ->withCount(['comments' => function ($query) {
+                            $query->where('status', 'active');
+                        }]);
+                    }
+                ])
+                ->orderBy('order_index')
+                ->get()
+                ->map(function ($manuscriptItem) {
+                    $item = $manuscriptItem->item;
 
-                if ($item) {
-                    // Propagate order index & manuscript-item id
-                    $item->order_index = $manuscriptItem->order_index;
-                    $item->manuscript_item_id = $manuscriptItem->id;
+                    if ($item) {
+                        // Transform for navigation
+                        return [
+                            'id' => $item->id,
+                            'parent_id' => $item->parent_id,
+                            'title' => $item->title,
+                            'type' => $item->type,
+                            'word_count' => $item->word_count,
+                            'character_count' => $item->character_count,
+                            'item_order' => $manuscriptItem->order_index,
+                            'synopsis' => $item->synopsis,
+                            'metadata' => $item->metadata,
+                            'include_in_compile' => $item->include_in_compile,
+                            'updated_at' => $item->updated_at->toISOString(),
+                            'has_comments' => $item->comments_count > 0,
+                            'comment_count' => $item->comments_count,
+                        ];
+                    }
 
-                    // Compute whether the item has children
-                    $item->has_children = $item->children()->exists();
-                }
+                    return null;
+                })
+                ->filter(); // Remove null items
 
-                return $item;
-            })
-            ->filter(); // Remove null items (safety)
+            return response()->json([
+                'data' => $items->values(),
+                'meta' => [
+                    'total_items' => $items->count(),
+                    'total_words' => $items->sum('word_count'),
+                    'last_modified' => $items->max('updated_at')
+                ]
+            ]);
 
-        return response()->json($items->values());
+        } catch (\Exception $e) {
+            Log::error('Failed to fetch manuscript items for navigation', [
+                'manuscript_id' => $id,
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'error' => 'Failed to load manuscript structure',
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 } 
