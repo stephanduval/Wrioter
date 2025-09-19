@@ -38,7 +38,7 @@ class ManuscriptCollection extends Model
      */
     public function items(): BelongsToMany
     {
-        return $this->belongsToMany(Item::class, 'collection_items')
+        return $this->belongsToMany(Item::class, 'collection_items', 'collection_id', 'item_id')
             ->withPivot(['order_index'])
             ->withTimestamps();
     }
