@@ -6,6 +6,12 @@ const projectDetailsComponent = () => import('@/pages/apps/projects/view/[id].vu
 
 // 👉 Redirects
 export const redirects: RouteRecordRaw[] = [
+  // Redirect /manuscripts/:id to dashboard (temporary)
+  {
+    path: '/manuscripts/:id',
+    name: 'manuscripts-redirect',
+    redirect: () => '/dashboards/analytics',
+  },
   // ℹ️ We are redirecting to different pages based on role.
   // NOTE: Role is just for UI purposes. ACL is based on abilities.
   {

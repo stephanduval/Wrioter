@@ -3,6 +3,7 @@
 ## Quick Access
 - **Database Schema**: `docs/database/schemas/current_tables.txt`
 - **Frontend Auth**: `docs/frontend/authorization.md`
+- **Dynamic Navigation**: `docs/features/dynamic-manuscript-navigation.md`
 - **Scrivener Import**: `docs/modules/scrivener-import/README.md`
 - **API Reference**: `docs/api/endpoints.md`
 - **Architecture**: `docs/architecture/overview.md`
@@ -63,6 +64,7 @@ Need to work on...
 ├── Frontend?
 │   ├── Components? → docs/frontend/components.md
 │   ├── Auth/Permissions? → docs/frontend/authorization.md
+│   ├── Navigation System? → docs/features/dynamic-manuscript-navigation.md
 │   └── Translations? → docs/frontend/translations.md
 ├── API?
 │   ├── Endpoints? → docs/api/endpoints.md
@@ -73,7 +75,8 @@ Need to work on...
     ├── Overview? → docs/architecture/overview.md
     ├── Frontend? → docs/architecture/frontend.md
     ├── Backend? → docs/architecture/backend.md
-    └── Database? → docs/architecture/database.md
+    ├── Database? → docs/architecture/database.md
+    └── Navigation System? → docs/architecture/manuscript-navigation-system.md
 ```
 
 ## Important Files
@@ -126,6 +129,11 @@ Need to work on...
 
 ## Need More Detail?
 
+- **Navigation System**: Complete documentation in `docs/features/dynamic-manuscript-navigation.md`
+  - Implementation guide: `docs/development/manuscript-navigation-implementation-guide.md`
+  - Technical architecture: `docs/architecture/manuscript-navigation-system.md`
+  - Database design: `docs/database/design/manuscript-navigation-schema.md`
+  - UI/UX design system: `docs/ui-ux/manuscript-navigation-design-system.md`
 - Specific module documentation in `docs/modules/`
 - Database design in `docs/database/design/`
 - Deployment guides in `docs/deployment/`

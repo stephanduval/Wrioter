@@ -189,14 +189,46 @@ const { can } = useAbility()
 
 ## Navigation System
 
-### Key Navigation Files
+The Wrioter frontend features a sophisticated navigation system with both static and dynamic components that provide comprehensive manuscript organization and access.
+
+### **Navigation Architecture Overview**
+
+```
+Application Navigation
+├── Static Navigation (Always Present)
+│   ├── Global Menu Items
+│   ├── User Management
+│   ├── Admin Functions
+│   └── System Features
+└── Dynamic Navigation (Context-Aware)
+    ├── Manuscript Navigation (When manuscript selected)
+    │   ├── Manuscript Header
+    │   ├── Hierarchical Tree Structure
+    │   ├── Collections View
+    │   └── Quick Actions
+    └── Future Context Navigation
+        ├── Project Navigation
+        └── Workspace Navigation
+```
+
+### **Key Navigation Files**
+
+#### **Static Navigation Components**
 - **`/resources/ts/@layouts/components/VerticalNavLink.vue`** - Renders individual navigation items (this is the actual component used)
 - **`/resources/ts/navigation/vertical/Freynet-Gagné-menu.ts`** - Menu configuration and structure
 - **`/resources/ts/layouts/components/DefaultLayoutWithVerticalNav.vue`** - Main layout wrapper
+- **`/resources/ts/layouts/components/VerticalNavMenu.vue`** - Static navigation container
+
+#### **Dynamic Navigation Components**
+- **`/resources/ts/components/manuscript/DynamicManuscriptNavigation.vue`** - Dynamic manuscript navigation container
+- **`/resources/ts/components/manuscript/ManuscriptNavigationTree.vue`** - Hierarchical tree structure
+- **`/resources/ts/components/manuscript/TreeNode.vue`** - Individual tree nodes (recursive)
+- **`/resources/ts/components/manuscript/ManuscriptHeader.vue`** - Manuscript info and actions
+- **`/resources/ts/components/manuscript/ManuscriptCollections.vue`** - Collections view
 
 ⚠️ **Important**: The app uses the `@layouts` system. The `VerticalNavMenu.vue` file in `/resources/ts/layouts/components/` is NOT used.
 
-### Menu Configuration
+### **Static Menu Configuration**
 ```typescript
 // resources/ts/navigation/vertical/Freynet-Gagné-menu.ts
 export default [
@@ -218,15 +250,120 @@ export default [
 ]
 ```
 
-### Custom Navigation Items
+### **Dynamic Manuscript Navigation**
+
+#### **Features**
+- **Context-Aware Visibility**: Appears only when a manuscript is selected
+- **Hierarchical Tree Structure**: Shows folders, documents, and content organization
+- **Real-Time Updates**: Reflects changes to manuscript structure immediately
+- **Multiple View Modes**: Tree view, flat view, and collections view
+- **Search and Filtering**: Find content quickly within large manuscripts
+- **Drag-and-Drop Reordering**: Reorganize content through intuitive interactions
+
+#### **State Management**
+```typescript
+// Navigation state is managed through dedicated stores
+useManuscriptStore():          // Core manuscript data and tree structure
+useManuscriptNavigationStore() // UI state, expansion, selection, filters
+```
+
+#### **Integration Pattern**
+```vue
+<!-- Dynamic navigation integrates seamlessly with static navigation -->
+<VNavigationDrawer>
+  <!-- Dynamic manuscript navigation (conditional) -->
+  <DynamicManuscriptNavigation v-if="hasSelectedManuscript" />
+  <VDivider v-if="hasSelectedManuscript" />
+
+  <!-- Static navigation (always present) -->
+  <StaticNavigation />
+</VNavigationDrawer>
+```
+
+### **Custom Navigation Items**
+
 Items with `custom: true` are handled differently by `VerticalNavLink.vue`:
 - Bypass normal routing behavior
 - Use custom click handlers instead of navigation
 - Can bypass permission checks if needed
 - Useful for drawer/modal triggers
+- Enable complex interactions (like manuscript selection)
 
-### Dynamic Menu Filtering
-Routes and menu items are automatically filtered based on user permissions using CASL.
+### **Navigation State Persistence**
+
+#### **Static Navigation**
+- Menu expansion states saved to localStorage
+- User preferences for navigation layout
+- Permission-based menu filtering
+
+#### **Dynamic Navigation**
+- Expanded folder states persist across sessions
+- Selected manuscript remembered between visits
+- Search and filter preferences saved
+- View mode preferences (tree/flat/collections)
+
+### **Performance Considerations**
+
+#### **Static Navigation**
+- Minimal rendering overhead
+- Efficient permission checking with CASL
+- Lazy-loaded menu sections for large menus
+
+#### **Dynamic Navigation**
+- Virtual scrolling for large manuscript structures
+- Efficient tree building with memoization
+- Incremental loading for deep hierarchies
+- Optimized re-rendering on structure changes
+
+### **Responsive Navigation Behavior**
+
+#### **Desktop (1200px+)**
+- Full navigation sidebar with dynamic and static sections
+- Complete feature set including drag-and-drop
+- Detailed metadata display
+
+#### **Tablet (768px - 1200px)**
+- Collapsible navigation drawer
+- Simplified metadata display
+- Touch-optimized interactions
+
+#### **Mobile (< 768px)**
+- Full-screen navigation overlay
+- Simplified tree structure
+- Swipe gestures for common actions
+- Larger touch targets
+
+### **Dynamic Menu Filtering**
+
+Routes and menu items are automatically filtered based on user permissions using CASL:
+
+```typescript
+// Permission-based filtering
+const hasPermission = can(item.action, item.subject)
+if (!hasPermission && item.title !== 'menu.selectManuscript') {
+  return null // Hide item if no permission
+}
+```
+
+### **Future Navigation Enhancements**
+
+#### **Planned Features**
+- **Multi-Manuscript Workspaces**: Navigate between multiple open manuscripts
+- **Cross-Reference Navigation**: Jump between related content across manuscripts
+- **AI-Powered Navigation**: Smart suggestions for content organization
+- **Collaborative Navigation**: Real-time indicators for team editing
+- **Advanced Search**: Global search across all manuscripts and content
+
+#### **Extension Points**
+- **Plugin Architecture**: Custom navigation components for specific content types
+- **Theme Integration**: Navigation adapts to custom themes and branding
+- **Accessibility Enhancements**: Advanced screen reader optimization
+- **Performance Optimization**: Further improvements for very large manuscripts
+
+For detailed implementation information, see:
+- [Dynamic Manuscript Navigation Feature Specification](../features/dynamic-manuscript-navigation.md)
+- [Manuscript Navigation System Architecture](../architecture/manuscript-navigation-system.md)
+- [Navigation Design System](../ui-ux/manuscript-navigation-design-system.md)
 
 ## Form Handling
 
