@@ -96,6 +96,14 @@ class Item extends Model
     }
 
     /**
+     * Get the comments for this item.
+     */
+    public function comments(): HasMany
+    {
+        return $this->hasMany(WritingComment::class, 'writing_item_id');
+    }
+
+    /**
      * Create a new version of this item.
      */
     public function createVersion(array $attributes): ItemVersion

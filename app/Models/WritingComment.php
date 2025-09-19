@@ -10,6 +10,8 @@ class WritingComment extends Model
 {
     use SoftDeletes;
 
+    protected $table = 'comments';
+
     protected $fillable = [
         'writing_item_id',
         'user_id',
