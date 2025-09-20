@@ -221,7 +221,13 @@ const handleNodeClick = (nodeId: string) => {
   // Navigate to the node
   const node = manuscriptStore.findNodeById(nodeId)
   if (node) {
-    router.push(node.path)
+    // For text items, navigate to the editor
+    if (node.type === 'text' && manuscriptStore.selectedManuscriptId) {
+      router.push(`/manuscripts/${manuscriptStore.selectedManuscriptId}/items/${node.itemId}/edit`)
+    } else {
+      // For other types, use the existing path if available
+      router.push(node.path)
+    }
   }
 }
 

@@ -59,22 +59,61 @@ const routes = [
 ]
 ```
 
-### State Management (Pinia)
+### State Management (Hybrid Approach)
+
+This project uses a **hybrid state management approach** combining direct localStorage and Pinia stores for optimal performance and developer experience.
+
+#### **Direct localStorage (Simple State)**
+```typescript
+// resources/ts/composables/useApi.ts
+export function useApi() {
+  const accessToken = localStorage.getItem('accessToken')
+  // Simple, non-reactive authentication state
+}
+```
+
+**Use Cases:**
+- Authentication tokens (`accessToken`, `userData`)
+- User preferences that don't need reactivity
+- Simple data that doesn't change frequently
+
+#### **Pinia Stores (Complex Reactive State)**
 ```typescript
 // resources/ts/stores/manuscript.ts
 export const useManuscriptStore = defineStore('manuscript', () => {
   const manuscripts = ref<Manuscript[]>([])
   const currentManuscript = ref<Manuscript | null>(null)
-  
-  // Actions
+
+  // No localStorage persistence - pure Pinia reactivity
   async function fetchManuscripts() {
     const { data } = await api.get('/manuscripts')
     manuscripts.value = data.data
   }
-  
+
   return { manuscripts, currentManuscript, fetchManuscripts }
 })
 ```
+
+**Use Cases:**
+- Application data that needs cross-component reactivity
+- Complex objects and arrays
+- UI state that changes frequently
+- Data that needs computed properties or watchers
+
+#### **Decision Matrix**
+| Data Type | Storage | Reason |
+|-----------|---------|---------|
+| Auth tokens | localStorage | Simple, doesn't need reactivity |
+| User preferences | localStorage | Rarely changes, persists across sessions |
+| Manuscript data | Pinia | Complex, reactive, shared across components |
+| UI state | Pinia | Frequently changes, needs reactivity |
+| Navigation state | Pinia | Complex tree structure, real-time updates |
+
+#### **Implementation Guidelines**
+- **Never mix approaches** for the same data type
+- **Use localStorage** for persistence without reactivity needs
+- **Use Pinia** for reactive state that doesn't need persistence
+- **Document the choice** in component comments when not obvious
 
 ### API Integration
 ```typescript

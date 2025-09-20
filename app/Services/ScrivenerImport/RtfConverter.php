@@ -163,37 +163,121 @@ class RtfConverter
      */
     public function fallbackConversion(string $rtf): string
     {
-        // First, remove hex-encoded binary data (images, etc.)
-        $text = preg_replace('/[0-9a-fA-F]{32,}/', '', $rtf);
-        
-        // Remove RTF picture data blocks
-        $text = preg_replace('/\\\*\\\shppict.*?\}/', '', $text);
-        $text = preg_replace('/\\\pict.*?\}/', '', $text);
-        
-        // Remove RTF groups with control words first (most complex structures)
-        $text = preg_replace('/\{\\\\[^}]*\}/', '', $text);
-        
-        // Remove remaining RTF control words
-        $text = preg_replace('/\\\\[a-z]+[0-9]*\s?/i', '', $text);
-        $text = preg_replace('/\\\\[^a-z0-9]/i', '', $text);
-        
-        // Remove any remaining braces
-        $text = str_replace(['{', '}'], '', $text);
-        
-        // Convert paragraph markers
-        $text = preg_replace('/\\\\par\s*/', "\n", $text);
-        
-        // Clean up whitespace
-        $text = preg_replace('/\s+/', ' ', $text);
-        $text = preg_replace('/\n\s*\n\s*\n/', "\n\n", $text);
-        $text = trim($text);
-        
-        // If the result is still mostly non-text characters, return empty string
-        if (strlen($text) > 0 && (strlen(preg_replace('/[a-zA-Z0-9\s\.\,\!\?\-]/', '', $text)) / strlen($text)) > 0.3) {
+        // Return empty string if input is empty
+        if (empty($rtf)) {
             return '';
         }
-        
-        return $text;
+
+        $text = $rtf;
+
+        // Step 1: Remove RTF header and document setup
+        $text = preg_replace('/^{\\\rtf1[^}]*}/', '', $text);
+        $text = preg_replace('/^{\\\rtf1[^{]*{/', '{', $text);
+
+        // Step 2: Remove font table, color table, and style definitions
+        $text = preg_replace('/{\\\fonttbl[^}]*(?:{[^}]*}[^}]*)*}/s', '', $text);
+        $text = preg_replace('/{\\\colortbl[^}]*}/s', '', $text);
+        $text = preg_replace('/{\\\stylesheet[^}]*(?:{[^}]*}[^}]*)*}/s', '', $text);
+        $text = preg_replace('/{\\\info[^}]*(?:{[^}]*}[^}]*)*}/s', '', $text);
+
+        // Step 3: Remove page layout and section definitions
+        $text = preg_replace('/\\\paperw\d+/', '', $text);
+        $text = preg_replace('/\\\paperh\d+/', '', $text);
+        $text = preg_replace('/\\\marg[lrtb]\d+/', '', $text);
+        $text = preg_replace('/\\\sectd[^\\\\{]*/', '', $text);
+        $text = preg_replace('/\\\pard[^\\\\{]*/', '', $text);
+
+        // Step 4: Handle Unicode characters specifically
+        $text = preg_replace_callback('/\\\u(\d+)\\\?\'[0-9a-fA-F]{2}/', function($matches) {
+            $unicode = intval($matches[1]);
+            if ($unicode > 0) {
+                return mb_chr($unicode, 'UTF-8');
+            }
+            return '';
+        }, $text);
+
+        // Step 5: Handle common RTF escape sequences
+        $replacements = [
+            '\\\'92' => "'",      // Right single quote
+            '\\\'93' => '"',      // Left double quote
+            '\\\'94' => '"',      // Right double quote
+            '\\\'96' => '–',      // En dash
+            '\\\'97' => '—',      // Em dash
+            '\\\'85' => '…',      // Ellipsis
+            '\\~' => ' ',         // Non-breaking space
+            '\\_' => '_',         // Underscore
+            '\\{' => '{',         // Left brace
+            '\\}' => '}',         // Right brace
+            '\\\\' => '\\',       // Backslash
+            '\\par' => "\n\n",    // Paragraph break
+            '\\line' => "\n",     // Line break
+            '\\tab' => "\t",      // Tab
+            '\\bullet' => '•',    // Bullet
+        ];
+
+        foreach ($replacements as $search => $replace) {
+            $text = str_replace($search, $replace, $text);
+        }
+
+        // Step 6: Remove Scrivener-specific annotations and markup
+        $text = preg_replace('/<\$Scr_[^>]*>/', '', $text);
+        $text = preg_replace('/<!?\$Scr_[^>]*>/', '', $text);
+
+        // Step 7: Extract actual text content using a more sophisticated approach
+        // Look for text within RTF formatting groups, preserving the actual readable content
+        $extractedText = '';
+
+        // Use a more nuanced approach to extract text from RTF
+        // This regex finds text that appears after RTF formatting codes
+        if (preg_match_all('/(?:\\\[a-z]+\d*\s*)*([^\\\\{}]+)(?=[\\\{}]|$)/i', $text, $matches)) {
+            $textParts = [];
+            foreach ($matches[1] as $part) {
+                $part = trim($part);
+                if (!empty($part) && !preg_match('/^[\d\s\-]+$/', $part)) {
+                    $textParts[] = $part;
+                }
+            }
+            $extractedText = implode(' ', $textParts);
+        }
+
+        // Step 8: If the sophisticated extraction didn't work, try a simpler approach
+        if (empty($extractedText) || strlen($extractedText) < 10) {
+            // Remove all RTF control words and formatting
+            $simpleText = $text;
+
+            // Remove control words
+            $simpleText = preg_replace('/\\\[a-z]+\d*\s*/i', ' ', $simpleText);
+            $simpleText = preg_replace('/\\\[^a-zA-Z0-9\s]/', '', $simpleText);
+
+            // Remove braces
+            $simpleText = str_replace(['{', '}'], '', $simpleText);
+
+            // Clean up
+            $simpleText = preg_replace('/\s+/', ' ', $simpleText);
+            $simpleText = trim($simpleText);
+
+            if (!empty($simpleText) && !preg_match('/^[\d\s\-]+$/', $simpleText)) {
+                $extractedText = $simpleText;
+            }
+        }
+
+        // Step 9: Clean up the extracted text
+        if (!empty($extractedText)) {
+            // Remove any remaining control sequences
+            $extractedText = preg_replace('/\\\[a-z]+\d*/i', '', $extractedText);
+
+            // Fix spacing
+            $extractedText = preg_replace('/\s+/', ' ', $extractedText);
+            $extractedText = preg_replace('/\n\s*\n\s*/', "\n\n", $extractedText);
+            $extractedText = trim($extractedText);
+        }
+
+        // Step 10: Final validation
+        if (empty($extractedText) || preg_match('/^[\d\s\-]+$/', $extractedText)) {
+            return '';
+        }
+
+        return $extractedText;
     }
 
     /**

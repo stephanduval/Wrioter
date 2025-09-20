@@ -374,6 +374,7 @@ declare module 'vue' {
     ErrorHeader: typeof import('./resources/ts/components/ErrorHeader.vue')['default']
     FileContentViewer: typeof import('./resources/ts/components/FileContentViewer.vue')['default']
     I18n: typeof import('./resources/ts/@core/components/I18n.vue')['default']
+    ItemEditor: typeof import('./resources/ts/components/manuscript/ItemEditor.vue')['default']
     ManuscriptRawFileViewer: typeof import('./resources/ts/components/ManuscriptRawFileViewer.vue')['default']
     ManuscriptSelectionDialog: typeof import('./resources/ts/components/dialogs/ManuscriptSelectionDialog.vue')['default']
     ManuscriptSelectionDrawer: typeof import('./resources/ts/components/dialogs/ManuscriptSelectionDrawer.vue')['default']
