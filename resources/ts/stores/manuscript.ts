@@ -67,37 +67,10 @@ type NodeType = 'folder' | 'text' | 'research' | 'character' | 'mindmap' | 'imag
 export const useManuscriptStore = defineStore('manuscript', () => {
   const { api } = useApi()
 
-  // localStorage keys
-  const SELECTED_MANUSCRIPT_KEY = 'selectedManuscriptId'
-  const CURRENT_MANUSCRIPT_KEY = 'currentManuscript'
-
-  // Initialize from localStorage
-  const getFromStorage = (key: string) => {
-    try {
-      const value = localStorage.getItem(key)
-      return value ? JSON.parse(value) : null
-    } catch (error) {
-      console.warn(`Failed to parse ${key} from localStorage:`, error)
-      return null
-    }
-  }
-
-  const saveToStorage = (key: string, value: any) => {
-    try {
-      if (value === null || value === undefined) {
-        localStorage.removeItem(key)
-      } else {
-        localStorage.setItem(key, JSON.stringify(value))
-      }
-    } catch (error) {
-      console.warn(`Failed to save ${key} to localStorage:`, error)
-    }
-  }
-
-  // State
+  // State - Pure Pinia reactivity, no localStorage persistence
   const manuscripts = ref<Manuscript[]>([])
-  const currentManuscript = ref<Manuscript | null>(getFromStorage(CURRENT_MANUSCRIPT_KEY))
-  const selectedManuscriptId = ref<number | null>(getFromStorage(SELECTED_MANUSCRIPT_KEY))
+  const currentManuscript = ref<Manuscript | null>(null)
+  const selectedManuscriptId = ref<number | null>(null)
   const loading = ref(false)
   const error = ref<string | null>(null)
 
@@ -354,7 +327,6 @@ export const useManuscriptStore = defineStore('manuscript', () => {
 
   async function selectManuscript(manuscript: Manuscript | null) {
     selectedManuscriptId.value = manuscript?.id || null
-    saveToStorage(SELECTED_MANUSCRIPT_KEY, selectedManuscriptId.value)
 
     if (manuscript && manuscript.id) {
       // Ensure the manuscript is in our list
@@ -374,12 +346,10 @@ export const useManuscriptStore = defineStore('manuscript', () => {
 
   function setCurrentManuscript(manuscript: Manuscript | null) {
     currentManuscript.value = manuscript
-    saveToStorage(CURRENT_MANUSCRIPT_KEY, manuscript)
   }
 
   function clearSelection() {
     selectedManuscriptId.value = null
-    saveToStorage(SELECTED_MANUSCRIPT_KEY, null)
   }
 
   function $reset() {
@@ -389,9 +359,9 @@ export const useManuscriptStore = defineStore('manuscript', () => {
     loading.value = false
     error.value = null
 
-    // Clear localStorage
-    saveToStorage(SELECTED_MANUSCRIPT_KEY, null)
-    saveToStorage(CURRENT_MANUSCRIPT_KEY, null)
+    // Clear navigation state
+    manuscriptTree.value = []
+    flatItemsIndex.value.clear()
   }
 
   return {

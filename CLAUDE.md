@@ -60,9 +60,46 @@ php artisan about
   Queue ........................................................................................................................ database  
   Session ........................................................................................................................ cookie  
 
-I prefer to use localStorage to cookies 
+I prefer to use localStorage to cookies
 
 The database is mysql.
+
+# State Management Architecture
+
+This project uses a **hybrid state management approach** combining direct localStorage and Pinia stores:
+
+## **Direct localStorage (Simple State)**
+- **Use for**: Authentication tokens, user preferences, simple data that doesn't need reactivity
+- **Location**: `resources/ts/composables/useApi.ts`
+- **Examples**: `accessToken`, `userData`, `abilityRules`
+- **Pattern**:
+  ```typescript
+  const token = localStorage.getItem('accessToken')
+  localStorage.setItem('accessToken', newToken)
+  ```
+
+## **Pinia Stores (Complex Reactive State)**
+- **Use for**: Application data that needs reactivity, cross-component state, complex objects
+- **Location**: `resources/ts/stores/`
+- **Examples**: Manuscript data, UI state, navigation state
+- **Pattern**:
+  ```typescript
+  export const useManuscriptStore = defineStore('manuscript', () => {
+    const manuscripts = ref<Manuscript[]>([])
+    const currentManuscript = ref<Manuscript | null>(null)
+    return { manuscripts, currentManuscript }
+  })
+  ```
+
+## **Decision Guidelines**
+- **Use localStorage when**: Data is simple, doesn't change often, or doesn't need to trigger UI updates
+- **Use Pinia when**: Data is complex, changes frequently, or needs to be shared across multiple components
+- **Never mix**: Don't use both approaches for the same data type
+
+## **Current Stores**
+- `useManuscriptStore()`: Manuscript data and navigation tree (Pinia only - no localStorage persistence)
+- `useManuscriptNavigationStore()`: UI state for navigation
+- Authentication: Direct localStorage only
 
 # Development Environment Setup
 

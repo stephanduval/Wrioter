@@ -190,11 +190,14 @@ class ProcessScrivenerImport implements ShouldQueue
                 'trace' => $e->getTraceAsString(),
             ]);
 
+            // Create user-friendly error message
+            $userFriendlyError = $this->createUserFriendlyErrorMessage($e);
+
             // Update import record with failure
             $this->import->update([
                 'status' => 'failed',
-                'error_message' => $e->getMessage(),
-                'current_step' => 'Failed: ' . $e->getMessage(),
+                'error_message' => $userFriendlyError,
+                'current_step' => 'Failed: ' . $userFriendlyError,
             ]);
 
             // Attempt cleanup
@@ -246,11 +249,63 @@ class ProcessScrivenerImport implements ShouldQueue
             'trace' => $exception->getTraceAsString(),
         ]);
 
+        // Create a user-friendly error message
+        $errorMessage = $this->createUserFriendlyErrorMessage($exception);
+
         // Ensure the import record is marked as failed
         $this->import->update([
             'status' => 'failed',
-            'error_message' => $exception->getMessage(),
+            'error_message' => $errorMessage,
         ]);
+    }
+
+    /**
+     * Create a user-friendly error message from an exception
+     */
+    private function createUserFriendlyErrorMessage(\Throwable $exception): string
+    {
+        $message = $exception->getMessage();
+
+        // Handle database-related errors with cleaner messages
+        if (strpos($message, 'SQLSTATE') !== false) {
+            if (strpos($message, 'String data, right truncated') !== false) {
+                return 'Import failed: Some content in your Scrivener project is too large to import. Please try importing smaller sections or contact support.';
+            } elseif (strpos($message, 'Duplicate entry') !== false) {
+                return 'Import failed: Duplicate content detected. This project may have already been imported.';
+            } elseif (strpos($message, 'foreign key constraint') !== false) {
+                return 'Import failed: Database constraint error. Please try again or contact support.';
+            } else {
+                return 'Import failed: Database error occurred during import. Please try again.';
+            }
+        }
+
+        // Handle file-related errors
+        if (strpos($message, 'file_get_contents') !== false || strpos($message, 'fopen') !== false) {
+            return 'Import failed: Unable to read the uploaded file. Please ensure the file is not corrupted and try again.';
+        }
+
+        // Handle memory or timeout errors
+        if (strpos($message, 'memory') !== false || strpos($message, 'timeout') !== false) {
+            return 'Import failed: The project is too large to process. Please try importing smaller sections.';
+        }
+
+        // Handle RTF conversion errors
+        if (strpos($message, 'RTF') !== false || strpos($message, 'conversion') !== false) {
+            return 'Import failed: Error converting document content. Some documents may have unsupported formatting.';
+        }
+
+        // For other errors, truncate the message if it's too long and make it user-friendly
+        if (strlen($message) > 500) {
+            $shortMessage = substr($message, 0, 500) . '...';
+            return 'Import failed: ' . $shortMessage . ' Please contact support with this error.';
+        }
+
+        // Default fallback
+        if (empty($message)) {
+            return 'Import failed: An unexpected error occurred. Please try again.';
+        }
+
+        return 'Import failed: ' . $message;
     }
 } 
  

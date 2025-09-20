@@ -14,6 +14,7 @@ use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\ManuscriptController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\ScrivenerImportController;
+use App\Http\Controllers\ItemController;
 use Illuminate\Support\Facades\Mail;
 
 /*
@@ -126,6 +127,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/manuscripts/{id}/items', [ManuscriptController::class, 'items']);
     Route::put('/manuscripts/{id}', [ManuscriptController::class, 'update']);
     Route::delete('/manuscripts/{id}', [ManuscriptController::class, 'destroy']);
+
+    // Item routes within manuscripts
+    Route::get('/manuscripts/{manuscriptId}/items/{itemId}', [ItemController::class, 'show']);
+    Route::put('/manuscripts/{manuscriptId}/items/{itemId}', [ItemController::class, 'update']);
+    Route::get('/manuscripts/{manuscriptId}/items/{itemId}/versions', [ItemController::class, 'versions']);
 });
 
 // Admin Routes for Raw Files
