@@ -152,8 +152,21 @@ class ManuscriptController extends Controller
 
             Log::info("Fetching items for manuscript navigation: {$id}");
 
+            $search = $request->get('search');
+
             // Fetch all items at once for efficient tree building
-            $items = ManuscriptItem::where('manuscript_id', $id)
+            $itemsQuery = ManuscriptItem::where('manuscript_id', $id);
+
+            // Add search functionality if search term provided
+            if ($search) {
+                $itemsQuery->whereHas('item', function ($query) use ($search) {
+                    $query->where('title', 'LIKE', "%{$search}%")
+                          ->orWhere('content', 'LIKE', "%{$search}%")
+                          ->orWhere('synopsis', 'LIKE', "%{$search}%");
+                });
+            }
+
+            $items = $itemsQuery
                 ->with([
                     'item' => function ($query) {
                         $query->select([

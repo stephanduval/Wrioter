@@ -232,13 +232,17 @@ export const useManuscriptStore = defineStore('manuscript', () => {
   }
 
   // API method to fetch manuscript items for navigation
-  const fetchManuscriptItems = async (manuscriptId: number) => {
+  const fetchManuscriptItems = async (manuscriptId: number, searchTerm?: string) => {
     try {
       loading.value = true
       error.value = null
 
-      console.log('Fetching items for manuscript:', manuscriptId)
-      const response = await api.get(`/manuscripts/${manuscriptId}/items`)
+      console.log('Fetching items for manuscript:', manuscriptId, searchTerm ? `with search: "${searchTerm}"` : '')
+
+      const url = searchTerm
+        ? `/manuscripts/${manuscriptId}/items?search=${encodeURIComponent(searchTerm)}`
+        : `/manuscripts/${manuscriptId}/items`
+      const response = await api.get(url)
 
       console.log('Raw API response:', response)
       console.log('Response data:', response.data)
@@ -352,6 +356,24 @@ export const useManuscriptStore = defineStore('manuscript', () => {
     selectedManuscriptId.value = null
   }
 
+  // Search items with content
+  async function searchItems(searchTerm: string) {
+    if (!selectedManuscriptId.value) {
+      throw new Error('No manuscript selected')
+    }
+
+    console.log(`Searching items for term: "${searchTerm}"`)
+    await fetchManuscriptItems(selectedManuscriptId.value, searchTerm)
+  }
+
+  // Clear search and reload all items
+  async function clearSearch() {
+    if (!selectedManuscriptId.value) return
+
+    console.log('Clearing search, reloading all items')
+    await fetchManuscriptItems(selectedManuscriptId.value)
+  }
+
   function $reset() {
     manuscripts.value = []
     currentManuscript.value = null
@@ -389,6 +411,8 @@ export const useManuscriptStore = defineStore('manuscript', () => {
     selectManuscript,
     setCurrentManuscript,
     clearSelection,
+    searchItems,
+    clearSearch,
     $reset,
 
     // Navigation methods
