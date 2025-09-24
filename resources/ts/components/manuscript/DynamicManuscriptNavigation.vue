@@ -104,7 +104,7 @@
     <!-- Navigation Tree Items -->
     <div v-else class="navigation-tree">
       <TreeNode
-        v-for="node in filteredTree"
+        v-for="node in manuscriptStore.manuscriptTree"
         :key="node.id"
         :node="node"
         :level="0"
@@ -153,40 +153,14 @@ const searchQuery = computed({
   set: (value: string) => navigationStore.setSearchQuery(value)
 })
 
-// Filtered tree based on search
-const filteredTree = computed(() => {
-  const tree = manuscriptStore.manuscriptTree
-  const query = navigationStore.searchQuery.toLowerCase()
-
-  if (!query) {
-    return tree
-  }
-
-  // Simple search implementation - filter nodes that match the query
-  const filterNodes = (nodes: any[]): any[] => {
-    return nodes.filter(node => {
-      const titleMatch = node.title.toLowerCase().includes(query)
-      const hasMatchingChildren = node.children.length > 0 && filterNodes(node.children).length > 0
-
-      if (titleMatch || hasMatchingChildren) {
-        // If this node or its children match, include it with filtered children
-        return {
-          ...node,
-          children: hasMatchingChildren ? filterNodes(node.children) : node.children
-        }
-      }
-      return false
-    }).filter(Boolean)
-  }
-
-  return filterNodes(tree)
-})
+// Note: Search is now handled server-side instead of client-side filtering
 
 // Methods
-const handleSearchToggle = () => {
+const handleSearchToggle = async () => {
   showSearch.value = !showSearch.value
   if (!showSearch.value) {
     navigationStore.clearSearch()
+    await manuscriptStore.clearSearch()
   }
 }
 
@@ -204,9 +178,27 @@ const handleExpandAll = () => {
   expandFolderNodes(manuscriptStore.manuscriptTree)
 }
 
-const handleSearch = (query: string) => {
+// Debounce search to avoid too many API calls
+let searchTimeout: NodeJS.Timeout | null = null
+
+const handleSearch = async (query: string) => {
   console.log('Search query:', query)
-  // The computed filteredTree will automatically update
+
+  // Clear previous timeout
+  if (searchTimeout) {
+    clearTimeout(searchTimeout)
+  }
+
+  // Debounce search by 500ms
+  searchTimeout = setTimeout(async () => {
+    if (!query || query.trim() === '') {
+      // Clear search and reload all items
+      await manuscriptStore.clearSearch()
+    } else {
+      // Search items on server
+      await manuscriptStore.searchItems(query.trim())
+    }
+  }, 500)
 }
 
 const handleRetry = async () => {
