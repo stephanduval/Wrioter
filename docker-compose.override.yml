@@ -1,0 +1,63 @@
+services:
+  laravel.test:
+    ports:
+      - '8000:80'
+      - '5173:5173'
+    environment:
+      - APP_ENV=local
+      - DB_CONNECTION=mysql
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_DATABASE=${DB_DATABASE}
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - QUEUE_CONNECTION=database
+    volumes:
+      - '.:/var/www/html'
+      - 'sail-node_modules:/var/www/html/node_modules'
+
+  mysql:
+    ports:
+      - '3307:3306'
+    environment:
+      MYSQL_ROOT_PASSWORD: '${DB_PASSWORD}'
+      MYSQL_DATABASE: '${DB_DATABASE}'
+      MYSQL_USER: '${DB_USERNAME}'
+      MYSQL_PASSWORD: '${DB_PASSWORD}'
+      # Create test database
+    volumes:
+      - 'sail-mysql:/var/lib/mysql'
+      - './docker/mysql-init.sql:/docker-entrypoint-initdb.d/create-test-db.sql'
+
+  # Add test database service
+  mysql-test:
+    image: 'mysql/mysql-server:8.0'
+    ports:
+      - '3308:3306'
+    environment:
+      MYSQL_ROOT_PASSWORD: 'WrioterTest123!@#'
+      MYSQL_ROOT_HOST: '%'
+      MYSQL_DATABASE: 'wrioter_test'
+      MYSQL_USER: 'wrioter_test'
+      MYSQL_PASSWORD: 'WrioterTest123!@#'
+      MYSQL_ALLOW_EMPTY_PASSWORD: 0
+    volumes:
+      - 'sail-mysql-test:/var/lib/mysql'
+    networks:
+      - sail
+    healthcheck:
+      test:
+        - CMD
+        - mysqladmin
+        - ping
+        - '-pWrioterTest123!@#'
+      retries: 3
+      timeout: 5s
+
+volumes:
+  sail-node_modules:
+    driver: local
+  sail-mysql-test:
+    driver: local

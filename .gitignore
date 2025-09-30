@@ -47,6 +47,9 @@ database_schemas/*.sql
 
 # 👉 Custom Git ignores
 
+# Documentation folder (contains sensitive credentials)
+/docs/
+
 # Test environment files with credentials
 .env.testing.local
 .env.e2e.local
