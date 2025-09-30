@@ -1,0 +1,56 @@
+# Dependencies
+node_modules/
+vendor/
+
+# Environment files
+.env*
+!.env.example
+
+# Development files
+.git/
+.github/
+.vscode/
+.idea/
+
+# Build artifacts
+public/build/
+public/hot
+public/storage
+
+# Logs
+storage/logs/
+*.log
+
+# Cache
+bootstrap/cache/
+storage/framework/cache/
+storage/framework/sessions/
+storage/framework/views/
+
+# Testing
+coverage/
+.phpunit.result.cache
+tests/_output/
+tests/_support/_generated/
+
+# Documentation
+docs/
+*.md
+!README.md
+
+# Docker files (when building)
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+tmp/
+temp/
+
+# Backup files
+*.bak
+*.backup
