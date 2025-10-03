@@ -5,10 +5,10 @@
 
 # Configuration
 SERVER_HOST="23.180.104.108"
-SSH_USER="sduval" # CloudPanel site user
+SSH_USER="sduvalssh" # CloudPanel SSH user
 DOMAIN="stephandouglasduval.com"
 # CloudPanel uses public as document root, Laravel files go one level up
-SITE_ROOT="/home/${SSH_USER}/htdocs/${DOMAIN}"
+SITE_ROOT="/home/sduval/htdocs/${DOMAIN}"  # Website still in sduval home, SSH user is sduvalssh
 WEB_ROOT="${SITE_ROOT}/public"
 BACKUP_DIR="/home/${SSH_USER}/backups"
 DEPLOY_BRANCH="main"

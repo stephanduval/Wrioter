@@ -1,6 +1,20 @@
 # Wrioter Production Deployment Guide
 
 ## Server Information
+
+### Primary Server (StormWeb CloudPanel)
+- **Server IP**: 23.180.104.108
+- **Domain**: stephandouglasduval.com
+- **Server OS**: CloudPanel with Apache
+- **Project Directory**: `/home/sduval/htdocs/stephandouglasduval.com`
+- **Public Root**: `/home/sduval/htdocs/stephandouglasduval.com/public`
+- **SSH Access**: `ssh sduvalssh@23.180.104.108`
+- **SSH User**: `sduvalssh`
+- **SSH Password**: `qOLxXsp8C1punbLrfw81`
+- **SSH User Home**: `/home/sduvalssh/`
+- **CloudPanel URL**: https://sduval.stormweb.cloud
+
+### Legacy Server (DigitalOcean)
 - **Server IP**: 138.197.142.132
 - **Server OS**: Ubuntu 24.10 with Apache
 - **Project Directory**: `/var/www/enter.project.name.here`
