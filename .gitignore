@@ -57,6 +57,9 @@ tests/config/credentials.local.js
 cypress/config/credentials.local.js
 test-credentials.json
 
+# Claude local settings
+.claude/settings.local.json
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
