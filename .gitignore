@@ -85,3 +85,7 @@ FreynetGagnePortal.zip
 Backups/Sneat_Working_Production_Backup.zip
 upload.zip
 /planning/
+docker-deploy.tar.gz
+*.tar.gz
+*.deb
+*.jar
