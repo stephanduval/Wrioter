@@ -89,3 +89,9 @@ docker-deploy.tar.gz
 *.tar.gz
 *.deb
 *.jar
+
+# Large deployment files
+*.tar.gz
+*.deb
+docker-deploy.tar.gz
+pandoc-*.deb
