@@ -11,8 +11,13 @@
         'is-dragging': node.state.isDragging
       }"
       :style="{ paddingLeft: `${level * 20}px` }"
+      :data-node-id="node.id"
+      :data-item-id="node.itemId"
       @click="handleNodeClick"
       @contextmenu="handleContextMenu"
+      @touchstart="handleTouchStart"
+      @touchend="handleTouchEnd"
+      @touchmove="handleTouchMove"
     >
       <!-- Node Content -->
       <div class="node-content">
@@ -161,6 +166,32 @@ const handleToggleExpansion = () => {
 const handleContextMenu = (event: MouseEvent) => {
   event.preventDefault()
   emit('node-context', { nodeId: props.node.id, event })
+}
+
+// Mobile long-press support
+let longPressTimer: NodeJS.Timeout | null = null
+const LONG_PRESS_DURATION = 500
+
+const handleTouchStart = (event: TouchEvent) => {
+  longPressTimer = setTimeout(() => {
+    // Trigger context menu on long press
+    emit('node-context', { nodeId: props.node.id, event: event as any })
+  }, LONG_PRESS_DURATION)
+}
+
+const handleTouchEnd = () => {
+  if (longPressTimer) {
+    clearTimeout(longPressTimer)
+    longPressTimer = null
+  }
+}
+
+const handleTouchMove = () => {
+  // Cancel long press if finger moves
+  if (longPressTimer) {
+    clearTimeout(longPressTimer)
+    longPressTimer = null
+  }
 }
 
 const getIconColor = (): string => {
