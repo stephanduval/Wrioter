@@ -7,9 +7,13 @@
           v-model="localTitle"
           variant="plain"
           placeholder="Enter title..."
-          class="editor-title"
+          class="editor-title editor-field"
           hide-details
           @update:model-value="handleTitleChange"
+          @contextmenu="handleContextMenu"
+          @touchstart="handleTouchStart"
+          @touchend="handleTouchEnd"
+          @touchmove="handleTouchMove"
         />
 
         <div class="editor-metadata">
@@ -108,6 +112,7 @@
       </div>
     </div>
 
+
     <!-- Synopsis/Notes Section -->
     <div v-if="showSynopsis" class="synopsis-section">
       <VDivider class="my-4" />
@@ -118,7 +123,12 @@
         placeholder="Add notes or synopsis for this item..."
         rows="3"
         hide-details
+        class="editor-field"
         @update:model-value="handleSynopsisChange"
+        @contextmenu="handleContextMenu"
+        @touchstart="handleTouchStart"
+        @touchend="handleTouchEnd"
+        @touchmove="handleTouchMove"
       />
     </div>
   </div>
@@ -128,6 +138,8 @@
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useItemStore } from '@/stores/item'
+import { useContextMenu } from '@/composables/useContextMenu'
+import { getEditorMenuItems } from '@/config/contextMenus/editorMenus'
 import TiptapEditor from '@/@core/components/TiptapEditor.vue'
 
 interface Props {
@@ -142,6 +154,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const route = useRoute()
 const itemStore = useItemStore()
+const contextMenu = useContextMenu()
 
 // Local reactive state for the editor
 const localTitle = ref('')
@@ -224,6 +237,47 @@ onUnmounted(() => {
   if (synopsisTimeout) clearTimeout(synopsisTimeout)
 })
 
+// Context menu handler
+const handleContextMenu = (event: MouseEvent) => {
+  event.preventDefault()
+  event.stopPropagation()
+
+  // Get selected text
+  const selection = window.getSelection()?.toString()
+  const menuItems = getEditorMenuItems(selection)
+
+  if (menuItems.length > 0) {
+    contextMenu.show(event, {
+      items: menuItems,
+      context: { selection }
+    })
+  }
+}
+
+// Touch handlers for mobile long-press
+let longPressTimer: NodeJS.Timeout | null = null
+const LONG_PRESS_DURATION = 500
+
+const handleTouchStart = (event: TouchEvent) => {
+  longPressTimer = setTimeout(() => {
+    handleContextMenu(event as any)
+  }, LONG_PRESS_DURATION)
+}
+
+const handleTouchEnd = () => {
+  if (longPressTimer) {
+    clearTimeout(longPressTimer)
+    longPressTimer = null
+  }
+}
+
+const handleTouchMove = () => {
+  if (longPressTimer) {
+    clearTimeout(longPressTimer)
+    longPressTimer = null
+  }
+}
+
 // Keyboard shortcuts
 const handleKeydown = (event: KeyboardEvent) => {
   // Ctrl/Cmd + S for manual save
@@ -237,10 +291,32 @@ const handleKeydown = (event: KeyboardEvent) => {
 
 onMounted(() => {
   document.addEventListener('keydown', handleKeydown)
+
+  // Add context menu listeners to the editor content area
+  const editorContent = document.querySelector('.editor-content')
+  if (editorContent) {
+    editorContent.addEventListener('contextmenu', handleContextMenu)
+    editorContent.addEventListener('touchstart', handleTouchStart as any)
+    editorContent.addEventListener('touchend', handleTouchEnd)
+    editorContent.addEventListener('touchmove', handleTouchMove)
+  }
 })
 
 onUnmounted(() => {
   document.removeEventListener('keydown', handleKeydown)
+
+  // Clean up context menu listeners
+  const editorContent = document.querySelector('.editor-content')
+  if (editorContent) {
+    editorContent.removeEventListener('contextmenu', handleContextMenu)
+    editorContent.removeEventListener('touchstart', handleTouchStart as any)
+    editorContent.removeEventListener('touchend', handleTouchEnd)
+    editorContent.removeEventListener('touchmove', handleTouchMove)
+  }
+
+  if (longPressTimer) {
+    clearTimeout(longPressTimer)
+  }
 })
 </script>
 
