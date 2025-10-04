@@ -582,6 +582,11 @@
         "fileRequired": "Please select a file to upload",
         "fileType": "Only .zip files are allowed",
         "fileSize": "File size must be less than 50MB"
+      },
+      "errors": {
+        "invalidFileType": "Only .zip files are allowed",
+        "fileTooLarge": "File size must be less than 50MB",
+        "uploadFailed": "Failed to upload file. Please try again."
       }
     }
   },
