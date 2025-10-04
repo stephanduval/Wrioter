@@ -1,12 +1,15 @@
 import type { MenuItem } from '@/composables/useContextMenu'
+import { getI18n } from '@/plugins/i18n'
 
 export const getEditorMenuItems = (selection?: string): MenuItem[] => {
+  const i18n = getI18n()
+  const { t } = i18n.global
   const hasSelection = !!selection && selection.length > 0
 
   return [
     {
       id: 'cut',
-      label: 'Cut',
+      label: t('contextMenu.editor.cut'),
       icon: 'bx-cut',
       action: () => {
         document.execCommand('cut')
@@ -15,7 +18,7 @@ export const getEditorMenuItems = (selection?: string): MenuItem[] => {
     },
     {
       id: 'copy',
-      label: 'Copy',
+      label: t('contextMenu.editor.copy'),
       icon: 'bx-copy',
       action: () => {
         document.execCommand('copy')
@@ -24,7 +27,7 @@ export const getEditorMenuItems = (selection?: string): MenuItem[] => {
     },
     {
       id: 'paste',
-      label: 'Paste',
+      label: t('contextMenu.editor.paste'),
       icon: 'bx-paste',
       action: () => {
         document.execCommand('paste')
@@ -33,7 +36,7 @@ export const getEditorMenuItems = (selection?: string): MenuItem[] => {
     { separator: true },
     {
       id: 'select-all',
-      label: 'Select All',
+      label: t('contextMenu.editor.selectAll'),
       icon: 'bx-select-multiple',
       action: () => {
         document.execCommand('selectAll')
@@ -42,7 +45,7 @@ export const getEditorMenuItems = (selection?: string): MenuItem[] => {
     { separator: true },
     {
       id: 'bold',
-      label: 'Bold',
+      label: t('contextMenu.editor.bold'),
       icon: 'bx-bold',
       action: () => {
         document.execCommand('bold')
@@ -51,7 +54,7 @@ export const getEditorMenuItems = (selection?: string): MenuItem[] => {
     },
     {
       id: 'italic',
-      label: 'Italic',
+      label: t('contextMenu.editor.italic'),
       icon: 'bx-italic',
       action: () => {
         document.execCommand('italic')
@@ -60,7 +63,7 @@ export const getEditorMenuItems = (selection?: string): MenuItem[] => {
     },
     {
       id: 'underline',
-      label: 'Underline',
+      label: t('contextMenu.editor.underline'),
       icon: 'bx-underline',
       action: () => {
         document.execCommand('underline')
@@ -71,10 +74,13 @@ export const getEditorMenuItems = (selection?: string): MenuItem[] => {
 }
 
 export const getDefaultMenuItems = (): MenuItem[] => {
+  const i18n = getI18n()
+  const { t } = i18n.global
+
   return [
     {
       id: 'reload',
-      label: 'Reload',
+      label: t('contextMenu.default.reload'),
       icon: 'bx-refresh',
       action: () => {
         window.location.reload()
@@ -82,7 +88,7 @@ export const getDefaultMenuItems = (): MenuItem[] => {
     },
     {
       id: 'back',
-      label: 'Go Back',
+      label: t('contextMenu.default.goBack'),
       icon: 'bx-arrow-back',
       action: () => {
         window.history.back()

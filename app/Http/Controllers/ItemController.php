@@ -12,6 +12,88 @@ use Illuminate\Support\Facades\Log;
 class ItemController extends Controller
 {
     /**
+     * Create a new item in the manuscript.
+     */
+    public function store(Request $request, string $manuscriptId)
+    {
+        try {
+            // Verify the manuscript belongs to the user
+            $manuscript = Manuscript::where('id', $manuscriptId)
+                ->where('user_id', Auth::id())
+                ->firstOrFail();
+
+            $validated = $request->validate([
+                'title' => 'required|string|max:255',
+                'content' => 'nullable|string',
+                'content_markdown' => 'nullable|string',
+                'content_format' => 'nullable|in:markdown,html',
+                'synopsis' => 'nullable|string',
+                'type' => 'nullable|string|max:50',
+                'parent_id' => 'nullable|integer|exists:items,id',
+                'metadata' => 'nullable|array',
+            ]);
+
+            // Calculate word and character counts
+            $content = $validated['content'] ?? '';
+            $plainText = strip_tags($content);
+            $validated['word_count'] = str_word_count($plainText);
+            $validated['character_count'] = mb_strlen($plainText);
+
+            // Set user_id
+            $validated['user_id'] = Auth::id();
+
+            // Create the item
+            $item = Item::create($validated);
+
+            // Get the next order_index for the manuscript
+            $maxOrder = ManuscriptItem::where('manuscript_id', $manuscriptId)
+                ->max('order_index') ?? 0;
+
+            // Attach item to manuscript
+            ManuscriptItem::create([
+                'manuscript_id' => $manuscriptId,
+                'item_id' => $item->id,
+                'order_index' => $maxOrder + 1,
+                'is_independent' => false,
+                'metadata' => $validated['metadata'] ?? null,
+            ]);
+
+            Log::info("ItemController::store - Created item {$item->id} in manuscript {$manuscriptId}");
+
+            return response()->json([
+                'data' => [
+                    'id' => $item->id,
+                    'title' => $item->title,
+                    'content' => $item->content,
+                    'content_markdown' => $item->content_markdown,
+                    'content_format' => $item->content_format,
+                    'word_count' => $item->word_count,
+                    'character_count' => $item->character_count,
+                    'synopsis' => $item->synopsis,
+                    'type' => $item->type,
+                    'parent_id' => $item->parent_id,
+                    'metadata' => $item->metadata,
+                    'manuscript_id' => $manuscriptId,
+                    'created_at' => $item->created_at->toISOString(),
+                    'updated_at' => $item->updated_at->toISOString(),
+                ]
+            ], 201);
+
+        } catch (\Exception $e) {
+            Log::error('Failed to create item', [
+                'manuscript_id' => $manuscriptId,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'error' => 'Failed to create item',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
      * Display the specified item.
      */
     public function show(Request $request, string $manuscriptId, string $itemId)
