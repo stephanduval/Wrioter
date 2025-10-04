@@ -220,3 +220,17 @@ Route::get('/send-message-notification', function () {
         ], 500);
     }
 });
+
+// Folder View Routes
+Route::middleware('auth:sanctum')->group(function () {
+    // Get folder contents optimized for view mode
+    Route::get('/folders/{folderId}/contents', [App\Http\Controllers\FolderController::class, 'getContents']);
+});
+
+// User Preferences Routes
+Route::middleware('auth:sanctum')->group(function () {
+    // Folder view preferences
+    Route::get('/preferences/folder-views/{folderId}', [App\Http\Controllers\UserPreferencesController::class, 'getFolderViewPreferences']);
+    Route::post('/preferences/folder-views/{folderId}', [App\Http\Controllers\UserPreferencesController::class, 'saveFolderViewPreferences']);
+    Route::delete('/preferences/folder-views/{folderId}', [App\Http\Controllers\UserPreferencesController::class, 'deleteFolderViewPreferences']);
+});

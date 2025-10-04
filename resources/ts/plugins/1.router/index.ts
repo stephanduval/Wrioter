@@ -7,6 +7,7 @@ import { createRouter, createWebHistory } from 'vue-router/auto'
 
 import { redirects, routes } from './additional-routes'
 import { setupGuards } from './guards'
+import { setRouter } from '@/utils/navigation'
 
 function recursiveLayouts(route: RouteRecordRaw): RouteRecordRaw {
   if (route.children) {
@@ -37,6 +38,9 @@ const router = createRouter({
 })
 
 setupGuards(router)
+
+// Make router available globally for navigation outside component setup
+setRouter(router)
 
 export { router }
 

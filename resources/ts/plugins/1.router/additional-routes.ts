@@ -294,4 +294,16 @@ export const routes: RouteRecordRaw[] = [
       requiresAuth: true,
     },
   },
+  // Folder View Route (Manuscript/Corkboard/Outline views)
+  {
+    path: '/folders/:id',
+    name: 'folder-view',
+    component: () => import('@/pages/folder-view.vue'),
+    meta: {
+      layoutWrapperClasses: 'layout-content-height-fixed',
+      action: 'read',
+      subject: 'manuscripts',
+      requiresAuth: true,
+    },
+  },
 ]
