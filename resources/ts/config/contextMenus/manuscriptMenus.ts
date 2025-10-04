@@ -1,6 +1,7 @@
 import type { MenuItem } from '@/composables/useContextMenu'
 import { useRouter } from 'vue-router'
 import { useManuscriptStore } from '@/stores/manuscript'
+import { getI18n } from '@/plugins/i18n'
 
 interface Manuscript {
   id: number
@@ -15,11 +16,13 @@ interface Manuscript {
 export const getManuscriptMenuItems = (manuscript: Manuscript): MenuItem[] => {
   const router = useRouter()
   const manuscriptStore = useManuscriptStore()
+  const i18n = getI18n()
+  const { t } = i18n.global
 
   return [
     {
       id: 'view',
-      label: 'View Manuscript',
+      label: t('contextMenu.manuscript.view'),
       icon: 'bx-show',
       action: () => {
         router.push(`/manuscripts/${manuscript.id}`)
@@ -27,7 +30,7 @@ export const getManuscriptMenuItems = (manuscript: Manuscript): MenuItem[] => {
     },
     {
       id: 'edit',
-      label: 'Edit Details',
+      label: t('contextMenu.manuscript.edit'),
       icon: 'bx-edit',
       action: () => {
         router.push(`/manuscripts/${manuscript.id}/edit`)
@@ -35,7 +38,7 @@ export const getManuscriptMenuItems = (manuscript: Manuscript): MenuItem[] => {
     },
     {
       id: 'duplicate',
-      label: 'Duplicate',
+      label: t('contextMenu.manuscript.duplicate'),
       icon: 'bx-copy',
       action: async () => {
         console.log('Duplicate manuscript:', manuscript.id)
@@ -44,7 +47,7 @@ export const getManuscriptMenuItems = (manuscript: Manuscript): MenuItem[] => {
     },
     {
       id: 'export',
-      label: 'Export',
+      label: t('contextMenu.manuscript.export'),
       icon: 'bx-download',
       action: () => {
         console.log('Export manuscript:', manuscript.id)
@@ -54,14 +57,14 @@ export const getManuscriptMenuItems = (manuscript: Manuscript): MenuItem[] => {
     { separator: true },
     {
       id: 'delete',
-      label: 'Delete',
+      label: t('contextMenu.manuscript.delete'),
       icon: 'bx-trash',
       danger: true,
       action: async () => {
-        if (confirm(`Are you sure you want to delete "${manuscript.title}"?`)) {
+        if (confirm(t('contextMenu.manuscript.deleteConfirm', { title: manuscript.title }))) {
           console.log('Delete manuscript:', manuscript.id)
           // TODO: Implement delete functionality when API method is available
-          alert('Delete functionality not yet implemented')
+          alert(t('contextMenu.manuscript.deleteNotImplemented'))
         }
       },
       disabled: () => {

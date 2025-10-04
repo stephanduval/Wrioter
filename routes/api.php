@@ -129,6 +129,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/manuscripts/{id}', [ManuscriptController::class, 'destroy']);
 
     // Item routes within manuscripts
+    Route::post('/manuscripts/{manuscriptId}/items', [ItemController::class, 'store']);
     Route::get('/manuscripts/{manuscriptId}/items/{itemId}', [ItemController::class, 'show']);
     Route::put('/manuscripts/{manuscriptId}/items/{itemId}', [ItemController::class, 'update']);
     Route::get('/manuscripts/{manuscriptId}/items/{itemId}/versions', [ItemController::class, 'versions']);

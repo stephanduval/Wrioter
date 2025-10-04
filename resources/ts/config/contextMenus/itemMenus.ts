@@ -1,6 +1,8 @@
 import type { MenuItem } from '@/composables/useContextMenu'
+import { router } from '@/plugins/1.router'
 import { useManuscriptStore } from '@/stores/manuscript'
 import { useItemStore } from '@/stores/item'
+import { getI18n } from '@/plugins/i18n'
 import { navigateTo } from '@/utils/navigation'
 
 interface ManuscriptItem {
@@ -20,10 +22,10 @@ interface ManuscriptItem {
 }
 
 export const getItemMenuItems = (item: ManuscriptItem, manuscriptId: number): MenuItem[] => {
-  // Don't use useRouter() here - it's not in a component setup context
-  // Instead, we'll navigate using window.location or return a path for the caller to handle
   const itemStore = useItemStore()
   const manuscriptStore = useManuscriptStore()
+  const i18n = getI18n()
+  const { t } = i18n.global
 
   const canMoveUp = () => {
     // TODO: Check if item can move up based on siblings
@@ -72,8 +74,38 @@ export const getItemMenuItems = (item: ManuscriptItem, manuscriptId: number): Me
 
     // Regular item options
     {
+      id: 'new-page',
+      label: t('contextMenu.item.newPage'),
+      icon: 'bx-plus',
+      action: async () => {
+        try {
+          console.log('Create new page as child of:', item.id)
+
+          const newItem = await itemStore.createItem(manuscriptId, {
+            title: t('contextMenu.item.newPage'),
+            parent_id: item.id,
+            type: 'text',
+            content: '',
+            content_format: 'html'
+          })
+
+          console.log('New item created:', newItem)
+
+          // Refresh the manuscript store to show the new item
+          await manuscriptStore.fetchManuscriptItems(manuscriptId)
+
+          // Navigate to the new item
+          router.push(`/manuscripts/${manuscriptId}/items/${newItem.id}/edit`)
+        } catch (error) {
+          console.error('Failed to create new page:', error)
+          alert(t('contextMenu.item.createPageError') || 'Failed to create new page')
+        }
+      }
+    },
+    { separator: true },
+    {
       id: 'edit',
-      label: 'Edit Item',
+      label: t('contextMenu.item.edit'),
       icon: 'bx-edit',
       action: () => {
         navigateTo(`/manuscripts/${manuscriptId}/items/${item.id}/edit`)
@@ -82,7 +114,7 @@ export const getItemMenuItems = (item: ManuscriptItem, manuscriptId: number): Me
     },
     {
       id: 'view',
-      label: 'View Item',
+      label: t('contextMenu.item.view'),
       icon: 'bx-show',
       action: () => {
         navigateTo(`/manuscripts/${manuscriptId}/items/${item.id}`)
@@ -91,7 +123,7 @@ export const getItemMenuItems = (item: ManuscriptItem, manuscriptId: number): Me
     { separator: true },
     {
       id: 'move-up',
-      label: 'Move Up',
+      label: t('contextMenu.item.moveUp'),
       icon: 'bx-up-arrow-alt',
       action: async () => {
         console.log('Move item up:', item.id)
@@ -101,7 +133,7 @@ export const getItemMenuItems = (item: ManuscriptItem, manuscriptId: number): Me
     },
     {
       id: 'move-down',
-      label: 'Move Down',
+      label: t('contextMenu.item.moveDown'),
       icon: 'bx-down-arrow-alt',
       action: async () => {
         console.log('Move item down:', item.id)
@@ -112,7 +144,7 @@ export const getItemMenuItems = (item: ManuscriptItem, manuscriptId: number): Me
     { separator: true },
     {
       id: 'status',
-      label: 'Change Status',
+      label: t('contextMenu.item.changeStatus'),
       icon: 'bx-flag',
       action: () => {
         console.log('Change status for item:', item.id)
@@ -121,7 +153,7 @@ export const getItemMenuItems = (item: ManuscriptItem, manuscriptId: number): Me
     },
     {
       id: 'compile',
-      label: item.metadata?.isCompilable ? 'Exclude from Compile' : 'Include in Compile',
+      label: item.metadata?.isCompilable ? t('contextMenu.item.excludeFromCompile') : t('contextMenu.item.includeInCompile'),
       icon: item.metadata?.isCompilable ? 'bx-x-circle' : 'bx-check-circle',
       action: async () => {
         console.log('Toggle compile for item:', item.id)
@@ -131,7 +163,7 @@ export const getItemMenuItems = (item: ManuscriptItem, manuscriptId: number): Me
     { separator: true },
     {
       id: 'duplicate',
-      label: 'Duplicate',
+      label: t('contextMenu.item.duplicate'),
       icon: 'bx-copy',
       action: async () => {
         console.log('Duplicate item:', item.id)
@@ -140,14 +172,14 @@ export const getItemMenuItems = (item: ManuscriptItem, manuscriptId: number): Me
     },
     {
       id: 'delete',
-      label: 'Delete',
+      label: t('contextMenu.item.delete'),
       icon: 'bx-trash',
       danger: true,
       action: async () => {
-        if (confirm(`Are you sure you want to delete "${item.title}"?`)) {
+        if (confirm(t('contextMenu.item.deleteConfirm', { title: item.title }))) {
           console.log('Delete item:', item.id)
           // TODO: Implement delete functionality when API method is available
-          alert('Delete functionality not yet implemented')
+          alert(t('contextMenu.item.deleteNotImplemented'))
         }
       }
     }
