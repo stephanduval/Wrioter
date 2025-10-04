@@ -1,5 +1,9 @@
 # Context Menu Implementation Plan
 
+> **Status**: ✅ IMPLEMENTED
+>
+> See [Context Menu Usage Guide](./context-menu-usage-guide.md) for how to use and extend the system.
+
 ## Overview
 Implementation of a flexible, adaptive context menu system for Vue.js that works seamlessly across desktop and mobile devices.
 

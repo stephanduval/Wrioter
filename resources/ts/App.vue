@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import ScrollToTop from '@core/components/ScrollToTop.vue'
+import ContextMenuProvider from '@/components/context-menu/ContextMenuProvider.vue'
 import initCore from '@core/initCore'
 import { initConfigStore, useConfigStore } from '@core/stores/config'
 import { hexToRgb } from '@core/utils/colorConverter'
@@ -21,6 +22,9 @@ const configStore = useConfigStore()
       <RouterView />
       <!-- <BuyNow /> -->
       <ScrollToTop />
+
+      <!-- Global Context Menu Provider -->
+      <ContextMenuProvider />
     </VApp>
   </VLocaleProvider>
 </template>
