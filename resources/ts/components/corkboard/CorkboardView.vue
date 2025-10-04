@@ -1,0 +1,551 @@
+<template>
+  <div
+    id="corkboard-container"
+    class="corkboard-view"
+    :class="{
+      'is-loading': isLoading,
+      'is-empty': !hasCards,
+      'selection-mode': selectionStore.isSelectionMode
+    }"
+  >
+    <!-- Toolbar -->
+    <CorkboardToolbar
+      v-model:zoom="corkboardStore.viewConfig.zoom"
+      v-model:layout="corkboardStore.viewConfig.layout"
+      v-model:display-mode="corkboardStore.viewConfig.displayMode"
+      v-model:columns="corkboardStore.viewConfig.columns"
+      :selected-count="selectionStore.selectedCount"
+      :total-count="corkboardStore.cardCount"
+      :filters="corkboardStore.filters"
+      :is-loading="isLoading"
+      @search="handleSearch"
+      @filter="handleFilter"
+      @sort="handleSort"
+      @create-card="handleCreateCard"
+      @bulk-action="handleBulkAction"
+      @toggle-selection-mode="toggleSelectionMode"
+    />
+
+    <!-- Main content area -->
+    <div class="corkboard-content">
+      <!-- Loading state -->
+      <div
+        v-if="isLoading"
+        class="loading-container"
+      >
+        <VProgressCircular
+          indeterminate
+          color="primary"
+          size="48"
+        />
+        <p class="text-body-1 mt-4">Loading corkboard...</p>
+      </div>
+
+      <!-- Empty state -->
+      <div
+        v-else-if="!hasCards"
+        class="empty-state"
+      >
+        <VIcon
+          icon="bx-grid-alt"
+          size="64"
+          color="disabled"
+        />
+        <h3 class="text-h6 mt-4 mb-2">No cards yet</h3>
+        <p class="text-body-2 text-disabled mb-4">
+          Create your first card to start organizing your manuscript
+        </p>
+        <VBtn
+          color="primary"
+          prepend-icon="bx-plus"
+          @click="handleCreateCard"
+        >
+          Create Card
+        </VBtn>
+      </div>
+
+      <!-- Error state -->
+      <VAlert
+        v-else-if="error"
+        type="error"
+        class="ma-4"
+        :text="error"
+        closable
+        @click:close="clearError"
+      />
+
+      <!-- Corkboard grid -->
+      <CorkboardGrid
+        v-else
+        :cards="filteredCards"
+        :view-config="corkboardStore.viewConfig"
+        :selected-ids="selectionStore.selectedArray"
+        :card-positions="corkboardStore.cardPositions"
+        @card-select="handleCardSelect"
+        @card-reorder="handleCardReorder"
+        @card-drop="handleCardDrop"
+        @context-menu="handleContextMenu"
+      />
+    </div>
+
+    <!-- Selection mode toolbar (mobile) -->
+    <VBottomSheet
+      v-model="selectionStore.isSelectionMode"
+      class="selection-sheet"
+    >
+      <VCard>
+        <VCardTitle class="d-flex align-center">
+          <span>{{ selectionStore.selectedCount }} selected</span>
+          <VSpacer />
+          <VBtn
+            icon="bx-x"
+            variant="text"
+            @click="toggleSelectionMode"
+          />
+        </VCardTitle>
+        <VCardText>
+          <div class="d-flex gap-2 flex-wrap">
+            <VBtn
+              prepend-icon="bx-edit"
+              @click="handleBulkAction('edit')"
+            >
+              Edit
+            </VBtn>
+            <VBtn
+              prepend-icon="bx-move"
+              @click="handleBulkAction('move')"
+            >
+              Move
+            </VBtn>
+            <VBtn
+              prepend-icon="bx-copy"
+              @click="handleBulkAction('duplicate')"
+            >
+              Duplicate
+            </VBtn>
+            <VBtn
+              prepend-icon="bx-trash"
+              color="error"
+              @click="handleBulkAction('delete')"
+            >
+              Delete
+            </VBtn>
+          </div>
+        </VCardText>
+      </VCard>
+    </VBottomSheet>
+
+    <!-- Context menu -->
+    <VMenu
+      v-model="showContextMenu"
+      :location="contextMenuPosition"
+      absolute
+    >
+      <VList>
+        <VListItem
+          v-for="item in contextMenuItems"
+          :key="item.id"
+          :disabled="item.disabled"
+          @click="item.action"
+        >
+          <template #prepend>
+            <VIcon :icon="item.icon" />
+          </template>
+          <VListItemTitle>{{ item.label }}</VListItemTitle>
+        </VListItem>
+      </VList>
+    </VMenu>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, computed, onMounted, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import {
+  VProgressCircular,
+  VIcon,
+  VBtn,
+  VAlert,
+  VBottomSheet,
+  VCard,
+  VCardTitle,
+  VCardText,
+  VSpacer,
+  VMenu,
+  VList,
+  VListItem,
+  VListItemTitle
+} from 'vuetify/components'
+
+import CorkboardToolbar from './CorkboardToolbar.vue'
+import CorkboardGrid from './CorkboardGrid.vue'
+
+import { useCorkboardStore } from '@/stores/corkboard'
+import { useSelectionStore } from '@/stores/selection'
+import { useBoxSelection } from '@/composables/useSelection'
+import type { CorkboardCard } from '@/api/corkboard'
+
+interface Props {
+  manuscriptId: number
+  corkboardId?: number
+}
+
+const props = defineProps<Props>()
+
+const router = useRouter()
+const route = useRoute()
+
+// Stores
+const corkboardStore = useCorkboardStore()
+const selectionStore = useSelectionStore()
+
+// Reactive state
+const showContextMenu = ref(false)
+const contextMenuPosition = ref<[number, number]>([0, 0])
+const contextMenuItems = ref<any[]>([])
+
+// Computed properties
+const isLoading = computed(() => corkboardStore.isLoading)
+const hasCards = computed(() => corkboardStore.hasCards)
+const filteredCards = computed(() => corkboardStore.filteredCards)
+const error = computed(() => corkboardStore.error)
+
+// Box selection setup
+const containerRef = ref<HTMLElement>()
+useBoxSelection({
+  container: containerRef,
+  itemSelector: '[data-card-id]',
+  onSelect: (elements) => {
+    const cardIds = elements
+      .map(el => el.getAttribute('data-card-id'))
+      .filter((id): id is string => id !== null)
+
+    if (cardIds.length > 0) {
+      selectionStore.replaceSelection(cardIds)
+    }
+  }
+})
+
+// Event handlers
+const handleSearch = (query: string) => {
+  corkboardStore.setFilters({ searchQuery: query })
+}
+
+const handleFilter = (filters: any) => {
+  corkboardStore.setFilters(filters)
+}
+
+const handleSort = (sort: any) => {
+  corkboardStore.setSort(sort)
+}
+
+const handleCreateCard = async () => {
+  try {
+    const newCard = await corkboardStore.createCard({
+      title: 'New Card',
+      synopsis: 'Enter your synopsis here...',
+      status: 'todo'
+    })
+
+    if (newCard) {
+      // Select the new card
+      selectionStore.selectItem(newCard.id)
+
+      // Navigate to edit if needed
+      // router.push(`/manuscripts/${props.manuscriptId}/items/${newCard.itemId}/edit`)
+    }
+  } catch (error) {
+    console.error('Failed to create card:', error)
+  }
+}
+
+const handleCardSelect = (cardId: string, options: { additive?: boolean; range?: boolean } = {}) => {
+  if (options.range) {
+    selectionStore.extendSelection(cardId)
+  } else if (options.additive) {
+    selectionStore.toggleItem(cardId)
+  } else {
+    selectionStore.selectItem(cardId)
+  }
+}
+
+const handleCardReorder = async (operations: any[]) => {
+  try {
+    await corkboardStore.reorderCards(operations)
+  } catch (error) {
+    console.error('Failed to reorder cards:', error)
+  }
+}
+
+const handleCardDrop = async (draggedCardIds: string[], targetIndex: number, targetPosition?: any) => {
+  try {
+    await corkboardStore.handleCardDrop(draggedCardIds, targetIndex, targetPosition)
+  } catch (error) {
+    console.error('Failed to handle card drop:', error)
+  }
+}
+
+const handleContextMenu = (cardIds: string[], event: MouseEvent) => {
+  contextMenuPosition.value = [event.clientX, event.clientY]
+
+  const isMultiple = cardIds.length > 1
+  const selectedCards = cardIds.map(id => corkboardStore.getCardById(id)).filter(Boolean)
+
+  contextMenuItems.value = [
+    {
+      id: 'edit',
+      label: isMultiple ? 'Edit Selected' : 'Edit Card',
+      icon: 'bx-edit',
+      action: () => handleBulkAction('edit'),
+      disabled: false
+    },
+    {
+      id: 'duplicate',
+      label: isMultiple ? 'Duplicate Selected' : 'Duplicate Card',
+      icon: 'bx-copy',
+      action: () => handleBulkAction('duplicate'),
+      disabled: false
+    },
+    {
+      id: 'separator-1',
+      separator: true
+    },
+    {
+      id: 'status-todo',
+      label: 'Mark as To Do',
+      icon: 'bx-circle',
+      action: () => handleBulkStatusChange('todo'),
+      disabled: false
+    },
+    {
+      id: 'status-draft',
+      label: 'Mark as Draft',
+      icon: 'bx-edit-alt',
+      action: () => handleBulkStatusChange('draft'),
+      disabled: false
+    },
+    {
+      id: 'status-review',
+      label: 'Mark as Review',
+      icon: 'bx-search',
+      action: () => handleBulkStatusChange('review'),
+      disabled: false
+    },
+    {
+      id: 'status-done',
+      label: 'Mark as Done',
+      icon: 'bx-check-circle',
+      action: () => handleBulkStatusChange('done'),
+      disabled: false
+    },
+    {
+      id: 'separator-2',
+      separator: true
+    },
+    {
+      id: 'delete',
+      label: isMultiple ? 'Delete Selected' : 'Delete Card',
+      icon: 'bx-trash',
+      action: () => handleBulkAction('delete'),
+      disabled: false
+    }
+  ]
+
+  showContextMenu.value = true
+}
+
+const handleBulkAction = async (action: string) => {
+  const selectedIds = selectionStore.selectedArray
+
+  switch (action) {
+    case 'edit':
+      // Open multi-edit dialog or navigate to first item
+      if (selectedIds.length === 1) {
+        const card = corkboardStore.getCardById(selectedIds[0])
+        if (card) {
+          router.push(`/manuscripts/${props.manuscriptId}/items/${card.itemId}/edit`)
+        }
+      } else {
+        // Open bulk edit dialog
+        console.log('Bulk edit:', selectedIds)
+      }
+      break
+
+    case 'duplicate':
+      try {
+        // Duplicate selected cards
+        for (const cardId of selectedIds) {
+          const card = corkboardStore.getCardById(cardId)
+          if (card) {
+            await corkboardStore.createCard({
+              ...card,
+              title: `${card.title} (Copy)`,
+              id: undefined // Let backend generate new ID
+            })
+          }
+        }
+      } catch (error) {
+        console.error('Failed to duplicate cards:', error)
+      }
+      break
+
+    case 'move':
+      console.log('Move cards:', selectedIds)
+      // Open move dialog
+      break
+
+    case 'delete':
+      if (confirm(`Delete ${selectedIds.length} card(s)?`)) {
+        try {
+          for (const cardId of selectedIds) {
+            await corkboardStore.deleteCard(cardId)
+          }
+          selectionStore.clearSelection()
+        } catch (error) {
+          console.error('Failed to delete cards:', error)
+        }
+      }
+      break
+  }
+
+  showContextMenu.value = false
+}
+
+const handleBulkStatusChange = async (status: CorkboardCard['status']) => {
+  const selectedIds = selectionStore.selectedArray
+
+  try {
+    await corkboardStore.bulkUpdateCards(selectedIds, { status })
+  } catch (error) {
+    console.error('Failed to update card status:', error)
+  }
+
+  showContextMenu.value = false
+}
+
+const toggleSelectionMode = () => {
+  if (selectionStore.isSelectionMode) {
+    selectionStore.exitSelectionMode()
+  } else {
+    selectionStore.enterSelectionMode()
+  }
+}
+
+const clearError = () => {
+  // Clear error in store if method exists
+  if ('clearError' in corkboardStore) {
+    (corkboardStore as any).clearError()
+  }
+}
+
+// Lifecycle
+onMounted(async () => {
+  try {
+    await corkboardStore.loadCorkboard(props.manuscriptId, props.corkboardId)
+  } catch (error) {
+    console.error('Failed to load corkboard:', error)
+  }
+})
+
+// Watch for route changes
+watch(() => [props.manuscriptId, props.corkboardId], async ([newManuscriptId, newCorkboardId]) => {
+  if (newManuscriptId) {
+    await corkboardStore.loadCorkboard(newManuscriptId, newCorkboardId)
+  }
+})
+
+// Cleanup on unmount
+onUnmounted(() => {
+  selectionStore.reset()
+})
+</script>
+
+<style scoped lang="scss">
+.corkboard-view {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background-color: rgb(var(--v-theme-surface));
+
+  &.is-loading {
+    pointer-events: none;
+  }
+
+  &.selection-mode {
+    .corkboard-content {
+      padding-bottom: 80px; // Space for mobile toolbar
+    }
+  }
+}
+
+.corkboard-content {
+  flex: 1;
+  overflow: auto;
+  position: relative;
+  padding: 16px;
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
+  color: rgb(var(--v-theme-on-surface-variant));
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 400px;
+  text-align: center;
+  color: rgb(var(--v-theme-on-surface-variant));
+}
+
+.selection-sheet {
+  :deep(.v-bottom-sheet__content) {
+    max-height: 200px;
+  }
+}
+
+// Context menu styling
+.v-menu {
+  :deep(.v-list) {
+    min-width: 200px;
+  }
+
+  :deep(.v-list-item) {
+    min-height: 40px;
+
+    &.v-list-item--disabled {
+      opacity: 0.5;
+    }
+  }
+}
+
+// Mobile responsive
+@media (max-width: 768px) {
+  .corkboard-content {
+    padding: 8px;
+  }
+}
+
+// High contrast mode
+@media (prefers-contrast: high) {
+  .corkboard-view {
+    border: 1px solid rgb(var(--v-theme-outline));
+  }
+}
+
+// Reduced motion
+@media (prefers-reduced-motion: reduce) {
+  .corkboard-view {
+    * {
+      transition: none !important;
+      animation: none !important;
+    }
+  }
+}
+</style>
