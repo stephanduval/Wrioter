@@ -584,7 +584,54 @@
         "fileRequired": "Veuillez sélectionner un fichier à télécharger",
         "fileType": "Seuls les fichiers .zip sont autorisés",
         "fileSize": "La taille du fichier doit être inférieure à 50MB"
-      }
+      },
+      "errors": {
+        "invalidFileType": "Seuls les fichiers .zip sont autorisés",
+        "fileTooLarge": "La taille du fichier doit être inférieure à 50MB",
+        "uploadFailed": "Échec du téléchargement du fichier. Veuillez réessayer."
+      },
+      "viewManuscript": "Voir le manuscrit",
+      "processingDescription": "Votre fichier est en cours de traitement. Vous pouvez naviguer ailleurs; nous vous informerons lorsqu'il sera terminé."
+    }
+  },
+  "contextMenu": {
+    "item": {
+      "newPage": "Nouvelle Page",
+      "newPageComingSoon": "La fonctionnalité de création de nouvelle page arrive bientôt!",
+      "createPageError": "Échec de la création de la nouvelle page",
+      "edit": "Modifier l'élément",
+      "view": "Voir l'élément",
+      "moveUp": "Déplacer vers le haut",
+      "moveDown": "Déplacer vers le bas",
+      "changeStatus": "Changer le statut",
+      "excludeFromCompile": "Exclure de la compilation",
+      "includeInCompile": "Inclure dans la compilation",
+      "duplicate": "Dupliquer",
+      "delete": "Supprimer",
+      "deleteConfirm": "Êtes-vous sûr de vouloir supprimer \"{title}\" ?",
+      "deleteNotImplemented": "La fonctionnalité de suppression n'est pas encore implémentée"
+    },
+    "manuscript": {
+      "view": "Voir le manuscrit",
+      "edit": "Modifier les détails",
+      "duplicate": "Dupliquer",
+      "export": "Exporter",
+      "delete": "Supprimer",
+      "deleteConfirm": "Êtes-vous sûr de vouloir supprimer \"{title}\" ?",
+      "deleteNotImplemented": "La fonctionnalité de suppression n'est pas encore implémentée"
+    },
+    "editor": {
+      "cut": "Couper",
+      "copy": "Copier",
+      "paste": "Coller",
+      "selectAll": "Tout sélectionner",
+      "bold": "Gras",
+      "italic": "Italique",
+      "underline": "Souligné"
+    },
+    "default": {
+      "reload": "Recharger",
+      "goBack": "Retour"
     }
   }
 }

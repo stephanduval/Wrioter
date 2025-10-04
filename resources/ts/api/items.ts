@@ -31,7 +31,29 @@ export interface ItemUpdatePayload {
   metadata?: any
 }
 
+export interface ItemCreatePayload {
+  title: string
+  content?: string
+  content_markdown?: string
+  content_format?: 'markdown' | 'html'
+  synopsis?: string
+  type?: string
+  parent_id?: number
+  metadata?: any
+}
+
 export const itemsApi = {
+  /**
+   * Create a new item in a manuscript
+   */
+  async createItem(manuscriptId: number, payload: ItemCreatePayload): Promise<Item> {
+    const response = await $api(`/manuscripts/${manuscriptId}/items`, {
+      method: 'POST',
+      body: payload
+    })
+    return response.data
+  },
+
   /**
    * Get a specific item from a manuscript
    */

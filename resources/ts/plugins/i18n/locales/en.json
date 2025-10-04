@@ -582,7 +582,52 @@
         "fileRequired": "Please select a file to upload",
         "fileType": "Only .zip files are allowed",
         "fileSize": "File size must be less than 50MB"
+      },
+      "errors": {
+        "invalidFileType": "Only .zip files are allowed",
+        "fileTooLarge": "File size must be less than 50MB",
+        "uploadFailed": "Failed to upload file. Please try again."
       }
+    }
+  },
+  "contextMenu": {
+    "item": {
+      "newPage": "New Page",
+      "newPageComingSoon": "Create new page functionality coming soon!",
+      "createPageError": "Failed to create new page",
+      "edit": "Edit Item",
+      "view": "View Item",
+      "moveUp": "Move Up",
+      "moveDown": "Move Down",
+      "changeStatus": "Change Status",
+      "excludeFromCompile": "Exclude from Compile",
+      "includeInCompile": "Include in Compile",
+      "duplicate": "Duplicate",
+      "delete": "Delete",
+      "deleteConfirm": "Are you sure you want to delete \"{title}\"?",
+      "deleteNotImplemented": "Delete functionality not yet implemented"
+    },
+    "manuscript": {
+      "view": "View Manuscript",
+      "edit": "Edit Details",
+      "duplicate": "Duplicate",
+      "export": "Export",
+      "delete": "Delete",
+      "deleteConfirm": "Are you sure you want to delete \"{title}\"?",
+      "deleteNotImplemented": "Delete functionality not yet implemented"
+    },
+    "editor": {
+      "cut": "Cut",
+      "copy": "Copy",
+      "paste": "Paste",
+      "selectAll": "Select All",
+      "bold": "Bold",
+      "italic": "Italic",
+      "underline": "Underline"
+    },
+    "default": {
+      "reload": "Reload",
+      "goBack": "Go Back"
     }
   }
 }
