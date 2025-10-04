@@ -195,7 +195,11 @@ declare global {
   const useCloned: typeof import('@vueuse/core')['useCloned']
   const useColorMode: typeof import('@vueuse/core')['useColorMode']
   const useConfirmDialog: typeof import('@vueuse/core')['useConfirmDialog']
+<<<<<<< HEAD
   const useContextSelection: typeof import('./resources/ts/composables/useSelection')['useContextSelection']
+=======
+  const useContextMenu: typeof import('./resources/ts/composables/useContextMenu')['useContextMenu']
+>>>>>>> 07fa4f91f6dc62dfdab1959b1df60e5d50f1cdbc
   const useCookie: typeof import('./resources/ts/@core/composable/useCookie')['useCookie']
   const useCounter: typeof import('@vueuse/core')['useCounter']
   const useCssModule: typeof import('vue')['useCssModule']
@@ -569,7 +573,11 @@ declare module 'vue' {
     readonly useCloned: UnwrapRef<typeof import('@vueuse/core')['useCloned']>
     readonly useColorMode: UnwrapRef<typeof import('@vueuse/core')['useColorMode']>
     readonly useConfirmDialog: UnwrapRef<typeof import('@vueuse/core')['useConfirmDialog']>
+<<<<<<< HEAD
     readonly useContextSelection: UnwrapRef<typeof import('./resources/ts/composables/useSelection')['useContextSelection']>
+=======
+    readonly useContextMenu: UnwrapRef<typeof import('./resources/ts/composables/useContextMenu')['useContextMenu']>
+>>>>>>> 07fa4f91f6dc62dfdab1959b1df60e5d50f1cdbc
     readonly useCookie: UnwrapRef<typeof import('./resources/ts/@core/composable/useCookie')['useCookie']>
     readonly useCounter: UnwrapRef<typeof import('@vueuse/core')['useCounter']>
     readonly useCssModule: UnwrapRef<typeof import('vue')['useCssModule']>

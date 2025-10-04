@@ -128,6 +128,7 @@
         {{ treeMetadata.totalItems }} items
       </span>
     </div>
+
   </div>
 </template>
 
@@ -136,12 +137,17 @@ import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useManuscriptStore } from '@/stores/manuscript'
 import { useManuscriptNavigationStore } from '@/stores/manuscript-navigation'
+import { useContextMenu } from '@/composables/useContextMenu'
+import { ContextDetectionService } from '@/services/contextDetection'
 import TreeNode from './TreeNode.vue'
 
 // Stores and router
 const manuscriptStore = useManuscriptStore()
 const navigationStore = useManuscriptNavigationStore()
 const router = useRouter()
+
+// Context menu composable
+const contextMenu = useContextMenu()
 
 // Local state
 const showSearch = ref(false)
@@ -228,8 +234,14 @@ const handleNodeToggle = (nodeId: string) => {
 }
 
 const handleNodeContext = (data: { nodeId: string; event: MouseEvent }) => {
-  // TODO: Implement context menu in future phases
-  console.log('Context menu for node:', data.nodeId)
+  const menuItems = ContextDetectionService.getMenuItemsForNode(data.nodeId)
+
+  if (menuItems.length > 0) {
+    contextMenu.show(data.event, {
+      items: menuItems,
+      context: { nodeId: data.nodeId }
+    })
+  }
 }
 
 const formatWordCount = (count: number): string => {
