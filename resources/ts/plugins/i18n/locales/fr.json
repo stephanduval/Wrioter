@@ -584,7 +584,14 @@
         "fileRequired": "Veuillez sélectionner un fichier à télécharger",
         "fileType": "Seuls les fichiers .zip sont autorisés",
         "fileSize": "La taille du fichier doit être inférieure à 50MB"
-      }
+      },
+      "errors": {
+        "invalidFileType": "Seuls les fichiers .zip sont autorisés",
+        "fileTooLarge": "La taille du fichier doit être inférieure à 50MB",
+        "uploadFailed": "Échec du téléchargement du fichier. Veuillez réessayer."
+      },
+      "viewManuscript": "Voir le manuscrit",
+      "processingDescription": "Votre fichier est en cours de traitement. Vous pouvez naviguer ailleurs; nous vous informerons lorsqu'il sera terminé."
     }
   },
   "contextMenu": {
