@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { itemsApi, type Item, type ItemUpdatePayload } from '@/api/items'
+import { itemsApi, type Item, type ItemUpdatePayload, type ItemCreatePayload } from '@/api/items'
 
 export type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
 
@@ -186,6 +186,32 @@ export const useItemStore = defineStore('item', () => {
     state.value.error = null
   }
 
+  const createItem = async (manuscriptId: number, payload: ItemCreatePayload): Promise<Item> => {
+    try {
+      state.value.error = null
+      state.value.saveStatus = 'saving'
+
+      const newItem = await itemsApi.createItem(manuscriptId, payload)
+
+      console.log('Item created successfully:', newItem.title)
+      state.value.saveStatus = 'saved'
+
+      // Clear saved status after 2 seconds
+      setTimeout(() => {
+        if (state.value.saveStatus === 'saved') {
+          state.value.saveStatus = 'idle'
+        }
+      }, 2000)
+
+      return newItem
+    } catch (error) {
+      console.error('Failed to create item:', error)
+      state.value.error = error instanceof Error ? error.message : 'Failed to create item'
+      state.value.saveStatus = 'error'
+      throw error
+    }
+  }
+
   return {
     // State
     state: computed(() => state.value),
@@ -196,6 +222,7 @@ export const useItemStore = defineStore('item', () => {
 
     // Actions
     loadItem,
+    createItem,
     updateContent,
     updateTitle,
     saveManually,

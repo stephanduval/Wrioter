@@ -234,13 +234,19 @@ const handleNodeToggle = (nodeId: string) => {
 }
 
 const handleNodeContext = (data: { nodeId: string; event: MouseEvent }) => {
+  console.log('handleNodeContext called with nodeId:', data.nodeId)
+
   const menuItems = ContextDetectionService.getMenuItemsForNode(data.nodeId)
+  console.log('Menu items retrieved:', menuItems.length, menuItems)
 
   if (menuItems.length > 0) {
+    console.log('Showing context menu at:', data.event.clientX, data.event.clientY)
     contextMenu.show(data.event, {
       items: menuItems,
       context: { nodeId: data.nodeId }
     })
+  } else {
+    console.warn('No menu items found for node:', data.nodeId)
   }
 }
 
