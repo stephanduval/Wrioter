@@ -159,7 +159,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import {
   VProgressCircular,
@@ -181,13 +181,21 @@ import CorkboardToolbar from './CorkboardToolbar.vue'
 import CorkboardGrid from './CorkboardGrid.vue'
 
 import { useCorkboardStore } from '@/stores/corkboard'
+import { useFolderViewStore, type FolderItem, type FolderData } from '@/stores/folderView'
 import { useSelectionStore } from '@/stores/selection'
 import { useBoxSelection } from '@/composables/useSelection'
 import type { CorkboardCard } from '@/api/corkboard'
 
+/**
+ * CorkboardView - Refactored to work as a view mode
+ *
+ * Now receives folder and items as props from parent FolderView component.
+ * Focuses only on corkboard-specific UI and interactions.
+ */
 interface Props {
-  manuscriptId: number
-  corkboardId?: number
+  folderId: number
+  folder: FolderData | null
+  items: FolderItem[]
 }
 
 const props = defineProps<Props>()
@@ -204,11 +212,15 @@ const showContextMenu = ref(false)
 const contextMenuPosition = ref<[number, number]>([0, 0])
 const contextMenuItems = ref<any[]>([])
 
-// Computed properties
-const isLoading = computed(() => corkboardStore.isLoading)
-const hasCards = computed(() => corkboardStore.hasCards)
-const filteredCards = computed(() => corkboardStore.filteredCards)
-const error = computed(() => corkboardStore.error)
+// Computed properties (now based on props instead of store)
+const isLoading = computed(() => folderViewStore.isLoading)
+const hasCards = computed(() => adaptedCards.value.length > 0)
+const filteredCards = computed(() => {
+  // Apply corkboard store filters to adapted cards
+  // For now, return all adapted cards - filtering will be added later
+  return adaptedCards.value
+})
+const error = computed(() => folderViewStore.error)
 
 // Box selection setup
 const containerRef = ref<HTMLElement>()
@@ -438,24 +450,40 @@ const clearError = () => {
   }
 }
 
-// Lifecycle
-onMounted(async () => {
-  try {
-    await corkboardStore.loadCorkboard(props.manuscriptId, props.corkboardId)
-  } catch (error) {
-    console.error('Failed to load corkboard:', error)
-  }
+// Store setup
+const folderViewStore = useFolderViewStore()
+
+// Convert FolderItem[] to CorkboardCard[] format
+// This adapts the folder items to work with existing corkboard components
+const adaptedCards = computed<CorkboardCard[]>(() => {
+  return props.items.map(item => ({
+    id: String(item.id),
+    itemId: item.id,
+    title: item.title,
+    synopsis: item.synopsis,
+    excerpt: item.excerpt,
+    content: item.content,
+    word_count: item.word_count,
+    status: item.metadata?.status || 'draft',
+    label: item.metadata?.label,
+    color: item.metadata?.color,
+    metadata: item.metadata,
+    include_in_compile: item.include_in_compile !== false,
+    item_order: item.item_order || 0,
+    updated_at: item.updated_at,
+    type: item.type
+  }))
 })
 
-// Watch for route changes
-watch(() => [props.manuscriptId, props.corkboardId], async ([newManuscriptId, newCorkboardId]) => {
-  if (newManuscriptId) {
-    await corkboardStore.loadCorkboard(newManuscriptId, newCorkboardId)
-  }
+// Lifecycle
+onMounted(() => {
+  console.log('CorkboardView mounted with', props.items.length, 'items')
+  // Data loading is now handled by parent FolderView
+  // Just setup corkboard-specific UI state here
 })
 
 // Cleanup on unmount
-onUnmounted(() => {
+onBeforeUnmount(() => {
   selectionStore.reset()
 })
 </script>

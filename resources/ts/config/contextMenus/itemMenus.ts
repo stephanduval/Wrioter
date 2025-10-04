@@ -1,7 +1,7 @@
 import type { MenuItem } from '@/composables/useContextMenu'
-import { useRouter } from 'vue-router'
 import { useManuscriptStore } from '@/stores/manuscript'
 import { useItemStore } from '@/stores/item'
+import { navigateTo } from '@/utils/navigation'
 
 interface ManuscriptItem {
   id: number
@@ -20,7 +20,8 @@ interface ManuscriptItem {
 }
 
 export const getItemMenuItems = (item: ManuscriptItem, manuscriptId: number): MenuItem[] => {
-  const router = useRouter()
+  // Don't use useRouter() here - it's not in a component setup context
+  // Instead, we'll navigate using window.location or return a path for the caller to handle
   const itemStore = useItemStore()
   const manuscriptStore = useManuscriptStore()
 
@@ -39,12 +40,43 @@ export const getItemMenuItems = (item: ManuscriptItem, manuscriptId: number): Me
   }
 
   return [
+    // Folder View Mode Options (only for folders)
+    {
+      id: 'view-manuscript',
+      label: 'View as Manuscript',
+      icon: 'bx-file-doc',
+      action: () => {
+        navigateTo(`/folders/${item.id}?view=manuscript`)
+      },
+      hidden: () => !isFolder()
+    },
+    {
+      id: 'view-corkboard',
+      label: 'View as Corkboard',
+      icon: 'bx-grid-alt',
+      action: () => {
+        navigateTo(`/folders/${item.id}?view=corkboard`)
+      },
+      hidden: () => !isFolder()
+    },
+    {
+      id: 'view-outline',
+      label: 'View as Outline',
+      icon: 'bx-list-ul',
+      action: () => {
+        navigateTo(`/folders/${item.id}?view=outline`)
+      },
+      hidden: () => !isFolder()
+    },
+    { separator: true, hidden: () => !isFolder() },
+
+    // Regular item options
     {
       id: 'edit',
       label: 'Edit Item',
       icon: 'bx-edit',
       action: () => {
-        router.push(`/manuscripts/${manuscriptId}/items/${item.id}/edit`)
+        navigateTo(`/manuscripts/${manuscriptId}/items/${item.id}/edit`)
       },
       hidden: () => isFolder()
     },
@@ -53,7 +85,7 @@ export const getItemMenuItems = (item: ManuscriptItem, manuscriptId: number): Me
       label: 'View Item',
       icon: 'bx-show',
       action: () => {
-        router.push(`/manuscripts/${manuscriptId}/items/${item.id}`)
+        navigateTo(`/manuscripts/${manuscriptId}/items/${item.id}`)
       }
     },
     { separator: true },
