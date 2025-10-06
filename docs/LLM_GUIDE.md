@@ -98,8 +98,9 @@ Need to work on...
 
 1. **Start Development**
    ```bash
-   yarn dev        # Frontend
-   yarn serve      # Backend
+   yarn dev          # Frontend
+   yarn serve        # Backend
+   yarn serve:queue  # Queue workers (REQUIRED for file imports/processing)
    ```
 
 2. **Testing Environment**
@@ -123,7 +124,7 @@ Need to work on...
 
 1. Always check `current_tables.txt` for database structure
 2. Use the test environment for experimentation
-3. Queue workers must be running for file imports
+3. **Queue workers must be running for file imports** - Use `yarn serve:queue` locally or systemd service in production
 4. Frontend changes need `yarn build:test` to see results
 5. Check CLAUDE.md for project-specific rules
 

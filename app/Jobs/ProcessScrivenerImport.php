@@ -68,7 +68,10 @@ class ProcessScrivenerImport implements ShouldQueue
             $this->updateProgress('Starting import...');
 
             // Get the full path to the stored file
-            $filePath = Storage::path($this->import->storage_path);
+            // Check if it's already an absolute path (new format) or relative (old format)
+            $filePath = str_starts_with($this->import->storage_path, '/')
+                ? $this->import->storage_path
+                : Storage::path($this->import->storage_path);
 
             // Step 1: Extract and validate the .scrivx file
             $this->updateProgress('Extracting project file...');

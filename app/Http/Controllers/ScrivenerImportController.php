@@ -37,16 +37,21 @@ class ScrivenerImportController extends Controller
             $file = $request->file('file');
             $originalName = $file->getClientOriginalName();
             $filename = Str::random(40) . '.zip';
-            
-            // Store in temporary location
-            $path = $file->storeAs('scrivener/temp', $filename);
+
+            // Store in system temp directory (world-accessible for queue worker)
+            $tempPath = sys_get_temp_dir() . '/scrivener-uploads';
+            if (!file_exists($tempPath)) {
+                mkdir($tempPath, 0777, true);
+            }
+            $fullPath = $tempPath . '/' . $filename;
+            $file->move($tempPath, $filename);
 
             // Create import record
             $import = ScrivenerImport::create([
                 'user_id' => auth()->id(),
                 'filename' => $originalName,
                 'status' => 'pending',
-                'storage_path' => $path,
+                'storage_path' => $fullPath,
                 'progress' => 0,
                 'total_items' => 0,
                 'processed_items' => 0,
