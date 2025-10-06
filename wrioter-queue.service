@@ -1,0 +1,15 @@
+[Unit]
+Description=Wrioter Queue Worker
+After=network.target
+
+[Service]
+User=www-data
+Group=www-data
+Restart=always
+RestartSec=5
+ExecStart=/usr/bin/php /var/www/stephandouglasduval.com/artisan queue:work --sleep=3 --tries=3 --timeout=3600
+StandardOutput=append:/var/www/stephandouglasduval.com/storage/logs/queue.log
+StandardError=append:/var/www/stephandouglasduval.com/storage/logs/queue-error.log
+
+[Install]
+WantedBy=multi-user.target
