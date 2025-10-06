@@ -67,8 +67,8 @@ class FileHandler
      */
     public function extract(string $scrivxPath): string
     {
-        // Create a unique temporary directory
-        $extractedPath = storage_path('app/temp/scrivener-import-' . Str::random(16));
+        // Create a unique temporary directory using system temp
+        $extractedPath = sys_get_temp_dir() . '/scrivener-import-' . Str::random(16);
         if (!file_exists($extractedPath)) {
             mkdir($extractedPath, 0755, true);
         }
