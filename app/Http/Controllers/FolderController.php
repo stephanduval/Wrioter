@@ -6,6 +6,8 @@ use App\Models\Item;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class FolderController extends Controller
 {
@@ -164,5 +166,78 @@ class FolderController extends Controller
             'view_mode' => $preference->view_mode,
             'settings' => $preference->settings
         ];
+    }
+
+    /**
+     * Reorder items within a folder
+     *
+     * @param Request $request
+     * @param int $folderId
+     * @return JsonResponse
+     */
+    public function reorder(Request $request, int $folderId): JsonResponse
+    {
+        try {
+            // Find the folder
+            $folder = Item::where('id', $folderId)
+                ->where('type', 'folder')
+                ->firstOrFail();
+
+            // Check authorization
+            if ($folder->user_id !== Auth::id()) {
+                abort(403, 'Unauthorized');
+            }
+
+            // Validate request
+            $validated = $request->validate([
+                'items' => 'required|array',
+                'items.*.item_id' => 'required|integer|exists:items,id',
+                'items.*.order' => 'required|integer|min:0',
+            ]);
+
+            // Perform reorder in a transaction
+            DB::beginTransaction();
+
+            try {
+                foreach ($validated['items'] as $itemUpdate) {
+                    $item = Item::where('id', $itemUpdate['item_id'])
+                        ->where('parent_id', $folderId)
+                        ->where('user_id', Auth::id())
+                        ->first();
+
+                    if ($item) {
+                        $item->item_order = $itemUpdate['order'];
+                        $item->save();
+                    }
+                }
+
+                DB::commit();
+
+                Log::info("FolderController::reorder - Reordered items in folder {$folderId}", [
+                    'item_count' => count($validated['items'])
+                ]);
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Items reordered successfully'
+                ]);
+
+            } catch (\Exception $e) {
+                DB::rollBack();
+                throw $e;
+            }
+
+        } catch (\Exception $e) {
+            Log::error('Failed to reorder items', [
+                'folder_id' => $folderId,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'error' => 'Failed to reorder items',
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 }
