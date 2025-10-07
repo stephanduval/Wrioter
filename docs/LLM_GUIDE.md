@@ -4,6 +4,7 @@
 - **Database Schema**: `docs/database/schemas/current_tables.txt`
 - **Frontend Auth**: `docs/frontend/authorization.md`
 - **Dynamic Navigation**: `docs/features/dynamic-manuscript-navigation.md`
+- **Drag-and-Drop**: `docs/features/drag-drop-quick-reference.md`
 - **Scrivener Import**: `docs/modules/scrivener-import/README.md`
 - **API Reference**: `docs/api/endpoints.md`
 - **Architecture**: `docs/architecture/overview.md`

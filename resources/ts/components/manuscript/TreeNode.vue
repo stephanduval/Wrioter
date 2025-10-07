@@ -130,7 +130,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
+import { useDragAndDrop } from '@/composables/useDragAndDrop'
+import type { DropPosition } from '@/composables/useDragAndDrop'
 
 interface TreeNode {
   id: string
@@ -157,8 +159,6 @@ interface TreeNode {
     isDragging: boolean
   }
 }
-
-type DropPosition = 'above' | 'below' | 'inside' | null
 
 interface Props {
   node: TreeNode
@@ -191,9 +191,16 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<Emits>()
 
-// Drag & Drop state
-const isDragging = ref(false)
-const dropPosition = ref<DropPosition>(null)
+// Drag & Drop composable
+const {
+  isDragging,
+  dropPosition,
+  handleDragStart: dragStart,
+  handleDragEnd: dragEnd,
+  handleDragOver: dragOver,
+  handleDragLeave: dragLeave,
+  handleDrop: drop
+} = useDragAndDrop()
 
 // Computed properties
 const hasChildren = computed(() => props.node.children.length > 0)
@@ -277,20 +284,14 @@ const formatWordCount = (count: number): string => {
   return count.toString()
 }
 
-// Drag and Drop handlers
+// Drag and Drop handlers using composable
 const handleDragStart = (event: DragEvent) => {
-  isDragging.value = true
-
-  // Set drag data
-  if (event.dataTransfer) {
-    event.dataTransfer.effectAllowed = 'move'
-    event.dataTransfer.setData('application/json', JSON.stringify({
-      nodeId: props.node.id,
-      itemId: props.node.itemId,
-      title: props.node.title,
-      type: props.node.type
-    }))
-  }
+  dragStart(event, {
+    id: props.node.id,
+    itemId: props.node.itemId,
+    type: props.node.type,
+    title: props.node.title
+  })
 
   // Emit drag start event
   emit('node-drag-start', {
@@ -300,69 +301,33 @@ const handleDragStart = (event: DragEvent) => {
 }
 
 const handleDragEnd = () => {
-  isDragging.value = false
-  dropPosition.value = null
+  dragEnd()
   emit('node-drag-end')
 }
 
 const handleDragOver = (event: DragEvent, position: 'above' | 'below' | 'inside') => {
-  // Don't allow dropping on itself
-  if (props.draggingNodeId === props.node.id) {
-    return
-  }
-
-  // For folders, allow dropping inside
-  // For files, only allow above/below
-  if (position === 'inside' && !hasChildren.value) {
-    return
-  }
-
-  event.preventDefault()
-  dropPosition.value = position
-
-  if (event.dataTransfer) {
-    event.dataTransfer.dropEffect = 'move'
-  }
+  dragOver(event, props.node.id, position, {
+    allowInside: hasChildren.value,
+    preventSelf: true
+  })
 }
 
 const handleDragLeave = (position: 'above' | 'below' | 'inside') => {
-  if (dropPosition.value === position) {
-    dropPosition.value = null
-  }
+  dragLeave(position)
 }
 
 const handleDrop = (event: DragEvent, position: 'above' | 'below' | 'inside') => {
-  event.preventDefault()
-  event.stopPropagation()
+  const result = drop(event, props.node.id, props.node.itemId, position)
 
-  // Don't allow dropping on itself
-  if (props.draggingNodeId === props.node.id) {
-    dropPosition.value = null
-    return
-  }
-
-  try {
-    const dataStr = event.dataTransfer?.getData('application/json')
-    if (!dataStr) {
-      console.error('No drag data found')
-      return
-    }
-
-    const dragData = JSON.parse(dataStr)
-
-    // Emit drop event
+  if (result) {
+    // Emit drop event with result from composable
     emit('node-drop', {
-      sourceNodeId: dragData.nodeId,
-      sourceItemId: dragData.itemId,
-      targetNodeId: props.node.id,
-      targetItemId: props.node.itemId,
-      position
+      sourceNodeId: result.sourceId as string,
+      sourceItemId: result.sourceItemId,
+      targetNodeId: result.targetId as string,
+      targetItemId: result.targetItemId,
+      position: result.position
     })
-
-    dropPosition.value = null
-  } catch (error) {
-    console.error('Error handling drop:', error)
-    dropPosition.value = null
   }
 }
 </script>
