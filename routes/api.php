@@ -133,6 +133,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/manuscripts/{manuscriptId}/items/{itemId}', [ItemController::class, 'show']);
     Route::put('/manuscripts/{manuscriptId}/items/{itemId}', [ItemController::class, 'update']);
     Route::get('/manuscripts/{manuscriptId}/items/{itemId}/versions', [ItemController::class, 'versions']);
+    Route::post('/manuscripts/{manuscriptId}/items/reorder', [ItemController::class, 'reorder']);
 });
 
 // Admin Routes for Raw Files

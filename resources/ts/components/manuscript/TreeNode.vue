@@ -1,5 +1,14 @@
 <template>
   <div>
+    <!-- Drop Zone Above -->
+    <div
+      v-if="showDropZoneAbove"
+      class="drop-zone drop-zone-above"
+      @drop="handleDrop($event, 'above')"
+      @dragover.prevent="handleDragOver($event, 'above')"
+      @dragleave="handleDragLeave('above')"
+    />
+
     <!-- Main Tree Node -->
     <div
       class="tree-node"
@@ -8,16 +17,23 @@
         'is-selected': isSelected,
         'is-folder': hasChildren,
         'is-loading': node.state.isLoading,
-        'is-dragging': node.state.isDragging
+        'is-dragging': isDragging,
+        'drop-target': dropPosition === 'inside'
       }"
       :style="{ paddingLeft: `${level * 20}px` }"
       :data-node-id="node.id"
       :data-item-id="node.itemId"
+      draggable="true"
       @click="handleNodeClick"
       @contextmenu="handleContextMenu"
       @touchstart="handleTouchStart"
       @touchend="handleTouchEnd"
       @touchmove="handleTouchMove"
+      @dragstart="handleDragStart"
+      @dragend="handleDragEnd"
+      @dragover.prevent="handleDragOver($event, 'inside')"
+      @dragleave="handleDragLeave('inside')"
+      @drop="handleDrop($event, 'inside')"
     >
       <!-- Node Content -->
       <div class="node-content">
@@ -82,6 +98,15 @@
       </div>
     </div>
 
+    <!-- Drop Zone Below -->
+    <div
+      v-if="showDropZoneBelow"
+      class="drop-zone drop-zone-below"
+      @drop="handleDrop($event, 'below')"
+      @dragover.prevent="handleDragOver($event, 'below')"
+      @dragleave="handleDragLeave('below')"
+    />
+
     <!-- Child Nodes -->
     <div v-if="hasChildren && isExpanded" class="child-nodes">
       <TreeNode
@@ -92,16 +117,20 @@
         :expanded-nodes="expandedNodes"
         :selected-node="selectedNode"
         :show-metadata="showMetadata"
+        :dragging-node-id="draggingNodeId"
         @node-click="$emit('node-click', $event)"
         @node-toggle="$emit('node-toggle', $event)"
         @node-context="$emit('node-context', $event)"
+        @node-drag-start="$emit('node-drag-start', $event)"
+        @node-drag-end="$emit('node-drag-end')"
+        @node-drop="$emit('node-drop', $event)"
       />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 
 interface TreeNode {
   id: string
@@ -129,30 +158,60 @@ interface TreeNode {
   }
 }
 
+type DropPosition = 'above' | 'below' | 'inside' | null
+
 interface Props {
   node: TreeNode
   level: number
   expandedNodes: Set<string>
   selectedNode: string | null
   showMetadata?: boolean
+  draggingNodeId?: string | null
 }
 
 interface Emits {
   (e: 'node-click', nodeId: string): void
   (e: 'node-toggle', nodeId: string): void
   (e: 'node-context', data: { nodeId: string; event: MouseEvent }): void
+  (e: 'node-drag-start', data: { nodeId: string; itemId: number }): void
+  (e: 'node-drag-end'): void
+  (e: 'node-drop', data: {
+    sourceNodeId: string
+    sourceItemId: number
+    targetNodeId: string
+    targetItemId: number
+    position: 'above' | 'below' | 'inside'
+  }): void
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  showMetadata: true
+  showMetadata: true,
+  draggingNodeId: null
 })
 
 const emit = defineEmits<Emits>()
+
+// Drag & Drop state
+const isDragging = ref(false)
+const dropPosition = ref<DropPosition>(null)
 
 // Computed properties
 const hasChildren = computed(() => props.node.children.length > 0)
 const isExpanded = computed(() => props.expandedNodes.has(props.node.id))
 const isSelected = computed(() => props.selectedNode === props.node.id)
+
+// Show drop zones when dragging
+const showDropZoneAbove = computed(() =>
+  props.draggingNodeId &&
+  props.draggingNodeId !== props.node.id &&
+  dropPosition.value === 'above'
+)
+
+const showDropZoneBelow = computed(() =>
+  props.draggingNodeId &&
+  props.draggingNodeId !== props.node.id &&
+  dropPosition.value === 'below'
+)
 
 // Methods
 const handleNodeClick = () => {
@@ -216,6 +275,95 @@ const formatWordCount = (count: number): string => {
     return `${(count / 1000).toFixed(1)}k`
   }
   return count.toString()
+}
+
+// Drag and Drop handlers
+const handleDragStart = (event: DragEvent) => {
+  isDragging.value = true
+
+  // Set drag data
+  if (event.dataTransfer) {
+    event.dataTransfer.effectAllowed = 'move'
+    event.dataTransfer.setData('application/json', JSON.stringify({
+      nodeId: props.node.id,
+      itemId: props.node.itemId,
+      title: props.node.title,
+      type: props.node.type
+    }))
+  }
+
+  // Emit drag start event
+  emit('node-drag-start', {
+    nodeId: props.node.id,
+    itemId: props.node.itemId
+  })
+}
+
+const handleDragEnd = () => {
+  isDragging.value = false
+  dropPosition.value = null
+  emit('node-drag-end')
+}
+
+const handleDragOver = (event: DragEvent, position: 'above' | 'below' | 'inside') => {
+  // Don't allow dropping on itself
+  if (props.draggingNodeId === props.node.id) {
+    return
+  }
+
+  // For folders, allow dropping inside
+  // For files, only allow above/below
+  if (position === 'inside' && !hasChildren.value) {
+    return
+  }
+
+  event.preventDefault()
+  dropPosition.value = position
+
+  if (event.dataTransfer) {
+    event.dataTransfer.dropEffect = 'move'
+  }
+}
+
+const handleDragLeave = (position: 'above' | 'below' | 'inside') => {
+  if (dropPosition.value === position) {
+    dropPosition.value = null
+  }
+}
+
+const handleDrop = (event: DragEvent, position: 'above' | 'below' | 'inside') => {
+  event.preventDefault()
+  event.stopPropagation()
+
+  // Don't allow dropping on itself
+  if (props.draggingNodeId === props.node.id) {
+    dropPosition.value = null
+    return
+  }
+
+  try {
+    const dataStr = event.dataTransfer?.getData('application/json')
+    if (!dataStr) {
+      console.error('No drag data found')
+      return
+    }
+
+    const dragData = JSON.parse(dataStr)
+
+    // Emit drop event
+    emit('node-drop', {
+      sourceNodeId: dragData.nodeId,
+      sourceItemId: dragData.itemId,
+      targetNodeId: props.node.id,
+      targetItemId: props.node.itemId,
+      position
+    })
+
+    dropPosition.value = null
+  } catch (error) {
+    console.error('Error handling drop:', error)
+    dropPosition.value = null
+  }
 }
 </script>
 
@@ -351,6 +499,73 @@ const formatWordCount = (count: number): string => {
     bottom: 0;
     width: 1px;
     background-color: rgba(var(--v-theme-on-surface), 0.12);
+  }
+}
+
+// Drop zones
+.drop-zone {
+  position: relative;
+  height: 4px;
+  margin: 2px 0;
+  background-color: transparent;
+  transition: all 0.2s;
+
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 2px;
+    background-color: rgb(var(--v-theme-primary));
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  &:hover::before,
+  &.active::before {
+    opacity: 1;
+  }
+
+  &.drop-zone-above {
+    margin-bottom: -2px;
+  }
+
+  &.drop-zone-below {
+    margin-top: -2px;
+  }
+}
+
+// Drop target styling (for dropping inside folders)
+.tree-node.drop-target {
+  background-color: rgba(var(--v-theme-primary), 0.15);
+  border: 2px dashed rgb(var(--v-theme-primary));
+
+  &::after {
+    content: 'Drop here';
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 10px;
+    color: rgb(var(--v-theme-primary));
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+}
+
+// Dragging cursor
+.tree-node[draggable="true"] {
+  cursor: grab;
+
+  &:active {
+    cursor: grabbing;
+  }
+
+  &.is-dragging {
+    opacity: 0.4;
+    cursor: grabbing;
   }
 }
 </style>
