@@ -402,6 +402,58 @@ export const useManuscriptStore = defineStore('manuscript', () => {
     }
   }
 
+  // Delete an item from the manuscript
+  async function deleteItem(manuscriptId: number, itemId: number) {
+    try {
+      loading.value = true
+      error.value = null
+
+      console.log(`Deleting item ${itemId} from manuscript ${manuscriptId}`)
+
+      await api.delete(`/manuscripts/${manuscriptId}/items/${itemId}`)
+
+      console.log('Item deleted successfully')
+
+      // Refresh the manuscript items to reflect the deletion
+      await fetchManuscriptItems(manuscriptId)
+
+      return true
+    } catch (err: any) {
+      error.value = err.response?.data?.message || 'Failed to delete item'
+      console.error('Error deleting item:', err)
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  // Rename an item
+  async function renameItem(manuscriptId: number, itemId: number, newTitle: string) {
+    try {
+      loading.value = true
+      error.value = null
+
+      console.log(`Renaming item ${itemId} in manuscript ${manuscriptId} to "${newTitle}"`)
+
+      const response = await api.patch(`/manuscripts/${manuscriptId}/items/${itemId}/rename`, {
+        title: newTitle
+      })
+
+      console.log('Item renamed successfully:', response.data)
+
+      // Refresh the manuscript items to reflect the rename
+      await fetchManuscriptItems(manuscriptId)
+
+      return response.data
+    } catch (err: any) {
+      error.value = err.response?.data?.message || 'Failed to rename item'
+      console.error('Error renaming item:', err)
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
   function $reset() {
     manuscripts.value = []
     currentManuscript.value = null
@@ -442,6 +494,8 @@ export const useManuscriptStore = defineStore('manuscript', () => {
     searchItems,
     clearSearch,
     reorderItem,
+    deleteItem,
+    renameItem,
     $reset,
 
     // Navigation methods

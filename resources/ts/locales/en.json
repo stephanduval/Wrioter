@@ -6,6 +6,27 @@
             "import": "Import Scrivener File"
         }
     },
+    "contextMenu": {
+        "item": {
+            "newPage": "New Page",
+            "edit": "Edit",
+            "view": "View",
+            "moveUp": "Move Up",
+            "moveDown": "Move Down",
+            "changeStatus": "Change Status",
+            "includeInCompile": "Include in Compile",
+            "excludeFromCompile": "Exclude from Compile",
+            "duplicate": "Duplicate",
+            "rename": "Rename",
+            "delete": "Delete",
+            "createPageError": "Failed to create new page",
+            "deleteConfirm": "Are you sure you want to delete '{title}'?",
+            "deleteError": "Failed to delete item",
+            "deleteNotImplemented": "Delete functionality coming soon",
+            "renamePrompt": "Enter a new name for '{title}':",
+            "renameError": "Failed to rename item"
+        }
+    },
     "scrivener": {
         "import": {
             "title": "Import from Scrivener",
