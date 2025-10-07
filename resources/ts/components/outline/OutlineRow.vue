@@ -1,9 +1,25 @@
 <template>
   <tr
     class="outline-row"
-    :class="{ 'is-selected': selected }"
+    :class="{ 'is-selected': selected, 'is-dragging': isDragging, 'drag-over': isDragOver }"
+    :draggable="true"
     @click="handleClick"
+    @dragstart="handleDragStart"
+    @dragend="handleDragEnd"
+    @dragover="handleDragOver"
+    @dragleave="handleDragLeave"
+    @drop="handleDrop"
   >
+    <!-- Drag Handle Column -->
+    <td class="drag-handle-cell">
+      <VIcon
+        icon="bx-menu"
+        size="small"
+        class="drag-handle"
+        title="Drag to reorder"
+      />
+    </td>
+
     <!-- Selection Checkbox -->
     <td class="selection-cell">
       <VCheckbox
@@ -135,12 +151,18 @@ const props = defineProps<{
   item: FolderItem
   columns: OutlineColumn[]
   selected: boolean
+  index: number
 }>()
 
 const emit = defineEmits<{
   select: [itemId: number, selected: boolean]
   edit: [itemId: number, columnId: string, value: any]
   click: [item: FolderItem]
+  dragStart: [item: FolderItem, index: number, event: DragEvent]
+  dragEnd: []
+  dragOver: [index: number, event: DragEvent]
+  dragLeave: []
+  drop: [index: number, event: DragEvent]
 }>()
 
 // Store
@@ -149,6 +171,8 @@ const outlineStore = useOutlineStore()
 // Local state
 const editingColumnId = ref<string | null>(null)
 const editingValue = ref<any>(null)
+const isDragging = ref(false)
+const isDragOver = ref(false)
 
 // Options
 const statusOptions = [
@@ -250,6 +274,45 @@ function truncateText(text: any, maxLength: number): string {
   const str = String(text)
   return str.length > maxLength ? str.substring(0, maxLength) + '...' : str
 }
+
+// Drag and drop handlers
+function handleDragStart(event: DragEvent) {
+  isDragging.value = true
+
+  if (event.dataTransfer) {
+    event.dataTransfer.effectAllowed = 'move'
+    event.dataTransfer.setData('text/plain', String(props.item.id))
+  }
+
+  emit('dragStart', props.item, props.index, event)
+}
+
+function handleDragEnd() {
+  isDragging.value = false
+  emit('dragEnd')
+}
+
+function handleDragOver(event: DragEvent) {
+  event.preventDefault()
+  isDragOver.value = true
+
+  if (event.dataTransfer) {
+    event.dataTransfer.dropEffect = 'move'
+  }
+
+  emit('dragOver', props.index, event)
+}
+
+function handleDragLeave() {
+  isDragOver.value = false
+  emit('dragLeave')
+}
+
+function handleDrop(event: DragEvent) {
+  event.preventDefault()
+  isDragOver.value = false
+  emit('drop', props.index, event)
+}
 </script>
 
 <style scoped>
@@ -299,11 +362,46 @@ function truncateText(text: any, maxLength: number): string {
   white-space: nowrap;
 }
 
+/* Drag and Drop Styles */
+.drag-handle-cell {
+  width: 40px;
+  padding: 0.5rem !important;
+  cursor: grab;
+}
+
+.drag-handle {
+  opacity: 0.3;
+  transition: opacity 0.2s;
+}
+
+.outline-row:hover .drag-handle {
+  opacity: 1;
+}
+
+.drag-handle-cell:active {
+  cursor: grabbing;
+}
+
+.outline-row.is-dragging {
+  opacity: 0.5;
+  background-color: rgba(var(--v-theme-primary), 0.1);
+}
+
+.outline-row.drag-over {
+  border-top: 3px solid rgb(var(--v-theme-primary));
+  background-color: rgba(var(--v-theme-primary), 0.05);
+}
+
 /* Responsive */
 @media (max-width: 960px) {
   .outline-row td {
     padding: 0.5rem 0.75rem;
     font-size: 0.875rem;
+  }
+
+  /* Always show drag handle on mobile */
+  .drag-handle {
+    opacity: 0.6;
   }
 }
 </style>
