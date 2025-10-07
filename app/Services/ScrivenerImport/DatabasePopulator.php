@@ -274,12 +274,13 @@ class DatabasePopulator
                 $this->createItemAttachments($item->id, $itemData['attachments']);
             }
 
-            // Store the item and version for later use
-            $items[$item->scrivener_uuid] = $item;
-            $itemVersions[$item->scrivener_uuid] = $version;
+            // Store the item and version for later use - use ORIGINAL UUID as key
+            // This is critical because parent_relationships reference the original UUID
+            $items[$originalUuid] = $item;
+            $itemVersions[$originalUuid] = $version;
 
             // Store manuscript item data for later attachment
-            $manuscriptItems[$item->scrivener_uuid] = [
+            $manuscriptItems[$originalUuid] = [
                 'item' => $item,
                 'version' => $version,
                 'parent_relationships' => $itemData['parent_relationships'] ?? [],
@@ -325,10 +326,15 @@ class DatabasePopulator
                 }
             }
 
-            // Attach item to manuscript with primary parent relationship
+            // Set parent_id on item and attach to manuscript with primary parent relationship
             $metadata = $item->metadata ?? [];
             if ($primaryParent && isset($items[$primaryParent['parent_uuid']])) {
                 $parent = $items[$primaryParent['parent_uuid']];
+
+                // Set the parent_id field on the item for proper folder hierarchy
+                $item->parent_id = $parent->id;
+                $item->save();
+
                 $metadata = array_merge($metadata, [
                     'primary_parent_id' => $parent->id,
                     'primary_parent_uuid' => $primaryParent['parent_uuid'],
