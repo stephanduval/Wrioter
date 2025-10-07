@@ -374,6 +374,34 @@ export const useManuscriptStore = defineStore('manuscript', () => {
     await fetchManuscriptItems(selectedManuscriptId.value)
   }
 
+  // Reorder items within a manuscript
+  async function reorderItem(data: {
+    sourceItemId: number
+    targetItemId: number
+    position: 'above' | 'below' | 'inside'
+    manuscriptId: number
+  }) {
+    try {
+      loading.value = true
+      error.value = null
+
+      const response = await api.post(`/manuscripts/${data.manuscriptId}/items/reorder`, {
+        source_item_id: data.sourceItemId,
+        target_item_id: data.targetItemId,
+        position: data.position
+      })
+
+      console.log('Item reordered successfully:', response)
+      return response.data
+    } catch (err: any) {
+      error.value = err.message || 'Failed to reorder item'
+      console.error('Error reordering item:', err)
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
   function $reset() {
     manuscripts.value = []
     currentManuscript.value = null
@@ -413,6 +441,7 @@ export const useManuscriptStore = defineStore('manuscript', () => {
     clearSelection,
     searchItems,
     clearSearch,
+    reorderItem,
     $reset,
 
     // Navigation methods

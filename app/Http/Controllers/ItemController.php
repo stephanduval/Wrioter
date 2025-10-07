@@ -267,4 +267,124 @@ class ItemController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Reorder items within a manuscript or move items between folders.
+     */
+    public function reorder(Request $request, string $manuscriptId)
+    {
+        try {
+            // Verify the manuscript belongs to the user
+            $manuscript = Manuscript::where('id', $manuscriptId)
+                ->where('user_id', Auth::id())
+                ->firstOrFail();
+
+            $validated = $request->validate([
+                'source_item_id' => 'required|integer|exists:items,id',
+                'target_item_id' => 'required|integer|exists:items,id',
+                'position' => 'required|in:above,below,inside',
+            ]);
+
+            $sourceItem = Item::findOrFail($validated['source_item_id']);
+            $targetItem = Item::findOrFail($validated['target_item_id']);
+
+            // Verify both items belong to the manuscript
+            ManuscriptItem::where('manuscript_id', $manuscriptId)
+                ->where('item_id', $sourceItem->id)
+                ->firstOrFail();
+            ManuscriptItem::where('manuscript_id', $manuscriptId)
+                ->where('item_id', $targetItem->id)
+                ->firstOrFail();
+
+            Log::info("Reordering item", [
+                'manuscript_id' => $manuscriptId,
+                'source_item_id' => $sourceItem->id,
+                'target_item_id' => $targetItem->id,
+                'position' => $validated['position'],
+            ]);
+
+            // Handle reordering based on position
+            switch ($validated['position']) {
+                case 'inside':
+                    // Move source item inside target (target must be a folder)
+                    $sourceItem->parent_id = $targetItem->id;
+                    $sourceItem->save();
+
+                    // Set item_order to be at the end of target's children
+                    $maxOrder = Item::where('parent_id', $targetItem->id)
+                        ->max('item_order') ?? 0;
+                    $sourceItem->item_order = $maxOrder + 1;
+                    $sourceItem->save();
+                    break;
+
+                case 'above':
+                case 'below':
+                    // Move source item to same parent as target
+                    $sourceItem->parent_id = $targetItem->parent_id;
+                    $sourceItem->save();
+
+                    // Get all siblings (items with same parent) ordered by item_order
+                    $siblings = Item::where('parent_id', $targetItem->parent_id)
+                        ->where('id', '!=', $sourceItem->id)
+                        ->orderBy('item_order', 'asc')
+                        ->get();
+
+                    // Find target's position in siblings
+                    $newOrder = [];
+                    $insertPosition = $validated['position'] === 'above' ? 0 : 1;
+
+                    foreach ($siblings as $index => $sibling) {
+                        if ($sibling->id === $targetItem->id) {
+                            // Insert source at the correct position relative to target
+                            if ($insertPosition === 0) {
+                                $newOrder[] = $sourceItem;
+                                $newOrder[] = $sibling;
+                            } else {
+                                $newOrder[] = $sibling;
+                                $newOrder[] = $sourceItem;
+                            }
+                        } else {
+                            $newOrder[] = $sibling;
+                        }
+                    }
+
+                    // Update item_order for all affected items
+                    foreach ($newOrder as $index => $item) {
+                        $item->item_order = $index;
+                        $item->save();
+                    }
+                    break;
+            }
+
+            Log::info("Item reordered successfully", [
+                'manuscript_id' => $manuscriptId,
+                'source_item_id' => $sourceItem->id,
+                'new_parent_id' => $sourceItem->parent_id,
+                'new_order' => $sourceItem->item_order,
+            ]);
+
+            return response()->json([
+                'message' => 'Item reordered successfully',
+                'data' => [
+                    'source_item' => [
+                        'id' => $sourceItem->id,
+                        'parent_id' => $sourceItem->parent_id,
+                        'item_order' => $sourceItem->item_order,
+                    ],
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Failed to reorder item', [
+                'manuscript_id' => $manuscriptId,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'error' => 'Failed to reorder item',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
 }

@@ -114,10 +114,10 @@ Need to work on...
    yarn schema:text     # Update database docs
    ```
 
-4. **Deploy to Production**
+4. **Deploy to Production (StormWeb)**
    ```bash
-   yarn deploy:prod     # Deploy code
-   yarn deploy:full     # Deploy with migrations
+   yarn stormweb:deploy  # Deploy to production server
+   # Or manually: ./deploy-stormweb-fixed.sh
    ```
 
 ## Tips for LLMs

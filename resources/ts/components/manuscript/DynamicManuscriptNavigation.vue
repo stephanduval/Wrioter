@@ -110,9 +110,13 @@
         :level="0"
         :expanded-nodes="navigationStore.expandedNodes"
         :selected-node="navigationStore.selectedNode"
+        :dragging-node-id="draggingNodeId"
         @node-click="handleNodeClick"
         @node-toggle="handleNodeToggle"
         @node-context="handleNodeContext"
+        @node-drag-start="handleNodeDragStart"
+        @node-drag-end="handleNodeDragEnd"
+        @node-drop="handleNodeDrop"
       />
     </div>
 
@@ -151,6 +155,7 @@ const contextMenu = useContextMenu()
 
 // Local state
 const showSearch = ref(false)
+const draggingNodeId = ref<string | null>(null)
 
 // Computed
 const treeMetadata = computed(() => manuscriptStore.treeMetadata)
@@ -255,6 +260,43 @@ const formatWordCount = (count: number): string => {
     return `${(count / 1000).toFixed(1)}k`
   }
   return count.toString()
+}
+
+// Drag and Drop handlers
+const handleNodeDragStart = (data: { nodeId: string; itemId: number }) => {
+  console.log('Drag start:', data)
+  draggingNodeId.value = data.nodeId
+}
+
+const handleNodeDragEnd = () => {
+  console.log('Drag end')
+  draggingNodeId.value = null
+}
+
+const handleNodeDrop = async (data: {
+  sourceNodeId: string
+  sourceItemId: number
+  targetNodeId: string
+  targetItemId: number
+  position: 'above' | 'below' | 'inside'
+}) => {
+  console.log('Drop event:', data)
+
+  try {
+    // Call the API to reorder items
+    await manuscriptStore.reorderItem({
+      sourceItemId: data.sourceItemId,
+      targetItemId: data.targetItemId,
+      position: data.position,
+      manuscriptId: manuscriptStore.selectedManuscriptId!
+    })
+
+    // Reload the tree to reflect changes
+    await manuscriptStore.fetchManuscriptItems(manuscriptStore.selectedManuscriptId!)
+  } catch (error) {
+    console.error('Error reordering item:', error)
+    // TODO: Show error notification to user
+  }
 }
 
 console.log('🎯 DynamicManuscriptNavigation component loaded!')
