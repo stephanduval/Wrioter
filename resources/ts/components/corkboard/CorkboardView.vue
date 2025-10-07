@@ -184,6 +184,7 @@ import { useCorkboardStore } from '@/stores/corkboard'
 import { useFolderViewStore, type FolderItem, type FolderData } from '@/stores/folderView'
 import { useSelectionStore } from '@/stores/selection'
 import { useBoxSelection } from '@/composables/useSelection'
+import { reorderFolderItems } from '@/api/folders'
 import type { CorkboardCard } from '@/api/corkboard'
 
 /**
@@ -283,7 +284,16 @@ const handleCardSelect = (cardId: string, options: { additive?: boolean; range?:
 
 const handleCardReorder = async (operations: any[]) => {
   try {
-    await corkboardStore.reorderCards(operations)
+    // Convert corkboard operations to folder reorder format
+    const folderOperations = operations.map(op => ({
+      item_id: Number(op.cardId),
+      order: op.toIndex
+    }))
+
+    await reorderFolderItems(props.folderId, folderOperations)
+
+    // Reload folder data
+    await folderViewStore.loadFolderContents(props.folderId)
   } catch (error) {
     console.error('Failed to reorder cards:', error)
   }
@@ -291,7 +301,27 @@ const handleCardReorder = async (operations: any[]) => {
 
 const handleCardDrop = async (draggedCardIds: string[], targetIndex: number, targetPosition?: any) => {
   try {
-    await corkboardStore.handleCardDrop(draggedCardIds, targetIndex, targetPosition)
+    // Create reorder operations from drop
+    const reorderedCards = [...adaptedCards.value]
+    const draggedIndices = draggedCardIds.map(id => reorderedCards.findIndex(c => c.id === id))
+
+    // Remove dragged cards
+    const draggedItems = draggedIndices.map(idx => reorderedCards[idx])
+    draggedIndices.sort((a, b) => b - a).forEach(idx => reorderedCards.splice(idx, 1))
+
+    // Insert at target
+    reorderedCards.splice(targetIndex, 0, ...draggedItems)
+
+    // Create operations
+    const operations = reorderedCards.map((card, index) => ({
+      item_id: card.itemId,
+      order: index
+    }))
+
+    await reorderFolderItems(props.folderId, operations)
+
+    // Reload folder data
+    await folderViewStore.loadFolderContents(props.folderId)
   } catch (error) {
     console.error('Failed to handle card drop:', error)
   }

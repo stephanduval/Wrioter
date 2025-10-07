@@ -227,6 +227,8 @@ Route::get('/send-message-notification', function () {
 Route::middleware('auth:sanctum')->group(function () {
     // Get folder contents optimized for view mode
     Route::get('/folders/{folderId}/contents', [App\Http\Controllers\FolderController::class, 'getContents']);
+    // Reorder items within a folder
+    Route::post('/folders/{folderId}/reorder', [App\Http\Controllers\FolderController::class, 'reorder']);
 });
 
 // User Preferences Routes

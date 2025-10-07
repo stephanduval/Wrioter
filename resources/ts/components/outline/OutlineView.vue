@@ -86,6 +86,9 @@
       >
         <thead>
           <tr>
+            <!-- Drag Handle Column -->
+            <th class="drag-handle-column"></th>
+
             <!-- Selection Column -->
             <th class="selection-column">
               <VCheckbox
@@ -120,14 +123,20 @@
 
         <tbody>
           <OutlineRow
-            v-for="item in processedItems"
+            v-for="(item, index) in processedItems"
             :key="item.id"
             :item="item"
+            :index="index"
             :columns="visibleColumnConfigs"
             :selected="selectedIds.has(item.id)"
             @select="handleRowSelect"
             @edit="handleCellEdit"
             @click="handleRowClick"
+            @drag-start="handleDragStart"
+            @drag-end="handleDragEnd"
+            @drag-over="handleDragOver"
+            @drag-leave="handleDragLeave"
+            @drop="handleDrop"
           />
         </tbody>
       </VTable>
@@ -200,6 +209,7 @@ import { storeToRefs } from 'pinia'
 import { useOutlineStore } from '@/stores/outline'
 import { useFolderViewStore, type FolderItem, type FolderData } from '@/stores/folderView'
 import { useSelectionStore } from '@/stores/selection'
+import { reorderFolderItems } from '@/api/folders'
 import OutlineRow from './OutlineRow.vue'
 
 const props = defineProps<{
@@ -212,6 +222,7 @@ const emit = defineEmits<{
   exportCSV: []
   rowClick: [item: FolderItem]
   cellEdit: [itemId: number, columnId: string, value: any]
+  itemsReordered: []
 }>()
 
 // Stores
@@ -352,6 +363,62 @@ async function saveSettings() {
   await folderViewStore.saveOutlineSettings(config)
 }
 
+// Drag and drop state
+const draggedItem = ref<FolderItem | null>(null)
+const draggedIndex = ref<number>(-1)
+
+// Drag and drop handlers
+function handleDragStart(item: FolderItem, index: number, event: DragEvent) {
+  draggedItem.value = item
+  draggedIndex.value = index
+}
+
+function handleDragEnd() {
+  draggedItem.value = null
+  draggedIndex.value = -1
+}
+
+function handleDragOver(index: number, event: DragEvent) {
+  // Nothing needed here, handled by row component
+}
+
+function handleDragLeave() {
+  // Nothing needed here, handled by row component
+}
+
+async function handleDrop(targetIndex: number, event: DragEvent) {
+  if (!draggedItem.value || draggedIndex.value === -1 || draggedIndex.value === targetIndex) {
+    handleDragEnd()
+    return
+  }
+
+  try {
+    // Create new order for all items
+    const reorderedItems = [...processedItems.value]
+    const [movedItem] = reorderedItems.splice(draggedIndex.value, 1)
+    reorderedItems.splice(targetIndex, 0, movedItem)
+
+    // Create reorder operations with new order indices
+    const operations = reorderedItems.map((item, index) => ({
+      item_id: item.id,
+      order: index
+    }))
+
+    // Call API to persist the reorder
+    await reorderFolderItems(props.folderId, operations)
+
+    // Notify parent to refresh data
+    emit('itemsReordered')
+
+    console.log('Items reordered successfully in outline')
+  } catch (error) {
+    console.error('Failed to reorder items:', error)
+    // TODO: Show error toast
+  } finally {
+    handleDragEnd()
+  }
+}
+
 // Load saved settings
 onMounted(() => {
   const settings = folderViewStore.currentViewSettings as any
@@ -406,6 +473,11 @@ watch(
   font-weight: 600;
   text-align: left;
   white-space: nowrap;
+}
+
+.drag-handle-column {
+  width: 40px;
+  padding: 0.5rem !important;
 }
 
 .selection-column {
