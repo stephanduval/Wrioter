@@ -107,12 +107,28 @@
           v-for="(item, index) in items"
           :key="item.id"
         >
-          <ManuscriptItem
-            :item="item"
-            :font-size="fontSize"
-            :line-spacing="lineSpacing"
-            @click="handleItemClick(item)"
-          />
+          <div
+            class="manuscript-item-wrapper"
+            :class="{ 'drag-over': dragOverIndex === index }"
+            :draggable="true"
+            @dragstart="handleDragStart(item, index, $event)"
+            @dragend="handleDragEnd"
+            @dragover="handleDragOver(index, $event)"
+            @dragleave="handleDragLeave"
+            @drop="handleDrop(index, $event)"
+          >
+            <!-- Drag handle -->
+            <div class="drag-handle" title="Drag to reorder">
+              <VIcon icon="bx-menu" size="small" />
+            </div>
+
+            <ManuscriptItem
+              :item="item"
+              :font-size="fontSize"
+              :line-spacing="lineSpacing"
+              @click="handleItemClick(item)"
+            />
+          </div>
 
           <!-- Page Break -->
           <div
@@ -139,6 +155,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useFolderViewStore, type FolderItem, type FolderData } from '@/stores/folderView'
+import { reorderFolderItems } from '@/api/folders'
 import ManuscriptItem from './ManuscriptItem.vue'
 
 const props = defineProps<{
@@ -151,6 +168,7 @@ const emit = defineEmits<{
   print: []
   export: []
   itemClick: [item: FolderItem]
+  itemsReordered: []
 }>()
 
 // Store
@@ -158,6 +176,11 @@ const folderViewStore = useFolderViewStore()
 
 // Local state
 const contentRef = ref<HTMLElement>()
+
+// Drag and drop state
+const draggedItem = ref<FolderItem | null>(null)
+const draggedIndex = ref<number>(-1)
+const dragOverIndex = ref<number>(-1)
 
 // View settings
 const fontSize = ref<'small' | 'medium' | 'large'>('medium')
@@ -241,6 +264,75 @@ function handleCopyAll() {
 
 function handleItemClick(item: FolderItem) {
   emit('itemClick', item)
+}
+
+// Drag and drop handlers
+function handleDragStart(item: FolderItem, index: number, event: DragEvent) {
+  draggedItem.value = item
+  draggedIndex.value = index
+
+  if (event.dataTransfer) {
+    event.dataTransfer.effectAllowed = 'move'
+    event.dataTransfer.setData('text/plain', String(item.id))
+  }
+}
+
+function handleDragEnd() {
+  draggedItem.value = null
+  draggedIndex.value = -1
+  dragOverIndex.value = -1
+}
+
+function handleDragOver(index: number, event: DragEvent) {
+  event.preventDefault()
+
+  if (event.dataTransfer) {
+    event.dataTransfer.dropEffect = 'move'
+  }
+
+  // Only update if different from dragged item
+  if (index !== draggedIndex.value) {
+    dragOverIndex.value = index
+  }
+}
+
+function handleDragLeave() {
+  dragOverIndex.value = -1
+}
+
+async function handleDrop(targetIndex: number, event: DragEvent) {
+  event.preventDefault()
+
+  if (!draggedItem.value || draggedIndex.value === -1 || draggedIndex.value === targetIndex) {
+    handleDragEnd()
+    return
+  }
+
+  try {
+    // Create new order for all items
+    const reorderedItems = [...props.items]
+    const [movedItem] = reorderedItems.splice(draggedIndex.value, 1)
+    reorderedItems.splice(targetIndex, 0, movedItem)
+
+    // Create reorder operations with new order indices
+    const operations = reorderedItems.map((item, index) => ({
+      item_id: item.id,
+      order: index
+    }))
+
+    // Call API to persist the reorder
+    await reorderFolderItems(props.folderId, operations)
+
+    // Notify parent to refresh data
+    emit('itemsReordered')
+
+    console.log('Items reordered successfully')
+  } catch (error) {
+    console.error('Failed to reorder items:', error)
+    // TODO: Show error toast
+  } finally {
+    handleDragEnd()
+  }
 }
 
 // Load saved settings
@@ -370,6 +462,43 @@ watch(
   }
 }
 
+/* Drag and Drop Styles */
+.manuscript-item-wrapper {
+  position: relative;
+  transition: all 0.2s ease;
+  border-left: 3px solid transparent;
+  margin-left: -3px;
+}
+
+.manuscript-item-wrapper:hover .drag-handle {
+  opacity: 1;
+}
+
+.manuscript-item-wrapper.drag-over {
+  border-left-color: rgb(var(--v-theme-primary));
+  background-color: rgba(var(--v-theme-primary), 0.05);
+}
+
+.drag-handle {
+  position: absolute;
+  left: -2rem;
+  top: 1rem;
+  opacity: 0;
+  cursor: grab;
+  padding: 0.5rem;
+  border-radius: 4px;
+  transition: opacity 0.2s ease;
+  color: rgb(var(--v-theme-on-surface-variant));
+}
+
+.drag-handle:hover {
+  background-color: rgba(var(--v-theme-surface-variant), 0.5);
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
 /* Responsive */
 @media (max-width: 960px) {
   .manuscript-content {
@@ -378,6 +507,10 @@ watch(
 
   .manuscript-container {
     padding: 2rem 1.5rem;
+  }
+
+  .drag-handle {
+    left: -1.5rem;
   }
 }
 
@@ -388,6 +521,13 @@ watch(
 
   .manuscript-container {
     padding: 1.5rem 1rem;
+  }
+
+  /* Always show drag handle on mobile */
+  .drag-handle {
+    opacity: 0.6;
+    left: -1rem;
+    top: 0.5rem;
   }
 }
 </style>
