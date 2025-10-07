@@ -43,6 +43,11 @@ export function useApi() {
         method: 'PUT',
         body: body ? JSON.stringify(body) : undefined
       }),
+      patch: (url: string, body?: any, options?: RequestInit) => request(url, {
+        ...options,
+        method: 'PATCH',
+        body: body ? JSON.stringify(body) : undefined
+      }),
       delete: (url: string, options?: RequestInit) => request(url, { ...options, method: 'DELETE' }),
     }
   }
