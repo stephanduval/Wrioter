@@ -942,7 +942,8 @@ const fetchManuscripts = async () => {
         'Accept': 'application/json'
       }
     })
-    manuscripts.value = await response.json()
+    const result = await response.json()
+    manuscripts.value = result.data || []
     stats.value.totalManuscripts = manuscripts.value.length
   } catch (error) {
     console.error('Error fetching manuscripts:', error)
