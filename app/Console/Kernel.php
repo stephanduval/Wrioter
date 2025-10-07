@@ -26,7 +26,11 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        // $schedule->command('inspire')->hourly();
+        // Clean up old Scrivener import files daily at 2 AM
+        $schedule->command('scrivener:cleanup')
+            ->daily()
+            ->at('02:00')
+            ->appendOutputTo(storage_path('logs/cleanup.log'));
     }
 
     /**

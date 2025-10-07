@@ -1,0 +1,17 @@
+[Unit]
+Description=Wrioter Laravel Scheduler
+After=network.target
+
+[Service]
+Type=oneshot
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/stephandouglasduval.com
+ExecStart=/usr/bin/php /var/www/stephandouglasduval.com/artisan schedule:run
+
+# Logging
+StandardOutput=append:/var/log/wrioter-scheduler.log
+StandardError=append:/var/log/wrioter-scheduler-error.log
+
+[Install]
+WantedBy=multi-user.target
