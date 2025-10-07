@@ -387,4 +387,93 @@ class ItemController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Delete an item from the manuscript.
+     */
+    public function destroy(string $manuscriptId, string $itemId)
+    {
+        try {
+            // Verify the manuscript belongs to the user
+            $manuscript = Manuscript::where('id', $manuscriptId)
+                ->where('user_id', Auth::id())
+                ->firstOrFail();
+
+            Log::info("ItemController::destroy - Deleting item {$itemId} from manuscript {$manuscriptId}");
+
+            $item = Item::where('id', $itemId)
+                ->where('user_id', Auth::id())
+                ->firstOrFail();
+
+            // Delete the manuscript-item relationship
+            ManuscriptItem::where('manuscript_id', $manuscriptId)
+                ->where('item_id', $itemId)
+                ->delete();
+
+            // Delete the item itself
+            $item->delete();
+
+            Log::info("Item {$itemId} deleted successfully from manuscript {$manuscriptId}");
+
+            return response()->json(['message' => 'Item deleted successfully']);
+        } catch (\Exception $e) {
+            Log::error('Failed to delete item', [
+                'manuscript_id' => $manuscriptId,
+                'item_id' => $itemId,
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'error' => 'Failed to delete item',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Rename an item (update its title).
+     */
+    public function rename(Request $request, string $manuscriptId, string $itemId)
+    {
+        try {
+            // Verify the manuscript belongs to the user
+            $manuscript = Manuscript::where('id', $manuscriptId)
+                ->where('user_id', Auth::id())
+                ->firstOrFail();
+
+            $validated = $request->validate([
+                'title' => 'required|string|max:255',
+            ]);
+
+            Log::info("ItemController::rename - Renaming item {$itemId} in manuscript {$manuscriptId} to '{$validated['title']}'");
+
+            $item = Item::where('id', $itemId)
+                ->where('user_id', Auth::id())
+                ->firstOrFail();
+
+            $item->update(['title' => $validated['title']]);
+
+            Log::info("Item {$itemId} renamed successfully to '{$validated['title']}'");
+
+            return response()->json([
+                'data' => [
+                    'id' => $item->id,
+                    'title' => $item->title,
+                    'updated_at' => $item->updated_at->toISOString(),
+                ],
+                'message' => 'Item renamed successfully'
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to rename item', [
+                'manuscript_id' => $manuscriptId,
+                'item_id' => $itemId,
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'error' => 'Failed to rename item',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
 }

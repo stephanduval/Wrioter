@@ -607,9 +607,13 @@
       "excludeFromCompile": "Exclure de la compilation",
       "includeInCompile": "Inclure dans la compilation",
       "duplicate": "Dupliquer",
+      "rename": "Renommer",
       "delete": "Supprimer",
       "deleteConfirm": "Êtes-vous sûr de vouloir supprimer \"{title}\" ?",
-      "deleteNotImplemented": "La fonctionnalité de suppression n'est pas encore implémentée"
+      "deleteError": "Échec de la suppression de l'élément",
+      "deleteNotImplemented": "La fonctionnalité de suppression n'est pas encore implémentée",
+      "renamePrompt": "Entrez un nouveau nom pour '{title}':",
+      "renameError": "Échec du renommage de l'élément"
     },
     "manuscript": {
       "view": "Voir le manuscrit",

@@ -603,9 +603,13 @@
       "excludeFromCompile": "Exclude from Compile",
       "includeInCompile": "Include in Compile",
       "duplicate": "Duplicate",
+      "rename": "Rename",
       "delete": "Delete",
       "deleteConfirm": "Are you sure you want to delete \"{title}\"?",
-      "deleteNotImplemented": "Delete functionality not yet implemented"
+      "deleteError": "Failed to delete item",
+      "deleteNotImplemented": "Delete functionality not yet implemented",
+      "renamePrompt": "Enter a new name for '{title}':",
+      "renameError": "Failed to rename item"
     },
     "manuscript": {
       "view": "View Manuscript",

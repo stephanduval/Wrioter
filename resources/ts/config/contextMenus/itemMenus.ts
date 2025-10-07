@@ -162,6 +162,24 @@ export const getItemMenuItems = (item: ManuscriptItem, manuscriptId: number): Me
     },
     { separator: true },
     {
+      id: 'rename',
+      label: t('contextMenu.item.rename'),
+      icon: 'bx-rename',
+      action: async () => {
+        const newTitle = prompt(t('contextMenu.item.renamePrompt', { title: item.title }), item.title)
+        if (newTitle && newTitle.trim() !== '' && newTitle !== item.title) {
+          try {
+            console.log('Rename item:', item.id, 'to:', newTitle)
+            await manuscriptStore.renameItem(manuscriptId, item.itemId, newTitle.trim())
+            console.log('Item renamed successfully')
+          } catch (error) {
+            console.error('Failed to rename item:', error)
+            alert(t('contextMenu.item.renameError') || 'Failed to rename item')
+          }
+        }
+      }
+    },
+    {
       id: 'duplicate',
       label: t('contextMenu.item.duplicate'),
       icon: 'bx-copy',
@@ -170,6 +188,7 @@ export const getItemMenuItems = (item: ManuscriptItem, manuscriptId: number): Me
         // TODO: Implement duplicate functionality
       }
     },
+    { separator: true },
     {
       id: 'delete',
       label: t('contextMenu.item.delete'),
@@ -177,9 +196,14 @@ export const getItemMenuItems = (item: ManuscriptItem, manuscriptId: number): Me
       danger: true,
       action: async () => {
         if (confirm(t('contextMenu.item.deleteConfirm', { title: item.title }))) {
-          console.log('Delete item:', item.id)
-          // TODO: Implement delete functionality when API method is available
-          alert(t('contextMenu.item.deleteNotImplemented'))
+          try {
+            console.log('Delete item:', item.id)
+            await manuscriptStore.deleteItem(manuscriptId, item.itemId)
+            console.log('Item deleted successfully')
+          } catch (error) {
+            console.error('Failed to delete item:', error)
+            alert(t('contextMenu.item.deleteError') || 'Failed to delete item')
+          }
         }
       }
     }
