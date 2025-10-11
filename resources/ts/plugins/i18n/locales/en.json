@@ -225,7 +225,7 @@
     "manuscripts": {
       "new": "New Manuscript"
     },
-    "selectManuscript": "Select Manuscript", 
+    "selectManuscript": "Select Manuscript",
     "manuscriptSection": "Manuscripts",
     "manuscriptNew": "New Manuscript",
     "manuscriptList": "All Manuscripts",
@@ -555,7 +555,7 @@
   "scrivener": {
     "import": {
       "title": "Import from Scrivener",
-      "subtitle": "Upload your Scrivener project file to import your manuscript",
+      "subtitle": "aaaaUpload your Scrivener project file to import your manuscript",
       "recentImports": "Recent Imports",
       "fileInput": "Choose Scrivener Project File",
       "uploadButton": "Upload Project",
