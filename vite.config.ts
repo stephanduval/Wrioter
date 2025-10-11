@@ -123,8 +123,9 @@ export default defineConfig({
   },
 
   server: {
+    host: '0.0.0.0',
     hmr: {
-      host: 'localhost',
+      host: '192.168.1.252',
     },
     port: process.env.NODE_ENV === 'testing' ? 5174 : 5173,
   },
