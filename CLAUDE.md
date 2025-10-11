@@ -29,3 +29,8 @@ LLM_Guide.md can help give you context if you need to understand the application
 ## File References
 - Use markdown links: [file.ts:42](src/file.ts#L42)
 - Avoid backticks for file names
+
+## Deployment
+- NEVER use rsync directly
+- ALWAYS use ./sync-to-devserver.sh for syncing to remote server
+- This ensures .env* files are never overwritten
