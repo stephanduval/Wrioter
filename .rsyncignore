@@ -1,0 +1,42 @@
+# Rsync exclude patterns for dev server sync
+# Usage: rsync -av --exclude-from=.rsyncignore /home/rogers/Code/Wrioter/ sduval@192.168.1.252:~/Code/Wrioter/
+
+# Environment files - each server needs its own
+.env*
+!.env.example
+
+# Backups
+.env-backups/
+
+# Dependencies
+node_modules/
+vendor/
+
+# Build outputs - NEVER sync these (they contain environment-specific URLs)
+public/build/
+public/hot
+.vite/
+
+# Storage and cache
+storage/
+bootstrap/cache/
+
+# Logs
+*.log
+logs/
+
+# IDE
+.vscode/
+.idea/
+
+# Git
+.git/
+
+# Database
+*.sql
+database/database.sqlite
+
+# Large files
+*.tar.gz
+*.zip
+*.deb
