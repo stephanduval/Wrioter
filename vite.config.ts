@@ -6,13 +6,16 @@ import AutoImport from 'unplugin-auto-import/vite'
 import Components from 'unplugin-vue-components/vite'
 import { VueRouterAutoImports, getPascalCaseRouteName } from 'unplugin-vue-router'
 import VueRouter from 'unplugin-vue-router/vite'
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import Layouts from 'vite-plugin-vue-layouts'
 import vuetify from 'vite-plugin-vuetify'
 import svgLoader from 'vite-svg-loader'
 
 // https://vitejs.dev/config/
-export default defineConfig({
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), '')
+
+  return {
   base: '/build/', // Ensure correct base path for history mode
 
   plugins: [
@@ -123,10 +126,10 @@ export default defineConfig({
   },
 
   server: {
-    host: '0.0.0.0',
+    host: env.VITE_HOST || '0.0.0.0',
     hmr: {
-      host: '192.168.1.252',
+      host: env.VITE_HMR_HOST || 'localhost',
     },
-    port: parseInt(process.env.VITE_PORT || '5173'),
+    port: parseInt(env.VITE_PORT || '5173'),
   },
-});
+}});

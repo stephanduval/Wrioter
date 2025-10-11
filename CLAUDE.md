@@ -3,6 +3,10 @@ LLM_Guide.md can help give you context if you need to understand the application
 /home/rogers/Code/Wrioter/docs/LLM_GUIDE.md
 
 
+# Remote Dev Server Sync Rules
+⚠️ **NEVER use manual rsync commands** - Always use `./sync-to-devserver.sh` to sync files to the remote dev server. This ensures `.env*` files are never overwritten, which would break the multi-branch setup by reverting URLs from `192.168.1.252` to `localhost`.
+
+
 # Claude Efficiency Guidelines
 
 ## Tool Usage
