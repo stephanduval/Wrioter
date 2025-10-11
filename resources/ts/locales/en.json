@@ -29,7 +29,7 @@
     },
     "scrivener": {
         "import": {
-            "title": "Import from Scrivener",
+            "title": "Import.. fraaaom Scrivener",
             "subtitle": "Upload your Scrivener project file to import your manuscript",
             "fileInput": "Choose Scrivener Project File",
             "uploadButton": "Upload and Import",

@@ -8,6 +8,7 @@
 - **Scrivener Import**: `docs/modules/scrivener-import/README.md`
 - **API Reference**: `docs/api/endpoints.md`
 - **Architecture**: `docs/architecture/overview.md`
+- **Remote Dev Server**: `docs/development/remote-development-server.md`
 
 ## System Overview
 Wrioter is a Vue.js/Laravel manuscript management system designed for writers. It features manuscript imports from Scrivener, real-time messaging, project organization, and a rich text editor. The system uses CASL for authorization, queue workers for background processing, and supports multiple user roles.
@@ -70,6 +71,10 @@ Need to work on...
 ├── API?
 │   ├── Endpoints? → docs/api/endpoints.md
 │   └── Authentication? → docs/api/authentication.md
+├── Development?
+│   ├── Environment Setup? → docs/development/environment-setup.md
+│   ├── Remote Dev Server? → docs/development/remote-development-server.md
+│   └── Debug Guide? → docs/development/debug-guide.md
 ├── Modules?
 │   └── Scrivener Import? → docs/modules/scrivener-import/README.md
 └── Architecture?
@@ -110,12 +115,20 @@ Need to work on...
    yarn db:fresh:test   # Reset test database
    ```
 
-3. **Update Documentation**
+3. **Remote Development Server**
+   ```bash
+   sync-wrioter-start   # Start auto-sync to remote dev server (192.168.1.252)
+   sync-wrioter-watch   # Watch sync progress
+   sync-wrioter-stop    # Stop sync
+   ```
+   See `docs/development/remote-development-server.md` for full setup
+
+4. **Update Documentation**
    ```bash
    yarn schema:text     # Update database docs
    ```
 
-4. **Deploy to Production (StormWeb)**
+5. **Deploy to Production (StormWeb)**
    ```bash
    yarn stormweb:deploy  # Deploy to production server
    # Or manually: ./deploy-stormweb-fixed.sh
