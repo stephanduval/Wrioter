@@ -476,4 +476,202 @@ class ItemController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Duplicate an item with all its properties and children.
+     */
+    public function duplicate(string $manuscriptId, string $itemId)
+    {
+        try {
+            // Verify the manuscript belongs to the user
+            $manuscript = Manuscript::where('id', $manuscriptId)
+                ->where('user_id', Auth::id())
+                ->firstOrFail();
+
+            // Get the original item
+            $originalItem = Item::where('id', $itemId)
+                ->where('user_id', Auth::id())
+                ->firstOrFail();
+
+            // Get the manuscript item for order_index
+            $originalManuscriptItem = ManuscriptItem::where('manuscript_id', $manuscriptId)
+                ->where('item_id', $itemId)
+                ->firstOrFail();
+
+            Log::info("ItemController::duplicate - Duplicating item {$itemId} in manuscript {$manuscriptId}");
+
+            // Create duplicate item
+            $duplicateItem = $originalItem->replicate();
+            $duplicateItem->title = $originalItem->title . ' (Copy)';
+            $duplicateItem->save();
+
+            // Attach duplicate to manuscript with next order_index
+            ManuscriptItem::create([
+                'manuscript_id' => $manuscriptId,
+                'item_id' => $duplicateItem->id,
+                'order_index' => $originalManuscriptItem->order_index + 1,
+                'is_independent' => $originalManuscriptItem->is_independent,
+                'metadata' => $originalManuscriptItem->metadata,
+            ]);
+
+            // Reorder subsequent items
+            ManuscriptItem::where('manuscript_id', $manuscriptId)
+                ->where('order_index', '>', $originalManuscriptItem->order_index)
+                ->where('item_id', '!=', $duplicateItem->id)
+                ->increment('order_index');
+
+            Log::info("Item {$itemId} duplicated successfully as item {$duplicateItem->id}");
+
+            return response()->json([
+                'data' => [
+                    'id' => $duplicateItem->id,
+                    'title' => $duplicateItem->title,
+                    'type' => $duplicateItem->type,
+                    'parent_id' => $duplicateItem->parent_id,
+                    'order_index' => $originalManuscriptItem->order_index + 1,
+                    'created_at' => $duplicateItem->created_at->toISOString(),
+                    'updated_at' => $duplicateItem->updated_at->toISOString(),
+                ],
+                'message' => 'Item duplicated successfully'
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to duplicate item', [
+                'manuscript_id' => $manuscriptId,
+                'item_id' => $itemId,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'error' => 'Failed to duplicate item',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Move an item up in the order.
+     */
+    public function moveUp(string $manuscriptId, string $itemId)
+    {
+        try {
+            // Verify the manuscript belongs to the user
+            $manuscript = Manuscript::where('id', $manuscriptId)
+                ->where('user_id', Auth::id())
+                ->firstOrFail();
+
+            // Get the manuscript item
+            $manuscriptItem = ManuscriptItem::where('manuscript_id', $manuscriptId)
+                ->where('item_id', $itemId)
+                ->firstOrFail();
+
+            $currentOrder = $manuscriptItem->order_index;
+
+            // Get the item above (lower order_index)
+            $itemAbove = ManuscriptItem::where('manuscript_id', $manuscriptId)
+                ->where('order_index', '<', $currentOrder)
+                ->orderBy('order_index', 'desc')
+                ->first();
+
+            if (!$itemAbove) {
+                return response()->json([
+                    'message' => 'Item is already at the top'
+                ], 400);
+            }
+
+            Log::info("ItemController::moveUp - Moving item {$itemId} up in manuscript {$manuscriptId}");
+
+            // Swap order_index values
+            $itemAboveOrder = $itemAbove->order_index;
+            $itemAbove->order_index = $currentOrder;
+            $manuscriptItem->order_index = $itemAboveOrder;
+
+            $itemAbove->save();
+            $manuscriptItem->save();
+
+            Log::info("Item {$itemId} moved up successfully");
+
+            return response()->json([
+                'data' => [
+                    'id' => $itemId,
+                    'order_index' => $manuscriptItem->order_index,
+                ],
+                'message' => 'Item moved up successfully'
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to move item up', [
+                'manuscript_id' => $manuscriptId,
+                'item_id' => $itemId,
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'error' => 'Failed to move item up',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Move an item down in the order.
+     */
+    public function moveDown(string $manuscriptId, string $itemId)
+    {
+        try {
+            // Verify the manuscript belongs to the user
+            $manuscript = Manuscript::where('id', $manuscriptId)
+                ->where('user_id', Auth::id())
+                ->firstOrFail();
+
+            // Get the manuscript item
+            $manuscriptItem = ManuscriptItem::where('manuscript_id', $manuscriptId)
+                ->where('item_id', $itemId)
+                ->firstOrFail();
+
+            $currentOrder = $manuscriptItem->order_index;
+
+            // Get the item below (higher order_index)
+            $itemBelow = ManuscriptItem::where('manuscript_id', $manuscriptId)
+                ->where('order_index', '>', $currentOrder)
+                ->orderBy('order_index', 'asc')
+                ->first();
+
+            if (!$itemBelow) {
+                return response()->json([
+                    'message' => 'Item is already at the bottom'
+                ], 400);
+            }
+
+            Log::info("ItemController::moveDown - Moving item {$itemId} down in manuscript {$manuscriptId}");
+
+            // Swap order_index values
+            $itemBelowOrder = $itemBelow->order_index;
+            $itemBelow->order_index = $currentOrder;
+            $manuscriptItem->order_index = $itemBelowOrder;
+
+            $itemBelow->save();
+            $manuscriptItem->save();
+
+            Log::info("Item {$itemId} moved down successfully");
+
+            return response()->json([
+                'data' => [
+                    'id' => $itemId,
+                    'order_index' => $manuscriptItem->order_index,
+                ],
+                'message' => 'Item moved down successfully'
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to move item down', [
+                'manuscript_id' => $manuscriptId,
+                'item_id' => $itemId,
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'error' => 'Failed to move item down',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
 }
