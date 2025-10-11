@@ -123,9 +123,10 @@ export default defineConfig({
   },
 
   server: {
+    host: '0.0.0.0',
     hmr: {
-      host: 'localhost',
+      host: '192.168.1.252',
     },
-    port: process.env.NODE_ENV === 'testing' ? 5174 : 5173,
+    port: process.env.VITE_PORT ? parseInt(process.env.VITE_PORT) : (process.env.NODE_ENV === 'testing' ? 5174 : 5173),
   },
 });
