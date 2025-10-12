@@ -49,6 +49,33 @@
       </div>
     </div>
 
+    <!-- Quick View Mode Buttons -->
+    <div v-if="manuscriptStore.selectedManuscriptId" class="view-mode-buttons">
+      <VBtnGroup density="compact" variant="tonal" divided>
+        <VBtn
+          size="x-small"
+          @click="navigateToView('manuscript')"
+          title="Manuscript View"
+        >
+          <VIcon icon="bx-file-doc" size="16" />
+        </VBtn>
+        <VBtn
+          size="x-small"
+          @click="navigateToView('corkboard')"
+          title="Corkboard View"
+        >
+          <VIcon icon="bx-grid-alt" size="16" />
+        </VBtn>
+        <VBtn
+          size="x-small"
+          @click="navigateToView('outline')"
+          title="Outline View"
+        >
+          <VIcon icon="bx-list-ul" size="16" />
+        </VBtn>
+      </VBtnGroup>
+    </div>
+
     <!-- Search Bar -->
     <div v-if="showSearch" class="search-section">
       <VTextField
@@ -299,6 +326,19 @@ const handleNodeDrop = async (data: {
   }
 }
 
+// Navigate to different view modes
+const navigateToView = (viewMode: 'manuscript' | 'corkboard' | 'outline') => {
+  // Get the root folder ID for the manuscript
+  // For now, we'll navigate to the manuscript's root folder
+  // In the future, we might want to navigate to the currently selected folder
+  const manuscriptId = manuscriptStore.selectedManuscriptId
+  if (manuscriptId) {
+    // Navigate to the folders view with the specified mode
+    // Using manuscriptId as the folder ID for the root
+    router.push(`/folders/${manuscriptId}?view=${viewMode}`)
+  }
+}
+
 console.log('🎯 DynamicManuscriptNavigation component loaded!')
 
 // Initialize navigation when component mounts
@@ -364,6 +404,21 @@ console.log('🔍 Component setup complete, hasSelectedManuscript:', manuscriptS
   .header-actions {
     display: flex;
     gap: 4px;
+  }
+}
+
+.view-mode-buttons {
+  margin-bottom: 12px;
+  display: flex;
+  justify-content: center;
+
+  :deep(.v-btn-group) {
+    width: 100%;
+
+    .v-btn {
+      flex: 1;
+      min-width: 0;
+    }
   }
 }
 

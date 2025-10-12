@@ -129,13 +129,23 @@ export const useManuscriptStore = defineStore('manuscript', () => {
 
     // Phase 1: Create all nodes
     items.forEach(item => {
+      // Determine the correct path based on item type
+      let itemPath = '/dashboards/analytics' // Default fallback
+      if (item.type === 'folder') {
+        // Folders should navigate to the folder view with corkboard as default
+        itemPath = `/folders/${item.id}?view=corkboard`
+      } else if (item.type === 'text' && selectedManuscriptId.value) {
+        // Text items should navigate to the editor
+        itemPath = `/manuscripts/${selectedManuscriptId.value}/items/${item.id}/edit`
+      }
+
       const node: TreeNode = {
         id: `item-${item.id}`,
         itemId: item.id,
         title: item.title || 'Untitled',
         type: (item.type as NodeType) || 'text',
         icon: getIconForItemType(item.type),
-        path: '/dashboards/analytics', // Temporary redirect until item view is implemented
+        path: itemPath,
         children: [],
         metadata: {
           wordCount: item.word_count || 0,
