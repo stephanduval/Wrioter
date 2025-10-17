@@ -4,11 +4,22 @@
 echo "🔄 Syncing to dev server (192.168.1.252)..."
 echo ""
 
+# Get the directory where this script is located
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
 rsync -av \
-  --exclude-from=/home/rogers/Code/Wrioter/.rsyncignore \
+  --exclude='.env*' \
+  --exclude='node_modules/' \
+  --exclude='vendor/' \
+  --exclude='.git/' \
+  --exclude='storage/logs/*' \
+  --exclude='storage/framework/cache/*' \
+  --exclude='storage/framework/sessions/*' \
+  --exclude='storage/framework/views/*' \
+  --exclude='bootstrap/cache/*' \
   --progress \
-  /home/rogers/Code/Wrioter/ \
-  sduval@192.168.1.252:~/Code/Wrioter/
+  "$SCRIPT_DIR/" \
+  sduval@192.168.1.252:"~/Code/Wrioter Branch 2/"
 
 echo ""
 echo "✅ Sync complete!"
