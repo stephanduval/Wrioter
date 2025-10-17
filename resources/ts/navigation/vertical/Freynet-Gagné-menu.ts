@@ -38,7 +38,33 @@ export default [
     subject: 'manuscripts',
   },
   // Dynamic manuscript items will be added here by the component
- // Main Menu Section
+
+  // MindMap Section
+  { heading: 'menu.mindMap' },
+
+  {
+    title: 'menu.mindMapList',
+    icon: { icon: 'bx-sitemap' },
+    to: 'mindmap-list',
+    action: 'read',
+    subject: 'mindmaps',
+  },
+  {
+    title: 'menu.mindMapCreate',
+    icon: { icon: 'bx-network-chart' },
+    to: 'mindmap-create',
+    action: 'create',
+    subject: 'mindmaps',
+  },
+  {
+    title: 'menu.mindMapExplorer',
+    icon: { icon: 'bx-radar' },
+    to: 'mindmap-explorer',
+    action: 'read',
+    subject: 'mindmaps',
+  },
+
+  // Main Menu Section
   { heading: 'menu.heading' },
   
   // Admin Dashboard

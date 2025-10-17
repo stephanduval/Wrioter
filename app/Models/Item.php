@@ -104,6 +104,16 @@ class Item extends Model
     }
 
     /**
+     * Get all tags for this item.
+     */
+    public function tags(): BelongsToMany
+    {
+        return $this->belongsToMany(Tag::class, 'item_tags')
+            ->withPivot(['context', 'position', 'confidence', 'added_by'])
+            ->withTimestamps();
+    }
+
+    /**
      * Create a new version of this item.
      */
     public function createVersion(array $attributes): ItemVersion

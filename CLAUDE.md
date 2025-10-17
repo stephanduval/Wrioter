@@ -1,10 +1,32 @@
 # Project Information
-LLM_Guide.md can help give you context if you need to understand the application structure, database and documentation:
+LLM_Guide.md can help give you context if you need to understand the application structure, database and documentation.
+
+**Latest documentation location:**
+/home/rogers/Code/Wrioter Branch 3/docs/
+
+**Legacy documentation (less recent):**
 /home/rogers/Code/Wrioter/docs/LLM_GUIDE.md
 
 
 # Remote Dev Server Sync Rules
-⚠️ **NEVER use manual rsync commands** - Always use `./sync-to-devserver.sh` to sync files to the remote dev server. This ensures `.env*` files are never overwritten, which would break the multi-branch setup by reverting URLs from `192.168.1.252` to `localhost`.
+⚠️ **CRITICAL**: Changes made locally must be synced to see them on the dev server!
+
+## Sync Process
+- **User runs sync manually** - Changes won't appear until `./sync-to-devserver.sh` is executed
+- Dev server runs at: `ssh sduval@192.168.1.252`
+- Local path: `/home/rogers/Code/Wrioter Branch 3/`
+- Remote path: `/home/sduval/Code/Wrioter Branch 3/`
+- Documentation in this folder syncs to remote server
+
+## If code isn't updating after changes:
+1. User likely hasn't run `./sync-to-devserver.sh` yet
+2. Wait for sync to complete before testing
+3. Refresh browser after sync completes
+
+## Important Sync Rules
+- **NEVER use manual rsync commands** - Always use `./sync-to-devserver.sh`
+- Script ensures `.env*` files are NOT synced (each environment has its own config)
+- This prevents breaking the multi-branch setup by reverting URLs from `192.168.1.252` to `localhost`
 
 
 # Claude Efficiency Guidelines
