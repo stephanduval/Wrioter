@@ -8,6 +8,7 @@ import Footer from '@/layouts/components/Footer.vue'
 // import NavSearchBar from '@/layouts/components/NavSearchBar.vue'
 import NavbarShortcuts from '@/layouts/components/NavbarShortcuts.vue'
 import NavbarThemeSwitcher from '@/layouts/components/NavbarThemeSwitcher.vue'
+import NavbarSplitToggle from '@/layouts/components/NavbarSplitToggle.vue'
 import UserProfile from '@/layouts/components/UserProfile.vue'
 import NavBarI18n from '@core/components/I18n.vue'
 import DynamicManuscriptNavigation from '@/components/manuscript/DynamicManuscriptNavigation.vue'
@@ -62,6 +63,7 @@ const actionArrowInitialRotation = configStore.isVerticalNavCollapsed ? '180deg'
           :languages="themeConfig.app.i18n.langConfig"
         />
         <NavbarThemeSwitcher />
+        <NavbarSplitToggle />
         <NavbarShortcuts />
         <!-- <NavBarNotifications class="me-1" /> -->
         <UserProfile />
