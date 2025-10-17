@@ -7,7 +7,7 @@
     @click="toggleSplitView"
   >
     <VIcon
-      :icon="splitEnabled ? 'mdi-view-split-vertical' : 'mdi-view-agenda-outline'"
+      :icon="splitEnabled ? 'bx-columns' : 'bx-rectangle'"
       size="22"
     />
     <VTooltip
@@ -36,7 +36,10 @@ const isMac = computed(() => navigator.platform.toUpperCase().indexOf('MAC') >= 
 
 // Toggle split view
 function toggleSplitView() {
+  console.log('[NavbarSplitToggle] Button clicked!')
+  console.log('[NavbarSplitToggle] Current split state:', splitEnabled.value)
   folderViewStore.toggleSplitView()
+  console.log('[NavbarSplitToggle] New split state:', splitEnabled.value)
 }
 
 // Keyboard shortcut handler
