@@ -131,12 +131,53 @@ const handleSubmit = async () => {
   const formData = new FormData()
   formData.append('file', file.value)
 
+  console.log('=== UPLOAD DEBUG START ===')
+  console.log('File name:', file.value.name)
+  console.log('File size:', file.value.size)
+
   try {
     const response = await axios.post('/api/scrivener/import', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
+        'Accept': 'application/json',
       },
+      validateStatus: function (status) {
+        return status >= 200 && status < 600 // Accept all statuses
+      }
     })
+
+    console.log('=== RESPONSE RECEIVED ===')
+    console.log('Status:', response.status)
+    console.log('Status Text:', response.statusText)
+    console.log('Headers:', response.headers)
+    console.log('Data type:', typeof response.data)
+    console.log('Data:', response.data)
+    console.log('Data preview:', JSON.stringify(response.data).substring(0, 200))
+
+    // Check if response is HTML instead of JSON
+    if (typeof response.data === 'string' && response.data.trim().startsWith('<!DOCTYPE')) {
+      console.error('ERROR: Received HTML instead of JSON!')
+      console.error('HTML content:', response.data.substring(0, 500))
+      errors.value.file = 'Server returned HTML instead of JSON. Check server logs.'
+      return
+    }
+
+    // Check for redirect (302)
+    if (response.status === 302) {
+      console.error('ERROR: Server returned redirect (302)')
+      console.error('Location header:', response.headers.location)
+      errors.value.file = 'Server redirected the request. Authentication may have failed.'
+      return
+    }
+
+    // Check for errors
+    if (response.status >= 400) {
+      console.error('ERROR: Server returned error status:', response.status)
+      errors.value.file = response.data?.message || `Server error: ${response.status}`
+      return
+    }
+
+    console.log('=== UPLOAD SUCCESS ===')
 
     // Clear the file input
     file.value = null
@@ -148,10 +189,23 @@ const handleSubmit = async () => {
     startPolling()
 
   } catch (error) {
-    console.error('Upload failed:', error)
-    errors.value.file = error.response?.data?.message || t('scrivener.import.errors.uploadFailed')
+    console.error('=== UPLOAD ERROR ===')
+    console.error('Error object:', error)
+    console.error('Error message:', error.message)
+    console.error('Response:', error.response)
+    console.error('Response status:', error.response?.status)
+    console.error('Response data type:', typeof error.response?.data)
+    console.error('Response data:', error.response?.data)
+    console.error('Response headers:', error.response?.headers)
+
+    if (error.response?.data && typeof error.response.data === 'string' && error.response.data.includes('<!DOCTYPE')) {
+      errors.value.file = 'Server returned HTML page instead of JSON. Check authentication and server configuration.'
+    } else {
+      errors.value.file = error.response?.data?.message || error.message || t('scrivener.import.errors.uploadFailed')
+    }
   } finally {
     uploading.value = false
+    console.log('=== UPLOAD DEBUG END ===')
   }
 }
 

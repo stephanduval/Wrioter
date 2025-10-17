@@ -351,8 +351,23 @@ const handleSubmit = async () => {
     // Create a promise to handle the XHR request
     const uploadPromise = new Promise((resolve, reject) => {
       xhr.onload = () => {
+        console.log('XHR Status:', xhr.status)
+        console.log('XHR Response Headers:', xhr.getAllResponseHeaders())
+
+        // Check if we got redirected to login page (HTML response)
+        if (xhr.responseText.startsWith('<!DOCTYPE') || xhr.responseText.includes('<html')) {
+          console.error('Got HTML response instead of JSON - likely redirected to login')
+          reject(new Error('Authentication failed - please refresh the page and try again'))
+          return
+        }
+
         if (xhr.status >= 200 && xhr.status < 300) {
-          resolve(JSON.parse(xhr.responseText))
+          try {
+            resolve(JSON.parse(xhr.responseText))
+          } catch (e) {
+            console.error('Failed to parse JSON response:', xhr.responseText)
+            reject(new Error('Invalid response from server'))
+          }
         } else {
           reject(new Error(xhr.responseText || 'Upload failed'))
         }
@@ -361,8 +376,19 @@ const handleSubmit = async () => {
     })
 
     xhr.open('POST', '/api/scrivener/import')
-    xhr.setRequestHeader('X-CSRF-TOKEN', document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '')
-    xhr.setRequestHeader('Authorization', `Bearer ${localStorage.getItem('accessToken')}`)
+
+    // Log authentication details for debugging
+    const token = localStorage.getItem('accessToken')
+    console.log('Access Token:', token ? 'Present' : 'Missing')
+
+    if (!token) {
+      throw new Error('No authentication token found. Please log in again.')
+    }
+
+    // Set authorization header
+    xhr.setRequestHeader('Authorization', `Bearer ${token}`)
+    xhr.setRequestHeader('Accept', 'application/json')
+    xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest')
     xhr.send(formData)
 
     const result = await uploadPromise
