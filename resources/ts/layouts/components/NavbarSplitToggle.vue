@@ -1,21 +1,22 @@
 <template>
-  <VTooltip
-    :text="`Toggle Split View (${isMac ? 'Cmd' : 'Ctrl'}+\\)`"
-    location="bottom"
+  <VBtn
+    icon
+    variant="text"
+    :color="splitEnabled ? 'primary' : undefined"
+    class="navbar-split-toggle-btn"
+    @click="toggleSplitView"
   >
-    <template #activator="{ props: tooltipProps }">
-      <IconBtn
-        v-bind="tooltipProps"
-        :class="{ 'text-primary': splitEnabled }"
-        @click="toggleSplitView"
-      >
-        <VIcon
-          :icon="splitEnabled ? 'mdi-view-split-vertical' : 'mdi-view-agenda-outline'"
-          size="22"
-        />
-      </IconBtn>
-    </template>
-  </VTooltip>
+    <VIcon
+      :icon="splitEnabled ? 'mdi-view-split-vertical' : 'mdi-view-agenda-outline'"
+      size="22"
+    />
+    <VTooltip
+      activator="parent"
+      location="bottom"
+    >
+      Toggle Split View ({{ isMac ? 'Cmd' : 'Ctrl' }}+\)
+    </VTooltip>
+  </VBtn>
 </template>
 
 <script setup lang="ts">
@@ -25,6 +26,10 @@ import { useFolderViewStore } from '@/stores/folderView'
 
 const folderViewStore = useFolderViewStore()
 const { splitEnabled } = storeToRefs(folderViewStore)
+
+// Debug logging
+console.log('[NavbarSplitToggle] Component mounted')
+console.log('[NavbarSplitToggle] Split enabled:', splitEnabled.value)
 
 // Platform detection for keyboard shortcut display
 const isMac = computed(() => navigator.platform.toUpperCase().indexOf('MAC') >= 0)
@@ -54,7 +59,9 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.text-primary {
-  color: rgb(var(--v-theme-primary)) !important;
+.navbar-split-toggle-btn {
+  /* Debug border to make button visible */
+  border: 2px solid red !important;
+  margin: 0 4px;
 }
 </style>
