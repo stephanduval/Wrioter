@@ -19,42 +19,27 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted, onUnmounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useFolderViewStore } from '@/stores/folderView'
-import { useRoute } from 'vue-router'
 
-const route = useRoute()
 const folderViewStore = useFolderViewStore()
 const { splitEnabled } = storeToRefs(folderViewStore)
-
-// Check if we're on a page that supports split view
-const isSplitViewAvailable = computed(() => {
-  // Only show on pages that have folder view functionality
-  // You can adjust this logic based on your routing structure
-  return route.name === 'project-id-folder-folderId' ||
-         route.path.includes('/folder/') ||
-         route.path.includes('/manuscript/')
-})
 
 // Platform detection for keyboard shortcut display
 const isMac = computed(() => navigator.platform.toUpperCase().indexOf('MAC') >= 0)
 
 // Toggle split view
 function toggleSplitView() {
-  if (isSplitViewAvailable.value) {
-    folderViewStore.toggleSplitView()
-  }
+  folderViewStore.toggleSplitView()
 }
 
 // Keyboard shortcut handler
 function handleKeyboard(e: KeyboardEvent) {
   // Check for Cmd/Ctrl + \
   if ((e.metaKey || e.ctrlKey) && (e.key === '\\' || e.key === '|')) {
-    if (isSplitViewAvailable.value) {
-      e.preventDefault()
-      toggleSplitView()
-    }
+    e.preventDefault()
+    toggleSplitView()
   }
 }
 
