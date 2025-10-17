@@ -75,6 +75,21 @@
         </VBtn>
       </VBtnToggle>
 
+      <VDivider vertical class="mx-2" />
+
+      <!-- Split View Toggle -->
+      <VTooltip :text="`Toggle Split View (${isMac ? 'Cmd' : 'Ctrl'}+\\)`">
+        <template #activator="{ props: tooltipProps }">
+          <VBtn
+            :icon="splitEnabled ? 'mdi-view-split-vertical' : 'mdi-view-agenda-outline'"
+            :color="splitEnabled ? 'primary' : undefined"
+            size="small"
+            v-bind="tooltipProps"
+            @click="toggleSplitView"
+          />
+        </template>
+      </VTooltip>
+
       <!-- Additional Actions Menu -->
       <VMenu>
         <template #activator="{ props }">
@@ -133,29 +148,63 @@
         </template>
       </VAlert>
 
-      <!-- Manuscript View -->
-      <ManuscriptView
-        v-else-if="currentViewMode === 'manuscript'"
-        :folder-id="folderId"
-        :folder="currentFolder"
-        :items="folderItems"
-      />
+      <!-- Regular View Mode (no split) -->
+      <template v-else-if="!splitEnabled">
+        <ManuscriptView
+          v-if="currentViewMode === 'manuscript'"
+          :folder-id="folderId"
+          :folder="currentFolder"
+          :items="folderItems"
+        />
 
-      <!-- Corkboard View -->
-      <CorkboardView
-        v-else-if="currentViewMode === 'corkboard'"
-        :folder-id="folderId"
-        :folder="currentFolder"
-        :items="folderItems"
-      />
+        <CorkboardView
+          v-else-if="currentViewMode === 'corkboard'"
+          :folder-id="folderId"
+          :folder="currentFolder"
+          :items="folderItems"
+        />
 
-      <!-- Outline View -->
-      <OutlineView
-        v-else-if="currentViewMode === 'outline'"
-        :folder-id="folderId"
-        :folder="currentFolder"
-        :items="folderItems"
-      />
+        <OutlineView
+          v-else-if="currentViewMode === 'outline'"
+          :folder-id="folderId"
+          :folder="currentFolder"
+          :items="folderItems"
+        />
+      </template>
+
+      <!-- Split View Mode -->
+      <SimpleSplitWrapper
+        v-else-if="splitEnabled && currentSplitLayout"
+        :layout="currentSplitLayout"
+        class="split-view-container"
+      >
+        <template #pane="{ paneId, index }">
+          <!-- Each pane renders the current view mode -->
+          <ManuscriptView
+            v-if="currentViewMode === 'manuscript'"
+            :folder-id="folderId"
+            :folder="currentFolder"
+            :items="folderItems"
+            :pane-id="paneId"
+          />
+
+          <CorkboardView
+            v-else-if="currentViewMode === 'corkboard'"
+            :folder-id="folderId"
+            :folder="currentFolder"
+            :items="folderItems"
+            :pane-id="paneId"
+          />
+
+          <OutlineView
+            v-else-if="currentViewMode === 'outline'"
+            :folder-id="folderId"
+            :folder="currentFolder"
+            :items="folderItems"
+            :pane-id="paneId"
+          />
+        </template>
+      </SimpleSplitWrapper>
     </div>
   </div>
 </template>
@@ -167,6 +216,7 @@ import { useFolderViewStore } from '@/stores/folderView'
 import ManuscriptView from '@/components/manuscript/ManuscriptView.vue'
 import CorkboardView from '@/components/corkboard/CorkboardView.vue'
 import OutlineView from '@/components/outline/OutlineView.vue'
+import SimpleSplitWrapper from '@/components/splitView/SimpleSplitWrapper.vue'
 
 const props = defineProps<{
   folderId: number
@@ -187,15 +237,24 @@ const {
   folderItems,
   isLoading,
   error,
-  itemCount
+  itemCount,
+  splitEnabled,
+  currentSplitLayout
 } = storeToRefs(folderViewStore)
 
 // Local state
 const keyboardListener = ref<((e: KeyboardEvent) => void) | null>(null)
 
+// Computed
+const isMac = computed(() => navigator.platform.toUpperCase().indexOf('MAC') >= 0)
+
 // Methods
 function getFolderIcon(): string {
   return 'bx-folder'
+}
+
+function toggleSplitView() {
+  folderViewStore.toggleSplitView()
 }
 
 async function handleRefresh() {
@@ -237,6 +296,11 @@ function setupKeyboardShortcuts() {
       case '3':
         e.preventDefault()
         currentViewMode.value = 'outline'
+        break
+      case '\\':
+      case '|':
+        e.preventDefault()
+        toggleSplitView()
         break
     }
   }
@@ -308,6 +372,12 @@ watch(() => props.folderId, async (newFolderId) => {
 /* Ensure view mode switcher buttons are visible */
 :deep(.v-btn-toggle) {
   box-shadow: none;
+}
+
+/* Split view container */
+.split-view-container {
+  height: 100%;
+  width: 100%;
 }
 
 /* Responsive adjustments */

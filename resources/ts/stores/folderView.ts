@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { $api } from '@/utils/api'
+import type { SplitNode } from '@/types/splitView'
 
 export type ViewMode = 'manuscript' | 'corkboard' | 'outline'
 
@@ -70,6 +71,14 @@ export const useFolderViewStore = defineStore('folderView', () => {
 
   const isLoading = ref(false)
   const error = ref<string | null>(null)
+
+  // Split view state
+  const splitEnabled = ref(false)
+  const splitLayouts = ref<{
+    manuscript?: SplitNode
+    corkboard?: SplitNode
+    outline?: SplitNode
+  }>({})
 
   // Getters
   const hasFolder = computed(() => currentFolderId.value !== null)
@@ -324,6 +333,60 @@ export const useFolderViewStore = defineStore('folderView', () => {
     error.value = null
   }
 
+  /**
+   * Toggle split view on/off
+   */
+  function toggleSplitView() {
+    splitEnabled.value = !splitEnabled.value
+
+    // Initialize split layout for current view if needed
+    if (splitEnabled.value && !splitLayouts.value[currentViewMode.value]) {
+      splitLayouts.value[currentViewMode.value] = createDefaultSplitLayout()
+    }
+  }
+
+  /**
+   * Create a default split layout
+   */
+  function createDefaultSplitLayout(): SplitNode {
+    return {
+      id: 'root',
+      type: 'container',
+      orientation: 'horizontal',
+      size: 100,
+      children: [
+        {
+          id: 'pane-1',
+          type: 'pane',
+          size: 50,
+          paneId: 'pane-1'
+        },
+        {
+          id: 'pane-2',
+          type: 'pane',
+          size: 50,
+          paneId: 'pane-2'
+        }
+      ]
+    }
+  }
+
+  /**
+   * Get current split layout for the active view mode
+   */
+  const currentSplitLayout = computed(() => {
+    return splitLayouts.value[currentViewMode.value] || null
+  })
+
+  /**
+   * Update the split layout for current view mode
+   */
+  function updateSplitLayout(layout: SplitNode) {
+    if (currentViewMode.value) {
+      splitLayouts.value[currentViewMode.value] = layout
+    }
+  }
+
   return {
     // State
     currentViewMode,
@@ -333,18 +396,23 @@ export const useFolderViewStore = defineStore('folderView', () => {
     viewPreferences,
     isLoading,
     error,
+    splitEnabled,
+    splitLayouts,
 
     // Getters
     hasFolder,
     currentViewPreference,
     currentViewSettings,
     itemCount,
+    currentSplitLayout,
 
     // Actions
     setViewMode,
     loadFolder,
     reloadFolder,
     loadFolderPreferences,
+    toggleSplitView,
+    updateSplitLayout,
     saveViewPreference,
     saveManuscriptSettings,
     saveCorkboardSettings,
