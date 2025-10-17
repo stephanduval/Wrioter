@@ -230,6 +230,10 @@
     "manuscriptNew": "New Manuscript",
     "manuscriptList": "All Manuscripts",
     "manuscriptView": "Manuscript View",
+    "mindMap": "Mind Maps",
+    "mindMapCreate": "Create Mind Map",
+    "mindMapList": "My Mind Maps",
+    "mindMapExplorer": "Mind Map Explorer",
     "manuscriptItems": {
       "chapter": "Chapter",
       "scene": "Scene",

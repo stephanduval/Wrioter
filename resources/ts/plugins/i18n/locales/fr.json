@@ -227,6 +227,10 @@
     "manuscriptNew": "Nouveau Manuscrit",
     "manuscriptList": "Tous les Manuscrits",
     "manuscriptView": "Vue Manuscrit",
+    "mindMap": "Cartes Mentales",
+    "mindMapCreate": "Créer une Carte Mentale",
+    "mindMapList": "Mes Cartes Mentales",
+    "mindMapExplorer": "Explorateur de Cartes",
     "manuscriptItems": {
       "chapter": "Chapitre",
       "scene": "Scène",
