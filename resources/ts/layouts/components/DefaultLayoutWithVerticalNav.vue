@@ -19,6 +19,10 @@ import { VerticalNavLayout } from '@layouts'
 
 const configStore = useConfigStore()
 
+// DEBUG: Check if this file loads
+console.log('[DefaultLayoutWithVerticalNav] Component loaded')
+console.log('[DefaultLayoutWithVerticalNav] NavbarSplitToggle imported:', NavbarSplitToggle)
+
 // ℹ️ Provide animation name for vertical nav collapse icon.
 const verticalNavHeaderActionAnimationName = ref<null | 'rotate-180' | 'rotate-back-180'>(null)
 
