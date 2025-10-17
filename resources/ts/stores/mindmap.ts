@@ -73,7 +73,7 @@ export const useMindMapStore = defineStore('mindmap', () => {
     loading.value = true
     error.value = null
     try {
-      const response = await axios.get('/api/mindmaps')
+      const response = await axios.get('/mindmaps')
       mindmaps.value = response.data.data || response.data
       return mindmaps.value
     } catch (err: any) {
@@ -88,7 +88,7 @@ export const useMindMapStore = defineStore('mindmap', () => {
     loading.value = true
     error.value = null
     try {
-      const response = await axios.get(`/api/mindmaps/${id}`)
+      const response = await axios.get(`/mindmaps/${id}`)
       currentMindmap.value = response.data.mindmap
 
       // Transform nodes for Vue Flow
@@ -141,7 +141,7 @@ export const useMindMapStore = defineStore('mindmap', () => {
     loading.value = true
     error.value = null
     try {
-      const response = await axios.post('/api/mindmaps', data)
+      const response = await axios.post('/mindmaps', data)
       const newMindmap = response.data
       mindmaps.value.push(newMindmap)
       return newMindmap
@@ -157,7 +157,7 @@ export const useMindMapStore = defineStore('mindmap', () => {
     loading.value = true
     error.value = null
     try {
-      const response = await axios.put(`/api/mindmaps/${id}`, data)
+      const response = await axios.put(`/mindmaps/${id}`, data)
       const updatedMindmap = response.data
 
       // Update in list
@@ -184,7 +184,7 @@ export const useMindMapStore = defineStore('mindmap', () => {
     loading.value = true
     error.value = null
     try {
-      await axios.delete(`/api/mindmaps/${id}`)
+      await axios.delete(`/mindmaps/${id}`)
       mindmaps.value = mindmaps.value.filter(m => m.id !== id)
 
       if (currentMindmap.value?.id === id) {
@@ -204,7 +204,7 @@ export const useMindMapStore = defineStore('mindmap', () => {
     loading.value = true
     error.value = null
     try {
-      const response = await axios.post(`/api/mindmaps/${id}/clone`)
+      const response = await axios.post(`/mindmaps/${id}/clone`)
       const newMindmap = response.data
       mindmaps.value.push(newMindmap)
       return newMindmap
@@ -221,7 +221,7 @@ export const useMindMapStore = defineStore('mindmap', () => {
     if (!currentMindmap.value) throw new Error('No mindmap loaded')
 
     try {
-      const response = await axios.post(`/api/mindmaps/${currentMindmap.value.id}/nodes`, {
+      const response = await axios.post(`/mindmaps/${currentMindmap.value.id}/nodes`, {
         content: node.data?.label || 'New Node',
         position: node.position,
         node_type: node.type || 'default',
@@ -257,7 +257,7 @@ export const useMindMapStore = defineStore('mindmap', () => {
     if (!dbId) return
 
     try {
-      await axios.put(`/api/mindmap-nodes/${dbId}`, {
+      await axios.put(`/mindmap-nodes/${dbId}`, {
         content: updates.data?.label,
         position: updates.position,
         metadata: updates.data?.metadata,
@@ -283,7 +283,7 @@ export const useMindMapStore = defineStore('mindmap', () => {
     if (!dbId) return
 
     try {
-      await axios.delete(`/api/mindmap-nodes/${dbId}`)
+      await axios.delete(`/mindmap-nodes/${dbId}`)
 
       nodes.value = nodes.value.filter(n => n.id !== nodeId)
       edges.value = edges.value.filter(e => e.source !== nodeId && e.target !== nodeId)
@@ -307,7 +307,7 @@ export const useMindMapStore = defineStore('mindmap', () => {
     if (!currentMindmap.value) throw new Error('No mindmap loaded')
 
     try {
-      const response = await axios.post(`/api/mindmaps/${currentMindmap.value.id}/connections`, connection)
+      const response = await axios.post(`/mindmaps/${currentMindmap.value.id}/connections`, connection)
 
       const newEdge: Edge = {
         id: `edge-${response.data.id}`,
@@ -340,7 +340,7 @@ export const useMindMapStore = defineStore('mindmap', () => {
     if (!dbId) return
 
     try {
-      await axios.put(`/api/connections/${dbId}`, {
+      await axios.put(`/connections/${dbId}`, {
         label: updates.data?.label,
         relationship_type: updates.data?.relationship_type,
         strength: updates.data?.strength,
@@ -367,7 +367,7 @@ export const useMindMapStore = defineStore('mindmap', () => {
     if (!dbId) return
 
     try {
-      await axios.delete(`/api/connections/${dbId}`)
+      await axios.delete(`/connections/${dbId}`)
       edges.value = edges.value.filter(e => e.id !== edgeId)
       hasUnsavedChanges.value = true
     } catch (err: any) {
@@ -387,7 +387,7 @@ export const useMindMapStore = defineStore('mindmap', () => {
         position: node.position,
       }))
 
-      await axios.post(`/api/mindmaps/${currentMindmap.value.id}/nodes/batch-update`, {
+      await axios.post(`/mindmaps/${currentMindmap.value.id}/nodes/batch-update`, {
         nodes: nodeUpdates,
       })
 
@@ -403,7 +403,7 @@ export const useMindMapStore = defineStore('mindmap', () => {
     if (!currentMindmap.value) throw new Error('No mindmap loaded')
 
     try {
-      const response = await axios.get(`/api/mindmaps/${currentMindmap.value.id}/export`, {
+      const response = await axios.get(`/mindmaps/${currentMindmap.value.id}/export`, {
         params: { format },
       })
       return response.data

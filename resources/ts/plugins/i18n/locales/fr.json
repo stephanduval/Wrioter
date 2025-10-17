@@ -641,5 +641,10 @@
       "reload": "Recharger",
       "goBack": "Retour"
     }
-  }
+  },
+  "Title": "Titre",
+  "Description": "Description",
+  "Search": "Rechercher",
+  "Type": "Type",
+  "Status": "Statut"
 }

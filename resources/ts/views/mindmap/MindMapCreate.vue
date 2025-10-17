@@ -130,10 +130,7 @@ const createMindmap = async () => {
 
     const newMindmap = await mindmapStore.createMindmap(data)
 
-    snackbar.show({
-      message: 'Mind map created successfully',
-      color: 'success',
-    })
+    toast.success('Mind map created successfully')
 
     // If template was selected, apply it
     if (formData.value.template && formData.value.template !== 'blank') {
@@ -144,10 +141,7 @@ const createMindmap = async () => {
     router.push({ name: 'mindmap-view', params: { id: newMindmap.id } })
   } catch (error) {
     console.error('Error creating mindmap:', error)
-    snackbar.show({
-      message: 'Failed to create mind map',
-      color: 'error',
-    })
+    toast.error('Failed to create mind map')
   }
 }
 

@@ -13,11 +13,14 @@ return new class extends Migration
     {
         Schema::create('writing_mindmaps', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('writing_item_id')->constrained('writing_items')->onDelete('cascade');
+            $table->foreignId('writing_item_id')->nullable()->constrained('writing_items')->onDelete('cascade');
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->string('title');
+            $table->text('description')->nullable();
             $table->json('settings')->nullable()->comment('Mind map visualization settings');
             $table->string('format')->default('opml')->comment('opml, freemind, xmind');
+            $table->boolean('is_template')->default(false);
+            $table->boolean('is_public')->default(false);
             $table->boolean('is_archived')->default(false);
             $table->timestamp('archived_at')->nullable();
             $table->timestamps();
