@@ -1,51 +1,98 @@
 <template>
   <div class="mindmap-view">
-    <!-- Toolbar -->
-    <MindMapToolbar
-      @add-node="handleAddNode"
-      @toggle-layout="handleLayoutChange"
-      @export="handleExport"
-      @save="handleSave"
-      @zoom-in="zoomIn"
-      @zoom-out="zoomOut"
-      @fit-view="fitView"
-    />
+    <VCard>
+      <VCardTitle class="d-flex align-center justify-space-between">
+        <div class="d-flex align-center gap-2">
+          <VBtn
+            icon
+            size="small"
+            variant="text"
+            @click="router.back()"
+          >
+            <VIcon>bx-arrow-back</VIcon>
+          </VBtn>
+          <span>{{ currentMindmap?.title || 'Mind Map' }}</span>
+        </div>
 
-    <div class="mindmap-container">
-      <!-- Sidebar -->
-      <MindMapSidebar
-        v-model:visible="sidebarVisible"
-        :items="availableItems"
-        @drag-item="handleDragItem"
-        @filter-tags="handleFilterTags"
-      />
+        <div class="d-flex gap-2">
+          <VBtn
+            color="primary"
+            variant="tonal"
+            @click="handleAddNode"
+          >
+            <VIcon start>bx-plus</VIcon>
+            Add Node
+          </VBtn>
+          <VBtn
+            color="success"
+            variant="tonal"
+            @click="handleSave"
+            :loading="saving"
+          >
+            <VIcon start>bx-save</VIcon>
+            Save
+          </VBtn>
+          <VBtn
+            variant="tonal"
+            @click="handleExport"
+          >
+            <VIcon start>bx-download</VIcon>
+            Export
+          </VBtn>
+        </div>
+      </VCardTitle>
 
-      <!-- Canvas -->
-      <div class="mindmap-canvas-wrapper">
-        <MindMapCanvas
-          ref="canvasRef"
-          :nodes="nodes"
-          :edges="edges"
-          @nodes-change="handleNodesChange"
-          @edges-change="handleEdgesChange"
-          @node-click="handleNodeClick"
-          @edge-click="handleEdgeClick"
-          @connect="handleConnect"
-          @node-context-menu="handleNodeContextMenu"
-          @pane-context-menu="handlePaneContextMenu"
-        />
-      </div>
+      <VCardText>
+        <div v-if="loading" class="text-center py-10">
+          <VProgressCircular indeterminate color="primary" />
+          <p class="mt-4">Loading mind map...</p>
+        </div>
 
-      <!-- Properties Panel -->
-      <ConnectionPanel
-        v-if="selectedEdge"
-        :edge="selectedEdge"
-        @update="handleEdgeUpdate"
-        @close="selectedEdge = null"
-      />
-    </div>
+        <div v-else-if="error" class="text-center py-10">
+          <VIcon size="64" color="error">bx-error-circle</VIcon>
+          <p class="mt-4 text-error">{{ error }}</p>
+          <VBtn class="mt-4" @click="loadMindmap">Retry</VBtn>
+        </div>
 
-    <!-- Node Properties Dialog -->
+        <div v-else class="mindmap-canvas">
+          <!-- Simple node display for now -->
+          <div class="nodes-grid">
+            <VCard
+              v-for="node in nodes"
+              :key="node.id"
+              class="node-card ma-2"
+              :class="{ 'node-selected': selectedNode?.id === node.id }"
+              @click="selectNode(node)"
+            >
+              <VCardText>
+                <div class="d-flex align-center justify-space-between">
+                  <span class="font-weight-medium">{{ node.data.label }}</span>
+                  <VBtn
+                    icon
+                    size="x-small"
+                    variant="text"
+                    color="error"
+                    @click.stop="deleteNode(node)"
+                  >
+                    <VIcon size="18">bx-trash</VIcon>
+                  </VBtn>
+                </div>
+                <p v-if="node.data.content" class="text-sm mt-2">
+                  {{ node.data.content }}
+                </p>
+              </VCardText>
+            </VCard>
+          </div>
+
+          <div v-if="nodes.length === 0" class="text-center py-10">
+            <VIcon size="64" color="grey">bx-network-chart</VIcon>
+            <p class="mt-4 text-grey">No nodes yet. Add your first node to get started!</p>
+          </div>
+        </div>
+      </VCardText>
+    </VCard>
+
+    <!-- Node Dialog -->
     <VDialog v-model="nodeDialog.visible" max-width="500">
       <VCard>
         <VCardTitle>
@@ -63,13 +110,6 @@
             label="Content"
             variant="outlined"
             rows="3"
-            class="mb-4"
-          />
-          <VSelect
-            v-model="nodeDialog.data.type"
-            label="Type"
-            :items="nodeTypes"
-            variant="outlined"
           />
         </VCardText>
         <VCardActions>
@@ -80,71 +120,47 @@
       </VCard>
     </VDialog>
 
-    <!-- Context Menu -->
-    <VMenu
-      v-model="contextMenu.visible"
-      :location="contextMenu.location"
-      :style="{
-        position: 'fixed',
-        left: `${contextMenu.x}px`,
-        top: `${contextMenu.y}px`,
-      }"
-    >
-      <VList density="compact">
-        <VListItem @click="handleContextAction('edit')">
-          <template #prepend>
-            <VIcon size="20">bx-edit</VIcon>
-          </template>
-          <VListItemTitle>Edit</VListItemTitle>
-        </VListItem>
-        <VListItem @click="handleContextAction('delete')">
-          <template #prepend>
-            <VIcon size="20" color="error">bx-trash</VIcon>
-          </template>
-          <VListItemTitle>Delete</VListItemTitle>
-        </VListItem>
-        <VDivider />
-        <VListItem @click="handleContextAction('add-child')">
-          <template #prepend>
-            <VIcon size="20">bx-git-branch</VIcon>
-          </template>
-          <VListItemTitle>Add Child</VListItemTitle>
-        </VListItem>
-        <VListItem @click="handleContextAction('add-sibling')">
-          <template #prepend>
-            <VIcon size="20">bx-git-merge</VIcon>
-          </template>
-          <VListItemTitle>Add Sibling</VListItemTitle>
-        </VListItem>
-      </VList>
-    </VMenu>
+    <!-- Export Dialog -->
+    <VDialog v-model="exportDialog.visible" max-width="500">
+      <VCard>
+        <VCardTitle>Export Mind Map</VCardTitle>
+        <VCardText>
+          <VSelect
+            v-model="exportDialog.format"
+            label="Export Format"
+            :items="exportFormats"
+            variant="outlined"
+          />
+        </VCardText>
+        <VCardActions>
+          <VSpacer />
+          <VBtn variant="text" @click="exportDialog.visible = false">Cancel</VBtn>
+          <VBtn color="primary" variant="flat" @click="confirmExport">Export</VBtn>
+        </VCardActions>
+      </VCard>
+    </VDialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { ref, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useMindMapStore } from '@/stores/mindmap'
 import { useToast } from 'vue-toastification'
-import MindMapCanvas from '@/components/mindmap/MindMapCanvas.vue'
-import MindMapToolbar from '@/components/mindmap/MindMapToolbar.vue'
-import MindMapSidebar from '@/components/mindmap/MindMapSidebar.vue'
-import ConnectionPanel from '@/components/mindmap/ConnectionPanel.vue'
 
 const route = useRoute()
+const router = useRouter()
 const mindmapStore = useMindMapStore()
 const toast = useToast()
 
-// Refs
-const canvasRef = ref(null)
-const sidebarVisible = ref(true)
-const selectedEdge = ref(null)
+// State
+const loading = ref(false)
+const saving = ref(false)
+const error = ref<string | null>(null)
 const selectedNode = ref(null)
-
-// Data
+const currentMindmap = ref(null)
 const nodes = ref([])
 const edges = ref([])
-const availableItems = ref([])
 
 const nodeDialog = ref({
   visible: false,
@@ -152,66 +168,37 @@ const nodeDialog = ref({
   data: {
     label: '',
     content: '',
-    type: 'default',
   },
 })
 
-const contextMenu = ref({
+const exportDialog = ref({
   visible: false,
-  x: 0,
-  y: 0,
-  location: 'bottom',
-  target: null,
+  format: 'json',
 })
 
-const nodeTypes = [
-  { title: 'Default', value: 'default' },
-  { title: 'Text', value: 'text' },
-  { title: 'Folder', value: 'folder' },
-  { title: 'Character', value: 'character' },
-  { title: 'Research', value: 'research' },
-  { title: 'Image', value: 'image' },
+const exportFormats = [
+  { title: 'JSON', value: 'json' },
+  { title: 'GraphML', value: 'graphml' },
+  { title: 'Markdown', value: 'markdown' },
 ]
 
 // Methods
 const loadMindmap = async () => {
-  const mindmapId = route.params.id
-  if (!mindmapId) return
+  loading.value = true
+  error.value = null
 
   try {
-    const data = await mindmapStore.loadMindmap(mindmapId)
-
-    // Transform backend data to Vue Flow format
-    nodes.value = data.nodes.map(node => ({
-      id: `node-${node.id}`,
-      type: node.node_type || 'default',
-      position: node.position || { x: 0, y: 0 },
-      data: {
-        label: node.content,
-        content: node.content,
-        metadata: node.metadata,
-      },
-    }))
-
-    edges.value = data.connections.map(conn => ({
-      id: `edge-${conn.id}`,
-      source: `node-${conn.from_node_id}`,
-      target: `node-${conn.to_node_id}`,
-      type: conn.connection_type === 'two-way' ? 'bidirectional' : 'default',
-      data: {
-        label: conn.label,
-        relationship_type: conn.relationship_type,
-        strength: conn.strength,
-        style: conn.style,
-      },
-      animated: conn.strength === 'strong',
-    }))
-  } catch (error) {
-    console.error('Error loading mindmap:', error)
-    snackbar.show({
-      message: 'Failed to load mind map',
-      color: 'error',
-    })
+    const id = route.params.id
+    const data = await mindmapStore.loadMindmap(id)
+    currentMindmap.value = data.mindmap
+    nodes.value = mindmapStore.nodes
+    edges.value = mindmapStore.edges
+  } catch (err: any) {
+    console.error('Error loading mindmap:', err)
+    error.value = err.message || 'Failed to load mind map'
+    toast.error('Failed to load mind map')
+  } finally {
+    loading.value = false
   }
 }
 
@@ -222,260 +209,137 @@ const handleAddNode = () => {
     data: {
       label: '',
       content: '',
-      type: 'default',
     },
   }
-}
-
-const handleNodesChange = (changes: any[]) => {
-  // Handle node position/data changes
-  nodes.value = changes
-  // Debounce save to backend
-  debouncedSave()
-}
-
-const handleEdgesChange = (changes: any[]) => {
-  // Handle edge changes
-  edges.value = changes
-  // Debounce save to backend
-  debouncedSave()
-}
-
-const handleNodeClick = (event: any, node: any) => {
-  selectedNode.value = node
-  selectedEdge.value = null
-}
-
-const handleEdgeClick = (event: any, edge: any) => {
-  selectedEdge.value = edge
   selectedNode.value = null
 }
 
-const handleConnect = async (params: any) => {
-  // Create new connection
-  const newEdge = {
-    id: `edge-${Date.now()}`,
-    source: params.source,
-    target: params.target,
-    type: 'default',
+const selectNode = (node: any) => {
+  selectedNode.value = node
+  nodeDialog.value = {
+    visible: true,
+    isNew: false,
     data: {
-      label: '',
-      relationship_type: 'relates-to',
-      strength: 'medium',
+      label: node.data.label,
+      content: node.data.content || '',
     },
   }
+}
 
-  edges.value = [...edges.value, newEdge]
-
-  // Save to backend
+const saveNode = async () => {
   try {
-    await mindmapStore.createConnection({
-      from_node_id: params.source.replace('node-', ''),
-      to_node_id: params.target.replace('node-', ''),
-      connection_type: 'one-way',
-      relationship_type: 'relates-to',
-      strength: 'medium',
-    })
-  } catch (error) {
-    console.error('Error creating connection:', error)
-    snackbar.show({
-      message: 'Failed to create connection',
-      color: 'error',
-    })
-  }
-}
-
-const handleNodeContextMenu = (event: MouseEvent, node: any) => {
-  event.preventDefault()
-  contextMenu.value = {
-    visible: true,
-    x: event.clientX,
-    y: event.clientY,
-    location: 'bottom',
-    target: node,
-  }
-}
-
-const handlePaneContextMenu = (event: MouseEvent) => {
-  event.preventDefault()
-  // Add node at click position
-  const position = canvasRef.value?.project({ x: event.clientX, y: event.clientY })
-  if (position) {
-    const newNode = {
-      id: `node-${Date.now()}`,
-      type: 'default',
-      position,
-      data: {
-        label: 'New Node',
-        content: '',
-      },
+    if (nodeDialog.value.isNew) {
+      // Add new node
+      await mindmapStore.addNode({
+        position: { x: Math.random() * 400, y: Math.random() * 400 },
+        data: nodeDialog.value.data,
+      })
+      toast.success('Node added successfully')
+    } else {
+      // Update existing node
+      await mindmapStore.updateNode(selectedNode.value.id, {
+        data: nodeDialog.value.data,
+      })
+      toast.success('Node updated successfully')
     }
-    nodes.value = [...nodes.value, newNode]
+
+    nodes.value = mindmapStore.nodes
+    nodeDialog.value.visible = false
+  } catch (err: any) {
+    console.error('Error saving node:', err)
+    toast.error('Failed to save node')
   }
 }
 
-const handleContextAction = (action: string) => {
-  switch (action) {
-    case 'edit':
-      if (contextMenu.value.target) {
-        nodeDialog.value = {
-          visible: true,
-          isNew: false,
-          data: {
-            ...contextMenu.value.target.data,
-          },
-        }
-      }
-      break
-    case 'delete':
-      if (contextMenu.value.target) {
-        nodes.value = nodes.value.filter(n => n.id !== contextMenu.value.target.id)
-        edges.value = edges.value.filter(e =>
-          e.source !== contextMenu.value.target.id &&
-          e.target !== contextMenu.value.target.id
-        )
-      }
-      break
-    case 'add-child':
-      // TODO: Implement add child
-      break
-    case 'add-sibling':
-      // TODO: Implement add sibling
-      break
+const deleteNode = async (node: any) => {
+  if (!confirm('Are you sure you want to delete this node?')) return
+
+  try {
+    await mindmapStore.deleteNode(node.id)
+    nodes.value = mindmapStore.nodes
+    toast.success('Node deleted successfully')
+  } catch (err: any) {
+    console.error('Error deleting node:', err)
+    toast.error('Failed to delete node')
   }
-  contextMenu.value.visible = false
-}
-
-const saveNode = () => {
-  if (nodeDialog.value.isNew) {
-    const newNode = {
-      id: `node-${Date.now()}`,
-      type: nodeDialog.value.data.type,
-      position: { x: 100, y: 100 },
-      data: { ...nodeDialog.value.data },
-    }
-    nodes.value = [...nodes.value, newNode]
-  } else if (selectedNode.value) {
-    const index = nodes.value.findIndex(n => n.id === selectedNode.value.id)
-    if (index >= 0) {
-      nodes.value[index] = {
-        ...nodes.value[index],
-        data: { ...nodeDialog.value.data },
-      }
-    }
-  }
-  nodeDialog.value.visible = false
-}
-
-const handleLayoutChange = (layout: string) => {
-  // TODO: Implement layout algorithms
-  console.log('Layout change:', layout)
-}
-
-const handleExport = (format: string) => {
-  // TODO: Implement export
-  console.log('Export:', format)
 }
 
 const handleSave = async () => {
+  saving.value = true
+
   try {
     await mindmapStore.saveMindmap({
       nodes: nodes.value,
       edges: edges.value,
     })
-    snackbar.show({
-      message: 'Mind map saved successfully',
-      color: 'success',
-    })
-  } catch (error) {
-    console.error('Error saving mindmap:', error)
-    snackbar.show({
-      message: 'Failed to save mind map',
-      color: 'error',
-    })
+    toast.success('Mind map saved successfully')
+  } catch (err: any) {
+    console.error('Error saving mindmap:', err)
+    toast.error('Failed to save mind map')
+  } finally {
+    saving.value = false
   }
 }
 
-const handleDragItem = (item: any) => {
-  // TODO: Handle dragging items from sidebar
-  console.log('Drag item:', item)
+const handleExport = () => {
+  exportDialog.value.visible = true
 }
 
-const handleFilterTags = (tags: string[]) => {
-  // TODO: Filter nodes by tags
-  console.log('Filter tags:', tags)
-}
-
-const handleEdgeUpdate = (updates: any) => {
-  if (selectedEdge.value) {
-    const index = edges.value.findIndex(e => e.id === selectedEdge.value.id)
-    if (index >= 0) {
-      edges.value[index] = {
-        ...edges.value[index],
-        data: {
-          ...edges.value[index].data,
-          ...updates,
-        },
-      }
-    }
-  }
-}
-
-// Canvas control methods
-const zoomIn = () => {
-  canvasRef.value?.zoomIn()
-}
-
-const zoomOut = () => {
-  canvasRef.value?.zoomOut()
-}
-
-const fitView = () => {
-  canvasRef.value?.fitView()
-}
-
-// Debounced save
-let saveTimeout: any = null
-const debouncedSave = () => {
-  clearTimeout(saveTimeout)
-  saveTimeout = setTimeout(() => {
-    handleSave()
-  }, 1000)
-}
-
-// Load available items for sidebar
-const loadAvailableItems = async () => {
+const confirmExport = async () => {
   try {
-    // TODO: Load items from API
-    availableItems.value = []
-  } catch (error) {
-    console.error('Error loading items:', error)
+    const data = await mindmapStore.exportMindmap(exportDialog.value.format)
+
+    // Create download
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${currentMindmap.value?.title || 'mindmap'}.${exportDialog.value.format}`
+    a.click()
+    URL.revokeObjectURL(url)
+
+    toast.success('Mind map exported successfully')
+    exportDialog.value.visible = false
+  } catch (err: any) {
+    console.error('Error exporting mindmap:', err)
+    toast.error('Failed to export mind map')
   }
 }
 
 // Lifecycle
 onMounted(() => {
   loadMindmap()
-  loadAvailableItems()
 })
 </script>
 
 <style scoped>
 .mindmap-view {
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  background: var(--v-theme-background);
+  height: 100%;
 }
 
-.mindmap-container {
-  flex: 1;
-  display: flex;
-  overflow: hidden;
+.mindmap-canvas {
+  min-height: 500px;
 }
 
-.mindmap-canvas-wrapper {
-  flex: 1;
-  position: relative;
+.nodes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.node-card {
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 2px solid transparent;
+}
+
+.node-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.node-selected {
+  border-color: rgb(var(--v-theme-primary));
 }
 </style>

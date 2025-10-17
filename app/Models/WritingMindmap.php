@@ -15,13 +15,18 @@ class WritingMindmap extends Model
         'writing_item_id',
         'user_id',
         'title',
+        'description',
         'settings',
         'format',
+        'is_template',
+        'is_public',
         'is_archived'
     ];
 
     protected $casts = [
         'settings' => 'array',
+        'is_template' => 'boolean',
+        'is_public' => 'boolean',
         'is_archived' => 'boolean',
         'archived_at' => 'datetime'
     ];

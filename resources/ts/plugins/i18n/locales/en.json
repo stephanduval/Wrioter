@@ -637,5 +637,10 @@
       "reload": "Reload",
       "goBack": "Go Back"
     }
-  }
+  },
+  "Title": "Title",
+  "Description": "Description",
+  "Search": "Search",
+  "Type": "Type",
+  "Status": "Status"
 }

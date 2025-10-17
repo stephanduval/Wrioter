@@ -236,6 +236,18 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/folders/{folderId}/reorder', [App\Http\Controllers\FolderController::class, 'reorder']);
 });
 
+// Mind Map Routes
+Route::middleware('auth:sanctum')->group(function () {
+    Route::apiResource('mindmaps', App\Http\Controllers\Api\MindMapController::class);
+    Route::post('/mindmaps/{id}/clone', [App\Http\Controllers\Api\MindMapController::class, 'cloneAsTemplate']);
+    Route::get('/mindmaps/{id}/export', [App\Http\Controllers\Api\MindMapController::class, 'export']);
+
+    // Mind Map Node Routes
+    Route::apiResource('mindmap-nodes', App\Http\Controllers\Api\MindMapNodeController::class);
+    Route::post('/mindmap-nodes/{id}/connect', [App\Http\Controllers\Api\MindMapNodeController::class, 'connect']);
+    Route::delete('/mindmap-nodes/{id}/disconnect/{targetId}', [App\Http\Controllers\Api\MindMapNodeController::class, 'disconnect']);
+});
+
 // User Preferences Routes
 Route::middleware('auth:sanctum')->group(function () {
     // Folder view preferences

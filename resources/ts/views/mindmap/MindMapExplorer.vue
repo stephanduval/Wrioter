@@ -250,10 +250,7 @@ const loadItems = async () => {
     items.value = response.data.data || response.data
   } catch (error) {
     console.error('Error loading items:', error)
-    snackbar.show({
-      message: 'Failed to load items',
-      color: 'error',
-    })
+    toast.error('Failed to load items')
   } finally {
     loading.value = false
   }
@@ -282,10 +279,7 @@ const resetFilters = () => {
 
 const generateMindmap = async () => {
   if (filteredItems.value.length === 0) {
-    snackbar.show({
-      message: 'No items to generate mind map from',
-      color: 'warning',
-    })
+    toast.warning('No items to generate mind map from')
     return
   }
 
@@ -298,10 +292,7 @@ const generateMindmap = async () => {
 
 const createMindmapFromSelection = async () => {
   if (selectedItems.value.length === 0) {
-    snackbar.show({
-      message: 'Please select at least one item',
-      color: 'warning',
-    })
+    toast.warning('Please select at least one item')
     return
   }
 
@@ -315,19 +306,13 @@ const createMindmapFromSelection = async () => {
     // TODO: Add nodes for each selected item
     // This would require API endpoints to create nodes from items
 
-    snackbar.show({
-      message: 'Mind map created successfully',
-      color: 'success',
-    })
+    toast.success('Mind map created successfully')
 
     // Navigate to the new mindmap
     router.push({ name: 'mindmap-view', params: { id: newMindmap.id } })
   } catch (error) {
     console.error('Error creating mindmap:', error)
-    snackbar.show({
-      message: 'Failed to create mind map',
-      color: 'error',
-    })
+    toast.error('Failed to create mind map')
   }
 }
 
