@@ -4,8 +4,9 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\WritingMindmap;
-use App\Models\WritingMindmapNode;
-use App\Models\MindmapNodeConnection;
+use App\Models\MindmapItemPosition;
+use App\Models\MindmapConnection;
+use App\Models\Item;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
@@ -51,35 +52,40 @@ class MindMapController extends Controller
             'format' => $validated['format'] ?? 'internal',
         ]);
 
-        // Create root node
-        $rootNode = WritingMindmapNode::create([
-            'mindmap_id' => $mindmap->id,
-            'content' => $mindmap->title,
-            'position' => ['x' => 0, 'y' => 0],
-            'node_type' => 'root',
-            'order_index' => 0,
-        ]);
-
-        $mindmap->load('nodes');
-
         return response()->json($mindmap, 201);
     }
 
     /**
-     * Display the specified mindmap.
+     * Display the specified mindmap with items and connections.
      */
     public function show($id): JsonResponse
     {
         $mindmap = WritingMindmap::where('user_id', Auth::id())
-            ->with(['nodes.outgoingConnections', 'nodes.incomingConnections'])
+            ->with([
+                'positions.item',
+                'connections.fromItem',
+                'connections.toItem'
+            ])
             ->findOrFail($id);
 
-        // Get all connections for the mindmap
-        $connections = MindmapNodeConnection::where('mindmap_id', $id)->get();
+        // Transform positions into node format for frontend
+        $nodes = $mindmap->positions->map(function ($pos) {
+            return [
+                'id' => $pos->item_id,
+                'data' => $pos->item,
+                'position' => $pos->position,
+                'size' => $pos->size,
+                'style' => $pos->style,
+                'is_visible' => $pos->is_visible,
+                'is_collapsed' => $pos->is_collapsed,
+                'z_index' => $pos->z_index,
+            ];
+        });
 
         return response()->json([
             'mindmap' => $mindmap,
-            'connections' => $connections,
+            'nodes' => $nodes,
+            'edges' => $mindmap->connections,
         ]);
     }
 
@@ -120,7 +126,7 @@ class MindMapController extends Controller
         $mindmap = WritingMindmap::where('user_id', Auth::id())->findOrFail($id);
 
         DB::transaction(function () use ($mindmap) {
-            // Cascading deletes will handle nodes and connections
+            // Cascading deletes will handle positions and connections
             $mindmap->delete();
         });
 
@@ -128,218 +134,353 @@ class MindMapController extends Controller
     }
 
     /**
-     * Export mindmap in specified format.
+     * Add an existing item to the mindmap.
      */
-    public function export($id, Request $request): JsonResponse
+    public function addItem(Request $request, $id): JsonResponse
     {
-        $mindmap = WritingMindmap::where('user_id', Auth::id())
-            ->with(['nodes', 'nodes.outgoingConnections', 'nodes.incomingConnections'])
-            ->findOrFail($id);
+        $mindmap = WritingMindmap::where('user_id', Auth::id())->findOrFail($id);
 
-        $format = $request->get('format', 'json');
+        $validated = $request->validate([
+            'item_id' => 'required|exists:items,id',
+            'position' => 'required|array',
+            'position.x' => 'required|numeric',
+            'position.y' => 'required|numeric',
+            'size' => 'nullable|array',
+            'style' => 'nullable|array',
+        ]);
 
-        switch ($format) {
-            case 'json':
-                return response()->json($this->exportAsJson($mindmap));
+        // Verify user owns the item
+        $item = Item::where('id', $validated['item_id'])
+            ->where('user_id', Auth::id())
+            ->firstOrFail();
 
-            case 'graphml':
-                return response()->json([
-                    'format' => 'graphml',
-                    'content' => $this->exportAsGraphML($mindmap),
-                ]);
-
-            case 'markdown':
-                return response()->json([
-                    'format' => 'markdown',
-                    'content' => $this->exportAsMarkdown($mindmap),
-                ]);
-
-            default:
-                return response()->json(['error' => 'Unsupported export format'], 400);
-        }
-    }
-
-    /**
-     * Export mindmap as JSON.
-     */
-    private function exportAsJson($mindmap): array
-    {
-        $connections = MindmapNodeConnection::where('mindmap_id', $mindmap->id)->get();
-
-        return [
-            'mindmap' => [
-                'id' => $mindmap->id,
-                'title' => $mindmap->title,
-                'description' => $mindmap->description,
-                'settings' => $mindmap->settings,
+        $position = MindmapItemPosition::updateOrCreate(
+            [
+                'mindmap_id' => $id,
+                'item_id' => $validated['item_id']
             ],
-            'nodes' => $mindmap->nodes->map(function ($node) {
-                return [
-                    'id' => $node->id,
-                    'content' => $node->content,
-                    'position' => $node->position,
-                    'style' => $node->style,
-                    'parent_id' => $node->parent_id,
-                    'node_type' => $node->node_type,
-                ];
-            }),
-            'connections' => $connections->map(function ($connection) {
-                return [
-                    'id' => $connection->id,
-                    'from' => $connection->from_node_id,
-                    'to' => $connection->to_node_id,
-                    'type' => $connection->connection_type,
-                    'relationship' => $connection->relationship_type,
-                    'strength' => $connection->strength,
-                    'label' => $connection->label,
-                ];
-            }),
-        ];
+            [
+                'position' => $validated['position'],
+                'size' => $validated['size'] ?? null,
+                'style' => $validated['style'] ?? null,
+            ]
+        );
+
+        return response()->json($position->load('item'), 201);
     }
 
     /**
-     * Export mindmap as GraphML.
+     * Create a new item and add it to the mindmap.
      */
-    private function exportAsGraphML($mindmap): string
+    public function createItem(Request $request, $id): JsonResponse
     {
-        $xml = '<?xml version="1.0" encoding="UTF-8"?>';
-        $xml .= '<graphml xmlns="http://graphml.graphdrawing.org/xmlns">';
-        $xml .= '<graph id="' . $mindmap->id . '" edgedefault="directed">';
+        $mindmap = WritingMindmap::where('user_id', Auth::id())->findOrFail($id);
 
-        // Add nodes
-        foreach ($mindmap->nodes as $node) {
-            $xml .= '<node id="n' . $node->id . '">';
-            $xml .= '<data key="label">' . htmlspecialchars($node->content) . '</data>';
-            $xml .= '<data key="x">' . ($node->position['x'] ?? 0) . '</data>';
-            $xml .= '<data key="y">' . ($node->position['y'] ?? 0) . '</data>';
-            $xml .= '</node>';
-        }
+        $validated = $request->validate([
+            'type' => 'required|in:text,folder',
+            'title' => 'required|string|max:191',
+            'content' => 'nullable|string',
+            'synopsis' => 'nullable|string',
+            'parent_id' => 'nullable|exists:items,id',
+            'position' => 'required|array',
+            'position.x' => 'required|numeric',
+            'position.y' => 'required|numeric',
+            'size' => 'nullable|array',
+            'style' => 'nullable|array',
+        ]);
 
-        // Add connections
-        $connections = MindmapNodeConnection::where('mindmap_id', $mindmap->id)->get();
-        foreach ($connections as $connection) {
-            $xml .= '<edge id="e' . $connection->id . '" source="n' . $connection->from_node_id . '" target="n' . $connection->to_node_id . '">';
-            $xml .= '<data key="relationship">' . htmlspecialchars($connection->relationship_type) . '</data>';
-            $xml .= '<data key="type">' . $connection->connection_type . '</data>';
-            $xml .= '<data key="strength">' . $connection->strength . '</data>';
-            if ($connection->label) {
-                $xml .= '<data key="label">' . htmlspecialchars($connection->label) . '</data>';
-            }
-            $xml .= '</edge>';
-        }
-
-        $xml .= '</graph>';
-        $xml .= '</graphml>';
-
-        return $xml;
-    }
-
-    /**
-     * Export mindmap as Markdown.
-     */
-    private function exportAsMarkdown($mindmap): string
-    {
-        $markdown = "# " . $mindmap->title . "\n\n";
-
-        if ($mindmap->description) {
-            $markdown .= $mindmap->description . "\n\n";
-        }
-
-        $markdown .= "## Nodes\n\n";
-
-        // Build hierarchical structure
-        $rootNodes = $mindmap->nodes->where('parent_id', null);
-        foreach ($rootNodes as $rootNode) {
-            $markdown .= $this->nodeToMarkdown($rootNode, 0);
-        }
-
-        // Add connections
-        $connections = MindmapNodeConnection::where('mindmap_id', $mindmap->id)->get();
-        if ($connections->isNotEmpty()) {
-            $markdown .= "\n## Connections\n\n";
-            foreach ($connections as $connection) {
-                $fromNode = $mindmap->nodes->find($connection->from_node_id);
-                $toNode = $mindmap->nodes->find($connection->to_node_id);
-
-                $arrow = $connection->connection_type === 'two-way' ? '↔' : '→';
-                $markdown .= "- " . $fromNode->content . " " . $arrow . " " . $toNode->content;
-                $markdown .= " (" . $connection->relationship_type . ", " . $connection->strength . ")\n";
-            }
-        }
-
-        return $markdown;
-    }
-
-    /**
-     * Convert node to markdown recursively.
-     */
-    private function nodeToMarkdown($node, $level): string
-    {
-        $indent = str_repeat('  ', $level);
-        $markdown = $indent . "- " . $node->content . "\n";
-
-        foreach ($node->children as $child) {
-            $markdown .= $this->nodeToMarkdown($child, $level + 1);
-        }
-
-        return $markdown;
-    }
-
-    /**
-     * Clone a mindmap as template.
-     */
-    public function cloneAsTemplate($id): JsonResponse
-    {
-        $originalMindmap = WritingMindmap::where('user_id', Auth::id())->findOrFail($id);
-
-        DB::transaction(function () use ($originalMindmap, &$newMindmap) {
-            // Create new mindmap
-            $newMindmap = WritingMindmap::create([
+        DB::beginTransaction();
+        try {
+            // Create item in items table
+            $item = Item::create([
                 'user_id' => Auth::id(),
-                'title' => $originalMindmap->title . ' (Copy)',
-                'description' => $originalMindmap->description,
-                'settings' => $originalMindmap->settings,
-                'format' => $originalMindmap->format,
-                'is_template' => false,
+                'type' => $validated['type'],
+                'title' => $validated['title'],
+                'content' => $validated['content'] ?? null,
+                'synopsis' => $validated['synopsis'] ?? null,
+                'parent_id' => $validated['parent_id'] ?? null,
             ]);
 
-            // Clone nodes
-            $nodeMapping = [];
-            foreach ($originalMindmap->nodes as $originalNode) {
-                $newNode = WritingMindmapNode::create([
-                    'mindmap_id' => $newMindmap->id,
-                    'parent_id' => isset($nodeMapping[$originalNode->parent_id])
-                        ? $nodeMapping[$originalNode->parent_id]
-                        : null,
-                    'content' => $originalNode->content,
-                    'position' => $originalNode->position,
-                    'style' => $originalNode->style,
-                    'node_type' => $originalNode->node_type,
-                    'is_collapsed' => $originalNode->is_collapsed,
-                    'order_index' => $originalNode->order_index,
-                    'metadata' => $originalNode->metadata,
-                ]);
+            // Add position to mindmap
+            $position = MindmapItemPosition::create([
+                'mindmap_id' => $id,
+                'item_id' => $item->id,
+                'position' => $validated['position'],
+                'size' => $validated['size'] ?? null,
+                'style' => $validated['style'] ?? null,
+            ]);
 
-                $nodeMapping[$originalNode->id] = $newNode->id;
+            DB::commit();
+
+            return response()->json([
+                'item' => $item,
+                'position' => $position
+            ], 201);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['error' => 'Failed to create item'], 500);
+        }
+    }
+
+    /**
+     * Update item position in mindmap.
+     */
+    public function updatePosition(Request $request, $mindmapId, $itemId): JsonResponse
+    {
+        $mindmap = WritingMindmap::where('user_id', Auth::id())->findOrFail($mindmapId);
+
+        $validated = $request->validate([
+            'position' => 'required|array',
+            'position.x' => 'required|numeric',
+            'position.y' => 'required|numeric',
+            'size' => 'nullable|array',
+            'style' => 'nullable|array',
+            'is_visible' => 'nullable|boolean',
+            'is_collapsed' => 'nullable|boolean',
+            'z_index' => 'nullable|integer',
+        ]);
+
+        $position = MindmapItemPosition::where('mindmap_id', $mindmapId)
+            ->where('item_id', $itemId)
+            ->firstOrFail();
+
+        $position->update($validated);
+
+        return response()->json($position);
+    }
+
+    /**
+     * Batch update positions for multiple items.
+     */
+    public function batchUpdatePositions(Request $request, $id): JsonResponse
+    {
+        $mindmap = WritingMindmap::where('user_id', Auth::id())->findOrFail($id);
+
+        $validated = $request->validate([
+            'positions' => 'required|array',
+            'positions.*.item_id' => 'required|exists:items,id',
+            'positions.*.position' => 'required|array',
+            'positions.*.position.x' => 'required|numeric',
+            'positions.*.position.y' => 'required|numeric',
+        ]);
+
+        DB::beginTransaction();
+        try {
+            foreach ($validated['positions'] as $posData) {
+                MindmapItemPosition::where('mindmap_id', $id)
+                    ->where('item_id', $posData['item_id'])
+                    ->update([
+                        'position' => $posData['position']
+                    ]);
             }
 
-            // Clone connections
-            $originalConnections = MindmapNodeConnection::where('mindmap_id', $originalMindmap->id)->get();
-            foreach ($originalConnections as $originalConnection) {
-                MindmapNodeConnection::create([
-                    'mindmap_id' => $newMindmap->id,
-                    'from_node_id' => $nodeMapping[$originalConnection->from_node_id],
-                    'to_node_id' => $nodeMapping[$originalConnection->to_node_id],
-                    'connection_type' => $originalConnection->connection_type,
-                    'relationship_type' => $originalConnection->relationship_type,
-                    'strength' => $originalConnection->strength,
-                    'style' => $originalConnection->style,
-                    'label' => $originalConnection->label,
-                    'metadata' => $originalConnection->metadata,
-                ]);
-            }
-        });
+            DB::commit();
 
-        return response()->json($newMindmap->load('nodes'), 201);
+            return response()->json(['message' => 'Positions updated successfully']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['error' => 'Failed to update positions'], 500);
+        }
+    }
+
+    /**
+     * Remove item from mindmap (doesn't delete the item itself).
+     */
+    public function removeItem($mindmapId, $itemId): JsonResponse
+    {
+        $mindmap = WritingMindmap::where('user_id', Auth::id())->findOrFail($mindmapId);
+
+        DB::beginTransaction();
+        try {
+            // Remove position
+            MindmapItemPosition::where('mindmap_id', $mindmapId)
+                ->where('item_id', $itemId)
+                ->delete();
+
+            // Remove related connections
+            MindmapConnection::where('mindmap_id', $mindmapId)
+                ->where(function($q) use ($itemId) {
+                    $q->where('from_item_id', $itemId)
+                      ->orWhere('to_item_id', $itemId);
+                })
+                ->delete();
+
+            DB::commit();
+
+            return response()->json(['message' => 'Item removed from mindmap']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['error' => 'Failed to remove item'], 500);
+        }
+    }
+
+    /**
+     * Create a connection between items.
+     */
+    public function createConnection(Request $request, $id): JsonResponse
+    {
+        $mindmap = WritingMindmap::where('user_id', Auth::id())->findOrFail($id);
+
+        $validated = $request->validate([
+            'from_item_id' => 'required|exists:items,id',
+            'to_item_id' => 'required|exists:items,id',
+            'connection_type' => 'required|in:one-way,two-way',
+            'relationship_type' => 'nullable|string|max:50',
+            'label' => 'nullable|string|max:255',
+            'style' => 'nullable|array',
+        ]);
+
+        // Verify both items exist in this mindmap
+        $fromExists = MindmapItemPosition::where('mindmap_id', $id)
+            ->where('item_id', $validated['from_item_id'])
+            ->exists();
+
+        $toExists = MindmapItemPosition::where('mindmap_id', $id)
+            ->where('item_id', $validated['to_item_id'])
+            ->exists();
+
+        if (!$fromExists || !$toExists) {
+            return response()->json(['error' => 'Both items must exist in the mindmap'], 400);
+        }
+
+        $connection = MindmapConnection::create([
+            'mindmap_id' => $id,
+            ...$validated
+        ]);
+
+        return response()->json($connection->load(['fromItem', 'toItem']), 201);
+    }
+
+    /**
+     * Update a connection.
+     */
+    public function updateConnection(Request $request, $connectionId): JsonResponse
+    {
+        $validated = $request->validate([
+            'connection_type' => 'nullable|in:one-way,two-way',
+            'relationship_type' => 'nullable|string|max:50',
+            'label' => 'nullable|string|max:255',
+            'style' => 'nullable|array',
+        ]);
+
+        $connection = MindmapConnection::findOrFail($connectionId);
+
+        // Verify user owns the mindmap
+        $mindmap = WritingMindmap::where('id', $connection->mindmap_id)
+            ->where('user_id', Auth::id())
+            ->firstOrFail();
+
+        $connection->update($validated);
+
+        return response()->json($connection);
+    }
+
+    /**
+     * Delete a connection.
+     */
+    public function deleteConnection($connectionId): JsonResponse
+    {
+        $connection = MindmapConnection::findOrFail($connectionId);
+
+        // Verify user owns the mindmap
+        $mindmap = WritingMindmap::where('id', $connection->mindmap_id)
+            ->where('user_id', Auth::id())
+            ->firstOrFail();
+
+        $connection->delete();
+
+        return response()->json(['message' => 'Connection deleted successfully']);
+    }
+
+    /**
+     * Import items from manuscript structure.
+     */
+    public function importManuscript(Request $request, $id): JsonResponse
+    {
+        $mindmap = WritingMindmap::where('user_id', Auth::id())->findOrFail($id);
+
+        $validated = $request->validate([
+            'manuscript_id' => 'nullable|exists:manuscripts,id',
+            'parent_id' => 'nullable|exists:items,id',
+            'layout' => 'nullable|in:hierarchical,grid,force-directed',
+        ]);
+
+        // Get items to import
+        $query = Item::where('user_id', Auth::id());
+
+        if (isset($validated['manuscript_id'])) {
+            $query->whereHas('manuscripts', function($q) use ($validated) {
+                $q->where('manuscripts.id', $validated['manuscript_id']);
+            });
+        } elseif (isset($validated['parent_id'])) {
+            $query->where('parent_id', $validated['parent_id']);
+        }
+
+        $items = $query->get();
+
+        if ($items->isEmpty()) {
+            return response()->json(['error' => 'No items found to import'], 404);
+        }
+
+        DB::beginTransaction();
+        try {
+            $layout = $validated['layout'] ?? 'hierarchical';
+            $positions = [];
+
+            foreach ($items as $index => $item) {
+                // Calculate position based on layout
+                $pos = $this->calculatePosition($index, count($items), $layout);
+
+                $position = MindmapItemPosition::updateOrCreate(
+                    [
+                        'mindmap_id' => $id,
+                        'item_id' => $item->id,
+                    ],
+                    [
+                        'position' => $pos,
+                    ]
+                );
+
+                $positions[] = $position;
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Items imported successfully',
+                'count' => count($positions),
+                'positions' => $positions,
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['error' => 'Failed to import items'], 500);
+        }
+    }
+
+    /**
+     * Calculate position based on layout algorithm.
+     */
+    private function calculatePosition(int $index, int $total, string $layout): array
+    {
+        switch ($layout) {
+            case 'grid':
+                $cols = ceil(sqrt($total));
+                $x = ($index % $cols) * 300;
+                $y = floor($index / $cols) * 200;
+                return ['x' => $x, 'y' => $y];
+
+            case 'force-directed':
+                $angle = ($index / $total) * 2 * pi();
+                $radius = 300;
+                $x = cos($angle) * $radius;
+                $y = sin($angle) * $radius;
+                return ['x' => $x, 'y' => $y];
+
+            case 'hierarchical':
+            default:
+                $x = $index * 50;
+                $y = $index * 150;
+                return ['x' => $x, 'y' => $y];
+        }
     }
 }

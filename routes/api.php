@@ -238,14 +238,25 @@ Route::middleware('auth:sanctum')->group(function () {
 
 // Mind Map Routes
 Route::middleware('auth:sanctum')->group(function () {
+    // Mindmap CRUD
     Route::apiResource('mindmaps', App\Http\Controllers\Api\MindMapController::class);
-    Route::post('/mindmaps/{id}/clone', [App\Http\Controllers\Api\MindMapController::class, 'cloneAsTemplate']);
-    Route::get('/mindmaps/{id}/export', [App\Http\Controllers\Api\MindMapController::class, 'export']);
 
-    // Mind Map Node Routes
-    Route::apiResource('mindmap-nodes', App\Http\Controllers\Api\MindMapNodeController::class);
-    Route::post('/mindmap-nodes/{id}/connect', [App\Http\Controllers\Api\MindMapNodeController::class, 'connect']);
-    Route::delete('/mindmap-nodes/{id}/disconnect/{targetId}', [App\Http\Controllers\Api\MindMapNodeController::class, 'disconnect']);
+    // Mindmap Items Management
+    Route::post('/mindmaps/{id}/items/add', [App\Http\Controllers\Api\MindMapController::class, 'addItem']);
+    Route::post('/mindmaps/{id}/items/create', [App\Http\Controllers\Api\MindMapController::class, 'createItem']);
+    Route::put('/mindmaps/{id}/items/{itemId}/position', [App\Http\Controllers\Api\MindMapController::class, 'updatePosition']);
+    Route::delete('/mindmaps/{id}/items/{itemId}', [App\Http\Controllers\Api\MindMapController::class, 'removeItem']);
+
+    // Connections
+    Route::post('/mindmaps/{id}/connections', [App\Http\Controllers\Api\MindMapController::class, 'createConnection']);
+    Route::put('/connections/{id}', [App\Http\Controllers\Api\MindMapController::class, 'updateConnection']);
+    Route::delete('/connections/{id}', [App\Http\Controllers\Api\MindMapController::class, 'deleteConnection']);
+
+    // Bulk operations
+    Route::post('/mindmaps/{id}/positions/batch', [App\Http\Controllers\Api\MindMapController::class, 'batchUpdatePositions']);
+
+    // Import manuscript items
+    Route::post('/mindmaps/{id}/import-manuscript', [App\Http\Controllers\Api\MindMapController::class, 'importManuscript']);
 });
 
 // User Preferences Routes

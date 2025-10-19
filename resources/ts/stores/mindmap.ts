@@ -14,30 +14,37 @@ interface MindMap {
   updated_at: string
 }
 
-interface MindMapNode {
+interface Item {
   id: number
-  mindmap_id: number
+  user_id: number
+  type: string
+  title: string
+  content?: string
+  synopsis?: string
   parent_id?: number
-  content: string
-  position: { x: number; y: number }
-  style?: any
-  node_type: string
-  is_collapsed: boolean
-  order_index: number
   metadata?: any
 }
 
-interface NodeConnection {
+interface MindMapNode {
+  id: number // item_id
+  data: Item
+  position: { x: number; y: number }
+  size?: { width: number; height: number }
+  style?: any
+  is_visible: boolean
+  is_collapsed: boolean
+  z_index: number
+}
+
+interface MindMapConnection {
   id: number
   mindmap_id: number
-  from_node_id: number
-  to_node_id: number
+  from_item_id: number
+  to_item_id: number
   connection_type: 'one-way' | 'two-way'
-  relationship_type: string
-  strength: 'weak' | 'medium' | 'strong'
-  style?: any
+  relationship_type?: string
   label?: string
-  metadata?: any
+  style?: any
 }
 
 export const useMindMapStore = defineStore('mindmap', () => {
@@ -46,6 +53,7 @@ export const useMindMapStore = defineStore('mindmap', () => {
   const mindmaps = ref<MindMap[]>([])
   const nodes = ref<Node[]>([])
   const edges = ref<Edge[]>([])
+  const items = ref<Map<number, Item>>(new Map()) // Cache of items by ID
   const selectedNodes = ref<string[]>([])
   const selectedEdges = ref<string[]>([])
   const loading = ref(false)
@@ -91,35 +99,42 @@ export const useMindMapStore = defineStore('mindmap', () => {
       const response = await axios.get(`/mindmaps/${id}`)
       currentMindmap.value = response.data.mindmap
 
-      // Transform nodes for Vue Flow
-      const backendNodes = response.data.mindmap.nodes || []
-      nodes.value = backendNodes.map((node: MindMapNode) => ({
-        id: `node-${node.id}`,
-        type: node.node_type || 'default',
-        position: node.position || { x: 0, y: 0 },
-        data: {
-          label: node.content,
-          content: node.content,
-          metadata: node.metadata,
-          dbId: node.id,
-        },
-      }))
+      // Transform nodes for Vue Flow - now using items + positions
+      const backendNodes: MindMapNode[] = response.data.nodes || []
+      nodes.value = backendNodes.map((node) => {
+        // Cache the item
+        if (node.data) {
+          items.value.set(node.data.id, node.data)
+        }
+
+        return {
+          id: `item-${node.id}`,
+          type: node.data?.type || 'default',
+          position: node.position || { x: 0, y: 0 },
+          data: {
+            label: node.data?.title || 'Untitled',
+            content: node.data?.content,
+            synopsis: node.data?.synopsis,
+            metadata: node.data?.metadata,
+            itemId: node.id, // The actual item ID
+            itemType: node.data?.type,
+          },
+        }
+      })
 
       // Transform connections for Vue Flow
-      const backendConnections = response.data.connections || []
-      edges.value = backendConnections.map((conn: NodeConnection) => ({
+      const backendConnections: MindMapConnection[] = response.data.edges || []
+      edges.value = backendConnections.map((conn) => ({
         id: `edge-${conn.id}`,
-        source: `node-${conn.from_node_id}`,
-        target: `node-${conn.to_node_id}`,
+        source: `item-${conn.from_item_id}`,
+        target: `item-${conn.to_item_id}`,
         type: conn.connection_type === 'two-way' ? 'bidirectional' : 'default',
         data: {
           label: conn.label,
           relationship_type: conn.relationship_type,
-          strength: conn.strength,
           style: conn.style,
           dbId: conn.id,
         },
-        animated: conn.strength === 'strong',
       }))
 
       hasUnsavedChanges.value = false
@@ -200,108 +215,166 @@ export const useMindMapStore = defineStore('mindmap', () => {
     }
   }
 
-  const duplicateMindmap = async (id: number | string): Promise<MindMap> => {
-    loading.value = true
-    error.value = null
-    try {
-      const response = await axios.post(`/mindmaps/${id}/clone`)
-      const newMindmap = response.data
-      mindmaps.value.push(newMindmap)
-      return newMindmap
-    } catch (err: any) {
-      error.value = err.message || 'Failed to duplicate mindmap'
-      throw err
-    } finally {
-      loading.value = false
-    }
-  }
-
-  // Node Operations
-  const addNode = async (node: Partial<Node>): Promise<Node> => {
+  // Node/Item Operations - Updated for new architecture
+  const addExistingItem = async (itemId: number, position: { x: number; y: number }): Promise<Node> => {
     if (!currentMindmap.value) throw new Error('No mindmap loaded')
 
     try {
-      const response = await axios.post(`/mindmaps/${currentMindmap.value.id}/nodes`, {
-        content: node.data?.label || 'New Node',
-        position: node.position,
-        node_type: node.type || 'default',
-        metadata: node.data?.metadata,
+      const response = await axios.post(`/mindmaps/${currentMindmap.value.id}/items/add`, {
+        item_id: itemId,
+        position,
       })
 
+      const item = response.data.item
+
+      // Cache the item
+      items.value.set(item.id, item)
+
       const newNode: Node = {
-        id: `node-${response.data.id}`,
-        type: response.data.node_type || 'default',
-        position: response.data.position,
+        id: `item-${item.id}`,
+        type: item.type || 'default',
+        position,
         data: {
-          label: response.data.content,
-          content: response.data.content,
-          metadata: response.data.metadata,
-          dbId: response.data.id,
+          label: item.title,
+          content: item.content,
+          synopsis: item.synopsis,
+          metadata: item.metadata,
+          itemId: item.id,
+          itemType: item.type,
         },
       }
 
       nodes.value.push(newNode)
-      hasUnsavedChanges.value = true
+      hasUnsavedChanges.value = false // Already saved to backend
       return newNode
     } catch (err: any) {
-      error.value = err.message || 'Failed to add node'
+      error.value = err.message || 'Failed to add item'
       throw err
     }
   }
 
-  const updateNode = async (nodeId: string, updates: Partial<Node>): Promise<void> => {
-    const node = nodes.value.find(n => n.id === nodeId)
-    if (!node) return
-
-    const dbId = node.data?.dbId
-    if (!dbId) return
+  const createNewItem = async (itemData: {
+    type: string
+    title: string
+    content?: string
+    synopsis?: string
+    parent_id?: number
+    position: { x: number; y: number }
+  }): Promise<Node> => {
+    if (!currentMindmap.value) throw new Error('No mindmap loaded')
 
     try {
-      await axios.put(`/mindmap-nodes/${dbId}`, {
-        content: updates.data?.label,
-        position: updates.position,
-        metadata: updates.data?.metadata,
+      const response = await axios.post(`/mindmaps/${currentMindmap.value.id}/items/create`, itemData)
+
+      const item = response.data.item
+
+      // Cache the item
+      items.value.set(item.id, item)
+
+      const newNode: Node = {
+        id: `item-${item.id}`,
+        type: item.type || 'default',
+        position: itemData.position,
+        data: {
+          label: item.title,
+          content: item.content,
+          synopsis: item.synopsis,
+          metadata: item.metadata,
+          itemId: item.id,
+          itemType: item.type,
+        },
+      }
+
+      nodes.value.push(newNode)
+      hasUnsavedChanges.value = false // Already saved to backend
+      return newNode
+    } catch (err: any) {
+      error.value = err.message || 'Failed to create item'
+      throw err
+    }
+  }
+
+  const updateNodePosition = async (nodeId: string, position: { x: number; y: number }): Promise<void> => {
+    const node = nodes.value.find(n => n.id === nodeId)
+    if (!node || !currentMindmap.value) return
+
+    const itemId = node.data?.itemId
+    if (!itemId) return
+
+    try {
+      await axios.put(`/mindmaps/${currentMindmap.value.id}/items/${itemId}/position`, {
+        position,
       })
 
       const index = nodes.value.findIndex(n => n.id === nodeId)
       if (index >= 0) {
-        nodes.value[index] = { ...nodes.value[index], ...updates }
+        nodes.value[index].position = position
       }
 
-      hasUnsavedChanges.value = true
+      hasUnsavedChanges.value = false
     } catch (err: any) {
-      error.value = err.message || 'Failed to update node'
+      error.value = err.message || 'Failed to update position'
       throw err
     }
   }
 
-  const deleteNode = async (nodeId: string): Promise<void> => {
-    const node = nodes.value.find(n => n.id === nodeId)
-    if (!node) return
-
-    const dbId = node.data?.dbId
-    if (!dbId) return
+  const batchUpdatePositions = async (updates: Array<{ nodeId: string; position: { x: number; y: number } }>): Promise<void> => {
+    if (!currentMindmap.value) return
 
     try {
-      await axios.delete(`/mindmap-nodes/${dbId}`)
+      const positions = updates.map(update => {
+        const node = nodes.value.find(n => n.id === update.nodeId)
+        return {
+          item_id: node?.data?.itemId,
+          position: update.position,
+        }
+      }).filter(p => p.item_id)
+
+      await axios.post(`/mindmaps/${currentMindmap.value.id}/positions/batch`, {
+        positions,
+      })
+
+      // Update local state
+      updates.forEach(({ nodeId, position }) => {
+        const index = nodes.value.findIndex(n => n.id === nodeId)
+        if (index >= 0) {
+          nodes.value[index].position = position
+        }
+      })
+
+      hasUnsavedChanges.value = false
+    } catch (err: any) {
+      error.value = err.message || 'Failed to batch update positions'
+      throw err
+    }
+  }
+
+  const removeItemFromMindmap = async (nodeId: string): Promise<void> => {
+    const node = nodes.value.find(n => n.id === nodeId)
+    if (!node || !currentMindmap.value) return
+
+    const itemId = node.data?.itemId
+    if (!itemId) return
+
+    try {
+      await axios.delete(`/mindmaps/${currentMindmap.value.id}/items/${itemId}`)
 
       nodes.value = nodes.value.filter(n => n.id !== nodeId)
       edges.value = edges.value.filter(e => e.source !== nodeId && e.target !== nodeId)
 
-      hasUnsavedChanges.value = true
+      hasUnsavedChanges.value = false
     } catch (err: any) {
-      error.value = err.message || 'Failed to delete node'
+      error.value = err.message || 'Failed to remove item'
       throw err
     }
   }
 
-  // Connection Operations
+  // Connection Operations - Updated for new architecture
   const createConnection = async (connection: {
-    from_node_id: number | string
-    to_node_id: number | string
+    from_item_id: number
+    to_item_id: number
     connection_type: 'one-way' | 'two-way'
-    relationship_type: string
-    strength: 'weak' | 'medium' | 'strong'
+    relationship_type?: string
     label?: string
   }): Promise<Edge> => {
     if (!currentMindmap.value) throw new Error('No mindmap loaded')
@@ -311,20 +384,18 @@ export const useMindMapStore = defineStore('mindmap', () => {
 
       const newEdge: Edge = {
         id: `edge-${response.data.id}`,
-        source: `node-${connection.from_node_id}`,
-        target: `node-${connection.to_node_id}`,
+        source: `item-${connection.from_item_id}`,
+        target: `item-${connection.to_item_id}`,
         type: connection.connection_type === 'two-way' ? 'bidirectional' : 'default',
         data: {
           label: connection.label,
           relationship_type: connection.relationship_type,
-          strength: connection.strength,
           dbId: response.data.id,
         },
-        animated: connection.strength === 'strong',
       }
 
       edges.value.push(newEdge)
-      hasUnsavedChanges.value = true
+      hasUnsavedChanges.value = false
       return newEdge
     } catch (err: any) {
       error.value = err.message || 'Failed to create connection'
@@ -343,7 +414,7 @@ export const useMindMapStore = defineStore('mindmap', () => {
       await axios.put(`/connections/${dbId}`, {
         label: updates.data?.label,
         relationship_type: updates.data?.relationship_type,
-        strength: updates.data?.strength,
+        connection_type: updates.type === 'bidirectional' ? 'two-way' : 'one-way',
         style: updates.data?.style,
       })
 
@@ -352,7 +423,7 @@ export const useMindMapStore = defineStore('mindmap', () => {
         edges.value[index] = { ...edges.value[index], ...updates }
       }
 
-      hasUnsavedChanges.value = true
+      hasUnsavedChanges.value = false
     } catch (err: any) {
       error.value = err.message || 'Failed to update connection'
       throw err
@@ -369,46 +440,30 @@ export const useMindMapStore = defineStore('mindmap', () => {
     try {
       await axios.delete(`/connections/${dbId}`)
       edges.value = edges.value.filter(e => e.id !== edgeId)
-      hasUnsavedChanges.value = true
+      hasUnsavedChanges.value = false
     } catch (err: any) {
       error.value = err.message || 'Failed to delete connection'
       throw err
     }
   }
 
-  // Batch Operations
-  const saveMindmap = async (data: { nodes: Node[]; edges: Edge[] }): Promise<void> => {
+  // Import manuscript items
+  const importManuscript = async (options: {
+    manuscript_id?: number
+    parent_id?: number
+    layout?: 'hierarchical' | 'grid' | 'force-directed'
+  }): Promise<void> => {
     if (!currentMindmap.value) throw new Error('No mindmap loaded')
 
     try {
-      // Batch update nodes positions
-      const nodeUpdates = data.nodes.map(node => ({
-        id: node.data?.dbId,
-        position: node.position,
-      }))
+      const response = await axios.post(`/mindmaps/${currentMindmap.value.id}/import-manuscript`, options)
 
-      await axios.post(`/mindmaps/${currentMindmap.value.id}/nodes/batch-update`, {
-        nodes: nodeUpdates,
-      })
+      // Reload the mindmap to get the new items
+      await loadMindmap(currentMindmap.value.id)
 
       hasUnsavedChanges.value = false
     } catch (err: any) {
-      error.value = err.message || 'Failed to save mindmap'
-      throw err
-    }
-  }
-
-  // Export Operations
-  const exportMindmap = async (format: 'json' | 'graphml' | 'markdown' = 'json'): Promise<any> => {
-    if (!currentMindmap.value) throw new Error('No mindmap loaded')
-
-    try {
-      const response = await axios.get(`/mindmaps/${currentMindmap.value.id}/export`, {
-        params: { format },
-      })
-      return response.data
-    } catch (err: any) {
-      error.value = err.message || 'Failed to export mindmap'
+      error.value = err.message || 'Failed to import manuscript'
       throw err
     }
   }
@@ -450,6 +505,7 @@ export const useMindMapStore = defineStore('mindmap', () => {
     currentMindmap.value = null
     nodes.value = []
     edges.value = []
+    items.value.clear()
     selectedNodes.value = []
     selectedEdges.value = []
     hasUnsavedChanges.value = false
@@ -462,6 +518,7 @@ export const useMindMapStore = defineStore('mindmap', () => {
     mindmaps,
     nodes,
     edges,
+    items,
     selectedNodes,
     selectedEdges,
     loading,
@@ -478,21 +535,21 @@ export const useMindMapStore = defineStore('mindmap', () => {
     createMindmap,
     updateMindmap,
     deleteMindmap,
-    duplicateMindmap,
 
-    // Node Operations
-    addNode,
-    updateNode,
-    deleteNode,
+    // Item Operations (renamed from node operations)
+    addExistingItem,
+    createNewItem,
+    updateNodePosition,
+    batchUpdatePositions,
+    removeItemFromMindmap,
 
     // Connection Operations
     createConnection,
     updateConnection,
     deleteConnection,
 
-    // Batch Operations
-    saveMindmap,
-    exportMindmap,
+    // Import
+    importManuscript,
 
     // Selection
     selectNode,

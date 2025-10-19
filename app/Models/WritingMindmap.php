@@ -48,11 +48,34 @@ class WritingMindmap extends Model
     }
 
     /**
-     * Get the nodes for this mindmap.
+     * Get the item positions for this mindmap.
      */
-    public function nodes(): HasMany
+    public function positions(): HasMany
     {
-        return $this->hasMany(WritingMindmapNode::class, 'mindmap_id');
+        return $this->hasMany(MindmapItemPosition::class, 'mindmap_id');
+    }
+
+    /**
+     * Get the connections for this mindmap.
+     */
+    public function connections(): HasMany
+    {
+        return $this->hasMany(MindmapConnection::class, 'mindmap_id');
+    }
+
+    /**
+     * Get all items in this mindmap through positions.
+     */
+    public function items()
+    {
+        return $this->hasManyThrough(
+            Item::class,
+            MindmapItemPosition::class,
+            'mindmap_id',  // Foreign key on positions table
+            'id',          // Foreign key on items table
+            'id',          // Local key on mindmaps table
+            'item_id'      // Local key on positions table
+        );
     }
 
     /**

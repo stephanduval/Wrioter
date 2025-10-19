@@ -229,38 +229,39 @@ const selectNode = (node: any) => {
 const saveNode = async () => {
   try {
     if (nodeDialog.value.isNew) {
-      // Add new node
-      await mindmapStore.addNode({
+      // Create new item in mindmap
+      await mindmapStore.createNewItem({
+        type: 'text',
+        title: nodeDialog.value.data.label,
+        content: nodeDialog.value.data.content,
         position: { x: Math.random() * 400, y: Math.random() * 400 },
-        data: nodeDialog.value.data,
       })
-      toast.success('Node added successfully')
+      toast.success('Item added successfully')
     } else {
-      // Update existing node
-      await mindmapStore.updateNode(selectedNode.value.id, {
-        data: nodeDialog.value.data,
-      })
-      toast.success('Node updated successfully')
+      // Note: Item content updates would go through the items API
+      // For now, we just update the local display
+      // TODO: Add item update endpoint integration
+      toast.info('Item editing coming soon')
     }
 
     nodes.value = mindmapStore.nodes
     nodeDialog.value.visible = false
   } catch (err: any) {
     console.error('Error saving node:', err)
-    toast.error('Failed to save node')
+    toast.error('Failed to save item')
   }
 }
 
 const deleteNode = async (node: any) => {
-  if (!confirm('Are you sure you want to delete this node?')) return
+  if (!confirm('Are you sure you want to remove this item from the mind map?')) return
 
   try {
-    await mindmapStore.deleteNode(node.id)
+    await mindmapStore.removeItemFromMindmap(node.id)
     nodes.value = mindmapStore.nodes
-    toast.success('Node deleted successfully')
+    toast.success('Item removed from mind map')
   } catch (err: any) {
-    console.error('Error deleting node:', err)
-    toast.error('Failed to delete node')
+    console.error('Error removing item:', err)
+    toast.error('Failed to remove item')
   }
 }
 
@@ -268,11 +269,9 @@ const handleSave = async () => {
   saving.value = true
 
   try {
-    await mindmapStore.saveMindmap({
-      nodes: nodes.value,
-      edges: edges.value,
-    })
-    toast.success('Mind map saved successfully')
+    // Positions are auto-saved when created/moved
+    // This button could be used for batch updates if needed
+    toast.success('All changes are automatically saved')
   } catch (err: any) {
     console.error('Error saving mindmap:', err)
     toast.error('Failed to save mind map')
