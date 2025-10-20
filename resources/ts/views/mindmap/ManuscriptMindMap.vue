@@ -1,47 +1,31 @@
 <template>
-  <div class="manuscript-mindmap">
-    <!-- Manuscript Selector Bar -->
+  <div class="manuscript-mindmap h-100">
+    <!-- Header -->
     <VCard class="mb-4">
       <VCardTitle class="d-flex align-center justify-space-between">
         <div class="d-flex align-center gap-3">
-          <VIcon size="28" color="primary">bx-book-open</VIcon>
-          <VSelect
-            v-model="selectedManuscriptId"
-            :items="manuscripts"
-            :loading="loadingManuscripts"
-            item-title="title"
-            item-value="id"
-            label="Select Manuscript"
-            variant="outlined"
-            density="comfortable"
-            class="manuscript-selector"
-            style="min-width: 300px"
-            @update:model-value="onManuscriptChange"
-          >
-            <template #item="{ props, item }">
-              <VListItem v-bind="props" :subtitle="`${item.raw.status} • ${item.raw.items?.length || 0} items`">
-                <template #prepend>
-                  <VIcon>{{ getManuscriptIcon(item.raw.manuscript_type) }}</VIcon>
-                </template>
-              </VListItem>
-            </template>
-          </VSelect>
-
-          <VChip v-if="currentManuscript" color="info" variant="tonal">
-            {{ itemCount }} items
-          </VChip>
-
-          <VChip v-if="currentMindmap?.is_default" color="success" variant="tonal">
-            <VIcon start size="16">bx-check-circle</VIcon>
-            Default Mindmap
-          </VChip>
+          <VIcon size="28" color="primary">bx-network-chart</VIcon>
+          <div>
+            <h3 class="text-h5">
+              {{ currentManuscript?.title || 'Manuscript Mind Map' }}
+            </h3>
+            <p v-if="currentManuscript" class="text-caption text-grey mt-1">
+              Default structure visualization • {{ itemCount }} items
+            </p>
+          </div>
         </div>
 
         <div class="d-flex gap-2">
+          <VChip v-if="currentMindmap?.is_default" color="success" variant="tonal">
+            <VIcon start size="16">bx-check-circle</VIcon>
+            Auto-synced
+          </VChip>
+
           <VBtn
             color="primary"
             variant="tonal"
             :disabled="!currentManuscript"
+            :loading="syncing"
             @click="syncMindmap"
           >
             <VIcon start>bx-sync</VIcon>
@@ -54,7 +38,7 @@
             @click="toggleViewMode"
           >
             <VIcon start>{{ viewMode === 'grid' ? 'bx-network-chart' : 'bx-grid-alt' }}</VIcon>
-            {{ viewMode === 'grid' ? 'Canvas View' : 'Grid View' }}
+            {{ viewMode === 'grid' ? 'Canvas' : 'Grid' }}
           </VBtn>
         </div>
       </VCardTitle>
@@ -151,10 +135,14 @@
 
     <!-- No Manuscript Selected -->
     <VCard v-else>
-      <VCardText class="text-center py-10">
-        <VIcon size="64" color="grey">bx-book</VIcon>
-        <p class="mt-4 text-h6">Select a Manuscript</p>
-        <p class="text-grey">Choose a manuscript from the dropdown to view its structure</p>
+      <VCardText class="text-center py-16">
+        <VIcon size="80" color="grey">bx-book</VIcon>
+        <p class="mt-6 text-h5">No Manuscript Selected</p>
+        <p class="text-grey mt-2 mb-6">Please select a manuscript to view its mind map</p>
+        <VBtn color="primary" to="/build/select-manuscript">
+          <VIcon start>bx-book-open</VIcon>
+          Select Manuscript
+        </VBtn>
       </VCardText>
     </VCard>
 
@@ -214,6 +202,7 @@ import { useMindMapStore } from '@/stores/mindmap'
 import { useManuscriptStore } from '@/stores/manuscript'
 import { useRouter } from 'vue-router'
 import { useToast } from 'vue-toastification'
+import axios from '@/../js/axios'
 
 const mindmapStore = useMindMapStore()
 const manuscriptStore = useManuscriptStore()
@@ -221,9 +210,8 @@ const router = useRouter()
 const toast = useToast()
 
 // State
-const selectedManuscriptId = ref<number | null>(null)
 const loading = ref(false)
-const loadingManuscripts = ref(false)
+const syncing = ref(false)
 const error = ref<string | null>(null)
 const viewMode = ref<'grid' | 'canvas'>('grid')
 
@@ -232,47 +220,40 @@ const itemDialog = ref({
   item: null as any
 })
 
-// Computed
-const manuscripts = computed(() => manuscriptStore.manuscripts || [])
-const currentManuscript = computed(() =>
-  manuscripts.value.find(m => m.id === selectedManuscriptId.value)
-)
+// Computed - Use the manuscript store's selected manuscript
+const selectedManuscriptId = computed(() => manuscriptStore.selectedManuscriptId)
+const currentManuscript = computed(() => manuscriptStore.selectedManuscript)
 const currentMindmap = computed(() => mindmapStore.currentMindmap)
 const nodes = computed(() => mindmapStore.nodes)
 const edges = computed(() => mindmapStore.edges)
 const itemCount = computed(() => nodes.value.length)
 
-// Watch for manuscript changes
+// Watch for manuscript selection changes
 watch(selectedManuscriptId, (newId) => {
+  console.log('Manuscript selection changed:', newId)
   if (newId) {
     loadManuscriptMindmap()
   } else {
     mindmapStore.reset()
   }
-})
+}, { immediate: true })
 
 // Methods
-const loadManuscripts = async () => {
-  loadingManuscripts.value = true
-  try {
-    await manuscriptStore.fetchManuscripts()
-  } catch (err: any) {
-    console.error('Failed to load manuscripts:', err)
-    toast.error('Failed to load manuscripts')
-  } finally {
-    loadingManuscripts.value = false
-  }
-}
 
 const loadManuscriptMindmap = async () => {
-  if (!selectedManuscriptId.value) return
+  if (!selectedManuscriptId.value) {
+    console.log('No manuscript selected, skipping mindmap load')
+    return
+  }
 
   loading.value = true
   error.value = null
 
   try {
+    console.log('Loading default mindmap for manuscript:', selectedManuscriptId.value)
     await mindmapStore.loadManuscriptDefaultMindmap(selectedManuscriptId.value)
-    toast.success(`Loaded mindmap for ${currentManuscript.value?.title}`)
+    console.log('Mindmap loaded successfully:', nodes.value.length, 'items')
+    toast.success(`Loaded mindmap with ${nodes.value.length} items`)
   } catch (err: any) {
     console.error('Error loading manuscript mindmap:', err)
     error.value = err.message || 'Failed to load mindmap'
@@ -282,39 +263,22 @@ const loadManuscriptMindmap = async () => {
   }
 }
 
-const onManuscriptChange = (id: number) => {
-  // Store the selection for persistence
-  if (manuscriptStore.selectManuscript) {
-    manuscriptStore.selectManuscript(id)
-  }
-}
-
 const syncMindmap = async () => {
   if (!selectedManuscriptId.value) return
 
-  loading.value = true
+  syncing.value = true
   try {
-    // Call sync endpoint
-    const response = await fetch(`/api/manuscripts/${selectedManuscriptId.value}/sync-mindmap`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      }
-    })
+    console.log('Syncing mindmap for manuscript:', selectedManuscriptId.value)
+    await axios.post(`/manuscripts/${selectedManuscriptId.value}/sync-mindmap`)
 
-    if (response.ok) {
-      // Reload the mindmap
-      await loadManuscriptMindmap()
-      toast.success('Mindmap synced successfully')
-    } else {
-      throw new Error('Sync failed')
-    }
+    // Reload the mindmap
+    await loadManuscriptMindmap()
+    toast.success('Mindmap synced successfully')
   } catch (err: any) {
     console.error('Error syncing mindmap:', err)
     toast.error('Failed to sync mindmap')
   } finally {
-    loading.value = false
+    syncing.value = false
   }
 }
 
@@ -330,22 +294,14 @@ const selectNode = (node: any) => {
 }
 
 const openInEditor = () => {
-  if (itemDialog.value.item) {
-    // Navigate to item editor
+  if (itemDialog.value.item && selectedManuscriptId.value) {
+    // Navigate to item in editor
     router.push(`/manuscripts/${selectedManuscriptId.value}/items/${itemDialog.value.item.itemId}`)
   }
   itemDialog.value.visible = false
 }
 
-const addFirstItem = () => {
-  // Navigate to manuscript editor to add items
-  router.push(`/manuscripts/${selectedManuscriptId.value}/edit`)
-}
-
 // Utility functions
-const getManuscriptIcon = (type: string) => {
-  return type === 'scrivener' ? 'bx-import' : 'bx-book'
-}
 
 const getTypeIcon = (type: string) => {
   const icons: Record<string, string> = {
@@ -387,22 +343,11 @@ const truncateText = (text: string, maxLength: number) => {
   return text.substring(0, maxLength) + '...'
 }
 
-const getItemChildren = (node: any) => {
-  // Get children nodes based on parent_id
-  return nodes.value.filter(n => {
-    // This would need proper parent tracking
-    return false // Placeholder
-  })
-}
-
 // Lifecycle
 onMounted(() => {
-  loadManuscripts()
-
-  // If a manuscript was previously selected, load it
-  if (manuscriptStore.selectedManuscriptId) {
-    selectedManuscriptId.value = manuscriptStore.selectedManuscriptId
-  }
+  console.log('ManuscriptMindMap mounted, selected manuscript:', selectedManuscriptId.value)
+  // If a manuscript is already selected, load its mindmap
+  // The watch will trigger this automatically
 })
 </script>
 
