@@ -92,7 +92,12 @@
               </VCardTitle>
 
               <VCardSubtitle>
-                {{ formatDate(mindmap.updated_at) }}
+                <span v-if="mindmap.is_manuscript_default" class="text-primary">
+                  {{ mindmap.manuscript_title }} - Default
+                </span>
+                <span v-else>
+                  {{ formatDate(mindmap.updated_at) }}
+                </span>
               </VCardSubtitle>
 
               <VCardText>
@@ -102,7 +107,16 @@
 
                 <div class="d-flex align-center justify-space-between">
                   <VChip
-                    v-if="mindmap.is_template"
+                    v-if="mindmap.is_manuscript_default"
+                    size="small"
+                    color="success"
+                    variant="tonal"
+                  >
+                    <VIcon start size="14">bx-book</VIcon>
+                    Manuscript Default
+                  </VChip>
+                  <VChip
+                    v-else-if="mindmap.is_template"
                     size="small"
                     color="info"
                     variant="tonal"
@@ -117,7 +131,7 @@
                   >
                     Archived
                   </VChip>
-                  <VSpacer v-if="!mindmap.is_template && !mindmap.is_archived" />
+                  <VSpacer v-if="!mindmap.is_manuscript_default && !mindmap.is_template && !mindmap.is_archived" />
 
                   <VMenu location="bottom end">
                     <template #activator="{ props }">
@@ -252,13 +266,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useMindMapStore } from '@/stores/mindmap'
+import { useManuscriptStore } from '@/stores/manuscript'
 import { useToast } from 'vue-toastification'
 
 const router = useRouter()
 const mindmapStore = useMindMapStore()
+const manuscriptStore = useManuscriptStore()
 const toast = useToast()
 
 // Data
@@ -334,7 +350,42 @@ const totalPages = computed(() => {
 const loadMindmaps = async () => {
   loading.value = true
   try {
-    mindmaps.value = await mindmapStore.loadMindmaps()
+    // Load regular mindmaps
+    const regularMindmaps = await mindmapStore.loadMindmaps()
+
+    // Check if a manuscript is selected and fetch its default mindmap
+    if (manuscriptStore.selectedManuscriptId) {
+      try {
+        const response = await mindmapStore.api.get(
+          `/manuscripts/${manuscriptStore.selectedManuscriptId}/default-mindmap`
+        )
+
+        if (response.data && response.data.mindmap) {
+          // Add the default mindmap to the list with a special indicator
+          const defaultMindmap = {
+            ...response.data.mindmap,
+            is_manuscript_default: true,
+            manuscript_id: manuscriptStore.selectedManuscriptId,
+            manuscript_title: manuscriptStore.manuscripts?.find(
+              m => m.id === manuscriptStore.selectedManuscriptId
+            )?.title || 'Manuscript'
+          }
+
+          // Combine default mindmap with regular mindmaps, putting default first
+          mindmaps.value = [defaultMindmap, ...regularMindmaps.filter(
+            m => m.id !== defaultMindmap.id
+          )]
+        } else {
+          mindmaps.value = regularMindmaps
+        }
+      } catch (error) {
+        console.error('Error loading manuscript default mindmap:', error)
+        // If error loading default, just show regular mindmaps
+        mindmaps.value = regularMindmaps
+      }
+    } else {
+      mindmaps.value = regularMindmaps
+    }
   } catch (error) {
     console.error('Error loading mindmaps:', error)
     toast.error('Failed to load mind maps')
@@ -436,6 +487,11 @@ const requiredRule = (v: any) => !!v || 'This field is required'
 
 // Lifecycle
 onMounted(() => {
+  loadMindmaps()
+})
+
+// Watch for changes in selected manuscript
+watch(() => manuscriptStore.selectedManuscriptId, () => {
   loadMindmaps()
 })
 </script>
