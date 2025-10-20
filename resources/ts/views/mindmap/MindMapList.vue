@@ -271,6 +271,7 @@ import { useRouter } from 'vue-router'
 import { useMindMapStore } from '@/stores/mindmap'
 import { useManuscriptStore } from '@/stores/manuscript'
 import { useToast } from 'vue-toastification'
+import axios from '@/../js/axios'
 
 const router = useRouter()
 const mindmapStore = useMindMapStore()
@@ -356,7 +357,7 @@ const loadMindmaps = async () => {
     // Check if a manuscript is selected and fetch its default mindmap
     if (manuscriptStore.selectedManuscriptId) {
       try {
-        const response = await mindmapStore.api.get(
+        const response = await axios.get(
           `/manuscripts/${manuscriptStore.selectedManuscriptId}/default-mindmap`
         )
 
