@@ -62,8 +62,20 @@ class ManuscriptController extends Controller
             'status' => $validated['status'],
         ]);
 
+        // Create default mindmap for the manuscript
+        try {
+            $defaultMindmap = $manuscript->createDefaultMindmap();
+            Log::info("Created default mindmap for manuscript {$manuscript->id}", [
+                'mindmap_id' => $defaultMindmap->id
+            ]);
+        } catch (\Exception $e) {
+            Log::error("Failed to create default mindmap for manuscript {$manuscript->id}", [
+                'error' => $e->getMessage()
+            ]);
+        }
+
         return response()->json([
-            'data' => $manuscript
+            'data' => $manuscript->load('defaultMindmap')
         ], 201);
     }
 
@@ -136,6 +148,57 @@ class ManuscriptController extends Controller
 
         return response()->json([
             'data' => $collections
+        ]);
+    }
+
+    /**
+     * Sync the default mindmap for a manuscript.
+     */
+    public function syncMindmap(string $id)
+    {
+        $manuscript = Manuscript::where('id', $id)
+            ->where('user_id', Auth::id())
+            ->firstOrFail();
+
+        try {
+            $manuscript->syncDefaultMindmap();
+
+            Log::info("Synced default mindmap for manuscript {$id}");
+
+            return response()->json([
+                'message' => 'Mindmap synced successfully',
+                'data' => $manuscript->defaultMindmap
+            ]);
+        } catch (\Exception $e) {
+            Log::error("Failed to sync mindmap for manuscript {$id}", [
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'error' => 'Failed to sync mindmap',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get the default mindmap for a manuscript.
+     */
+    public function getDefaultMindmap(string $id)
+    {
+        $manuscript = Manuscript::where('id', $id)
+            ->where('user_id', Auth::id())
+            ->firstOrFail();
+
+        $mindmap = $manuscript->defaultMindmap()->first();
+
+        if (!$mindmap) {
+            // Create if doesn't exist
+            $mindmap = $manuscript->createDefaultMindmap();
+        }
+
+        return response()->json([
+            'data' => $mindmap->load(['positions.item', 'connections'])
         ]);
     }
 

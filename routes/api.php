@@ -128,6 +128,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/manuscripts/{id}', [ManuscriptController::class, 'update']);
     Route::delete('/manuscripts/{id}', [ManuscriptController::class, 'destroy']);
 
+    // Mindmap routes for manuscripts
+    Route::post('/manuscripts/{id}/sync-mindmap', [ManuscriptController::class, 'syncMindmap']);
+    Route::get('/manuscripts/{id}/default-mindmap', [ManuscriptController::class, 'getDefaultMindmap']);
+
     // Item routes within manuscripts
     Route::post('/manuscripts/{manuscriptId}/items', [ItemController::class, 'store']);
     Route::get('/manuscripts/{manuscriptId}/items/{itemId}', [ItemController::class, 'show']);
