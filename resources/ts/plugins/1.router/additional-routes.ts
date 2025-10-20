@@ -168,6 +168,17 @@ export const routes: RouteRecordRaw[] = [
     },
   },
   {
+    path: '/apps/mindmaps/manuscript',
+    name: 'manuscript-mindmap',
+    component: () => import('@/views/mindmap/ManuscriptMindMap.vue'),
+    meta: {
+      layoutWrapperClasses: 'layout-content-height-fixed',
+      action: 'read',
+      subject: 'mindmaps',
+      requiresAuth: true,
+    },
+  },
+  {
     path: '/apps/mindmaps/create',
     name: 'mindmap-create',
     component: () => import('@/views/mindmap/MindMapCreate.vue'),

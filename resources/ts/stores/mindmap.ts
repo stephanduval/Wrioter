@@ -92,6 +92,66 @@ export const useMindMapStore = defineStore('mindmap', () => {
     }
   }
 
+  const loadManuscriptDefaultMindmap = async (manuscriptId: number | string): Promise<any> => {
+    loading.value = true
+    error.value = null
+    try {
+      // Get or create the default mindmap for this manuscript
+      const response = await axios.get(`/manuscripts/${manuscriptId}/default-mindmap`)
+      const mindmapData = response.data.data
+
+      currentMindmap.value = mindmapData
+
+      // Transform positions into nodes for Vue Flow
+      const backendNodes: MindMapNode[] = mindmapData.positions || []
+      nodes.value = backendNodes.map((position) => {
+        const item = position.item
+        return {
+          id: `item-${item.id}`,
+          type: item.type || 'default',
+          position: position.position || { x: 0, y: 0 },
+          data: {
+            label: item.title || 'Untitled',
+            content: item.content,
+            synopsis: item.synopsis,
+            metadata: item.metadata,
+            itemId: item.id,
+            itemType: item.type,
+            style: position.style,
+          },
+        }
+      })
+
+      // Transform connections for Vue Flow
+      const backendConnections: MindMapConnection[] = mindmapData.connections || []
+      edges.value = backendConnections.map((conn) => ({
+        id: `edge-${conn.id}`,
+        source: `item-${conn.from_item_id}`,
+        target: `item-${conn.to_item_id}`,
+        type: conn.connection_type === 'two-way' ? 'bidirectional' : 'default',
+        data: {
+          label: conn.label,
+          relationship_type: conn.relationship_type,
+          style: conn.style,
+          dbId: conn.id,
+        },
+      }))
+
+      hasUnsavedChanges.value = false
+
+      return {
+        mindmap: currentMindmap.value,
+        nodes: nodes.value,
+        edges: edges.value,
+      }
+    } catch (err: any) {
+      error.value = err.message || 'Failed to load manuscript mindmap'
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
   const loadMindmap = async (id: number | string): Promise<any> => {
     loading.value = true
     error.value = null
@@ -532,6 +592,7 @@ export const useMindMapStore = defineStore('mindmap', () => {
     // Actions
     loadMindmaps,
     loadMindmap,
+    loadManuscriptDefaultMindmap,
     createMindmap,
     updateMindmap,
     deleteMindmap,
