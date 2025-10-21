@@ -24,7 +24,6 @@
       :data-node-id="node.id"
       :data-item-id="node.itemId"
       draggable="true"
-      @click="handleNodeClick"
       @contextmenu="handleContextMenu"
       @touchstart="handleTouchStart"
       @touchend="handleTouchEnd"
@@ -61,8 +60,8 @@
           :color="getIconColor()"
         />
 
-        <!-- Node Label -->
-        <div class="node-label">
+        <!-- Node Label (clickable to select/navigate) -->
+        <div class="node-label" @click="handleNodeClick">
           <span class="node-title">{{ node.title }}</span>
           <div
             v-if="showMetadata && (node.metadata.wordCount > 0 || node.metadata.hasComments)"
@@ -335,15 +334,11 @@ const handleDrop = (event: DragEvent, position: 'above' | 'below' | 'inside') =>
 <style scoped lang="scss">
 .tree-node {
   position: relative;
-  cursor: pointer;
+  cursor: default;
   border-radius: 4px;
   transition: background-color 0.2s;
   padding: 6px 8px;
   margin: 2px 0;
-
-  &:hover {
-    background-color: rgba(var(--v-theme-primary), 0.08);
-  }
 
   &.is-loading {
     opacity: 0.6;
@@ -398,6 +393,15 @@ const handleDrop = (event: DragEvent, position: 'above' | 'below' | 'inside') =>
 .node-label {
   flex: 1;
   min-width: 0;
+  cursor: pointer;
+  padding: 2px 4px;
+  margin: -2px -4px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: rgba(var(--v-theme-primary), 0.08);
+  }
 }
 
 .node-title {

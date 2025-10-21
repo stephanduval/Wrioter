@@ -141,6 +141,8 @@ import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useManuscriptStore } from '@/stores/manuscript'
 import { useManuscriptNavigationStore } from '@/stores/manuscript-navigation'
+import { useFolderViewStore } from '@/stores/folderView'
+import { usePaneStore } from '@/stores/pane'
 import { useContextMenu } from '@/composables/useContextMenu'
 import { ContextDetectionService } from '@/services/contextDetection'
 import TreeNode from './TreeNode.vue'
@@ -224,10 +226,41 @@ const handleNodeClick = (nodeId: string) => {
   // Navigate to the node
   const node = manuscriptStore.findNodeById(nodeId)
   if (node) {
-    // For text items, navigate to the editor
+    // For text items (documents), handle differently based on view context
     if (node.type === 'text' && manuscriptStore.selectedManuscriptId) {
-      router.push(`/manuscripts/${manuscriptStore.selectedManuscriptId}/items/${node.itemId}/edit`)
-    } else {
+      // Check if we're in split view with an active pane
+      const folderViewStore = useFolderViewStore()
+      const paneStore = usePaneStore()
+
+      if (folderViewStore.splitEnabled && paneStore.activePaneId) {
+        // Split view is active - update the active pane to edit mode with this item
+        console.log(`[Nav] Opening item ${node.itemId} in active pane ${paneStore.activePaneId}`)
+        paneStore.setEditingItem(paneStore.activePaneId, node.itemId)
+      } else {
+        // Single view mode - use traditional routing
+        router.push(`/manuscripts/${manuscriptStore.selectedManuscriptId}/items/${node.itemId}/edit`)
+      }
+    } else if (node.type === 'folder') {
+      // For folders, only handle in split view context
+      // (expansion/collapse now handled by the chevron button directly)
+      const folderViewStore = useFolderViewStore()
+      const paneStore = usePaneStore()
+
+      if (folderViewStore.splitEnabled && paneStore.activePaneId) {
+        // Split view: Load folder content in the active pane only
+        console.log(`[Nav] Loading folder ${node.itemId} in active pane ${paneStore.activePaneId}`)
+
+        // Use the new loadFolderForPane method to fetch and store folder content per pane
+        paneStore.loadFolderForPane(paneStore.activePaneId, node.itemId)
+
+        // Switch pane to a view mode (not edit) if currently in edit mode
+        const currentPane = paneStore.getPane(paneStore.activePaneId)
+        if (currentPane?.viewMode === 'edit') {
+          paneStore.updatePaneMode(paneStore.activePaneId, 'manuscript')
+        }
+      }
+      // In single view, clicking folder label does nothing (chevron handles expansion)
+    } else if (node.path) {
       // For other types, use the existing path if available
       router.push(node.path)
     }

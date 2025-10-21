@@ -179,30 +179,23 @@
         class="split-view-container"
       >
         <template #pane="{ paneId, index }">
-          <!-- Each pane renders the current view mode -->
-          <ManuscriptView
-            v-if="currentViewMode === 'manuscript'"
-            :folder-id="folderId"
-            :folder="currentFolder"
-            :items="folderItems"
+          <!-- Wrap each pane with PaneWrapper for independent controls -->
+          <PaneWrapper
             :pane-id="paneId"
-          />
-
-          <CorkboardView
-            v-else-if="currentViewMode === 'corkboard'"
-            :folder-id="folderId"
-            :folder="currentFolder"
-            :items="folderItems"
-            :pane-id="paneId"
-          />
-
-          <OutlineView
-            v-else-if="currentViewMode === 'outline'"
-            :folder-id="folderId"
-            :folder="currentFolder"
-            :items="folderItems"
-            :pane-id="paneId"
-          />
+            @view-mode-change="handlePaneViewModeChange(paneId, $event)"
+            @sync-selection="handlePaneSyncSelection(paneId)"
+            @export="handlePaneExport(paneId)"
+          >
+            <!-- Render view based on pane's specific view mode -->
+            <component
+              :is="getPaneComponent(paneId)"
+              :folder-id="folderId"
+              :folder="currentFolder"
+              :items="getPaneItems(paneId)"
+              :pane-id="paneId"
+              :item-id="getPaneEditingItemId(paneId)"
+            />
+          </PaneWrapper>
         </template>
       </SimpleSplitWrapper>
     </div>
@@ -210,13 +203,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount, markRaw, nextTick } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useFolderViewStore } from '@/stores/folderView'
+import { usePaneStore, type PaneViewMode } from '@/stores/pane'
 import ManuscriptView from '@/components/manuscript/ManuscriptView.vue'
 import CorkboardView from '@/components/corkboard/CorkboardView.vue'
 import OutlineView from '@/components/outline/OutlineView.vue'
+import ItemEditor from '@/components/manuscript/ItemEditor.vue'
 import SimpleSplitWrapper from '@/components/splitView/SimpleSplitWrapper.vue'
+import PaneWrapper from '@/components/splitView/PaneWrapper.vue'
 
 const props = defineProps<{
   folderId: number
@@ -229,8 +225,10 @@ const emit = defineEmits<{
   addItem: []
 }>()
 
-// Store
+// Stores
 const folderViewStore = useFolderViewStore()
+const paneStore = usePaneStore()
+
 const {
   currentViewMode,
   currentFolder,
@@ -245,8 +243,66 @@ const {
 // Local state
 const keyboardListener = ref<((e: KeyboardEvent) => void) | null>(null)
 
+// Component mapping for dynamic rendering
+const viewComponents = {
+  manuscript: markRaw(ManuscriptView),
+  corkboard: markRaw(CorkboardView),
+  outline: markRaw(OutlineView),
+  edit: markRaw(ItemEditor)
+}
+
 // Computed
 const isMac = computed(() => navigator.platform.toUpperCase().indexOf('MAC') >= 0)
+
+// Pane-specific methods
+function getPaneComponent(paneId: string) {
+  const pane = paneStore.getPane(paneId)
+  if (!pane) return viewComponents.manuscript
+
+  return viewComponents[pane.viewMode] || viewComponents.manuscript
+}
+
+function getPaneItems(paneId: string) {
+  const pane = paneStore.getPane(paneId)
+
+  // Use the pane's own folderItems if available (for independent pane content)
+  // Otherwise fall back to global folderItems (for initial load or single view)
+  const items = pane?.folderItems || folderItems.value
+
+  // For edit mode, we might want to filter to just the editing item
+  if (pane?.viewMode === 'edit' && pane.editingItemId) {
+    return items.filter(item => item.id === pane.editingItemId)
+  }
+
+  // For other modes, return all items (they'll handle their own filtering based on selection)
+  return items
+}
+
+function getPaneEditingItemId(paneId: string): number | undefined {
+  const pane = paneStore.getPane(paneId)
+  return pane?.editingItemId
+}
+
+function handlePaneViewModeChange(paneId: string, mode: PaneViewMode) {
+  console.log(`[FolderView] Pane ${paneId} changed to mode: ${mode}`)
+
+  // If switching to edit mode, ensure folder is set
+  const pane = paneStore.getPane(paneId)
+  if (pane && !pane.folderId) {
+    paneStore.setPaneFolder(paneId, props.folderId)
+  }
+}
+
+function handlePaneSyncSelection(paneId: string) {
+  console.log(`[FolderView] Syncing selection for pane ${paneId}`)
+  // Additional logic if needed
+}
+
+function handlePaneExport(paneId: string) {
+  console.log(`[FolderView] Exporting content from pane ${paneId}`)
+  // Implement export functionality
+  emit('export')
+}
 
 // Methods
 function getFolderIcon(): string {
@@ -255,6 +311,16 @@ function getFolderIcon(): string {
 
 function toggleSplitView() {
   folderViewStore.toggleSplitView()
+
+  // When enabling split view, set the folder for all panes
+  if (!splitEnabled.value && props.folderId) {
+    // Wait for next tick to ensure panes are created
+    nextTick(() => {
+      paneStore.allPanes.forEach(pane => {
+        paneStore.setPaneFolder(pane.id, props.folderId)
+      })
+    })
+  }
 }
 
 async function handleRefresh() {
@@ -329,7 +395,12 @@ onMounted(async () => {
 
   // Load folder contents
   try {
-    await folderViewStore.loadFolder(props.folderId)
+    if (!splitEnabled.value) {
+      // In single view mode, load folder globally
+      await folderViewStore.loadFolder(props.folderId)
+    }
+    // In split view mode, folder loading is handled per pane
+    // by DynamicManuscriptNavigation when items are clicked
   } catch (err) {
     console.error('Failed to load folder:', err)
   }
@@ -341,11 +412,13 @@ onBeforeUnmount(() => {
   folderViewStore.clearFolder()
 })
 
-// Watch for folder ID changes (if navigating between folders)
+// Watch for folder ID changes (if navigating between folders in single view)
 watch(() => props.folderId, async (newFolderId) => {
-  if (newFolderId) {
+  if (newFolderId && !splitEnabled.value) {
+    // In single view mode, load the folder globally
     await folderViewStore.loadFolder(newFolderId)
   }
+  // In split view mode, folder loading is handled per pane by DynamicManuscriptNavigation
 })
 </script>
 

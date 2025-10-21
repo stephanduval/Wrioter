@@ -47,20 +47,34 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import type { SplitNode } from '@/types/splitView'
 import { useFolderViewStore } from '@/stores/folderView'
+import { usePaneStore } from '@/stores/pane'
 
 const props = defineProps<{
   layout: SplitNode
 }>()
 
 const folderViewStore = useFolderViewStore()
+const paneStore = usePaneStore()
 const containerRef = ref<HTMLElement>()
 const isResizing = ref(false)
 const resizeStartPos = ref(0)
 const resizeIndex = ref(0)
 const initialSizes = ref<number[]>([])
+
+// Initialize pane states when component mounts
+onMounted(() => {
+  console.log('[SimpleSplitWrapper] Initializing pane states')
+  paneStore.initializeDefaultPanes()
+})
+
+// Clean up pane states when component unmounts
+onUnmounted(() => {
+  console.log('[SimpleSplitWrapper] Cleaning up pane states')
+  paneStore.clearAllPanes()
+})
 
 // Handle resize start
 function startResize(event: MouseEvent, index: number) {
