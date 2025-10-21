@@ -128,6 +128,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/manuscripts/{id}', [ManuscriptController::class, 'update']);
     Route::delete('/manuscripts/{id}', [ManuscriptController::class, 'destroy']);
 
+    // Mindmap routes for manuscripts
+    Route::post('/manuscripts/{id}/sync-mindmap', [ManuscriptController::class, 'syncMindmap']);
+    Route::get('/manuscripts/{id}/default-mindmap', [ManuscriptController::class, 'getDefaultMindmap']);
+
     // Item routes within manuscripts
     Route::post('/manuscripts/{manuscriptId}/items', [ItemController::class, 'store']);
     Route::get('/manuscripts/{manuscriptId}/items/{itemId}', [ItemController::class, 'show']);
@@ -234,6 +238,29 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/folders/{folderId}/contents', [App\Http\Controllers\FolderController::class, 'getContents']);
     // Reorder items within a folder
     Route::post('/folders/{folderId}/reorder', [App\Http\Controllers\FolderController::class, 'reorder']);
+});
+
+// Mind Map Routes
+Route::middleware('auth:sanctum')->group(function () {
+    // Mindmap CRUD
+    Route::apiResource('mindmaps', App\Http\Controllers\Api\MindMapController::class);
+
+    // Mindmap Items Management
+    Route::post('/mindmaps/{id}/items/add', [App\Http\Controllers\Api\MindMapController::class, 'addItem']);
+    Route::post('/mindmaps/{id}/items/create', [App\Http\Controllers\Api\MindMapController::class, 'createItem']);
+    Route::put('/mindmaps/{id}/items/{itemId}/position', [App\Http\Controllers\Api\MindMapController::class, 'updatePosition']);
+    Route::delete('/mindmaps/{id}/items/{itemId}', [App\Http\Controllers\Api\MindMapController::class, 'removeItem']);
+
+    // Connections
+    Route::post('/mindmaps/{id}/connections', [App\Http\Controllers\Api\MindMapController::class, 'createConnection']);
+    Route::put('/connections/{id}', [App\Http\Controllers\Api\MindMapController::class, 'updateConnection']);
+    Route::delete('/connections/{id}', [App\Http\Controllers\Api\MindMapController::class, 'deleteConnection']);
+
+    // Bulk operations
+    Route::post('/mindmaps/{id}/positions/batch', [App\Http\Controllers\Api\MindMapController::class, 'batchUpdatePositions']);
+
+    // Import manuscript items
+    Route::post('/mindmaps/{id}/import-manuscript', [App\Http\Controllers\Api\MindMapController::class, 'importManuscript']);
 });
 
 // User Preferences Routes

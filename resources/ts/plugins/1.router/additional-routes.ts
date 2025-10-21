@@ -154,6 +154,64 @@ export const routes: RouteRecordRaw[] = [
       requiresAuth: true,
     },
   },
+
+  // MindMap routes
+  {
+    path: '/apps/mindmaps',
+    name: 'mindmap-list',
+    component: () => import('@/views/mindmap/MindMapList.vue'),
+    meta: {
+      layoutWrapperClasses: 'layout-content-height-fixed',
+      action: 'read',
+      subject: 'mindmaps',
+      requiresAuth: true,
+    },
+  },
+  {
+    path: '/apps/mindmaps/manuscript',
+    name: 'manuscript-mindmap',
+    component: () => import('@/views/mindmap/ManuscriptMindMap.vue'),
+    meta: {
+      layoutWrapperClasses: 'layout-content-height-fixed',
+      action: 'read',
+      subject: 'mindmaps',
+      requiresAuth: true,
+    },
+  },
+  {
+    path: '/apps/mindmaps/create',
+    name: 'mindmap-create',
+    component: () => import('@/views/mindmap/MindMapCreate.vue'),
+    meta: {
+      layoutWrapperClasses: 'layout-content-height-fixed',
+      action: 'create',
+      subject: 'mindmaps',
+      requiresAuth: true,
+    },
+  },
+  {
+    path: '/apps/mindmaps/:id',
+    name: 'mindmap-view',
+    component: () => import('@/views/mindmap/MindMapView.vue'),
+    meta: {
+      layoutWrapperClasses: 'layout-content-height-fixed',
+      action: 'read',
+      subject: 'mindmaps',
+      requiresAuth: true,
+    },
+  },
+  {
+    path: '/apps/mindmap-explorer',
+    name: 'mindmap-explorer',
+    component: () => import('@/views/mindmap/MindMapExplorer.vue'),
+    meta: {
+      layoutWrapperClasses: 'layout-content-height-fixed',
+      action: 'read',
+      subject: 'mindmaps',
+      requiresAuth: true,
+    },
+  },
+
   // Reset Password Route
   {
     path: '/reset-password',

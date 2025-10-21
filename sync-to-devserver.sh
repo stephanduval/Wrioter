@@ -19,7 +19,7 @@ rsync -av \
   --exclude='bootstrap/cache/*' \
   --progress \
   "$SCRIPT_DIR/" \
-  sduval@192.168.1.252:"~/Code/Wrioter Branch 2/"
+  sduval@192.168.1.252:~/Code/Wrioter/
 
 echo ""
 echo "✅ Sync complete!"

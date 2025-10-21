@@ -70,6 +70,32 @@ class WritingMindmapNode extends Model
     }
 
     /**
+     * Get outgoing connections from this node.
+     */
+    public function outgoingConnections(): HasMany
+    {
+        return $this->hasMany(MindmapNodeConnection::class, 'from_node_id');
+    }
+
+    /**
+     * Get incoming connections to this node.
+     */
+    public function incomingConnections(): HasMany
+    {
+        return $this->hasMany(MindmapNodeConnection::class, 'to_node_id');
+    }
+
+    /**
+     * Get all connections (both incoming and outgoing).
+     */
+    public function allConnections()
+    {
+        return MindmapNodeConnection::where('from_node_id', $this->id)
+            ->orWhere('to_node_id', $this->id)
+            ->get();
+    }
+
+    /**
      * Scope a query to only include root nodes (no parent).
      */
     public function scopeRoot($query)

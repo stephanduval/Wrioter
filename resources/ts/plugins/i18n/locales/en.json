@@ -230,6 +230,10 @@
     "manuscriptNew": "New Manuscript",
     "manuscriptList": "All Manuscripts",
     "manuscriptView": "Manuscript View",
+    "mindMap": "Mind Maps",
+    "mindMapCreate": "Create Mind Map",
+    "mindMapList": "My Mind Maps",
+    "mindMapExplorer": "Mind Map Explorer",
     "manuscriptItems": {
       "chapter": "Chapter",
       "scene": "Scene",
@@ -633,5 +637,10 @@
       "reload": "Reload",
       "goBack": "Go Back"
     }
-  }
+  },
+  "Title": "Title",
+  "Description": "Description",
+  "Search": "Search",
+  "Type": "Type",
+  "Status": "Status"
 }

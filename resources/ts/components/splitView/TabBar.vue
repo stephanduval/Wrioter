@@ -10,7 +10,7 @@
       @wheel.prevent="handleWheel"
     >
       <div class="tabs-wrapper">
-        <Tab
+        <TabComponent
           v-for="(tab, index) in tabs"
           :key="tab.id"
           :tab="tab"
@@ -79,7 +79,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import type { Tab } from '@/types/splitView'
-import Tab from './Tab.vue'
+import TabComponent from './Tab.vue'
 
 const props = defineProps<{
   tabs: Tab[]
