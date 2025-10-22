@@ -3,7 +3,7 @@ import { ref, computed } from 'vue'
 import { $api } from '@/utils/api'
 import type { SplitNode } from '@/types/splitView'
 
-export type ViewMode = 'manuscript' | 'corkboard' | 'outline'
+export type ViewMode = 'manuscript' | 'corkboard' | 'outline' | 'mindmap' | 'item'
 
 export interface ViewPreference {
   view_mode: ViewMode
@@ -11,6 +11,8 @@ export interface ViewPreference {
     manuscript?: ManuscriptViewSettings
     corkboard?: CorkboardViewSettings
     outline?: OutlineViewSettings
+    mindmap?: MindmapViewSettings
+    item?: ItemViewSettings
   }
 }
 
@@ -32,6 +34,20 @@ export interface OutlineViewSettings {
   column_widths: Record<string, number>
   sort_column: string
   sort_direction: 'asc' | 'desc'
+}
+
+export interface MindmapViewSettings {
+  zoom: number
+  pan: { x: number, y: number }
+  show_grid: boolean
+  layout_algorithm: 'hierarchical' | 'force' | 'circular'
+}
+
+export interface ItemViewSettings {
+  font_size: 'small' | 'medium' | 'large'
+  show_synopsis: boolean
+  auto_save: boolean
+  show_word_count: boolean
 }
 
 export interface FolderItem {

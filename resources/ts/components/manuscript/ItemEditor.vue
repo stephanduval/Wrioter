@@ -2,29 +2,19 @@
   <div class="item-editor">
     <!-- Header with title and save status -->
     <div class="editor-header">
-      <div class="editor-header-main">
-        <VTextField
-          v-model="localTitle"
-          variant="plain"
-          placeholder="Enter title..."
-          class="editor-title editor-field"
-          hide-details
-          @update:model-value="handleTitleChange"
-          @contextmenu="handleContextMenu"
-          @touchstart="handleTouchStart"
-          @touchend="handleTouchEnd"
-          @touchmove="handleTouchMove"
-        />
-
-        <div class="editor-metadata">
-          <span v-if="itemStore.state.currentItem?.word_count" class="word-count">
-            {{ itemStore.state.currentItem.word_count }} words
-          </span>
-          <span v-if="itemStore.state.currentItem?.character_count" class="char-count">
-            {{ itemStore.state.currentItem.character_count }} characters
-          </span>
-        </div>
-      </div>
+      <EditableTitle
+        v-model="localTitle"
+        :manuscript-id="props.manuscriptId"
+        :item-id="props.itemId"
+        :show-metadata="true"
+        :word-count="itemStore.state.currentItem?.word_count"
+        :character-count="itemStore.state.currentItem?.character_count"
+        @contextmenu="handleContextMenu"
+        @touchstart="handleTouchStart"
+        @touchend="handleTouchEnd"
+        @touchmove="handleTouchMove"
+        @title-saved="handleTitleSaved"
+      />
 
       <div class="editor-actions">
         <!-- Save Status Indicator -->
@@ -141,6 +131,7 @@ import { useItemStore } from '@/stores/item'
 import { useContextMenu } from '@/composables/useContextMenu'
 import { getEditorMenuItems } from '@/config/contextMenus/editorMenus'
 import TiptapEditor from '@/@core/components/TiptapEditor.vue'
+import EditableTitle from '@/components/item/EditableTitle.vue'
 
 interface Props {
   manuscriptId: number
@@ -176,16 +167,11 @@ const saveStatusText = computed(() => {
 })
 
 // Debounced handlers to prevent excessive API calls
-let titleTimeout: NodeJS.Timeout | null = null
 let contentTimeout: NodeJS.Timeout | null = null
 let synopsisTimeout: NodeJS.Timeout | null = null
 
-const handleTitleChange = (newTitle: string) => {
-  if (titleTimeout) clearTimeout(titleTimeout)
-
-  titleTimeout = setTimeout(() => {
-    itemStore.updateTitle(newTitle)
-  }, 500)
+const handleTitleSaved = (newTitle: string) => {
+  console.log('Title saved:', newTitle)
 }
 
 const handleContentChange = (newContent: string) => {
@@ -232,7 +218,6 @@ watch([() => props.manuscriptId, () => props.itemId], async ([newManuscriptId, n
 
 // Cleanup when component unmounts
 onUnmounted(() => {
-  if (titleTimeout) clearTimeout(titleTimeout)
   if (contentTimeout) clearTimeout(contentTimeout)
   if (synopsisTimeout) clearTimeout(synopsisTimeout)
 })
@@ -336,36 +321,6 @@ onUnmounted(() => {
   gap: 16px;
 }
 
-.editor-header-main {
-  flex: 1;
-  min-width: 0;
-}
-
-.editor-title {
-  :deep(.v-field__input) {
-    font-size: 24px;
-    font-weight: 600;
-    line-height: 1.3;
-    padding: 0;
-  }
-
-  :deep(.v-field__field) {
-    padding: 0;
-  }
-}
-
-.editor-metadata {
-  display: flex;
-  gap: 16px;
-  margin-top: 4px;
-  font-size: 13px;
-  color: rgb(var(--v-theme-on-surface-variant));
-
-  .word-count,
-  .char-count {
-    font-weight: 500;
-  }
-}
 
 .editor-actions {
   display: flex;

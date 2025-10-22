@@ -23,7 +23,7 @@
     </VIcon>
 
     <VIcon
-      v-else-if="tab.type === 'editor'"
+      v-else-if="tab.type === 'editor' || tab.type === 'edit'"
       size="small"
       class="tab-icon"
     >
@@ -44,6 +44,30 @@
       class="tab-icon"
     >
       mdi-script-text-outline
+    </VIcon>
+
+    <VIcon
+      v-else-if="tab.type === 'outline'"
+      size="small"
+      class="tab-icon"
+    >
+      mdi-format-list-text
+    </VIcon>
+
+    <VIcon
+      v-else-if="tab.type === 'mindmap'"
+      size="small"
+      class="tab-icon"
+    >
+      mdi-graph-outline
+    </VIcon>
+
+    <VIcon
+      v-else-if="tab.type === 'item'"
+      size="small"
+      class="tab-icon"
+    >
+      mdi-file-edit-outline
     </VIcon>
 
     <span class="tab-title">

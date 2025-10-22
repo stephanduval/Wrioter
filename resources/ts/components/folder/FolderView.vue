@@ -73,6 +73,24 @@
           <VIcon icon="bx-list-ul" />
           <span class="d-none d-md-inline ms-1">Outline</span>
         </VBtn>
+
+        <VBtn
+          value="mindmap"
+          size="small"
+          :title="'Mind Map View (Cmd+4)'"
+        >
+          <VIcon icon="mdi-graph-outline" />
+          <span class="d-none d-md-inline ms-1">Mind Map</span>
+        </VBtn>
+
+        <VBtn
+          value="item"
+          size="small"
+          :title="'Item Editor View (Cmd+5)'"
+        >
+          <VIcon icon="mdi-file-edit-outline" />
+          <span class="d-none d-md-inline ms-1">Item</span>
+        </VBtn>
       </VBtnToggle>
 
       <VDivider vertical class="mx-2" />
@@ -170,6 +188,21 @@
           :folder="currentFolder"
           :items="folderItems"
         />
+
+        <MindMapView
+          v-else-if="currentViewMode === 'mindmap'"
+          :folder-id="folderId"
+          :folder="currentFolder"
+          :items="folderItems"
+        />
+
+        <ItemView
+          v-else-if="currentViewMode === 'item'"
+          :folder-id="folderId"
+          :folder="currentFolder"
+          :items="folderItems"
+          @add-item="handleAddItem"
+        />
       </template>
 
       <!-- Split View Mode -->
@@ -210,6 +243,8 @@ import { usePaneStore, type PaneViewMode } from '@/stores/pane'
 import ManuscriptView from '@/components/manuscript/ManuscriptView.vue'
 import CorkboardView from '@/components/corkboard/CorkboardView.vue'
 import OutlineView from '@/components/outline/OutlineView.vue'
+import MindMapView from '@/components/mindmap/MindMapView.vue'
+import ItemView from '@/components/item/ItemView.vue'
 import ItemEditor from '@/components/manuscript/ItemEditor.vue'
 import SimpleSplitWrapper from '@/components/splitView/SimpleSplitWrapper.vue'
 import PaneWrapper from '@/components/splitView/PaneWrapper.vue'
@@ -248,6 +283,8 @@ const viewComponents = {
   manuscript: markRaw(ManuscriptView),
   corkboard: markRaw(CorkboardView),
   outline: markRaw(OutlineView),
+  mindmap: markRaw(MindMapView),
+  item: markRaw(ItemView),
   edit: markRaw(ItemEditor)
 }
 
@@ -362,6 +399,14 @@ function setupKeyboardShortcuts() {
       case '3':
         e.preventDefault()
         currentViewMode.value = 'outline'
+        break
+      case '4':
+        e.preventDefault()
+        currentViewMode.value = 'mindmap'
+        break
+      case '5':
+        e.preventDefault()
+        currentViewMode.value = 'item'
         break
       case '\\':
       case '|':

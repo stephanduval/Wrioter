@@ -77,25 +77,18 @@
         </div>
       </template>
 
-      <!-- Custom Edge Types -->
-      <template #edge-bidirectional="edgeProps">
-        <BidirectionalEdge v-bind="edgeProps" />
-      </template>
-
-      <template #edge-labeled="edgeProps">
-        <LabeledEdge v-bind="edgeProps" />
-      </template>
     </VueFlow>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { VueFlow, Handle, Background, Controls, MiniMap, useVueFlow } from '@vue-flow/core'
+import { VueFlow, Handle, useVueFlow } from '@vue-flow/core'
+import { Background } from '@vue-flow/background'
+import { Controls } from '@vue-flow/controls'
+import { MiniMap } from '@vue-flow/minimap'
 import '@vue-flow/core/dist/style.css'
 import '@vue-flow/core/dist/theme-default.css'
-import BidirectionalEdge from './edges/BidirectionalEdge.vue'
-import LabeledEdge from './edges/LabeledEdge.vue'
 
 // Props & Emits
 const props = defineProps<{
@@ -141,8 +134,6 @@ const nodeTypes = {
 
 const edgeTypes = {
   default: 'default',
-  bidirectional: 'bidirectional',
-  labeled: 'labeled',
 }
 
 // Event handlers
@@ -188,7 +179,7 @@ defineExpose({
 })
 </script>
 
-<style>
+<style scoped>
 .mindmap-canvas {
   width: 100%;
   height: 100%;

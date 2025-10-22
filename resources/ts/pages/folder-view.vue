@@ -22,7 +22,7 @@ const folderId = computed(() => {
 // Get view mode from query params
 const viewMode = computed(() => {
   const view = route.query.view
-  if (view === 'manuscript' || view === 'corkboard' || view === 'outline') {
+  if (view === 'manuscript' || view === 'corkboard' || view === 'outline' || view === 'mindmap' || view === 'item') {
     return view
   }
   return 'corkboard' // Default view mode
@@ -39,7 +39,10 @@ watch([viewMode, folderId], ([newViewMode, newFolderId]) => {
 <style scoped>
 .folder-view-page {
   height: 100%;
+  width: 100%;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+  position: relative;
 }
 </style>

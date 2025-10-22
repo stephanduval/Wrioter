@@ -87,6 +87,8 @@ import ItemEditor from '@/components/manuscript/ItemEditor.vue'
 import ManuscriptView from '@/components/manuscript/ManuscriptView.vue'
 import CorkboardView from '@/components/corkboard/CorkboardView.vue'
 import OutlineView from '@/components/outline/OutlineView.vue'
+import MindMapView from '@/components/mindmap/MindMapView.vue'
+import ItemView from '@/components/item/ItemView.vue'
 
 const props = defineProps<{
   pane: Pane
@@ -114,7 +116,9 @@ const viewComponents = shallowRef({
   editor: ItemEditor,
   manuscript: ManuscriptView,
   corkboard: CorkboardView,
-  outline: OutlineView
+  outline: OutlineView,
+  mindmap: MindMapView,
+  item: ItemView
 })
 
 function getViewComponent(type: string) {

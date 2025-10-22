@@ -47,10 +47,11 @@ interface MindMapConnection {
   style?: any
 }
 
-export const useMindMapStore = defineStore('mindmap', () => {
+export const useMindmapStore = defineStore('mindmap', () => {
   // State
   const currentMindmap = ref<MindMap | null>(null)
   const mindmaps = ref<MindMap[]>([])
+  const folderMindmaps = ref<Map<number, MindMap>>(new Map()) // Cache mindmaps by folder ID
   const nodes = ref<Node[]>([])
   const edges = ref<Edge[]>([])
   const items = ref<Map<number, Item>>(new Map()) // Cache of items by ID
@@ -560,6 +561,83 @@ export const useMindMapStore = defineStore('mindmap', () => {
     selectedEdges.value = []
   }
 
+  // Folder-based mindmap operations
+  const loadFolderMindmap = async (folderId: number): Promise<void> => {
+    // Check cache first
+    if (folderMindmaps.value.has(folderId)) {
+      currentMindmap.value = folderMindmaps.value.get(folderId) || null
+      return
+    }
+
+    loading.value = true
+    error.value = null
+    try {
+      // Try to load mindmap for this folder
+      const response = await axios.get(`/folders/${folderId}/mindmap`)
+      if (response.data) {
+        const mindmap = response.data
+        folderMindmaps.value.set(folderId, mindmap)
+        currentMindmap.value = mindmap
+        // Load nodes and edges if available
+        if (mindmap.id) {
+          await loadMindmap(mindmap.id)
+        }
+      }
+    } catch (err: any) {
+      // Folder might not have a mindmap yet, which is okay
+      console.log(`No mindmap found for folder ${folderId}`)
+      currentMindmap.value = null
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const getMindmapByFolderId = (folderId: number): MindMap | null => {
+    return folderMindmaps.value.get(folderId) || null
+  }
+
+  const saveMindmap = async (): Promise<void> => {
+    if (!currentMindmap.value) throw new Error('No mindmap loaded')
+
+    loading.value = true
+    error.value = null
+    try {
+      // Save current state of nodes and edges
+      const response = await axios.put(`/mindmaps/${currentMindmap.value.id}/save`, {
+        nodes: nodes.value,
+        edges: edges.value
+      })
+
+      hasUnsavedChanges.value = false
+    } catch (err: any) {
+      error.value = err.message || 'Failed to save mindmap'
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const addNode = (node: Node) => {
+    nodes.value.push(node)
+    hasUnsavedChanges.value = true
+  }
+
+  const updateNode = (updatedNode: Node) => {
+    const index = nodes.value.findIndex(n => n.id === updatedNode.id)
+    if (index >= 0) {
+      nodes.value[index] = updatedNode
+      hasUnsavedChanges.value = true
+    }
+  }
+
+  const updateEdge = (updatedEdge: Edge) => {
+    const index = edges.value.findIndex(e => e.id === updatedEdge.id)
+    if (index >= 0) {
+      edges.value[index] = updatedEdge
+      hasUnsavedChanges.value = true
+    }
+  }
+
   // Reset
   const reset = () => {
     currentMindmap.value = null
@@ -570,12 +648,14 @@ export const useMindMapStore = defineStore('mindmap', () => {
     selectedEdges.value = []
     hasUnsavedChanges.value = false
     error.value = null
+    folderMindmaps.value.clear()
   }
 
   return {
     // State
     currentMindmap,
     mindmaps,
+    folderMindmaps,
     nodes,
     edges,
     items,
@@ -593,9 +673,15 @@ export const useMindMapStore = defineStore('mindmap', () => {
     loadMindmaps,
     loadMindmap,
     loadManuscriptDefaultMindmap,
+    loadFolderMindmap,
+    getMindmapByFolderId,
     createMindmap,
     updateMindmap,
     deleteMindmap,
+    saveMindmap,
+    addNode,
+    updateNode,
+    updateEdge,
 
     // Item Operations (renamed from node operations)
     addExistingItem,

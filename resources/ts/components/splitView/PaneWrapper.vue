@@ -56,6 +56,32 @@
           </template>
         </VTooltip>
 
+        <VTooltip text="Mind Map View" location="bottom">
+          <template #activator="{ props }">
+            <VBtn
+              value="mindmap"
+              size="small"
+              icon
+              v-bind="props"
+            >
+              <VIcon icon="mdi-graph-outline" size="20" />
+            </VBtn>
+          </template>
+        </VTooltip>
+
+        <VTooltip text="Item Editor" location="bottom">
+          <template #activator="{ props }">
+            <VBtn
+              value="item"
+              size="small"
+              icon
+              v-bind="props"
+            >
+              <VIcon icon="mdi-file-edit-outline" size="20" />
+            </VBtn>
+          </template>
+        </VTooltip>
+
         <VTooltip text="Edit View" location="bottom">
           <template #activator="{ props }">
             <VBtn

@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 
-export type PaneViewMode = 'manuscript' | 'corkboard' | 'outline' | 'edit'
+export type PaneViewMode = 'manuscript' | 'corkboard' | 'outline' | 'mindmap' | 'item' | 'edit'
 
 export interface PaneViewSettings {
   // Manuscript settings
@@ -16,6 +16,16 @@ export interface PaneViewSettings {
   // Outline settings
   visibleColumns?: string[]
   columnWidths?: Record<string, number>
+
+  // Mindmap settings
+  mindmapZoom?: number
+  mindmapPan?: { x: number, y: number }
+  showMindmapGrid?: boolean
+
+  // Item settings
+  itemEditorFontSize?: 'small' | 'medium' | 'large'
+  showSynopsis?: boolean
+  autoSave?: boolean
 
   // Common settings
   scrollPosition?: number
