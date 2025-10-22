@@ -60,11 +60,24 @@
           :color="getIconColor()"
         />
 
-        <!-- Node Label (clickable to select/navigate) -->
-        <div class="node-label" @click="handleNodeClick">
-          <span class="node-title">{{ node.title }}</span>
+        <!-- Node Label (clickable to select/navigate or double-click to rename) -->
+        <div class="node-label" @click="handleNodeClick" @dblclick="startInlineRename">
+          <!-- Inline Rename Input -->
+          <input
+            v-if="isRenaming"
+            ref="renameInputRef"
+            v-model="renameValue"
+            type="text"
+            class="node-rename-input"
+            @keydown.enter="confirmRename"
+            @keydown.escape="cancelRename"
+            @blur="confirmRename"
+            @click.stop
+          />
+          <!-- Display Title -->
+          <span v-else class="node-title">{{ node.title }}</span>
           <div
-            v-if="showMetadata && (node.metadata.wordCount > 0 || node.metadata.hasComments)"
+            v-if="!isRenaming && showMetadata && (node.metadata.wordCount > 0 || node.metadata.hasComments)"
             class="node-metadata"
           >
             <span
@@ -129,8 +142,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, watch, nextTick, onBeforeUnmount } from 'vue'
 import { useDragAndDrop } from '@/composables/useDragAndDrop'
+import { useManuscriptStore } from '@/stores/manuscript'
 import type { DropPosition } from '@/composables/useDragAndDrop'
 
 interface TreeNode {
@@ -149,46 +163,42 @@ interface TreeNode {
     lastModified: string
     hasComments: boolean
     isCompilable: boolean
-    synopsis?: string
   }
   state: {
-    isExpanded: boolean
-    isSelected: boolean
     isLoading: boolean
-    isDragging: boolean
   }
 }
 
 interface Props {
   node: TreeNode
-  level: number
+  level?: number
   expandedNodes: Set<string>
   selectedNode: string | null
   showMetadata?: boolean
-  draggingNodeId?: string | null
-}
-
-interface Emits {
-  (e: 'node-click', nodeId: string): void
-  (e: 'node-toggle', nodeId: string): void
-  (e: 'node-context', data: { nodeId: string; event: MouseEvent }): void
-  (e: 'node-drag-start', data: { nodeId: string; itemId: number }): void
-  (e: 'node-drag-end'): void
-  (e: 'node-drop', data: {
-    sourceNodeId: string
-    sourceItemId: number
-    targetNodeId: string
-    targetItemId: number
-    position: 'above' | 'below' | 'inside'
-  }): void
+  draggingNodeId: string | null
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  showMetadata: true,
-  draggingNodeId: null
+  level: 0,
+  showMetadata: false
 })
 
-const emit = defineEmits<Emits>()
+const emit = defineEmits<{
+  'node-click': [id: string]
+  'node-toggle': [id: string]
+  'node-context': [{ nodeId: string; event: MouseEvent | TouchEvent }]
+  'node-drag-start': [id: string]
+  'node-drag-end': []
+  'node-drop': [{ sourceId: string; targetId: string; position: DropPosition }]
+}>()
+
+// Rename state
+const isRenaming = ref(false)
+const renameValue = ref('')
+const renameInputRef = ref<HTMLInputElement | null>(null)
+
+// Store
+const manuscriptStore = useManuscriptStore()
 
 // Drag & Drop composable
 const {
@@ -247,35 +257,50 @@ const handleTouchStart = (event: TouchEvent) => {
 const handleTouchEnd = () => {
   if (longPressTimer) {
     clearTimeout(longPressTimer)
-    longPressTimer = null
   }
 }
 
 const handleTouchMove = () => {
-  // Cancel long press if finger moves
   if (longPressTimer) {
     clearTimeout(longPressTimer)
-    longPressTimer = null
   }
 }
 
-const getIconColor = (): string => {
-  switch (props.node.type) {
-    case 'folder':
-      return 'warning'
-    case 'text':
-      return 'primary'
-    case 'research':
-      return 'info'
-    case 'character':
-      return 'success'
-    case 'mindmap':
-      return 'purple'
-    default:
-      return 'default'
-  }
+// Drag handlers
+const handleDragStart = (event: DragEvent) => {
+  dragStart(event, props.node.id)
+  emit('node-drag-start', props.node.id)
 }
 
+const handleDragEnd = (event: DragEvent) => {
+  dragEnd(event)
+  emit('node-drag-end')
+}
+
+const handleDragOver = (event: DragEvent, position: DropPosition) => {
+  dragOver(event, position)
+}
+
+const handleDragLeave = (position: DropPosition) => {
+  dragLeave(position)
+}
+
+const handleDrop = (event: DragEvent, position: DropPosition) => {
+  event.preventDefault()
+  event.stopPropagation()
+
+  const sourceId = event.dataTransfer?.getData('nodeId')
+  if (sourceId && sourceId !== props.node.id) {
+    emit('node-drop', {
+      sourceId,
+      targetId: props.node.id,
+      position
+    })
+  }
+  dragLeave(position)
+}
+
+// Format word count for display
 const formatWordCount = (count: number): string => {
   if (count >= 1000) {
     return `${(count / 1000).toFixed(1)}k`
@@ -283,52 +308,75 @@ const formatWordCount = (count: number): string => {
   return count.toString()
 }
 
-// Drag and Drop handlers using composable
-const handleDragStart = (event: DragEvent) => {
-  dragStart(event, {
-    id: props.node.id,
-    itemId: props.node.itemId,
-    type: props.node.type,
-    title: props.node.title
-  })
-
-  // Emit drag start event
-  emit('node-drag-start', {
-    nodeId: props.node.id,
-    itemId: props.node.itemId
-  })
+// Get icon color based on node type
+const getIconColor = (): string => {
+  const type = props.node.type || 'default'
+  const colorMap: Record<string, string> = {
+    folder: 'amber',
+    document: 'blue',
+    scene: 'green',
+    character: 'red',
+    location: 'purple',
+    item: 'orange',
+    default: 'gray'
+  }
+  return colorMap[type] || colorMap.default
 }
 
-const handleDragEnd = () => {
-  dragEnd()
-  emit('node-drag-end')
-}
-
-const handleDragOver = (event: DragEvent, position: 'above' | 'below' | 'inside') => {
-  dragOver(event, props.node.id, position, {
-    allowInside: hasChildren.value,
-    preventSelf: true
+// Rename methods
+const startInlineRename = () => {
+  isRenaming.value = true
+  renameValue.value = props.node.title
+  nextTick(() => {
+    renameInputRef.value?.focus()
+    renameInputRef.value?.select()
   })
 }
 
-const handleDragLeave = (position: 'above' | 'below' | 'inside') => {
-  dragLeave(position)
-}
+const confirmRename = async () => {
+  const newTitle = renameValue.value.trim()
+  isRenaming.value = false
 
-const handleDrop = (event: DragEvent, position: 'above' | 'below' | 'inside') => {
-  const result = drop(event, props.node.id, props.node.itemId, position)
+  if (!newTitle || newTitle === props.node.title) {
+    return
+  }
 
-  if (result) {
-    // Emit drop event with result from composable
-    emit('node-drop', {
-      sourceNodeId: result.sourceId as string,
-      sourceItemId: result.sourceItemId,
-      targetNodeId: result.targetId as string,
-      targetItemId: result.targetItemId,
-      position: result.position
-    })
+  try {
+    const manuscriptId = manuscriptStore.selectedManuscript?.id
+    if (manuscriptId) {
+      await manuscriptStore.renameItem(manuscriptId, props.node.itemId, newTitle)
+    }
+  } catch (error) {
+    console.error('Failed to rename item:', error)
   }
 }
+
+const cancelRename = () => {
+  isRenaming.value = false
+  renameValue.value = ''
+}
+
+// Keyboard shortcut handler
+const handleKeyDown = (event: KeyboardEvent) => {
+  if (event.key === 'F2' && isSelected.value && !isRenaming.value) {
+    event.preventDefault()
+    startInlineRename()
+  }
+}
+
+// Setup keyboard listener when node is selected
+watch(isSelected, (selected) => {
+  if (selected) {
+    window.addEventListener('keydown', handleKeyDown)
+  } else {
+    window.removeEventListener('keydown', handleKeyDown)
+  }
+})
+
+// Cleanup on unmount
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', handleKeyDown)
+})
 </script>
 
 <style scoped lang="scss">
@@ -345,196 +393,136 @@ const handleDrop = (event: DragEvent, position: 'above' | 'below' | 'inside') =>
   }
 
   &.is-dragging {
-    opacity: 0.4;
+    opacity: 0.7;
+    background-color: rgba(59, 130, 246, 0.1);
   }
 
   &.is-selected {
-    background-color: rgba(var(--v-theme-primary), 0.12);
+    background-color: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+  }
 
-    .node-title {
-      color: rgb(var(--v-theme-primary));
-      font-weight: 500;
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+  }
+
+  .node-content {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    .expansion-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 20px;
+      padding: 0;
+      border: none;
+      background: none;
+      cursor: pointer;
+      transition: transform 0.2s;
+
+      &:hover {
+        background-color: rgba(0, 0, 0, 0.05);
+      }
+    }
+
+    .expansion-spacer {
+      width: 20px;
+    }
+
+    .node-icon {
+      flex-shrink: 0;
+    }
+
+    .node-label {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+      cursor: pointer;
+
+      .node-title {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .node-rename-input {
+        flex: 1;
+        padding: 4px 8px;
+        border: 2px solid #3b82f6;
+        border-radius: 4px;
+        font-family: inherit;
+        font-size: inherit;
+
+        &:focus {
+          outline: none;
+          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+      }
+
+      .node-metadata {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 0.75rem;
+        color: #9ca3af;
+
+        .word-count {
+          white-space: nowrap;
+        }
+
+        .comment-indicator,
+        .no-compile-indicator {
+          flex-shrink: 0;
+        }
+      }
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+
+      &.status-draft {
+        background-color: #e5e7eb;
+      }
+
+      &.status-in_progress {
+        background-color: #fbbf24;
+      }
+
+      &.status-completed {
+        background-color: #34d399;
+      }
+
+      &.status-archived {
+        background-color: #9ca3af;
+      }
     }
   }
-}
 
-.node-content {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.expansion-toggle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  padding: 0;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  border-radius: 2px;
-  transition: background-color 0.2s;
-
-  &:hover {
-    background-color: rgba(var(--v-theme-primary), 0.08);
-  }
-}
-
-.expansion-spacer {
-  width: 20px;
-}
-
-.node-icon {
-  flex-shrink: 0;
-}
-
-.node-label {
-  flex: 1;
-  min-width: 0;
-  cursor: pointer;
-  padding: 2px 4px;
-  margin: -2px -4px;
-  border-radius: 4px;
-  transition: background-color 0.2s;
-
-  &:hover {
-    background-color: rgba(var(--v-theme-primary), 0.08);
-  }
-}
-
-.node-title {
-  display: block;
-  font-size: 13px;
-  color: rgb(var(--v-theme-on-surface));
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.node-metadata {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  margin-top: 2px;
-  font-size: 11px;
-  color: rgb(var(--v-theme-on-surface-variant));
-
-  .word-count {
-    font-size: 10px;
-  }
-
-  .comment-indicator {
-    color: rgb(var(--v-theme-info));
-  }
-
-  .no-compile-indicator {
-    color: rgb(var(--v-theme-warning));
-  }
-}
-
-.status-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  flex-shrink: 0;
-
-  &.status-draft {
-    background-color: rgb(var(--v-theme-surface-variant));
-  }
-
-  &.status-in_progress {
-    background-color: rgb(var(--v-theme-warning));
-  }
-
-  &.status-completed {
-    background-color: rgb(var(--v-theme-success));
-  }
-
-  &.status-archived {
-    background-color: rgb(var(--v-theme-error));
-  }
-}
-
-.child-nodes {
-  position: relative;
-
-  &::before {
-    content: '';
-    position: absolute;
-    left: 10px;
-    top: 0;
-    bottom: 0;
-    width: 1px;
-    background-color: rgba(var(--v-theme-on-surface), 0.12);
-  }
-}
-
-// Drop zones
-.drop-zone {
-  position: relative;
-  height: 4px;
-  margin: 2px 0;
-  background-color: transparent;
-  transition: all 0.2s;
-
-  &::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: 50%;
-    transform: translateY(-50%);
+  .drop-zone {
     height: 2px;
-    background-color: rgb(var(--v-theme-primary));
-    opacity: 0;
-    transition: opacity 0.2s;
+    background-color: #3b82f6;
+    margin: 4px 0;
+    border-radius: 1px;
+
+    &.drop-zone-above {
+      margin-bottom: 4px;
+    }
+
+    &.drop-zone-below {
+      margin-top: 4px;
+    }
   }
 
-  &:hover::before,
-  &.active::before {
-    opacity: 1;
-  }
-
-  &.drop-zone-above {
-    margin-bottom: -2px;
-  }
-
-  &.drop-zone-below {
-    margin-top: -2px;
-  }
-}
-
-// Drop target styling (for dropping inside folders)
-.tree-node.drop-target {
-  background-color: rgba(var(--v-theme-primary), 0.15);
-  border: 2px dashed rgb(var(--v-theme-primary));
-
-  &::after {
-    content: 'Drop here';
-    position: absolute;
-    right: 8px;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 10px;
-    color: rgb(var(--v-theme-primary));
-    font-weight: 600;
-    text-transform: uppercase;
-  }
-}
-
-// Dragging cursor
-.tree-node[draggable="true"] {
-  cursor: grab;
-
-  &:active {
-    cursor: grabbing;
-  }
-
-  &.is-dragging {
-    opacity: 0.4;
-    cursor: grabbing;
+  .child-nodes {
+    margin-left: 0;
   }
 }
 </style>
