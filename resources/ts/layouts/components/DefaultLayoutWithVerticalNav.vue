@@ -37,10 +37,22 @@ watch([
 }, { immediate: true })
 
 const actionArrowInitialRotation = configStore.isVerticalNavCollapsed ? '180deg' : '0deg'
+
+// Handle nav item rename
+const handleNavItemRename = (itemId: string, newTitle: string) => {
+  console.log('Renaming nav item:', itemId, 'to:', newTitle)
+  // Here you can update the nav items in your store or make an API call
+  // For now, we'll just log it
+  // TODO: Implement actual rename logic based on your requirements
+}
 </script>
 
 <template>
-  <VerticalNavLayout :nav-items="navItems">
+  <VerticalNavLayout
+    :nav-items="navItems"
+    :editable-items="true"
+    @rename-item="handleNavItemRename"
+  >
     <!-- 👉 Dynamic Manuscript Navigation -->
     <template #before-vertical-nav-items>
       <DynamicManuscriptNavigation />

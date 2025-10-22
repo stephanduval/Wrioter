@@ -13,7 +13,11 @@ defineOptions({
 })
 
 const props = defineProps<{
-  item: NavGroup
+  item: NavGroup & { editable?: boolean }
+}>()
+
+const emit = defineEmits<{
+  (e: 'rename', itemId: string, newTitle: string): void
 }>()
 
 const route = useRoute()
@@ -208,7 +212,8 @@ watch(
           :is="'children' in child ? 'VerticalNavGroup' : VerticalNavLink"
           v-for="child in item.children"
           :key="child.title"
-          :item="child"
+          :item="{ ...child, editable: item.editable }"
+          @rename="(itemId: string, newTitle: string) => emit('rename', itemId, newTitle)"
         />
       </ul>
     </TransitionExpand>
