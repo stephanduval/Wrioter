@@ -185,9 +185,12 @@ interface Props {
   items: FolderItem[]
   paneId?: string
   itemId?: number // Allow pre-selection of an item
+  manuscriptId?: number // Optional explicit manuscript ID
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  manuscriptId: undefined
+})
 
 const emit = defineEmits<{
   'add-item': []
@@ -212,8 +215,11 @@ const fontSize = ref<'small' | 'medium' | 'large'>('medium')
 
 // Computed
 const manuscriptId = computed(() => {
-  // Get manuscript ID from the first item or folder metadata
-  // This is a simplified approach - might need adjustment based on your data structure
+  // Use explicit manuscriptId prop if provided
+  if (props.manuscriptId) {
+    return props.manuscriptId
+  }
+  // Fall back to folder metadata or first item
   return props.folder?.manuscript_id || props.items[0]?.manuscript_id || props.folderId
 })
 

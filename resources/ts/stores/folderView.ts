@@ -69,6 +69,7 @@ export interface FolderData {
   title: string
   type: 'folder'
   parent_id?: number
+  manuscript_id?: number
 }
 
 /**

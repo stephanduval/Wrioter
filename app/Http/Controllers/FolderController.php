@@ -81,12 +81,19 @@ class FolderController extends Controller
         // Load user preferences for this folder
         $viewPreferences = $this->loadViewPreferences($folderId);
 
+        // Get the manuscript ID from the folder's relationship
+        // Folders are items, so we need to get the manuscript through the manuscript_items table
+        $manuscriptId = DB::table('manuscript_items')
+            ->where('item_id', $folderId)
+            ->value('manuscript_id');
+
         return response()->json([
             'folder' => [
                 'id' => $folder->id,
                 'title' => $folder->title,
                 'type' => $folder->type,
-                'parent_id' => $folder->parent_id
+                'parent_id' => $folder->parent_id,
+                'manuscript_id' => $manuscriptId
             ],
             'items' => $items,
             'view_preferences' => $viewPreferences

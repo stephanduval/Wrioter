@@ -201,6 +201,7 @@
           :folder-id="folderId"
           :folder="currentFolder"
           :items="folderItems"
+          :manuscript-id="currentFolder?.manuscript_id"
           @add-item="handleAddItem"
         />
       </template>
@@ -227,6 +228,7 @@
               :items="getPaneItems(paneId)"
               :pane-id="paneId"
               :item-id="getPaneEditingItemId(paneId)"
+              :manuscript-id="currentFolder?.manuscript_id"
             />
           </PaneWrapper>
         </template>

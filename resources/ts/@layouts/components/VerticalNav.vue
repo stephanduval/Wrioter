@@ -13,11 +13,17 @@ interface Props {
   navItems: VerticalNavItems
   isOverlayNavActive: boolean
   toggleIsOverlayNavActive: (value: boolean) => void
+  editableItems?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
   tag: 'aside',
+  editableItems: false,
 })
+
+const emit = defineEmits<{
+  (e: 'rename-item', itemId: string, newTitle: string): void
+}>()
 
 const refNav = ref()
 
@@ -54,6 +60,11 @@ const handleNavScroll = (evt: Event) => {
 }
 
 const hideTitleAndIcon = configStore.isVerticalNavMini(isHovered)
+
+// Handle rename event from child components
+const handleRename = (itemId: string, newTitle: string) => {
+  emit('rename-item', itemId, newTitle)
+}
 </script>
 
 <template>
@@ -134,7 +145,8 @@ const hideTitleAndIcon = configStore.isVerticalNavMini(isHovered)
           :is="resolveNavItemComponent(item)"
           v-for="(item, index) in navItems"
           :key="index"
-          :item="item"
+          :item="{ ...item, editable: editableItems }"
+          @rename="handleRename"
         />
       </PerfectScrollbar>
     </slot>
