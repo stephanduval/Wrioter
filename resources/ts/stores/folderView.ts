@@ -62,6 +62,11 @@ export interface FolderItem {
   metadata?: any
   include_in_compile?: boolean
   updated_at: string
+  // Scrivening-specific fields
+  source_folder_id?: number
+  source_folder_title?: string
+  original_order?: number
+  scrivening_order?: number
 }
 
 export interface FolderData {
@@ -70,6 +75,27 @@ export interface FolderData {
   type: 'folder'
   parent_id?: number
   manuscript_id?: number
+}
+
+export interface ScriveningSelection {
+  type: 'folder' | 'item'
+  id: number
+}
+
+export interface ScriveningMetadata {
+  total_items: number
+  total_words: number
+  sources: Array<{
+    id: number
+    title: string
+    item_count: number
+  }>
+}
+
+export interface ScriveningSeparator {
+  afterItemId: number
+  sourceFolder: string
+  type: 'dashed' | 'header' | 'dot'
 }
 
 /**
@@ -97,6 +123,13 @@ export const useFolderViewStore = defineStore('folderView', () => {
     outline?: SplitNode
   }>({})
 
+  // Scrivening state
+  const scriveningMode = ref(false)
+  const scriveningSelections = ref<ScriveningSelection[]>([])
+  const scriveningItems = ref<FolderItem[]>([])
+  const scriveningMetadata = ref<ScriveningMetadata | null>(null)
+  const scriveningSeparators = ref<Map<number, ScriveningSeparator>>(new Map())
+
   // Getters
   const hasFolder = computed(() => currentFolderId.value !== null)
 
@@ -113,6 +146,15 @@ export const useFolderViewStore = defineStore('folderView', () => {
 
     return pref.settings[currentViewMode.value] || null
   })
+
+  // Scrivening getters
+  const displayItems = computed(() => {
+    return scriveningMode.value ? scriveningItems.value : folderItems.value
+  })
+
+  const scriveningItemCount = computed(() => scriveningItems.value.length)
+
+  const displayItemCount = computed(() => displayItems.value.length)
 
   // Actions
 
@@ -404,6 +446,120 @@ export const useFolderViewStore = defineStore('folderView', () => {
     }
   }
 
+  /**
+   * Enable scrivening mode with multiple selections
+   */
+  async function enableScrivening(selections: ScriveningSelection[]) {
+    try {
+      if (!selections || selections.length === 0) {
+        throw new Error('No selections provided')
+      }
+
+      isLoading.value = true
+      error.value = null
+
+      console.log('Enabling scrivening mode with selections:', selections)
+
+      // Call scrivening API
+      const response = await $api('/folders/scrivening/contents', {
+        method: 'POST',
+        body: {
+          selections,
+          view_mode: currentViewMode.value
+        }
+      })
+
+      console.log('Scrivening response:', response)
+
+      // Update state
+      scriveningMode.value = true
+      scriveningSelections.value = selections
+      scriveningItems.value = response.items || []
+      scriveningMetadata.value = response.metadata || null
+
+      // Build separators map
+      buildSeparators(response.items || [])
+
+      console.log(`Scrivening enabled with ${scriveningItems.value.length} items`)
+    } catch (err: any) {
+      console.error('Failed to enable scrivening:', err)
+      error.value = err.message || 'Failed to load scrivening contents'
+      throw err
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  /**
+   * Disable scrivening mode and return to normal folder view
+   */
+  function disableScrivening() {
+    scriveningMode.value = false
+    scriveningSelections.value = []
+    scriveningItems.value = []
+    scriveningMetadata.value = null
+    scriveningSeparators.value.clear()
+
+    console.log('Scrivening mode disabled')
+
+    // Reload current folder if one is loaded
+    if (currentFolderId.value) {
+      loadFolder(currentFolderId.value, currentViewMode.value)
+    }
+  }
+
+  /**
+   * Toggle scrivening mode on/off
+   */
+  function toggleScrivening(selections?: ScriveningSelection[]) {
+    if (scriveningMode.value) {
+      disableScrivening()
+    } else if (selections && selections.length > 0) {
+      enableScrivening(selections)
+    }
+  }
+
+  /**
+   * Build separators map from items array
+   */
+  function buildSeparators(items: FolderItem[]) {
+    scriveningSeparators.value.clear()
+
+    if (items.length === 0) return
+
+    let lastFolderId: number | undefined = undefined
+
+    items.forEach((item, index) => {
+      if (
+        item.source_folder_id !== undefined &&
+        item.source_folder_id !== lastFolderId &&
+        index > 0
+      ) {
+        // Add separator after previous item
+        const prevItem = items[index - 1]
+        scriveningSeparators.value.set(prevItem.id, {
+          afterItemId: prevItem.id,
+          sourceFolder: item.source_folder_title || 'Unknown',
+          type: 'dashed' // Default separator type
+        })
+      }
+      lastFolderId = item.source_folder_id
+    })
+
+    console.log(`Built ${scriveningSeparators.value.size} separators`)
+  }
+
+  /**
+   * Reload scrivening contents with current view mode
+   */
+  async function reloadScrivening() {
+    if (!scriveningMode.value || scriveningSelections.value.length === 0) {
+      return
+    }
+
+    await enableScrivening(scriveningSelections.value)
+  }
+
   return {
     // State
     currentViewMode,
@@ -416,12 +572,22 @@ export const useFolderViewStore = defineStore('folderView', () => {
     splitEnabled,
     splitLayouts,
 
+    // Scrivening state
+    scriveningMode,
+    scriveningSelections,
+    scriveningItems,
+    scriveningMetadata,
+    scriveningSeparators,
+
     // Getters
     hasFolder,
     currentViewPreference,
     currentViewSettings,
     itemCount,
     currentSplitLayout,
+    displayItems,
+    displayItemCount,
+    scriveningItemCount,
 
     // Actions
     setViewMode,
@@ -437,6 +603,13 @@ export const useFolderViewStore = defineStore('folderView', () => {
     clearFolder,
     updateItemOrder,
     updateBulkItemOrder,
+
+    // Scrivening actions
+    enableScrivening,
+    disableScrivening,
+    toggleScrivening,
+    reloadScrivening,
+
     $reset
   }
 })

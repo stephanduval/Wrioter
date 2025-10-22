@@ -268,7 +268,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { useMindMapStore } from '@/stores/mindmap'
+import { useMindmapStore as useMindMapStore } from '@/stores/mindmap'
 import { useManuscriptStore } from '@/stores/manuscript'
 import { useToast } from 'vue-toastification'
 import axios from '@/../js/axios'

@@ -130,9 +130,28 @@
             />
           </div>
 
-          <!-- Page Break -->
+          <!-- Scrivening Separator (shows between items from different folders) -->
           <div
-            v-if="showPageBreaks && index < items.length - 1"
+            v-if="scriveningMode && scriveningSeparators?.has(item.id)"
+            class="scrivening-separator"
+            :class="`separator-${scriveningSeparators.get(item.id)?.type || 'dashed'}`"
+          >
+            <template v-if="scriveningSeparators.get(item.id)?.type === 'header'">
+              <div class="separator-content">
+                <span class="folder-name">{{ scriveningSeparators.get(item.id)?.sourceFolder }}</span>
+              </div>
+            </template>
+            <template v-else-if="scriveningSeparators.get(item.id)?.type === 'dot'">
+              <div class="separator-dots">•••</div>
+            </template>
+            <template v-else>
+              <div class="separator-line" />
+            </template>
+          </div>
+
+          <!-- Page Break (only show when not in scrivening mode or no separator) -->
+          <div
+            v-else-if="showPageBreaks && index < items.length - 1"
             class="page-break"
           >
             <div class="page-break-line" />
@@ -158,11 +177,16 @@ import { useFolderViewStore, type FolderItem, type FolderData } from '@/stores/f
 import { reorderFolderItems } from '@/api/folders'
 import ManuscriptItem from './ManuscriptItem.vue'
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   folderId: number
   folder: FolderData | null
   items: FolderItem[]
-}>()
+  scriveningMode?: boolean
+  scriveningSeparators?: Map<number, any>
+}>(), {
+  scriveningMode: false,
+  scriveningSeparators: () => new Map()
+})
 
 const emit = defineEmits<{
   print: []
@@ -529,5 +553,46 @@ watch(
     left: -1rem;
     top: 0.5rem;
   }
+}
+
+/* Scrivening Separators */
+.scrivening-separator {
+  margin: 2rem 0;
+  text-align: center;
+}
+
+.scrivening-separator.separator-dashed .separator-line {
+  border-top: 2px dashed rgb(var(--v-theme-primary));
+  opacity: 0.5;
+}
+
+.scrivening-separator.separator-header .separator-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 1rem 0;
+}
+
+.scrivening-separator.separator-header .separator-content::before,
+.scrivening-separator.separator-header .separator-content::after {
+  content: '';
+  flex: 1;
+  border-top: 1px solid rgb(var(--v-theme-surface-variant));
+}
+
+.scrivening-separator .folder-name {
+  padding: 0 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: rgb(var(--v-theme-primary));
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.scrivening-separator.separator-dot .separator-dots {
+  font-size: 1.5rem;
+  color: rgb(var(--v-theme-on-surface-variant));
+  letter-spacing: 0.5rem;
+  opacity: 0.6;
 }
 </style>

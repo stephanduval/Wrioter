@@ -238,6 +238,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/folders/{folderId}/contents', [App\Http\Controllers\FolderController::class, 'getContents']);
     // Reorder items within a folder
     Route::post('/folders/{folderId}/reorder', [App\Http\Controllers\FolderController::class, 'reorder']);
+    // Get scrivening contents (multiple folders/items combined)
+    Route::post('/folders/scrivening/contents', [App\Http\Controllers\FolderController::class, 'getScriveningContents']);
 });
 
 // Mind Map Routes

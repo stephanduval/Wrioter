@@ -198,7 +198,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
-import { useMindMapStore } from '@/stores/mindmap'
+import { useMindmapStore as useMindMapStore } from '@/stores/mindmap'
 import { useManuscriptStore } from '@/stores/manuscript'
 import { useRouter } from 'vue-router'
 import { useToast } from 'vue-toastification'

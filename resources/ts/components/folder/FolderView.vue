@@ -19,7 +19,6 @@
 
     <!-- Toolbar with View Mode Switcher -->
     <VToolbar
-      v-if="currentFolder"
       density="compact"
       color="surface"
       class="folder-view-toolbar"
@@ -27,9 +26,18 @@
       <!-- Folder Title -->
       <VToolbarTitle>
         <VIcon :icon="getFolderIcon()" class="me-2" />
-        {{ currentFolder.title }}
+        {{ scriveningMode ? 'Multiple Selection' : (currentFolder?.title || 'Folder View') }}
         <VChip
-          v-if="itemCount > 0"
+          v-if="scriveningMode && scriveningItemCount > 0"
+          size="small"
+          color="primary"
+          class="ms-2"
+        >
+          <VIcon icon="mdi-file-multiple" size="small" class="me-1" />
+          {{ scriveningItemCount }} {{ scriveningItemCount === 1 ? 'item' : 'items' }}
+        </VChip>
+        <VChip
+          v-else-if="!scriveningMode && itemCount > 0"
           size="small"
           class="ms-2"
         >
@@ -108,6 +116,37 @@
         </template>
       </VTooltip>
 
+      <!-- DEBUG: MASSIVE VISIBLE TEST -->
+      <div style="background: red; color: white; padding: 20px; font-size: 24px; font-weight: bold; z-index: 9999;">
+        DEBUG SCRIVENING BUTTON AREA
+      </div>
+
+      <!-- Scrivening Mode Toggle -->
+      <VBtn
+        icon="mdi-file-multiple"
+        :color="scriveningMode ? 'primary' : undefined"
+        size="small"
+        @click="handleToggleScrivening"
+        title="Scrivening Mode (TEST)"
+      >
+        <VIcon icon="mdi-file-multiple" />
+      </VBtn>
+
+      <!-- DEBUG TEXT - REMOVE AFTER TESTING -->
+      <span style="color: red; font-weight: bold; font-size: 20px; background: yellow; padding: 10px;">SCRIV BUTTON HERE</span>
+
+      <!-- Exit Scrivening Mode Button -->
+      <VTooltip v-if="scriveningMode" text="Exit Scrivening Mode">
+        <template #activator="{ props: tooltipProps }">
+          <VBtn
+            icon="mdi-close"
+            size="small"
+            v-bind="tooltipProps"
+            @click="handleExitScrivening"
+          />
+        </template>
+      </VTooltip>
+
       <!-- Additional Actions Menu -->
       <VMenu>
         <template #activator="{ props }">
@@ -149,7 +188,7 @@
     <div class="folder-view-content">
       <!-- Empty State -->
       <VAlert
-        v-if="!isLoading && itemCount === 0"
+        v-if="!isLoading && !splitEnabled && displayItemCount === 0"
         type="info"
         variant="tonal"
         class="ma-4"
@@ -172,36 +211,44 @@
           v-if="currentViewMode === 'manuscript'"
           :folder-id="folderId"
           :folder="currentFolder"
-          :items="folderItems"
+          :items="displayItems"
+          :scrivening-mode="scriveningMode"
+          :scrivening-separators="scriveningSeparators"
         />
 
         <CorkboardView
           v-else-if="currentViewMode === 'corkboard'"
           :folder-id="folderId"
           :folder="currentFolder"
-          :items="folderItems"
+          :items="displayItems"
+          :scrivening-mode="scriveningMode"
+          :scrivening-separators="scriveningSeparators"
         />
 
         <OutlineView
           v-else-if="currentViewMode === 'outline'"
           :folder-id="folderId"
           :folder="currentFolder"
-          :items="folderItems"
+          :items="displayItems"
+          :scrivening-mode="scriveningMode"
+          :scrivening-separators="scriveningSeparators"
         />
 
         <MindMapView
           v-else-if="currentViewMode === 'mindmap'"
           :folder-id="folderId"
           :folder="currentFolder"
-          :items="folderItems"
+          :items="displayItems"
+          :scrivening-mode="scriveningMode"
         />
 
         <ItemView
           v-else-if="currentViewMode === 'item'"
           :folder-id="folderId"
           :folder="currentFolder"
-          :items="folderItems"
+          :items="displayItems"
           :manuscript-id="currentFolder?.manuscript_id"
+          :scrivening-mode="scriveningMode"
           @add-item="handleAddItem"
         />
       </template>
@@ -273,8 +320,13 @@ const {
   isLoading,
   error,
   itemCount,
+  displayItemCount,
   splitEnabled,
-  currentSplitLayout
+  currentSplitLayout,
+  scriveningMode,
+  scriveningItemCount,
+  displayItems,
+  scriveningSeparators
 } = storeToRefs(folderViewStore)
 
 // Local state
@@ -383,11 +435,49 @@ function handleAddItem() {
   // TODO: Implement add item dialog/action
 }
 
+// Scrivening methods
+async function handleToggleScrivening() {
+  if (scriveningMode.value) {
+    // If already in scrivening mode, exit it
+    handleExitScrivening()
+  } else {
+    // For testing: Enable scrivening with current folder
+    // To really demonstrate scrivening with multiple sources, we can add individual items
+    // In production, this would open a selection dialog for the user to pick items/folders
+    try {
+      console.log('Enabling scrivening mode with current folder:', props.folderId)
+
+      // Start with current folder
+      const selections = [{ type: 'folder' as const, id: props.folderId }]
+
+      // For demo: If we have items, also add a few individual items to show separators
+      // (In real usage, user would select these from other folders)
+      if (folderItems.value.length > 0) {
+        // Add first item individually to demonstrate item-level selection
+        selections.push({ type: 'item' as const, id: folderItems.value[0].id })
+      }
+
+      await folderViewStore.enableScrivening(selections)
+      console.log('Scrivening mode enabled successfully with', selections.length, 'selections')
+    } catch (err) {
+      console.error('Failed to enable scrivening mode:', err)
+      error.value = 'Failed to enable scrivening mode'
+    }
+  }
+}
+
+function handleExitScrivening() {
+  console.log('Exiting scrivening mode')
+  folderViewStore.disableScrivening()
+}
+
 // Keyboard shortcuts
 function setupKeyboardShortcuts() {
   keyboardListener.value = (e: KeyboardEvent) => {
     // Check if Cmd (Mac) or Ctrl (Windows/Linux) is pressed
-    if (!(e.metaKey || e.ctrlKey)) return
+    const cmdOrCtrl = e.metaKey || e.ctrlKey
+
+    if (!cmdOrCtrl) return
 
     switch (e.key) {
       case '1':
@@ -414,6 +504,14 @@ function setupKeyboardShortcuts() {
       case '|':
         e.preventDefault()
         toggleSplitView()
+        break
+      case 's':
+      case 'S':
+        // Cmd+Option+S (Mac) or Ctrl+Alt+S (Windows/Linux) for scrivening
+        if (e.altKey) {
+          e.preventDefault()
+          handleToggleScrivening()
+        }
         break
     }
   }
