@@ -80,13 +80,13 @@ ssh ${SSH_USER}@${SERVER_HOST} << 'ENDSSH'
     tar -xzf ~/deploy.tar.gz
     rm ~/deploy.tar.gz
 
-    # Set up .env file from .env.production
+    # Set up .env file from .env.production.stormweb
     echo "Setting up environment..."
-    if [ -f .env.production ]; then
-        cp .env.production .env
+    if [ -f .env.production.stormweb ]; then
+        cp .env.production.stormweb .env
         echo "✅ Environment file configured"
     else
-        echo "⚠️ Warning: .env.production not found!"
+        echo "⚠️ Warning: .env.production.stormweb not found!"
     fi
 
     # Set permissions
