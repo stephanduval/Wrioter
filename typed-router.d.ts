@@ -153,6 +153,7 @@ declare module 'vue-router/auto-routes' {
     'sdtestpage': RouteRecordInfo<'sdtestpage', '/sdtestpage', Record<never, never>, Record<never, never>>,
     'second-page': RouteRecordInfo<'second-page', '/second-page', Record<never, never>, Record<never, never>>,
     'select-manuscript': RouteRecordInfo<'select-manuscript', '/select-manuscript', Record<never, never>, Record<never, never>>,
+    'split-view-demo': RouteRecordInfo<'split-view-demo', '/split-view-demo', Record<never, never>, Record<never, never>>,
     'tables-data-table': RouteRecordInfo<'tables-data-table', '/tables/data-table', Record<never, never>, Record<never, never>>,
     'tables-simple-table': RouteRecordInfo<'tables-simple-table', '/tables/simple-table', Record<never, never>, Record<never, never>>,
     'wizard-examples-checkout': RouteRecordInfo<'wizard-examples-checkout', '/wizard-examples/checkout', Record<never, never>, Record<never, never>>,

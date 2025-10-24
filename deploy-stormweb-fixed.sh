@@ -6,6 +6,7 @@
 # Configuration
 SERVER_HOST="23.180.104.108"
 SSH_USER="sduvalssh" # CloudPanel SSH user
+SSH_KEY="$HOME/.ssh/id_rsa" # SSH key for authentication (key-based auth, no password)
 DOMAIN="stephandouglasduval.com"
 # CloudPanel uses public as document root, Laravel files go one level up
 SITE_ROOT="/home/sduval/htdocs/${DOMAIN}"  # Website still in sduval home, SSH user is sduvalssh
@@ -43,6 +44,7 @@ tar -czf deploy.tar.gz \
     --exclude=.env \
     --exclude=.env.testing \
     --exclude=storage/app/public/* \
+    --exclude=storage/app/temp/* \
     --exclude=storage/logs/* \
     --exclude=storage/framework/cache/* \
     --exclude=storage/framework/sessions/* \
@@ -56,17 +58,17 @@ tar -czf deploy.tar.gz \
 
 # Step 4: Upload to server
 echo -e "${YELLOW}📤 Uploading to StormWeb...${NC}"
-scp deploy.tar.gz ${SSH_USER}@${SERVER_HOST}:~/deploy.tar.gz
+scp -i "$SSH_KEY" deploy.tar.gz ${SSH_USER}@${SERVER_HOST}:~/deploy.tar.gz
 
 # Also upload the systemd service files
 echo -e "${YELLOW}📤 Uploading queue worker and scheduler service files...${NC}"
-scp wrioter-queue.service ${SSH_USER}@${SERVER_HOST}:~/wrioter-queue.service
-scp wrioter-scheduler.service ${SSH_USER}@${SERVER_HOST}:~/wrioter-scheduler.service
-scp wrioter-scheduler.timer ${SSH_USER}@${SERVER_HOST}:~/wrioter-scheduler.timer
+scp -i "$SSH_KEY" wrioter-queue.service ${SSH_USER}@${SERVER_HOST}:~/wrioter-queue.service
+scp -i "$SSH_KEY" wrioter-scheduler.service ${SSH_USER}@${SERVER_HOST}:~/wrioter-scheduler.service
+scp -i "$SSH_KEY" wrioter-scheduler.timer ${SSH_USER}@${SERVER_HOST}:~/wrioter-scheduler.timer
 
 # Step 5: Execute deployment on server
 echo -e "${YELLOW}🔧 Running deployment on server...${NC}"
-ssh ${SSH_USER}@${SERVER_HOST} << 'ENDSSH'
+ssh -i "$SSH_KEY" ${SSH_USER}@${SERVER_HOST} << 'ENDSSH'
     # Create backup
     echo "Creating backup..."
     mkdir -p ~/backups
