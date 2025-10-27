@@ -27,6 +27,9 @@ use Illuminate\Support\Facades\Mail;
 |
 */
 
+// Client Error Logging (no auth required - for mobile error tracking)
+Route::post('log-client-error', [App\Http\Controllers\ClientErrorController::class, 'logError']);
+
 // Authentication Routes
 Route::group(['prefix' => 'auth'], function () {
     Route::post('login', [AuthController::class, 'login']);
