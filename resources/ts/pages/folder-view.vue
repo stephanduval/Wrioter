@@ -38,11 +38,21 @@ const itemId = computed(() => {
 })
 
 // Set view mode when route changes
+// Using immediate: true and also watching after folder loads to ensure query params take precedence
 watch([viewMode, folderId], ([newViewMode, newFolderId]) => {
   if (newFolderId && newViewMode) {
     folderViewStore.setViewMode(newViewMode)
   }
 }, { immediate: true })
+
+// Also watch for when folder loads to re-apply query param view mode
+// This ensures URL query params override saved folder preferences
+watch(() => folderViewStore.currentFolder, (folder) => {
+  if (folder && route.query.view) {
+    // Re-apply the view mode from query params after folder loads
+    folderViewStore.setViewMode(viewMode.value)
+  }
+}, { flush: 'post' })
 </script>
 
 <style scoped>
