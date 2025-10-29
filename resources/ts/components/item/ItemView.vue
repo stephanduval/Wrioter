@@ -185,11 +185,13 @@ interface Props {
   items: FolderItem[]
   paneId?: string
   itemId?: number // Allow pre-selection of an item
+  initialItemId?: number // Initial item to select when opening from navigation
   manuscriptId?: number // Optional explicit manuscript ID
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  manuscriptId: undefined
+  manuscriptId: undefined,
+  initialItemId: undefined
 })
 
 const emit = defineEmits<{
@@ -203,7 +205,7 @@ const itemStore = useItemStore()
 const paneStore = usePaneStore()
 
 // Local state
-const selectedItemId = ref<number | null>(props.itemId || null)
+const selectedItemId = ref<number | null>(props.itemId || props.initialItemId || null)
 const focusMode = ref(false)
 const showViewOptions = ref(false)
 

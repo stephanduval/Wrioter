@@ -51,6 +51,7 @@ export interface PaneState {
   // UI state
   isActive: boolean
   isLoading: boolean
+  isViewLocked: boolean // Lock state for this pane
   error?: string
 }
 
@@ -101,6 +102,7 @@ export const usePaneStore = defineStore('pane', () => {
       viewSettings: {},
       isActive: false,
       isLoading: false,
+      isViewLocked: false,
       ...config
     }
 
@@ -169,6 +171,12 @@ export const usePaneStore = defineStore('pane', () => {
     const pane = panes.value.get(paneId)
     if (!pane) return
 
+    // Check if view is locked
+    if (pane.isViewLocked && pane.viewMode !== mode) {
+      console.log(`[PaneStore] Pane ${paneId} view change blocked - view is locked`)
+      return false
+    }
+
     pane.viewMode = mode
 
     // Clear edit-specific state if switching away from edit
@@ -177,6 +185,7 @@ export const usePaneStore = defineStore('pane', () => {
     }
 
     console.log(`[PaneStore] Pane ${paneId} mode changed to: ${mode}`)
+    return true
   }
 
   /**
@@ -388,6 +397,29 @@ export const usePaneStore = defineStore('pane', () => {
   }
 
   /**
+   * Toggle view lock for a specific pane
+   */
+  function togglePaneViewLock(paneId: string): boolean {
+    const pane = panes.value.get(paneId)
+    if (!pane) return false
+
+    pane.isViewLocked = !pane.isViewLocked
+    console.log(`[PaneStore] Pane ${paneId} view lock: ${pane.isViewLocked}`)
+    return pane.isViewLocked
+  }
+
+  /**
+   * Set view lock state for a specific pane
+   */
+  function setPaneViewLock(paneId: string, locked: boolean) {
+    const pane = panes.value.get(paneId)
+    if (!pane) return
+
+    pane.isViewLocked = locked
+    console.log(`[PaneStore] Pane ${paneId} view lock set to: ${locked}`)
+  }
+
+  /**
    * Reset store state
    */
   function $reset() {
@@ -424,6 +456,8 @@ export const usePaneStore = defineStore('pane', () => {
     syncPaneSelections,
     setPaneLoading,
     setPaneError,
+    togglePaneViewLock,
+    setPaneViewLock,
     initializeDefaultPanes,
     getNextPane,
     $reset

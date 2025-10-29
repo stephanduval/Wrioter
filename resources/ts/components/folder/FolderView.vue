@@ -54,6 +54,7 @@
         density="compact"
         color="primary"
         class="me-2"
+        :disabled="isViewLocked"
       >
         <VBtn
           value="manuscript"
@@ -102,6 +103,19 @@
       </VBtnToggle>
 
       <VDivider vertical class="mx-2" />
+
+      <!-- View Lock Toggle -->
+      <VTooltip :text="isViewLocked ? 'Unlock view (Cmd/Ctrl+L)' : 'Lock current view (Cmd/Ctrl+L)'">
+        <template #activator="{ props: tooltipProps }">
+          <VBtn
+            :icon="isViewLocked ? 'mdi-lock' : 'mdi-lock-open'"
+            :color="isViewLocked ? 'warning' : undefined"
+            size="small"
+            v-bind="tooltipProps"
+            @click="handleToggleViewLock"
+          />
+        </template>
+      </VTooltip>
 
       <!-- Split View Toggle -->
       <VTooltip :text="`Toggle Split View (${isMac ? 'Cmd' : 'Ctrl'}+\\)`">
@@ -248,6 +262,7 @@
           :folder="currentFolder"
           :items="displayItems"
           :manuscript-id="currentFolder?.manuscript_id"
+          :initial-item-id="initialItemId"
           :scrivening-mode="scriveningMode"
           @add-item="handleAddItem"
         />
@@ -300,6 +315,7 @@ import PaneWrapper from '@/components/splitView/PaneWrapper.vue'
 
 const props = defineProps<{
   folderId: number
+  initialItemId?: number
 }>()
 
 const emit = defineEmits<{
@@ -326,7 +342,8 @@ const {
   scriveningMode,
   scriveningItemCount,
   displayItems,
-  scriveningSeparators
+  scriveningSeparators,
+  isViewLocked
 } = storeToRefs(folderViewStore)
 
 // Local state
@@ -398,6 +415,18 @@ function handlePaneExport(paneId: string) {
 // Methods
 function getFolderIcon(): string {
   return 'bx-folder'
+}
+
+function handleToggleViewLock() {
+  const newLockState = folderViewStore.toggleViewLock()
+
+  // Show toast notification
+  const message = newLockState
+    ? 'View locked - current view mode will be preserved'
+    : 'View unlocked - you can now switch between views'
+
+  // TODO: Add toast notification when toast system is available
+  console.log(message)
 }
 
 function toggleSplitView() {
@@ -482,23 +511,48 @@ function setupKeyboardShortcuts() {
     switch (e.key) {
       case '1':
         e.preventDefault()
-        currentViewMode.value = 'manuscript'
+        if (!isViewLocked.value) {
+          currentViewMode.value = 'manuscript'
+        } else {
+          console.log('View switching blocked - view is locked')
+        }
         break
       case '2':
         e.preventDefault()
-        currentViewMode.value = 'corkboard'
+        if (!isViewLocked.value) {
+          currentViewMode.value = 'corkboard'
+        } else {
+          console.log('View switching blocked - view is locked')
+        }
         break
       case '3':
         e.preventDefault()
-        currentViewMode.value = 'outline'
+        if (!isViewLocked.value) {
+          currentViewMode.value = 'outline'
+        } else {
+          console.log('View switching blocked - view is locked')
+        }
         break
       case '4':
         e.preventDefault()
-        currentViewMode.value = 'mindmap'
+        if (!isViewLocked.value) {
+          currentViewMode.value = 'mindmap'
+        } else {
+          console.log('View switching blocked - view is locked')
+        }
         break
       case '5':
         e.preventDefault()
-        currentViewMode.value = 'item'
+        if (!isViewLocked.value) {
+          currentViewMode.value = 'item'
+        } else {
+          console.log('View switching blocked - view is locked')
+        }
+        break
+      case 'l':
+      case 'L':
+        e.preventDefault()
+        handleToggleViewLock()
         break
       case '\\':
       case '|':

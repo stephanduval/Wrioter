@@ -123,6 +123,15 @@ export const useFolderViewStore = defineStore('folderView', () => {
     outline?: SplitNode
   }>({})
 
+  // View lock state
+  const isViewLocked = ref(false)
+
+  // Load lock state from localStorage on init
+  const savedLockState = localStorage.getItem('folderView:isViewLocked')
+  if (savedLockState !== null) {
+    isViewLocked.value = savedLockState === 'true'
+  }
+
   // Scrivening state
   const scriveningMode = ref(false)
   const scriveningSelections = ref<ScriveningSelection[]>([])
@@ -162,6 +171,12 @@ export const useFolderViewStore = defineStore('folderView', () => {
    * Set the current view mode and optionally load a folder
    */
   async function setViewMode(mode: ViewMode, folderId?: number) {
+    // Check if view is locked
+    if (isViewLocked.value && mode !== currentViewMode.value) {
+      console.log('View switching blocked - view is locked')
+      return false
+    }
+
     currentViewMode.value = mode
 
     if (folderId !== undefined) {
@@ -172,6 +187,29 @@ export const useFolderViewStore = defineStore('folderView', () => {
     if (currentFolderId.value) {
       await saveViewPreference(currentFolderId.value, { view_mode: mode })
     }
+
+    return true
+  }
+
+  /**
+   * Toggle view lock state
+   */
+  function toggleViewLock() {
+    isViewLocked.value = !isViewLocked.value
+    // Persist to localStorage
+    localStorage.setItem('folderView:isViewLocked', String(isViewLocked.value))
+    console.log(`View lock ${isViewLocked.value ? 'enabled' : 'disabled'}`)
+    return isViewLocked.value
+  }
+
+  /**
+   * Set view lock state explicitly
+   */
+  function setViewLock(locked: boolean) {
+    isViewLocked.value = locked
+    // Persist to localStorage
+    localStorage.setItem('folderView:isViewLocked', String(locked))
+    console.log(`View lock set to ${locked}`)
   }
 
   /**
@@ -571,6 +609,7 @@ export const useFolderViewStore = defineStore('folderView', () => {
     error,
     splitEnabled,
     splitLayouts,
+    isViewLocked,
 
     // Scrivening state
     scriveningMode,
@@ -591,6 +630,8 @@ export const useFolderViewStore = defineStore('folderView', () => {
 
     // Actions
     setViewMode,
+    toggleViewLock,
+    setViewLock,
     loadFolder,
     reloadFolder,
     loadFolderPreferences,

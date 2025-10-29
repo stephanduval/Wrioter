@@ -364,4 +364,16 @@ export const routes: RouteRecordRaw[] = [
       requiresAuth: true,
     },
   },
+  // Manuscript-specific Folder View Route
+  {
+    path: '/manuscripts/:manuscriptId/folders/:id',
+    name: 'manuscript-folder-view',
+    component: () => import('@/pages/folder-view.vue'),
+    meta: {
+      layoutWrapperClasses: 'layout-content-height-fixed',
+      action: 'read',
+      subject: 'manuscripts',
+      requiresAuth: true,
+    },
+  },
 ]

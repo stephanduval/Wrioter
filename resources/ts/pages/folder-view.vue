@@ -1,6 +1,6 @@
 <template>
   <div class="folder-view-page">
-    <FolderView :folder-id="folderId" />
+    <FolderView :folder-id="folderId" :initial-item-id="itemId" />
   </div>
 </template>
 
@@ -26,6 +26,15 @@ const viewMode = computed(() => {
     return view
   }
   return 'corkboard' // Default view mode
+})
+
+// Get item ID from query params (for when opening a specific item in item view)
+const itemId = computed(() => {
+  const id = route.query.itemId
+  if (id) {
+    return typeof id === 'string' ? parseInt(id, 10) : Array.isArray(id) ? parseInt(id[0], 10) : undefined
+  }
+  return undefined
 })
 
 // Set view mode when route changes

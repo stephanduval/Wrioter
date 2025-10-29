@@ -226,27 +226,17 @@ const handleNodeClick = (nodeId: string) => {
   // Navigate to the node
   const node = manuscriptStore.findNodeById(nodeId)
   if (node) {
-    // For text items (documents), handle differently based on view context
-    if (node.type === 'text' && manuscriptStore.selectedManuscriptId) {
-      // Check if we're in split view with an active pane
-      const folderViewStore = useFolderViewStore()
-      const paneStore = usePaneStore()
+    // Check if we're in split view with an active pane
+    const folderViewStore = useFolderViewStore()
+    const paneStore = usePaneStore()
 
-      if (folderViewStore.splitEnabled && paneStore.activePaneId) {
+    if (folderViewStore.splitEnabled && paneStore.activePaneId) {
+      // Split view handling - existing behavior
+      if (node.type === 'text' && manuscriptStore.selectedManuscriptId) {
         // Split view is active - update the active pane to edit mode with this item
         console.log(`[Nav] Opening item ${node.itemId} in active pane ${paneStore.activePaneId}`)
         paneStore.setEditingItem(paneStore.activePaneId, node.itemId)
-      } else {
-        // Single view mode - use traditional routing
-        router.push(`/manuscripts/${manuscriptStore.selectedManuscriptId}/items/${node.itemId}/edit`)
-      }
-    } else if (node.type === 'folder') {
-      // For folders, only handle in split view context
-      // (expansion/collapse now handled by the chevron button directly)
-      const folderViewStore = useFolderViewStore()
-      const paneStore = usePaneStore()
-
-      if (folderViewStore.splitEnabled && paneStore.activePaneId) {
+      } else if (node.type === 'folder') {
         // Split view: Load folder content in the active pane only
         console.log(`[Nav] Loading folder ${node.itemId} in active pane ${paneStore.activePaneId}`)
 
@@ -259,10 +249,31 @@ const handleNodeClick = (nodeId: string) => {
           paneStore.updatePaneMode(paneStore.activePaneId, 'manuscript')
         }
       }
-      // In single view, clicking folder label does nothing (chevron handles expansion)
-    } else if (node.path) {
-      // For other types, use the existing path if available
-      router.push(node.path)
+    } else {
+      // Single view mode - NEW behavior: Always go to FolderView
+      if (node.type === 'folder' && manuscriptStore.selectedManuscriptId) {
+        // Navigate to folder view for folders
+        router.push(`/manuscripts/${manuscriptStore.selectedManuscriptId}/folders/${node.itemId}`)
+      } else if (node.type === 'text' && manuscriptStore.selectedManuscriptId) {
+        // For text items, navigate to parent folder with item view selected
+        const parentNode = manuscriptStore.findParentOfNode(nodeId)
+        if (parentNode && parentNode.type === 'folder') {
+          // Navigate to parent folder with item view mode and selected item
+          router.push({
+            path: `/manuscripts/${manuscriptStore.selectedManuscriptId}/folders/${parentNode.itemId}`,
+            query: {
+              view: 'item',
+              itemId: String(node.itemId)
+            }
+          })
+        } else {
+          // Fallback: If no parent folder found, use traditional item edit route
+          router.push(`/manuscripts/${manuscriptStore.selectedManuscriptId}/items/${node.itemId}/edit`)
+        }
+      } else if (node.path) {
+        // For other types, use the existing path if available
+        router.push(node.path)
+      }
     }
   }
 }

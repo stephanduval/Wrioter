@@ -218,6 +218,11 @@ export const useManuscriptStore = defineStore('manuscript', () => {
     return flatItemsIndex.value.get(nodeId) || null
   }
 
+  const findParentOfNode = (nodeId: string): TreeNode | null => {
+    const node = findNodeById(nodeId)
+    return node?.parent || null
+  }
+
   const getNodePath = (nodeId: string): TreeNode[] => {
     const node = findNodeById(nodeId)
     if (!node) return []
@@ -502,6 +507,7 @@ export const useManuscriptStore = defineStore('manuscript', () => {
     buildNavigationTree,
     fetchManuscriptItems,
     findNodeById,
+    findParentOfNode,
     getNodePath,
   }
 })
