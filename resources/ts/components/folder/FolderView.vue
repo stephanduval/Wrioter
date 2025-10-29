@@ -59,47 +59,37 @@
         <VBtn
           value="manuscript"
           size="small"
+          icon="bx-file-doc"
           :title="'Manuscript View (Cmd+1)'"
-        >
-          <VIcon icon="bx-file-doc" />
-          <span class="d-none d-md-inline ms-1">Manuscript</span>
-        </VBtn>
+        />
 
         <VBtn
           value="corkboard"
           size="small"
+          icon="bx-grid-alt"
           :title="'Corkboard View (Cmd+2)'"
-        >
-          <VIcon icon="bx-grid-alt" />
-          <span class="d-none d-md-inline ms-1">Corkboard</span>
-        </VBtn>
+        />
 
         <VBtn
           value="outline"
           size="small"
+          icon="bx-list-ul"
           :title="'Outline View (Cmd+3)'"
-        >
-          <VIcon icon="bx-list-ul" />
-          <span class="d-none d-md-inline ms-1">Outline</span>
-        </VBtn>
+        />
 
         <VBtn
           value="mindmap"
           size="small"
+          icon="bx-network-chart"
           :title="'Mind Map View (Cmd+4)'"
-        >
-          <VIcon icon="mdi-graph-outline" />
-          <span class="d-none d-md-inline ms-1">Mind Map</span>
-        </VBtn>
+        />
 
         <VBtn
           value="item"
           size="small"
+          icon="bx-edit"
           :title="'Item Editor View (Cmd+5)'"
-        >
-          <VIcon icon="mdi-file-edit-outline" />
-          <span class="d-none d-md-inline ms-1">Item</span>
-        </VBtn>
+        />
       </VBtnToggle>
 
       <VDivider vertical class="mx-2" />
