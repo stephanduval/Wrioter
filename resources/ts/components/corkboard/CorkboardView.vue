@@ -81,6 +81,8 @@
         :view-config="corkboardStore.viewConfig"
         :selected-ids="selectionStore.selectedArray"
         :card-positions="corkboardStore.cardPositions"
+        :scrivening-mode="scriveningMode"
+        :scrivening-separators="scriveningSeparators"
         @card-select="handleCardSelect"
         @card-reorder="handleCardReorder"
         @card-drop="handleCardDrop"
@@ -193,13 +195,24 @@ import type { CorkboardCard } from '@/api/corkboard'
  * Now receives folder and items as props from parent FolderView component.
  * Focuses only on corkboard-specific UI and interactions.
  */
+interface ScriveningSeparator {
+  type: 'dashed' | 'header' | 'dots'
+  title?: string
+  beforeIndex: number
+}
+
 interface Props {
   folderId: number
   folder: FolderData | null
   items: FolderItem[]
+  scriveningMode?: boolean
+  scriveningSeparators?: ScriveningSeparator[]
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  scriveningMode: false,
+  scriveningSeparators: () => []
+})
 
 const router = useRouter()
 const route = useRoute()

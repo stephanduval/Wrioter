@@ -120,11 +120,6 @@
         </template>
       </VTooltip>
 
-      <!-- DEBUG: MASSIVE VISIBLE TEST -->
-      <div style="background: red; color: white; padding: 20px; font-size: 24px; font-weight: bold; z-index: 9999;">
-        DEBUG SCRIVENING BUTTON AREA
-      </div>
-
       <!-- Scrivening Mode Toggle -->
       <VBtn
         icon="mdi-file-multiple"
@@ -135,9 +130,6 @@
       >
         <VIcon icon="mdi-file-multiple" />
       </VBtn>
-
-      <!-- DEBUG TEXT - REMOVE AFTER TESTING -->
-      <span style="color: red; font-weight: bold; font-size: 20px; background: yellow; padding: 10px;">SCRIV BUTTON HERE</span>
 
       <!-- Exit Scrivening Mode Button -->
       <VTooltip v-if="scriveningMode" text="Exit Scrivening Mode">

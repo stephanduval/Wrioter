@@ -34,6 +34,16 @@
           icon
           size="x-small"
           variant="text"
+          :color="selectionMode ? 'primary' : undefined"
+          @click="selectionMode = !selectionMode"
+          title="Toggle Selection Mode for Scrivening"
+        >
+          <VIcon icon="bx-checkbox-square" size="18" />
+        </VBtn>
+        <VBtn
+          icon
+          size="x-small"
+          variant="text"
           @click="handleSearchToggle"
         >
           <VIcon icon="bx-search" size="18" />
@@ -62,6 +72,9 @@
         @update:model-value="handleSearch"
       />
     </div>
+
+    <!-- Scrivening Selector Panel (shown when selections exist) -->
+    <ScriveningSelectorPanel v-if="selectionMode" />
 
     <!-- Loading State -->
     <div v-if="manuscriptStore.loading" class="loading-state">
@@ -111,12 +124,15 @@
         :expanded-nodes="navigationStore.expandedNodes"
         :selected-node="navigationStore.selectedNode"
         :dragging-node-id="draggingNodeId"
+        :selection-mode="selectionMode"
+        :scrivening-selections="scriveningSelections"
         @node-click="handleNodeClick"
         @node-toggle="handleNodeToggle"
         @node-context="handleNodeContext"
         @node-drag-start="handleNodeDragStart"
         @node-drag-end="handleNodeDragEnd"
         @node-drop="handleNodeDrop"
+        @scrivening-selection-toggle="handleScriveningSelectionToggle"
       />
     </div>
 
@@ -142,14 +158,17 @@ import { useRouter } from 'vue-router'
 import { useManuscriptStore } from '@/stores/manuscript'
 import { useManuscriptNavigationStore } from '@/stores/manuscript-navigation'
 import { useFolderViewStore } from '@/stores/folderView'
+import { useSelectionStore } from '@/stores/selection'
 import { usePaneStore } from '@/stores/pane'
 import { useContextMenu } from '@/composables/useContextMenu'
 import { ContextDetectionService } from '@/services/contextDetection'
 import TreeNode from './TreeNode.vue'
+import ScriveningSelectorPanel from '@/components/scrivening/ScriveningSelectorPanel.vue'
 
 // Stores and router
 const manuscriptStore = useManuscriptStore()
 const navigationStore = useManuscriptNavigationStore()
+const selectionStore = useSelectionStore()
 const router = useRouter()
 
 // Context menu composable
@@ -158,6 +177,16 @@ const contextMenu = useContextMenu()
 // Local state
 const showSearch = ref(false)
 const draggingNodeId = ref<string | null>(null)
+const selectionMode = ref(true)
+
+// Computed
+const scriveningSelections = computed(() => {
+  const selections = new Set<string>()
+  for (const [nodeId] of selectionStore.scriveningFolderMap) {
+    selections.add(nodeId)
+  }
+  return selections
+})
 
 // Computed
 const treeMetadata = computed(() => manuscriptStore.treeMetadata)
@@ -340,6 +369,15 @@ const handleNodeDrop = async (data: {
   } catch (error) {
     console.error('Error reordering item:', error)
     // TODO: Show error notification to user
+  }
+}
+
+// Scrivening Selection Handler
+const handleScriveningSelectionToggle = (data: { nodeId: string; itemId: number; checked: boolean }) => {
+  if (data.checked) {
+    selectionStore.addToScriveningSelection(data.nodeId, data.itemId)
+  } else {
+    selectionStore.removeFromScriveningSelection(data.nodeId)
   }
 }
 

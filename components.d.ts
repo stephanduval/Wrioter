@@ -412,6 +412,7 @@ declare module 'vue' {
     ScrivenerContentTree: typeof import('./resources/ts/components/ScrivenerContentTree.vue')['default']
     ScrivenerItemTree: typeof import('./resources/ts/components/ScrivenerItemTree.vue')['default']
     ScrivenerTreeItem: typeof import('./resources/ts/components/ScrivenerTreeItem.vue')['default']
+    ScriveningSelectorPanel: typeof import('./resources/ts/components/scrivening/ScriveningSelectorPanel.vue')['default']
     ScrollToTop: typeof import('./resources/ts/@core/components/ScrollToTop.vue')['default']
     SelectableItem: typeof import('./resources/ts/components/selection/SelectableItem.vue')['default']
     SharedEmailView: typeof import('./resources/ts/components/SharedEmailView.vue')['default']

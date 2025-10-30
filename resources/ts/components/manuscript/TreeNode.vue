@@ -18,7 +18,8 @@
         'is-folder': hasChildren,
         'is-loading': node.state.isLoading,
         'is-dragging': isDragging,
-        'drop-target': dropPosition === 'inside'
+        'drop-target': dropPosition === 'inside',
+        'in-scrivening-selection': isInScriveningSelection
       }"
       :style="{ paddingLeft: `${level * 20}px` }"
       :data-node-id="node.id"
@@ -61,7 +62,7 @@
         />
 
         <!-- Node Label (clickable to select/navigate or double-click to rename) -->
-        <div class="node-label" @click="handleNodeClick" @dblclick="startInlineRename">
+        <div class="node-label" @click="handleNodeClick($event)" @dblclick="startInlineRename">
           <!-- Inline Rename Input -->
           <input
             v-if="isRenaming"
@@ -130,12 +131,15 @@
         :selected-node="selectedNode"
         :show-metadata="showMetadata"
         :dragging-node-id="draggingNodeId"
+        :selection-mode="selectionMode"
+        :scrivening-selections="scriveningSelections"
         @node-click="$emit('node-click', $event)"
         @node-toggle="$emit('node-toggle', $event)"
         @node-context="$emit('node-context', $event)"
         @node-drag-start="$emit('node-drag-start', $event)"
         @node-drag-end="$emit('node-drag-end')"
         @node-drop="$emit('node-drop', $event)"
+        @scrivening-selection-toggle="$emit('scrivening-selection-toggle', $event)"
       />
     </div>
   </div>
@@ -176,11 +180,15 @@ interface Props {
   selectedNode: string | null
   showMetadata?: boolean
   draggingNodeId: string | null
+  selectionMode?: boolean
+  scriveningSelections?: Set<string>
 }
 
 const props = withDefaults(defineProps<Props>(), {
   level: 0,
-  showMetadata: false
+  showMetadata: false,
+  selectionMode: false,
+  scriveningSelections: () => new Set()
 })
 
 const emit = defineEmits<{
@@ -190,6 +198,7 @@ const emit = defineEmits<{
   'node-drag-start': [id: string]
   'node-drag-end': []
   'node-drop': [{ sourceId: string; targetId: string; position: DropPosition }]
+  'scrivening-selection-toggle': [{ nodeId: string; itemId: number; checked: boolean }]
 }>()
 
 // Rename state
@@ -215,6 +224,7 @@ const {
 const hasChildren = computed(() => props.node.children.length > 0)
 const isExpanded = computed(() => props.expandedNodes.has(props.node.id))
 const isSelected = computed(() => props.selectedNode === props.node.id)
+const isInScriveningSelection = computed(() => props.scriveningSelections?.has(props.node.id) || false)
 
 // Show drop zones when dragging
 const showDropZoneAbove = computed(() =>
@@ -230,7 +240,21 @@ const showDropZoneBelow = computed(() =>
 )
 
 // Methods
-const handleNodeClick = () => {
+const handleNodeClick = (event: MouseEvent) => {
+  // Shift-click toggles scrivening selection
+  if (event.shiftKey && props.selectionMode) {
+    event.preventDefault()
+    event.stopPropagation()
+    const isCurrentlySelected = isInScriveningSelection.value
+    emit('scrivening-selection-toggle', {
+      nodeId: props.node.id,
+      itemId: props.node.itemId,
+      checked: !isCurrentlySelected
+    })
+    return
+  }
+
+  // Normal click - navigate
   emit('node-click', props.node.id)
 }
 
@@ -402,8 +426,21 @@ onBeforeUnmount(() => {
     border: 1px solid rgba(59, 130, 246, 0.3);
   }
 
+  &.in-scrivening-selection {
+    background-color: rgba(59, 130, 246, 0.15);
+    border-left: 3px solid #3b82f6;
+
+    .node-title {
+      font-weight: 500;
+    }
+  }
+
   &:hover {
     background-color: rgba(0, 0, 0, 0.05);
+
+    .node-label {
+      cursor: pointer;
+    }
   }
 
   .node-content {

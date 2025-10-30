@@ -122,22 +122,49 @@
         </thead>
 
         <tbody>
-          <OutlineRow
-            v-for="(item, index) in processedItems"
-            :key="item.id"
-            :item="item"
-            :index="index"
-            :columns="visibleColumnConfigs"
-            :selected="selectedIds.has(item.id)"
-            @select="handleRowSelect"
-            @edit="handleCellEdit"
-            @click="handleRowClick"
-            @drag-start="handleDragStart"
-            @drag-end="handleDragEnd"
-            @drag-over="handleDragOver"
-            @drag-leave="handleDragLeave"
-            @drop="handleDrop"
-          />
+          <template v-for="(item, index) in processedItems" :key="item.id">
+            <!-- Render separator row if one exists before this index -->
+            <tr
+              v-if="getSeparatorBeforeIndex(index)"
+              :key="`separator-${index}`"
+              class="scrivening-separator-row"
+            >
+              <td :colspan="visibleColumnConfigs.length + 2" class="separator-cell">
+                <div
+                  v-if="getSeparatorBeforeIndex(index)?.type === 'dashed'"
+                  class="separator-dashed"
+                />
+                <div
+                  v-else-if="getSeparatorBeforeIndex(index)?.type === 'header'"
+                  class="separator-header"
+                >
+                  {{ getSeparatorBeforeIndex(index)?.title }}
+                </div>
+                <div
+                  v-else-if="getSeparatorBeforeIndex(index)?.type === 'dots'"
+                  class="separator-dots"
+                >
+                  • • •
+                </div>
+              </td>
+            </tr>
+
+            <!-- Render the outline row -->
+            <OutlineRow
+              :item="item"
+              :index="index"
+              :columns="visibleColumnConfigs"
+              :selected="selectedIds.has(item.id)"
+              @select="handleRowSelect"
+              @edit="handleCellEdit"
+              @click="handleRowClick"
+              @drag-start="handleDragStart"
+              @drag-end="handleDragEnd"
+              @drag-over="handleDragOver"
+              @drag-leave="handleDragLeave"
+              @drop="handleDrop"
+            />
+          </template>
         </tbody>
       </VTable>
 
@@ -212,11 +239,22 @@ import { useSelectionStore } from '@/stores/selection'
 import { reorderFolderItems } from '@/api/folders'
 import OutlineRow from './OutlineRow.vue'
 
-const props = defineProps<{
+interface ScriveningSeparator {
+  type: 'dashed' | 'header' | 'dots'
+  title?: string
+  beforeIndex: number
+}
+
+const props = withDefaults(defineProps<{
   folderId: number
   folder: FolderData | null
   items: FolderItem[]
-}>()
+  scriveningMode?: boolean
+  scriveningSeparators?: ScriveningSeparator[]
+}>(), {
+  scriveningMode: false,
+  scriveningSeparators: () => []
+})
 
 const emit = defineEmits<{
   exportCSV: []
@@ -270,6 +308,12 @@ const someSelected = computed(() => {
 // Methods
 function getColumnWidth(column: any): string {
   return `${column.width}px`
+}
+
+// Get separator before a given index
+function getSeparatorBeforeIndex(index: number): ScriveningSeparator | undefined {
+  if (!props.scriveningMode || !props.scriveningSeparators) return undefined
+  return props.scriveningSeparators.find(sep => sep.beforeIndex === index)
 }
 
 function toggleSort(field: string) {
@@ -519,5 +563,38 @@ watch(
     padding: 0.5rem 0.75rem;
     font-size: 0.875rem;
   }
+}
+
+/* Scrivening Separators */
+.scrivening-separator-row {
+  background: transparent;
+}
+
+.separator-cell {
+  padding: 12px 16px !important;
+  text-align: center;
+}
+
+.separator-dashed {
+  width: 100%;
+  border-top: 2px dashed rgba(0, 0, 0, 0.2);
+}
+
+.separator-header {
+  font-size: 14px;
+  font-weight: 600;
+  color: rgb(var(--v-theme-primary));
+  text-align: center;
+  padding: 8px 16px;
+  background: rgba(59, 130, 246, 0.1);
+  border-radius: 4px;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  display: inline-block;
+}
+
+.separator-dots {
+  font-size: 18px;
+  color: rgba(0, 0, 0, 0.3);
+  letter-spacing: 8px;
 }
 </style>
