@@ -48,49 +48,11 @@
       <VSpacer />
 
       <!-- View Mode Switcher -->
-      <VBtnToggle
+      <ViewModeSwitcher
         v-model="currentViewMode"
-        mandatory
-        density="compact"
-        color="primary"
-        class="me-2"
         :disabled="isViewLocked"
-      >
-        <VBtn
-          value="manuscript"
-          size="small"
-          icon="bx-file-doc"
-          :title="'Manuscript View (Cmd+1)'"
-        />
-
-        <VBtn
-          value="corkboard"
-          size="small"
-          icon="bx-grid-alt"
-          :title="'Corkboard View (Cmd+2)'"
-        />
-
-        <VBtn
-          value="outline"
-          size="small"
-          icon="bx-list-ul"
-          :title="'Outline View (Cmd+3)'"
-        />
-
-        <VBtn
-          value="mindmap"
-          size="small"
-          icon="bx-network-chart"
-          :title="'Mind Map View (Cmd+4)'"
-        />
-
-        <VBtn
-          value="item"
-          size="small"
-          icon="bx-edit"
-          :title="'Item Editor View (Cmd+5)'"
-        />
-      </VBtnToggle>
+        class="me-2"
+      />
 
       <VDivider vertical class="mx-2" />
 
@@ -294,6 +256,7 @@ import ItemView from '@/components/item/ItemView.vue'
 import ItemEditor from '@/components/manuscript/ItemEditor.vue'
 import SimpleSplitWrapper from '@/components/splitView/SimpleSplitWrapper.vue'
 import PaneWrapper from '@/components/splitView/PaneWrapper.vue'
+import ViewModeSwitcher from '@/components/shared/ViewModeSwitcher.vue'
 
 const props = defineProps<{
   folderId: number

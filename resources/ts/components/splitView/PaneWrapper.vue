@@ -10,92 +10,13 @@
     <!-- Pane Header -->
     <div class="pane-header">
       <!-- View Mode Selector -->
-      <VBtnToggle
+      <ViewModeSwitcher
         :model-value="paneState?.viewMode"
-        mandatory
-        density="compact"
-        color="primary"
+        :icon-size="20"
+        show-edit-mode
+        :edit-mode-enabled="canEnableEditMode"
         @update:model-value="handleViewModeChange"
-      >
-        <VTooltip text="Manuscript View" location="bottom">
-          <template #activator="{ props }">
-            <VBtn
-              value="manuscript"
-              size="small"
-              icon
-              v-bind="props"
-            >
-              <VIcon icon="mdi-file-document-outline" size="20" />
-            </VBtn>
-          </template>
-        </VTooltip>
-
-        <VTooltip text="Corkboard View" location="bottom">
-          <template #activator="{ props }">
-            <VBtn
-              value="corkboard"
-              size="small"
-              icon
-              v-bind="props"
-            >
-              <VIcon icon="mdi-view-grid-outline" size="20" />
-            </VBtn>
-          </template>
-        </VTooltip>
-
-        <VTooltip text="Outline View" location="bottom">
-          <template #activator="{ props }">
-            <VBtn
-              value="outline"
-              size="small"
-              icon
-              v-bind="props"
-            >
-              <VIcon icon="mdi-format-list-text" size="20" />
-            </VBtn>
-          </template>
-        </VTooltip>
-
-        <VTooltip text="Mind Map View" location="bottom">
-          <template #activator="{ props }">
-            <VBtn
-              value="mindmap"
-              size="small"
-              icon
-              v-bind="props"
-            >
-              <VIcon icon="mdi-graph-outline" size="20" />
-            </VBtn>
-          </template>
-        </VTooltip>
-
-        <VTooltip text="Item Editor" location="bottom">
-          <template #activator="{ props }">
-            <VBtn
-              value="item"
-              size="small"
-              icon
-              v-bind="props"
-            >
-              <VIcon icon="mdi-file-edit-outline" size="20" />
-            </VBtn>
-          </template>
-        </VTooltip>
-
-        <VTooltip text="Edit View" location="bottom">
-          <template #activator="{ props }">
-            <VBtn
-              value="edit"
-              size="small"
-              icon
-              v-bind="props"
-              :disabled="!canEnableEditMode"
-            >
-              <VIcon icon="mdi-pencil-outline" size="20" />
-            </VBtn>
-          </template>
-        </VTooltip>
-      </VBtnToggle>
+      />
 
       <VSpacer />
 
@@ -216,6 +137,7 @@
 import { computed, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { usePaneStore, type PaneViewMode } from '@/stores/pane'
+import ViewModeSwitcher from '@/components/shared/ViewModeSwitcher.vue'
 
 const props = defineProps<{
   paneId: string
