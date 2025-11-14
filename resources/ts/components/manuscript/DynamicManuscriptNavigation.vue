@@ -1,31 +1,37 @@
 <template>
   <!-- Debug: Always visible test element -->
-  <div v-if="!manuscriptStore.hasSelectedManuscript" class="debug-no-manuscript" style="padding: 8px; font-size: 11px; color: #666;">
+  <div
+    v-if="!manuscriptStore.hasSelectedManuscript"
+    class="debug-no-manuscript"
+    style="padding: 8px; font-size: 11px; color: #666"
+  >
     📋 DynamicManuscriptNavigation loaded - No manuscript selected
   </div>
 
-  <div v-if="manuscriptStore.hasSelectedManuscript" class="manuscript-navigation-wrapper">
+  <div
+    v-if="manuscriptStore.hasSelectedManuscript"
+    class="manuscript-navigation-wrapper"
+  >
     <!-- Manuscript Header -->
     <div
       class="manuscript-navigation-header"
       :class="{
         'is-loading': manuscriptStore.loading,
         'has-error': manuscriptStore.error,
-        'is-empty': !manuscriptStore.hasNavigationTree
+        'is-empty': !manuscriptStore.hasNavigationTree,
       }"
     >
       <div class="header-content">
-        <VIcon
-          icon="bx-book"
-          size="20"
-          color="primary"
-        />
+        <VIcon icon="bx-book" size="20" color="primary" />
         <div class="manuscript-info">
           <div class="manuscript-title">
-            {{ manuscriptStore.selectedManuscript?.title || 'Unknown Manuscript' }}
+            {{
+              manuscriptStore.selectedManuscript?.title || "Unknown Manuscript"
+            }}
           </div>
           <div class="manuscript-meta">
-            {{ treeMetadata.totalItems }} items • {{ formatWordCount(treeMetadata.totalWords) }} words
+            {{ treeMetadata.totalItems }} items •
+            {{ formatWordCount(treeMetadata.totalWords) }} words
           </div>
         </div>
       </div>
@@ -40,20 +46,10 @@
         >
           <VIcon icon="bx-checkbox-square" size="18" />
         </VBtn>
-        <VBtn
-          icon
-          size="x-small"
-          variant="text"
-          @click="handleSearchToggle"
-        >
+        <VBtn icon size="x-small" variant="text" @click="handleSearchToggle">
           <VIcon icon="bx-search" size="18" />
         </VBtn>
-        <VBtn
-          icon
-          size="x-small"
-          variant="text"
-          @click="handleExpandAll"
-        >
+        <VBtn icon size="x-small" variant="text" @click="handleExpandAll">
           <VIcon icon="bx-expand-alt" size="18" />
         </VBtn>
       </div>
@@ -78,40 +74,24 @@
 
     <!-- Loading State -->
     <div v-if="manuscriptStore.loading" class="loading-state">
-      <VProgressCircular
-        indeterminate
-        size="20"
-        color="primary"
-      />
+      <VProgressCircular indeterminate size="20" color="primary" />
       <span>Loading manuscript structure...</span>
     </div>
 
     <!-- Error State -->
     <div v-else-if="manuscriptStore.error" class="error-state">
-      <VIcon
-        icon="bx-error"
-        color="error"
-        size="20"
-      />
+      <VIcon icon="bx-error" color="error" size="20" />
       <span>{{ manuscriptStore.error }}</span>
-      <VBtn
-        size="x-small"
-        variant="text"
-        @click="handleRetry"
-      >
-        Retry
-      </VBtn>
+      <VBtn size="x-small" variant="text" @click="handleRetry"> Retry </VBtn>
     </div>
 
     <!-- Empty State -->
     <div v-else-if="!manuscriptStore.hasNavigationTree" class="empty-state">
-      <VIcon
-        icon="bx-folder-open"
-        size="32"
-        color="grey"
-      />
+      <VIcon icon="bx-folder-open" size="32" color="grey" />
       <div class="empty-text">No content found</div>
-      <div class="empty-subtext">Start by creating your first document or folder.</div>
+      <div class="empty-subtext">
+        Start by creating your first document or folder.
+      </div>
     </div>
 
     <!-- Navigation Tree Items -->
@@ -144,216 +124,232 @@
       <span v-else-if="navigationStore.expandedNodeCount > 0">
         {{ navigationStore.expandedNodeCount }} folders expanded
       </span>
-      <span v-else>
-        {{ treeMetadata.totalItems }} items
-      </span>
+      <span v-else> {{ treeMetadata.totalItems }} items </span>
     </div>
-
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
-import { useRouter } from 'vue-router'
-import { useManuscriptStore } from '@/stores/manuscript'
-import { useManuscriptNavigationStore } from '@/stores/manuscript-navigation'
-import { useFolderViewStore } from '@/stores/folderView'
-import { useSelectionStore } from '@/stores/selection'
-import { usePaneStore } from '@/stores/pane'
-import { useContextMenu } from '@/composables/useContextMenu'
-import { ContextDetectionService } from '@/services/contextDetection'
-import TreeNode from './TreeNode.vue'
-import ScriveningSelectorPanel from '@/components/scrivening/ScriveningSelectorPanel.vue'
+import { ref, computed, watch } from "vue";
+import { useRouter } from "vue-router";
+import { useManuscriptStore } from "@/stores/manuscript";
+import { useManuscriptNavigationStore } from "@/stores/manuscript-navigation";
+import { useFolderViewStore } from "@/stores/folderView";
+import { useSelectionStore } from "@/stores/selection";
+import { usePaneStore } from "@/stores/pane";
+import { useContextMenu } from "@/composables/useContextMenu";
+import { ContextDetectionService } from "@/services/contextDetection";
+import TreeNode from "./TreeNode.vue";
+import ScriveningSelectorPanel from "@/components/scrivening/ScriveningSelectorPanel.vue";
 
 // Stores and router
-const manuscriptStore = useManuscriptStore()
-const navigationStore = useManuscriptNavigationStore()
-const selectionStore = useSelectionStore()
-const router = useRouter()
+const manuscriptStore = useManuscriptStore();
+const navigationStore = useManuscriptNavigationStore();
+const selectionStore = useSelectionStore();
+const router = useRouter();
 
 // Context menu composable
-const contextMenu = useContextMenu()
+const contextMenu = useContextMenu();
 
 // Local state
-const showSearch = ref(false)
-const draggingNodeId = ref<string | null>(null)
-const selectionMode = ref(true)
+const showSearch = ref(false);
+const draggingNodeId = ref<string | null>(null);
+const selectionMode = ref(true);
 
 // Computed
 const scriveningSelections = computed(() => {
-  const selections = new Set<string>()
+  const selections = new Set<string>();
   for (const [nodeId] of selectionStore.scriveningFolderMap) {
-    selections.add(nodeId)
+    selections.add(nodeId);
   }
-  return selections
-})
+  return selections;
+});
 
 // Computed
-const treeMetadata = computed(() => manuscriptStore.treeMetadata)
+const treeMetadata = computed(() => manuscriptStore.treeMetadata);
 const searchQuery = computed({
   get: () => navigationStore.searchQuery,
-  set: (value: string) => navigationStore.setSearchQuery(value)
-})
+  set: (value: string) => navigationStore.setSearchQuery(value),
+});
 
 // Note: Search is now handled server-side instead of client-side filtering
 
 // Methods
 const handleSearchToggle = async () => {
-  showSearch.value = !showSearch.value
+  showSearch.value = !showSearch.value;
   if (!showSearch.value) {
-    navigationStore.clearSearch()
-    await manuscriptStore.clearSearch()
+    navigationStore.clearSearch();
+    await manuscriptStore.clearSearch();
   }
-}
+};
 
 const handleExpandAll = () => {
   // Get all folder nodes from the tree and expand them
   const expandFolderNodes = (nodes: any[]) => {
-    nodes.forEach(node => {
+    nodes.forEach((node) => {
       if (node.children.length > 0) {
-        navigationStore.expandNode(node.id)
-        expandFolderNodes(node.children)
+        navigationStore.expandNode(node.id);
+        expandFolderNodes(node.children);
       }
-    })
-  }
+    });
+  };
 
-  expandFolderNodes(manuscriptStore.manuscriptTree)
-}
+  expandFolderNodes(manuscriptStore.manuscriptTree);
+};
 
 // Debounce search to avoid too many API calls
-let searchTimeout: NodeJS.Timeout | null = null
+let searchTimeout: NodeJS.Timeout | null = null;
 
 const handleSearch = async (query: string) => {
-  console.log('Search query:', query)
+  console.log("Search query:", query);
 
   // Clear previous timeout
   if (searchTimeout) {
-    clearTimeout(searchTimeout)
+    clearTimeout(searchTimeout);
   }
 
   // Debounce search by 500ms
   searchTimeout = setTimeout(async () => {
-    if (!query || query.trim() === '') {
+    if (!query || query.trim() === "") {
       // Clear search and reload all items
-      await manuscriptStore.clearSearch()
+      await manuscriptStore.clearSearch();
     } else {
       // Search items on server
-      await manuscriptStore.searchItems(query.trim())
+      await manuscriptStore.searchItems(query.trim());
     }
-  }, 500)
-}
+  }, 500);
+};
 
 const handleRetry = async () => {
   if (manuscriptStore.selectedManuscriptId) {
-    await manuscriptStore.fetchManuscriptItems(manuscriptStore.selectedManuscriptId)
+    await manuscriptStore.fetchManuscriptItems(
+      manuscriptStore.selectedManuscriptId,
+    );
   }
-}
+};
 
 const handleNodeClick = (nodeId: string) => {
-  navigationStore.selectNode(nodeId)
+  navigationStore.selectNode(nodeId);
 
   // Navigate to the node
-  const node = manuscriptStore.findNodeById(nodeId)
+  const node = manuscriptStore.findNodeById(nodeId);
   if (node) {
     // Check if we're in split view with an active pane
-    const folderViewStore = useFolderViewStore()
-    const paneStore = usePaneStore()
+    const folderViewStore = useFolderViewStore();
+    const paneStore = usePaneStore();
 
     if (folderViewStore.splitEnabled && paneStore.activePaneId) {
       // Split view handling - existing behavior
-      if (node.type === 'text' && manuscriptStore.selectedManuscriptId) {
+      if (node.type === "text" && manuscriptStore.selectedManuscriptId) {
         // Split view is active - update the active pane to edit mode with this item
-        console.log(`[Nav] Opening item ${node.itemId} in active pane ${paneStore.activePaneId}`)
-        paneStore.setEditingItem(paneStore.activePaneId, node.itemId)
-      } else if (node.type === 'folder') {
+        console.log(
+          `[Nav] Opening item ${node.itemId} in active pane ${paneStore.activePaneId}`,
+        );
+        paneStore.setEditingItem(paneStore.activePaneId, node.itemId);
+      } else if (node.type === "folder") {
         // Split view: Load folder content in the active pane only
-        console.log(`[Nav] Loading folder ${node.itemId} in active pane ${paneStore.activePaneId}`)
+        console.log(
+          `[Nav] Loading folder ${node.itemId} in active pane ${paneStore.activePaneId}`,
+        );
 
         // Use the new loadFolderForPane method to fetch and store folder content per pane
-        paneStore.loadFolderForPane(paneStore.activePaneId, node.itemId)
+        paneStore.loadFolderForPane(paneStore.activePaneId, node.itemId);
 
         // Switch pane to a view mode (not edit) if currently in edit mode
-        const currentPane = paneStore.getPane(paneStore.activePaneId)
-        if (currentPane?.viewMode === 'edit') {
-          paneStore.updatePaneMode(paneStore.activePaneId, 'manuscript')
+        const currentPane = paneStore.getPane(paneStore.activePaneId);
+        if (currentPane?.viewMode === "edit") {
+          paneStore.updatePaneMode(paneStore.activePaneId, "manuscript");
         }
       }
     } else {
       // Single view mode - NEW behavior: Always go to FolderView
-      if (node.type === 'folder' && manuscriptStore.selectedManuscriptId) {
+      if (node.type === "folder" && manuscriptStore.selectedManuscriptId) {
         // Navigate to folder view for folders
-        router.push(`/manuscripts/${manuscriptStore.selectedManuscriptId}/folders/${node.itemId}`)
-      } else if (node.type === 'text' && manuscriptStore.selectedManuscriptId) {
+        router.push(
+          `/manuscripts/${manuscriptStore.selectedManuscriptId}/folders/${node.itemId}`,
+        );
+      } else if (node.type === "text" && manuscriptStore.selectedManuscriptId) {
         // For text items, navigate to parent folder with item view selected
-        const parentNode = manuscriptStore.findParentOfNode(nodeId)
-        if (parentNode && parentNode.type === 'folder') {
+        const parentNode = manuscriptStore.findParentOfNode(nodeId);
+        if (parentNode && parentNode.type === "folder") {
           // Navigate to parent folder with item view mode and selected item
           router.push({
             path: `/manuscripts/${manuscriptStore.selectedManuscriptId}/folders/${parentNode.itemId}`,
             query: {
-              view: 'item',
-              itemId: String(node.itemId)
-            }
-          })
+              view: "item",
+              itemId: String(node.itemId),
+            },
+          });
         } else {
           // Fallback: If no parent folder found, use traditional item edit route
-          router.push(`/manuscripts/${manuscriptStore.selectedManuscriptId}/items/${node.itemId}/edit`)
+          router.push(
+            `/manuscripts/${manuscriptStore.selectedManuscriptId}/items/${node.itemId}/edit`,
+          );
         }
       } else if (node.path) {
         // For other types, use the existing path if available
-        router.push(node.path)
+        router.push(node.path);
       }
     }
   }
-}
+};
 
 const handleNodeToggle = (nodeId: string) => {
-  navigationStore.toggleNode(nodeId)
-}
+  navigationStore.toggleNode(nodeId);
+};
 
 const handleNodeContext = (data: { nodeId: string; event: MouseEvent }) => {
-  console.log('handleNodeContext called with nodeId:', data.nodeId)
+  console.log("handleNodeContext called with nodeId:", data.nodeId);
 
-  const menuItems = ContextDetectionService.getMenuItemsForNode(data.nodeId)
-  console.log('Menu items retrieved:', menuItems.length, menuItems)
+  const menuItems = ContextDetectionService.getMenuItemsForNode(data.nodeId);
+  console.log("Menu items retrieved:", menuItems.length, menuItems);
 
   if (menuItems.length > 0) {
-    console.log('Showing context menu at:', data.event.clientX, data.event.clientY)
+    console.log(
+      "Showing context menu at:",
+      data.event.clientX,
+      data.event.clientY,
+    );
     contextMenu.show(data.event, {
       items: menuItems,
-      context: { nodeId: data.nodeId }
-    })
+      context: { nodeId: data.nodeId },
+    });
   } else {
-    console.warn('No menu items found for node:', data.nodeId)
+    console.warn("No menu items found for node:", data.nodeId);
   }
-}
+};
 
 const formatWordCount = (count: number): string => {
   if (count >= 1000) {
-    return `${(count / 1000).toFixed(1)}k`
+    return `${(count / 1000).toFixed(1)}k`;
   }
-  return count.toString()
-}
+  return count.toString();
+};
 
 // Drag and Drop handlers
-const handleNodeDragStart = (data: { nodeId: string; itemId: number }) => {
-  console.log('Drag start:', data)
-  draggingNodeId.value = data.nodeId
-}
+const handleNodeDragStart = (nodeId: string) => {
+  console.log("Drag start:", nodeId);
+  draggingNodeId.value = nodeId;
+};
 
 const handleNodeDragEnd = () => {
-  console.log('Drag end')
-  draggingNodeId.value = null
-}
+  console.log("Drag end");
+  draggingNodeId.value = null;
+};
 
 const handleNodeDrop = async (data: {
-  sourceNodeId: string
-  sourceItemId: number
-  targetNodeId: string
-  targetItemId: number
-  position: 'above' | 'below' | 'inside'
+  sourceId: string | number;
+  sourceItemId: number;
+  targetId: string | number;
+  targetItemId: number;
+  position: "above" | "below" | "inside";
 }) => {
-  console.log('Drop event:', data)
+  console.log("Drop event:", data);
+
+  if (!manuscriptStore.selectedManuscriptId) {
+    console.error("No manuscript selected");
+    return;
+  }
 
   try {
     // Call the API to reorder items
@@ -361,45 +357,62 @@ const handleNodeDrop = async (data: {
       sourceItemId: data.sourceItemId,
       targetItemId: data.targetItemId,
       position: data.position,
-      manuscriptId: manuscriptStore.selectedManuscriptId!
-    })
+      manuscriptId: manuscriptStore.selectedManuscriptId,
+    });
 
     // Reload the tree to reflect changes
-    await manuscriptStore.fetchManuscriptItems(manuscriptStore.selectedManuscriptId!)
+    await manuscriptStore.fetchManuscriptItems(
+      manuscriptStore.selectedManuscriptId,
+    );
   } catch (error) {
-    console.error('Error reordering item:', error)
+    console.error("Error reordering item:", error);
     // TODO: Show error notification to user
   }
-}
+};
 
 // Scrivening Selection Handler
-const handleScriveningSelectionToggle = (data: { nodeId: string; itemId: number; checked: boolean }) => {
+const handleScriveningSelectionToggle = (data: {
+  nodeId: string;
+  itemId: number;
+  checked: boolean;
+}) => {
   if (data.checked) {
-    selectionStore.addToScriveningSelection(data.nodeId, data.itemId)
+    selectionStore.addToScriveningSelection(data.nodeId, data.itemId);
   } else {
-    selectionStore.removeFromScriveningSelection(data.nodeId)
+    selectionStore.removeFromScriveningSelection(data.nodeId);
   }
-}
+};
 
-console.log('🎯 DynamicManuscriptNavigation component loaded!')
+console.log("🎯 DynamicManuscriptNavigation component loaded!");
 
 // Initialize navigation when component mounts
-watch(() => manuscriptStore.selectedManuscriptId, (newId) => {
-  console.log('📋 selectedManuscriptId changed:', newId)
-  if (newId) {
-    console.log('Dynamic navigation initialized for manuscript:', newId)
-  }
-}, { immediate: true })
+watch(
+  () => manuscriptStore.selectedManuscriptId,
+  (newId) => {
+    console.log("📋 selectedManuscriptId changed:", newId);
+    if (newId) {
+      console.log("Dynamic navigation initialized for manuscript:", newId);
+    }
+  },
+  { immediate: true },
+);
 
 // Debug component visibility
-watch(() => manuscriptStore.hasSelectedManuscript, (hasSelected) => {
-  console.log('👁️ hasSelectedManuscript changed:', hasSelected)
-  console.log('selectedManuscriptId:', manuscriptStore.selectedManuscriptId)
-  console.log('selectedManuscript:', manuscriptStore.selectedManuscript)
-}, { immediate: true })
+watch(
+  () => manuscriptStore.hasSelectedManuscript,
+  (hasSelected) => {
+    console.log("👁️ hasSelectedManuscript changed:", hasSelected);
+    console.log("selectedManuscriptId:", manuscriptStore.selectedManuscriptId);
+    console.log("selectedManuscript:", manuscriptStore.selectedManuscript);
+  },
+  { immediate: true },
+);
 
 // Debug the component render
-console.log('🔍 Component setup complete, hasSelectedManuscript:', manuscriptStore.hasSelectedManuscript)
+console.log(
+  "🔍 Component setup complete, hasSelectedManuscript:",
+  manuscriptStore.hasSelectedManuscript,
+);
 </script>
 
 <style scoped lang="scss">
