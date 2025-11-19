@@ -4,9 +4,9 @@
     <div
       v-if="showDropZoneAbove"
       class="drop-zone drop-zone-above"
-      @drop="handleDrop($event, 'above')"
-      @dragover.prevent="handleDragOver($event, 'above')"
-      @dragleave="handleDragLeave('above')"
+      @drop.stop="handleDrop($event, 'above')"
+      @dragover.prevent.stop="handleDragOver($event, 'above')"
+      @dragleave.stop="handleDragLeave('above')"
     />
 
     <!-- Main Tree Node -->
@@ -31,9 +31,9 @@
       @touchmove="handleTouchMove"
       @dragstart="handleDragStart"
       @dragend="handleDragEnd"
-      @dragover.prevent="handleDragOver($event, 'inside')"
-      @dragleave="handleDragLeave('inside')"
-      @drop="handleDrop($event, 'inside')"
+      @dragover.prevent.stop="handleDragOver($event, 'inside')"
+      @dragleave.stop="handleDragLeave('inside')"
+      @drop.stop="handleDrop($event, 'inside')"
     >
       <!-- Node Content -->
       <div class="node-content">
@@ -114,9 +114,9 @@
     <div
       v-if="showDropZoneBelow"
       class="drop-zone drop-zone-below"
-      @drop="handleDrop($event, 'below')"
-      @dragover.prevent="handleDragOver($event, 'below')"
-      @dragleave="handleDragLeave('below')"
+      @drop.stop="handleDrop($event, 'below')"
+      @dragover.prevent.stop="handleDragOver($event, 'below')"
+      @dragleave.stop="handleDragLeave('below')"
     />
 
     <!-- Child Nodes -->
@@ -332,6 +332,9 @@ const handleDragEnd = () => {
 };
 
 const handleDragOver = (event: DragEvent, position: DropPosition) => {
+  event.preventDefault();
+  event.stopPropagation();
+
   const allowInside = props.node.type === "folder" || hasChildren.value;
   dragOver(event, props.node.id, position, {
     allowInside,
@@ -601,29 +604,33 @@ onBeforeUnmount(() => {
 
 .drop-zone {
   position: relative;
-  height: 4px;
+  height: 8px;
   margin: 2px 0;
+  z-index: 10;
 
   &::before {
     content: "";
     position: absolute;
     left: 0;
     right: 0;
-    height: 2px;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 3px;
     background-color: #3b82f6;
-    box-shadow: 0 0 4px rgba(59, 130, 246, 0.5);
+    box-shadow: 0 0 6px rgba(59, 130, 246, 0.6);
+    border-radius: 2px;
   }
 
   &.drop-zone-above {
-    margin-bottom: 4px;
+    margin-bottom: 2px;
   }
 
   &.drop-zone-below {
-    margin-top: 4px;
+    margin-top: 2px;
   }
+}
 
-  .child-nodes {
-    margin-left: 0;
-  }
+.child-nodes {
+  margin-left: 0;
 }
 </style>
