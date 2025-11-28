@@ -29,6 +29,17 @@ LLM_Guide.md can help give you context if you need to understand the application
 - This prevents breaking the multi-branch setup by reverting URLs from `192.168.1.252` to `localhost`
 
 
+# Code Standards
+
+## TypeScript-Only Project
+⚠️ **CRITICAL**: This is a TypeScript project - all source files MUST be `.ts` or `.vue`
+
+- **NEVER create `.js` files** in the source code
+- All new files in `resources/ts/` must be TypeScript
+- Vue components use `<script setup lang="ts">`
+- Only exception: root config files (e.g., `vite.config.ts`, `cypress.config.cjs`)
+
+
 # Claude Efficiency Guidelines
 
 ## Tool Usage

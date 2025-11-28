@@ -1,5 +1,13 @@
 export function useApi() {
-  const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api'
+  // Use runtime hostname detection for production
+  const getBaseUrl = () => {
+    if (typeof window !== 'undefined' && window.location.hostname === 'stephandouglasduval.com') {
+      return 'https://stephandouglasduval.com/api'
+    }
+    return import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api'
+  }
+
+  const baseUrl = getBaseUrl()
 
   async function request(url: string, options: RequestInit = {}) {
     const accessToken = localStorage.getItem('accessToken')

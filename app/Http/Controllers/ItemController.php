@@ -18,78 +18,87 @@ class ItemController extends Controller
     {
         try {
             // Verify the manuscript belongs to the user
-            $manuscript = Manuscript::where('id', $manuscriptId)
-                ->where('user_id', Auth::id())
+            $manuscript = Manuscript::where("id", $manuscriptId)
+                ->where("user_id", Auth::id())
                 ->firstOrFail();
 
             $validated = $request->validate([
-                'title' => 'required|string|max:255',
-                'content' => 'nullable|string',
-                'content_markdown' => 'nullable|string',
-                'content_format' => 'nullable|in:markdown,html',
-                'synopsis' => 'nullable|string',
-                'type' => 'nullable|string|max:50',
-                'parent_id' => 'nullable|integer|exists:items,id',
-                'metadata' => 'nullable|array',
+                "title" => "required|string|max:255",
+                "content" => "nullable|string",
+                "content_markdown" => "nullable|string",
+                "content_format" => "nullable|in:markdown,html",
+                "synopsis" => "nullable|string",
+                "type" => "nullable|string|max:50",
+                "parent_id" => "nullable|integer|exists:items,id",
+                "metadata" => "nullable|array",
             ]);
 
             // Calculate word and character counts
-            $content = $validated['content'] ?? '';
+            $content = $validated["content"] ?? "";
             $plainText = strip_tags($content);
-            $validated['word_count'] = str_word_count($plainText);
-            $validated['character_count'] = mb_strlen($plainText);
+            $validated["word_count"] = str_word_count($plainText);
+            $validated["character_count"] = mb_strlen($plainText);
 
             // Set user_id
-            $validated['user_id'] = Auth::id();
+            $validated["user_id"] = Auth::id();
 
             // Create the item
             $item = Item::create($validated);
 
             // Get the next order_index for the manuscript
-            $maxOrder = ManuscriptItem::where('manuscript_id', $manuscriptId)
-                ->max('order_index') ?? 0;
+            $maxOrder =
+                ManuscriptItem::where("manuscript_id", $manuscriptId)->max(
+                    "order_index",
+                ) ?? 0;
 
             // Attach item to manuscript
             ManuscriptItem::create([
-                'manuscript_id' => $manuscriptId,
-                'item_id' => $item->id,
-                'order_index' => $maxOrder + 1,
-                'is_independent' => false,
-                'metadata' => $validated['metadata'] ?? null,
+                "manuscript_id" => $manuscriptId,
+                "item_id" => $item->id,
+                "order_index" => $maxOrder + 1,
+                "is_independent" => false,
+                "metadata" => $validated["metadata"] ?? null,
             ]);
 
-            Log::info("ItemController::store - Created item {$item->id} in manuscript {$manuscriptId}");
+            Log::info(
+                "ItemController::store - Created item {$item->id} in manuscript {$manuscriptId}",
+            );
 
-            return response()->json([
-                'data' => [
-                    'id' => $item->id,
-                    'title' => $item->title,
-                    'content' => $item->content,
-                    'content_markdown' => $item->content_markdown,
-                    'content_format' => $item->content_format,
-                    'word_count' => $item->word_count,
-                    'character_count' => $item->character_count,
-                    'synopsis' => $item->synopsis,
-                    'type' => $item->type,
-                    'parent_id' => $item->parent_id,
-                    'metadata' => $item->metadata,
-                    'manuscript_id' => $manuscriptId,
-                    'created_at' => $item->created_at->toISOString(),
-                    'updated_at' => $item->updated_at->toISOString(),
-                ]
-            ], 201);
-
+            return response()->json(
+                [
+                    "data" => [
+                        "id" => $item->id,
+                        "title" => $item->title,
+                        "content" => $item->content,
+                        "content_markdown" => $item->content_markdown,
+                        "content_format" => $item->content_format,
+                        "word_count" => $item->word_count,
+                        "character_count" => $item->character_count,
+                        "synopsis" => $item->synopsis,
+                        "type" => $item->type,
+                        "parent_id" => $item->parent_id,
+                        "metadata" => $item->metadata,
+                        "manuscript_id" => $manuscriptId,
+                        "created_at" => $item->created_at->toISOString(),
+                        "updated_at" => $item->updated_at->toISOString(),
+                    ],
+                ],
+                201,
+            );
         } catch (\Exception $e) {
-            Log::error('Failed to create item', [
-                'manuscript_id' => $manuscriptId,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+            Log::error("Failed to create item", [
+                "manuscript_id" => $manuscriptId,
+                "error" => $e->getMessage(),
+                "trace" => $e->getTraceAsString(),
             ]);
 
-            return response()->json([
-                'error' => 'Failed to create item',
-                'message' => $e->getMessage()
-            ], 500);
+            return response()->json(
+                [
+                    "error" => "Failed to create item",
+                    "message" => $e->getMessage(),
+                ],
+                500,
+            );
         }
     }
 
@@ -100,131 +109,152 @@ class ItemController extends Controller
     {
         try {
             // Verify the manuscript belongs to the user
-            $manuscript = Manuscript::where('id', $manuscriptId)
-                ->where('user_id', Auth::id())
+            $manuscript = Manuscript::where("id", $manuscriptId)
+                ->where("user_id", Auth::id())
                 ->firstOrFail();
 
             // Get the item through the manuscript relationship
-            $manuscriptItem = ManuscriptItem::where('manuscript_id', $manuscriptId)
-                ->where('item_id', $itemId)
-                ->with(['item' => function ($query) {
-                    $query->select([
-                        'items.id',
-                        'items.title',
-                        'items.content',
-                        'items.content_markdown',
-                        'items.content_format',
-                        'items.word_count',
-                        'items.character_count',
-                        'items.synopsis',
-                        'items.metadata',
-                        'items.updated_at',
-                        'items.created_at'
-                    ]);
-                }])
+            $manuscriptItem = ManuscriptItem::where(
+                "manuscript_id",
+                $manuscriptId,
+            )
+                ->where("item_id", $itemId)
+                ->with([
+                    "item" => function ($query) {
+                        $query->select([
+                            "items.id",
+                            "items.title",
+                            "items.content",
+                            "items.content_markdown",
+                            "items.content_format",
+                            "items.word_count",
+                            "items.character_count",
+                            "items.synopsis",
+                            "items.metadata",
+                            "items.updated_at",
+                            "items.created_at",
+                        ]);
+                    },
+                ])
                 ->firstOrFail();
 
             $item = $manuscriptItem->item;
 
             return response()->json([
-                'data' => [
-                    'id' => $item->id,
-                    'title' => $item->title,
-                    'content' => $item->content,
-                    'content_markdown' => $item->content_markdown,
-                    'content_format' => $item->content_format,
-                    'word_count' => $item->word_count,
-                    'character_count' => $item->character_count,
-                    'synopsis' => $item->synopsis,
-                    'metadata' => $item->metadata,
-                    'manuscript_id' => $manuscriptId,
-                    'updated_at' => $item->updated_at->toISOString(),
-                    'created_at' => $item->created_at->toISOString(),
-                ]
+                "data" => [
+                    "id" => $item->id,
+                    "title" => $item->title,
+                    "content" => $item->content,
+                    "content_markdown" => $item->content_markdown,
+                    "content_format" => $item->content_format,
+                    "word_count" => $item->word_count,
+                    "character_count" => $item->character_count,
+                    "synopsis" => $item->synopsis,
+                    "metadata" => $item->metadata,
+                    "manuscript_id" => $manuscriptId,
+                    "updated_at" => $item->updated_at->toISOString(),
+                    "created_at" => $item->created_at->toISOString(),
+                ],
             ]);
-
         } catch (\Exception $e) {
-            Log::error('Failed to fetch item', [
-                'manuscript_id' => $manuscriptId,
-                'item_id' => $itemId,
-                'error' => $e->getMessage()
+            Log::error("Failed to fetch item", [
+                "manuscript_id" => $manuscriptId,
+                "item_id" => $itemId,
+                "error" => $e->getMessage(),
             ]);
 
-            return response()->json([
-                'error' => 'Failed to load item',
-                'message' => $e->getMessage()
-            ], 500);
+            return response()->json(
+                [
+                    "error" => "Failed to load item",
+                    "message" => $e->getMessage(),
+                ],
+                500,
+            );
         }
     }
 
     /**
      * Update the specified item.
      */
-    public function update(Request $request, string $manuscriptId, string $itemId)
-    {
+    public function update(
+        Request $request,
+        string $manuscriptId,
+        string $itemId,
+    ) {
         try {
             // Verify the manuscript belongs to the user
-            $manuscript = Manuscript::where('id', $manuscriptId)
-                ->where('user_id', Auth::id())
+            $manuscript = Manuscript::where("id", $manuscriptId)
+                ->where("user_id", Auth::id())
                 ->firstOrFail();
 
             // Get the item through the manuscript relationship
-            $manuscriptItem = ManuscriptItem::where('manuscript_id', $manuscriptId)
-                ->where('item_id', $itemId)
+            $manuscriptItem = ManuscriptItem::where(
+                "manuscript_id",
+                $manuscriptId,
+            )
+                ->where("item_id", $itemId)
                 ->firstOrFail();
 
             $item = Item::findOrFail($itemId);
 
-            Log::info("ItemController::update - Updating item {$itemId}", $request->all());
+            Log::info(
+                "ItemController::update - Updating item {$itemId}",
+                $request->all(),
+            );
 
             $validated = $request->validate([
-                'title' => 'sometimes|string|max:255',
-                'content' => 'sometimes|string',
-                'content_markdown' => 'sometimes|string',
-                'content_format' => 'sometimes|in:markdown,html',
-                'synopsis' => 'sometimes|nullable|string',
-                'metadata' => 'sometimes|array',
+                "title" => "sometimes|string|max:255",
+                "content" => "sometimes|string",
+                "content_markdown" => "sometimes|string",
+                "content_format" => "sometimes|in:markdown,html",
+                "synopsis" => "sometimes|nullable|string",
+                "metadata" => "sometimes|array",
             ]);
 
             // Calculate word and character counts if content is being updated
-            if (isset($validated['content']) || isset($validated['content_markdown'])) {
-                $content = $validated['content'] ?? $item->content;
+            if (
+                isset($validated["content"]) ||
+                isset($validated["content_markdown"])
+            ) {
+                $content = $validated["content"] ?? $item->content;
 
                 // Strip HTML tags for accurate word count
                 $plainText = strip_tags($content);
-                $validated['word_count'] = str_word_count($plainText);
-                $validated['character_count'] = mb_strlen($plainText);
+                $validated["word_count"] = str_word_count($plainText);
+                $validated["character_count"] = mb_strlen($plainText);
             }
 
             $item->update($validated);
 
             return response()->json([
-                'data' => [
-                    'id' => $item->id,
-                    'title' => $item->title,
-                    'content' => $item->content,
-                    'content_markdown' => $item->content_markdown,
-                    'content_format' => $item->content_format,
-                    'word_count' => $item->word_count,
-                    'character_count' => $item->character_count,
-                    'synopsis' => $item->synopsis,
-                    'metadata' => $item->metadata,
-                    'manuscript_id' => $manuscriptId,
-                    'updated_at' => $item->updated_at->toISOString(),
-                ]
+                "data" => [
+                    "id" => $item->id,
+                    "title" => $item->title,
+                    "content" => $item->content,
+                    "content_markdown" => $item->content_markdown,
+                    "content_format" => $item->content_format,
+                    "word_count" => $item->word_count,
+                    "character_count" => $item->character_count,
+                    "synopsis" => $item->synopsis,
+                    "metadata" => $item->metadata,
+                    "manuscript_id" => $manuscriptId,
+                    "updated_at" => $item->updated_at->toISOString(),
+                ],
             ]);
-
         } catch (\Exception $e) {
-            Log::error('Failed to update item', [
-                'manuscript_id' => $manuscriptId,
-                'item_id' => $itemId,
-                'error' => $e->getMessage()
+            Log::error("Failed to update item", [
+                "manuscript_id" => $manuscriptId,
+                "item_id" => $itemId,
+                "error" => $e->getMessage(),
             ]);
 
-            return response()->json([
-                'error' => 'Failed to update item',
-                'message' => $e->getMessage()
-            ], 500);
+            return response()->json(
+                [
+                    "error" => "Failed to update item",
+                    "message" => $e->getMessage(),
+                ],
+                500,
+            );
         }
     }
 
@@ -235,36 +265,39 @@ class ItemController extends Controller
     {
         try {
             // Verify the manuscript belongs to the user
-            $manuscript = Manuscript::where('id', $manuscriptId)
-                ->where('user_id', Auth::id())
+            $manuscript = Manuscript::where("id", $manuscriptId)
+                ->where("user_id", Auth::id())
                 ->firstOrFail();
 
             // Verify the item belongs to the manuscript
-            ManuscriptItem::where('manuscript_id', $manuscriptId)
-                ->where('item_id', $itemId)
+            ManuscriptItem::where("manuscript_id", $manuscriptId)
+                ->where("item_id", $itemId)
                 ->firstOrFail();
 
             $item = Item::findOrFail($itemId);
-            $versions = $item->versions()
-                ->select(['id', 'name', 'change_description', 'created_at'])
+            $versions = $item
+                ->versions()
+                ->select(["id", "name", "change_description", "created_at"])
                 ->limit(10)
                 ->get();
 
             return response()->json([
-                'data' => $versions
+                "data" => $versions,
             ]);
-
         } catch (\Exception $e) {
-            Log::error('Failed to fetch item versions', [
-                'manuscript_id' => $manuscriptId,
-                'item_id' => $itemId,
-                'error' => $e->getMessage()
+            Log::error("Failed to fetch item versions", [
+                "manuscript_id" => $manuscriptId,
+                "item_id" => $itemId,
+                "error" => $e->getMessage(),
             ]);
 
-            return response()->json([
-                'error' => 'Failed to load versions',
-                'message' => $e->getMessage()
-            ], 500);
+            return response()->json(
+                [
+                    "error" => "Failed to load versions",
+                    "message" => $e->getMessage(),
+                ],
+                500,
+            );
         }
     }
 
@@ -275,63 +308,141 @@ class ItemController extends Controller
     {
         try {
             // Verify the manuscript belongs to the user
-            $manuscript = Manuscript::where('id', $manuscriptId)
-                ->where('user_id', Auth::id())
+            $manuscript = Manuscript::where("id", $manuscriptId)
+                ->where("user_id", Auth::id())
                 ->firstOrFail();
 
             $validated = $request->validate([
-                'source_item_id' => 'required|integer|exists:items,id',
-                'target_item_id' => 'required|integer|exists:items,id',
-                'position' => 'required|in:above,below,inside',
+                "source_item_id" => "required|integer|exists:items,id",
+                "target_item_id" => "required|integer|exists:items,id",
+                "position" => "required|in:above,below,inside",
             ]);
 
-            $sourceItem = Item::findOrFail($validated['source_item_id']);
-            $targetItem = Item::findOrFail($validated['target_item_id']);
+            $sourceItem = Item::findOrFail($validated["source_item_id"]);
+            $targetItem = Item::findOrFail($validated["target_item_id"]);
 
             // Verify both items belong to the manuscript
-            ManuscriptItem::where('manuscript_id', $manuscriptId)
-                ->where('item_id', $sourceItem->id)
+            ManuscriptItem::where("manuscript_id", $manuscriptId)
+                ->where("item_id", $sourceItem->id)
                 ->firstOrFail();
-            ManuscriptItem::where('manuscript_id', $manuscriptId)
-                ->where('item_id', $targetItem->id)
+            ManuscriptItem::where("manuscript_id", $manuscriptId)
+                ->where("item_id", $targetItem->id)
                 ->firstOrFail();
 
             Log::info("Reordering item", [
-                'manuscript_id' => $manuscriptId,
-                'source_item_id' => $sourceItem->id,
-                'target_item_id' => $targetItem->id,
-                'position' => $validated['position'],
+                "manuscript_id" => $manuscriptId,
+                "source_item_id" => $sourceItem->id,
+                "target_item_id" => $targetItem->id,
+                "position" => $validated["position"],
             ]);
 
             // Handle reordering based on position
-            switch ($validated['position']) {
-                case 'inside':
-                    // Move source item inside target (target must be a folder)
-                    $sourceItem->parent_id = $targetItem->id;
-                    $sourceItem->save();
+            switch ($validated["position"]) {
+                case "inside":
+                    // Check if target is a text item (not already a folder)
+                    if ($targetItem->type === "text") {
+                        // Scrivener-style behavior: Create a new folder and make both items children
 
-                    // Set item_order to be at the end of target's children
-                    $maxOrder = Item::where('parent_id', $targetItem->id)
-                        ->max('item_order') ?? 0;
-                    $sourceItem->item_order = $maxOrder + 1;
-                    $sourceItem->save();
+                        // Create new folder with target's title
+                        $newFolder = Item::create([
+                            "user_id" => Auth::id(),
+                            "type" => "folder",
+                            "title" => $targetItem->title,
+                            "synopsis" => $targetItem->synopsis,
+                            "parent_id" => $targetItem->parent_id,
+                            "item_order" => $targetItem->item_order,
+                            "metadata" => $targetItem->metadata,
+                            "folder_type" => "general",
+                        ]);
+
+                        // Get manuscript_items for both source and target
+                        $targetManuscriptItem = ManuscriptItem::where(
+                            "manuscript_id",
+                            $manuscriptId,
+                        )
+                            ->where("item_id", $targetItem->id)
+                            ->first();
+
+                        $sourceManuscriptItem = ManuscriptItem::where(
+                            "manuscript_id",
+                            $manuscriptId,
+                        )
+                            ->where("item_id", $sourceItem->id)
+                            ->first();
+
+                        // Add new folder to manuscript (takes target's position)
+                        ManuscriptItem::create([
+                            "manuscript_id" => $manuscriptId,
+                            "item_id" => $newFolder->id,
+                            "order_index" =>
+                                $targetManuscriptItem->order_index ?? 0,
+                            "is_independent" => false,
+                            "metadata" =>
+                                $targetManuscriptItem->metadata ?? null,
+                        ]);
+
+                        // Update child items' manuscript_items to have high order_index
+                        // This keeps them in the table but ensures they don't show at root level
+                        if ($targetManuscriptItem) {
+                            $targetManuscriptItem->order_index = 999999;
+                            $targetManuscriptItem->save();
+                        }
+
+                        if ($sourceManuscriptItem) {
+                            $sourceManuscriptItem->order_index = 999999;
+                            $sourceManuscriptItem->save();
+                        }
+
+                        // Move original target item inside the new folder (as first child)
+                        $targetItem->parent_id = $newFolder->id;
+                        $targetItem->item_order = 0;
+                        $targetItem->save();
+
+                        // Move source item inside the new folder (as second child)
+                        $sourceItem->parent_id = $newFolder->id;
+                        $sourceItem->item_order = 1;
+                        $sourceItem->save();
+
+                        Log::info(
+                            "Created new folder and moved both items inside",
+                            [
+                                "new_folder_id" => $newFolder->id,
+                                "target_item_id" => $targetItem->id,
+                                "source_item_id" => $sourceItem->id,
+                            ],
+                        );
+                    } else {
+                        // Target is already a folder - use existing behavior
+                        // Move source item inside target
+                        $sourceItem->parent_id = $targetItem->id;
+                        $sourceItem->save();
+
+                        // Set item_order to be at the end of target's children
+                        $maxOrder =
+                            Item::where("parent_id", $targetItem->id)->max(
+                                "item_order",
+                            ) ?? 0;
+                        $sourceItem->item_order = $maxOrder + 1;
+                        $sourceItem->save();
+                    }
                     break;
 
-                case 'above':
-                case 'below':
+                case "above":
+                case "below":
                     // Move source item to same parent as target
                     $sourceItem->parent_id = $targetItem->parent_id;
                     $sourceItem->save();
 
                     // Get all siblings (items with same parent) ordered by item_order
-                    $siblings = Item::where('parent_id', $targetItem->parent_id)
-                        ->where('id', '!=', $sourceItem->id)
-                        ->orderBy('item_order', 'asc')
+                    $siblings = Item::where("parent_id", $targetItem->parent_id)
+                        ->where("id", "!=", $sourceItem->id)
+                        ->orderBy("item_order", "asc")
                         ->get();
 
                     // Find target's position in siblings
                     $newOrder = [];
-                    $insertPosition = $validated['position'] === 'above' ? 0 : 1;
+                    $insertPosition =
+                        $validated["position"] === "above" ? 0 : 1;
 
                     foreach ($siblings as $index => $sibling) {
                         if ($sibling->id === $targetItem->id) {
@@ -357,34 +468,36 @@ class ItemController extends Controller
             }
 
             Log::info("Item reordered successfully", [
-                'manuscript_id' => $manuscriptId,
-                'source_item_id' => $sourceItem->id,
-                'new_parent_id' => $sourceItem->parent_id,
-                'new_order' => $sourceItem->item_order,
+                "manuscript_id" => $manuscriptId,
+                "source_item_id" => $sourceItem->id,
+                "new_parent_id" => $sourceItem->parent_id,
+                "new_order" => $sourceItem->item_order,
             ]);
 
             return response()->json([
-                'message' => 'Item reordered successfully',
-                'data' => [
-                    'source_item' => [
-                        'id' => $sourceItem->id,
-                        'parent_id' => $sourceItem->parent_id,
-                        'item_order' => $sourceItem->item_order,
+                "message" => "Item reordered successfully",
+                "data" => [
+                    "source_item" => [
+                        "id" => $sourceItem->id,
+                        "parent_id" => $sourceItem->parent_id,
+                        "item_order" => $sourceItem->item_order,
                     ],
-                ]
+                ],
             ]);
-
         } catch (\Exception $e) {
-            Log::error('Failed to reorder item', [
-                'manuscript_id' => $manuscriptId,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+            Log::error("Failed to reorder item", [
+                "manuscript_id" => $manuscriptId,
+                "error" => $e->getMessage(),
+                "trace" => $e->getTraceAsString(),
             ]);
 
-            return response()->json([
-                'error' => 'Failed to reorder item',
-                'message' => $e->getMessage()
-            ], 500);
+            return response()->json(
+                [
+                    "error" => "Failed to reorder item",
+                    "message" => $e->getMessage(),
+                ],
+                500,
+            );
         }
     }
 
@@ -395,85 +508,102 @@ class ItemController extends Controller
     {
         try {
             // Verify the manuscript belongs to the user
-            $manuscript = Manuscript::where('id', $manuscriptId)
-                ->where('user_id', Auth::id())
+            $manuscript = Manuscript::where("id", $manuscriptId)
+                ->where("user_id", Auth::id())
                 ->firstOrFail();
 
-            Log::info("ItemController::destroy - Deleting item {$itemId} from manuscript {$manuscriptId}");
+            Log::info(
+                "ItemController::destroy - Deleting item {$itemId} from manuscript {$manuscriptId}",
+            );
 
-            $item = Item::where('id', $itemId)
-                ->where('user_id', Auth::id())
+            $item = Item::where("id", $itemId)
+                ->where("user_id", Auth::id())
                 ->firstOrFail();
 
             // Delete the manuscript-item relationship
-            ManuscriptItem::where('manuscript_id', $manuscriptId)
-                ->where('item_id', $itemId)
+            ManuscriptItem::where("manuscript_id", $manuscriptId)
+                ->where("item_id", $itemId)
                 ->delete();
 
             // Delete the item itself
             $item->delete();
 
-            Log::info("Item {$itemId} deleted successfully from manuscript {$manuscriptId}");
+            Log::info(
+                "Item {$itemId} deleted successfully from manuscript {$manuscriptId}",
+            );
 
-            return response()->json(['message' => 'Item deleted successfully']);
+            return response()->json(["message" => "Item deleted successfully"]);
         } catch (\Exception $e) {
-            Log::error('Failed to delete item', [
-                'manuscript_id' => $manuscriptId,
-                'item_id' => $itemId,
-                'error' => $e->getMessage()
+            Log::error("Failed to delete item", [
+                "manuscript_id" => $manuscriptId,
+                "item_id" => $itemId,
+                "error" => $e->getMessage(),
             ]);
 
-            return response()->json([
-                'error' => 'Failed to delete item',
-                'message' => $e->getMessage()
-            ], 500);
+            return response()->json(
+                [
+                    "error" => "Failed to delete item",
+                    "message" => $e->getMessage(),
+                ],
+                500,
+            );
         }
     }
 
     /**
      * Rename an item (update its title).
      */
-    public function rename(Request $request, string $manuscriptId, string $itemId)
-    {
+    public function rename(
+        Request $request,
+        string $manuscriptId,
+        string $itemId,
+    ) {
         try {
             // Verify the manuscript belongs to the user
-            $manuscript = Manuscript::where('id', $manuscriptId)
-                ->where('user_id', Auth::id())
+            $manuscript = Manuscript::where("id", $manuscriptId)
+                ->where("user_id", Auth::id())
                 ->firstOrFail();
 
             $validated = $request->validate([
-                'title' => 'required|string|max:255',
+                "title" => "required|string|max:255",
             ]);
 
-            Log::info("ItemController::rename - Renaming item {$itemId} in manuscript {$manuscriptId} to '{$validated['title']}'");
+            Log::info(
+                "ItemController::rename - Renaming item {$itemId} in manuscript {$manuscriptId} to '{$validated["title"]}'",
+            );
 
-            $item = Item::where('id', $itemId)
-                ->where('user_id', Auth::id())
+            $item = Item::where("id", $itemId)
+                ->where("user_id", Auth::id())
                 ->firstOrFail();
 
-            $item->update(['title' => $validated['title']]);
+            $item->update(["title" => $validated["title"]]);
 
-            Log::info("Item {$itemId} renamed successfully to '{$validated['title']}'");
+            Log::info(
+                "Item {$itemId} renamed successfully to '{$validated["title"]}'",
+            );
 
             return response()->json([
-                'data' => [
-                    'id' => $item->id,
-                    'title' => $item->title,
-                    'updated_at' => $item->updated_at->toISOString(),
+                "data" => [
+                    "id" => $item->id,
+                    "title" => $item->title,
+                    "updated_at" => $item->updated_at->toISOString(),
                 ],
-                'message' => 'Item renamed successfully'
+                "message" => "Item renamed successfully",
             ]);
         } catch (\Exception $e) {
-            Log::error('Failed to rename item', [
-                'manuscript_id' => $manuscriptId,
-                'item_id' => $itemId,
-                'error' => $e->getMessage()
+            Log::error("Failed to rename item", [
+                "manuscript_id" => $manuscriptId,
+                "item_id" => $itemId,
+                "error" => $e->getMessage(),
             ]);
 
-            return response()->json([
-                'error' => 'Failed to rename item',
-                'message' => $e->getMessage()
-            ], 500);
+            return response()->json(
+                [
+                    "error" => "Failed to rename item",
+                    "message" => $e->getMessage(),
+                ],
+                500,
+            );
         }
     }
 
@@ -484,68 +614,82 @@ class ItemController extends Controller
     {
         try {
             // Verify the manuscript belongs to the user
-            $manuscript = Manuscript::where('id', $manuscriptId)
-                ->where('user_id', Auth::id())
+            $manuscript = Manuscript::where("id", $manuscriptId)
+                ->where("user_id", Auth::id())
                 ->firstOrFail();
 
             // Get the original item
-            $originalItem = Item::where('id', $itemId)
-                ->where('user_id', Auth::id())
+            $originalItem = Item::where("id", $itemId)
+                ->where("user_id", Auth::id())
                 ->firstOrFail();
 
             // Get the manuscript item for order_index
-            $originalManuscriptItem = ManuscriptItem::where('manuscript_id', $manuscriptId)
-                ->where('item_id', $itemId)
+            $originalManuscriptItem = ManuscriptItem::where(
+                "manuscript_id",
+                $manuscriptId,
+            )
+                ->where("item_id", $itemId)
                 ->firstOrFail();
 
-            Log::info("ItemController::duplicate - Duplicating item {$itemId} in manuscript {$manuscriptId}");
+            Log::info(
+                "ItemController::duplicate - Duplicating item {$itemId} in manuscript {$manuscriptId}",
+            );
 
             // Create duplicate item
             $duplicateItem = $originalItem->replicate();
-            $duplicateItem->title = $originalItem->title . ' (Copy)';
+            $duplicateItem->title = $originalItem->title . " (Copy)";
             $duplicateItem->save();
 
             // Attach duplicate to manuscript with next order_index
             ManuscriptItem::create([
-                'manuscript_id' => $manuscriptId,
-                'item_id' => $duplicateItem->id,
-                'order_index' => $originalManuscriptItem->order_index + 1,
-                'is_independent' => $originalManuscriptItem->is_independent,
-                'metadata' => $originalManuscriptItem->metadata,
+                "manuscript_id" => $manuscriptId,
+                "item_id" => $duplicateItem->id,
+                "order_index" => $originalManuscriptItem->order_index + 1,
+                "is_independent" => $originalManuscriptItem->is_independent,
+                "metadata" => $originalManuscriptItem->metadata,
             ]);
 
             // Reorder subsequent items
-            ManuscriptItem::where('manuscript_id', $manuscriptId)
-                ->where('order_index', '>', $originalManuscriptItem->order_index)
-                ->where('item_id', '!=', $duplicateItem->id)
-                ->increment('order_index');
+            ManuscriptItem::where("manuscript_id", $manuscriptId)
+                ->where(
+                    "order_index",
+                    ">",
+                    $originalManuscriptItem->order_index,
+                )
+                ->where("item_id", "!=", $duplicateItem->id)
+                ->increment("order_index");
 
-            Log::info("Item {$itemId} duplicated successfully as item {$duplicateItem->id}");
+            Log::info(
+                "Item {$itemId} duplicated successfully as item {$duplicateItem->id}",
+            );
 
             return response()->json([
-                'data' => [
-                    'id' => $duplicateItem->id,
-                    'title' => $duplicateItem->title,
-                    'type' => $duplicateItem->type,
-                    'parent_id' => $duplicateItem->parent_id,
-                    'order_index' => $originalManuscriptItem->order_index + 1,
-                    'created_at' => $duplicateItem->created_at->toISOString(),
-                    'updated_at' => $duplicateItem->updated_at->toISOString(),
+                "data" => [
+                    "id" => $duplicateItem->id,
+                    "title" => $duplicateItem->title,
+                    "type" => $duplicateItem->type,
+                    "parent_id" => $duplicateItem->parent_id,
+                    "order_index" => $originalManuscriptItem->order_index + 1,
+                    "created_at" => $duplicateItem->created_at->toISOString(),
+                    "updated_at" => $duplicateItem->updated_at->toISOString(),
                 ],
-                'message' => 'Item duplicated successfully'
+                "message" => "Item duplicated successfully",
             ]);
         } catch (\Exception $e) {
-            Log::error('Failed to duplicate item', [
-                'manuscript_id' => $manuscriptId,
-                'item_id' => $itemId,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+            Log::error("Failed to duplicate item", [
+                "manuscript_id" => $manuscriptId,
+                "item_id" => $itemId,
+                "error" => $e->getMessage(),
+                "trace" => $e->getTraceAsString(),
             ]);
 
-            return response()->json([
-                'error' => 'Failed to duplicate item',
-                'message' => $e->getMessage()
-            ], 500);
+            return response()->json(
+                [
+                    "error" => "Failed to duplicate item",
+                    "message" => $e->getMessage(),
+                ],
+                500,
+            );
         }
     }
 
@@ -556,30 +700,38 @@ class ItemController extends Controller
     {
         try {
             // Verify the manuscript belongs to the user
-            $manuscript = Manuscript::where('id', $manuscriptId)
-                ->where('user_id', Auth::id())
+            $manuscript = Manuscript::where("id", $manuscriptId)
+                ->where("user_id", Auth::id())
                 ->firstOrFail();
 
             // Get the manuscript item
-            $manuscriptItem = ManuscriptItem::where('manuscript_id', $manuscriptId)
-                ->where('item_id', $itemId)
+            $manuscriptItem = ManuscriptItem::where(
+                "manuscript_id",
+                $manuscriptId,
+            )
+                ->where("item_id", $itemId)
                 ->firstOrFail();
 
             $currentOrder = $manuscriptItem->order_index;
 
             // Get the item above (lower order_index)
-            $itemAbove = ManuscriptItem::where('manuscript_id', $manuscriptId)
-                ->where('order_index', '<', $currentOrder)
-                ->orderBy('order_index', 'desc')
+            $itemAbove = ManuscriptItem::where("manuscript_id", $manuscriptId)
+                ->where("order_index", "<", $currentOrder)
+                ->orderBy("order_index", "desc")
                 ->first();
 
             if (!$itemAbove) {
-                return response()->json([
-                    'message' => 'Item is already at the top'
-                ], 400);
+                return response()->json(
+                    [
+                        "message" => "Item is already at the top",
+                    ],
+                    400,
+                );
             }
 
-            Log::info("ItemController::moveUp - Moving item {$itemId} up in manuscript {$manuscriptId}");
+            Log::info(
+                "ItemController::moveUp - Moving item {$itemId} up in manuscript {$manuscriptId}",
+            );
 
             // Swap order_index values
             $itemAboveOrder = $itemAbove->order_index;
@@ -592,23 +744,26 @@ class ItemController extends Controller
             Log::info("Item {$itemId} moved up successfully");
 
             return response()->json([
-                'data' => [
-                    'id' => $itemId,
-                    'order_index' => $manuscriptItem->order_index,
+                "data" => [
+                    "id" => $itemId,
+                    "order_index" => $manuscriptItem->order_index,
                 ],
-                'message' => 'Item moved up successfully'
+                "message" => "Item moved up successfully",
             ]);
         } catch (\Exception $e) {
-            Log::error('Failed to move item up', [
-                'manuscript_id' => $manuscriptId,
-                'item_id' => $itemId,
-                'error' => $e->getMessage()
+            Log::error("Failed to move item up", [
+                "manuscript_id" => $manuscriptId,
+                "item_id" => $itemId,
+                "error" => $e->getMessage(),
             ]);
 
-            return response()->json([
-                'error' => 'Failed to move item up',
-                'message' => $e->getMessage()
-            ], 500);
+            return response()->json(
+                [
+                    "error" => "Failed to move item up",
+                    "message" => $e->getMessage(),
+                ],
+                500,
+            );
         }
     }
 
@@ -619,30 +774,38 @@ class ItemController extends Controller
     {
         try {
             // Verify the manuscript belongs to the user
-            $manuscript = Manuscript::where('id', $manuscriptId)
-                ->where('user_id', Auth::id())
+            $manuscript = Manuscript::where("id", $manuscriptId)
+                ->where("user_id", Auth::id())
                 ->firstOrFail();
 
             // Get the manuscript item
-            $manuscriptItem = ManuscriptItem::where('manuscript_id', $manuscriptId)
-                ->where('item_id', $itemId)
+            $manuscriptItem = ManuscriptItem::where(
+                "manuscript_id",
+                $manuscriptId,
+            )
+                ->where("item_id", $itemId)
                 ->firstOrFail();
 
             $currentOrder = $manuscriptItem->order_index;
 
             // Get the item below (higher order_index)
-            $itemBelow = ManuscriptItem::where('manuscript_id', $manuscriptId)
-                ->where('order_index', '>', $currentOrder)
-                ->orderBy('order_index', 'asc')
+            $itemBelow = ManuscriptItem::where("manuscript_id", $manuscriptId)
+                ->where("order_index", ">", $currentOrder)
+                ->orderBy("order_index", "asc")
                 ->first();
 
             if (!$itemBelow) {
-                return response()->json([
-                    'message' => 'Item is already at the bottom'
-                ], 400);
+                return response()->json(
+                    [
+                        "message" => "Item is already at the bottom",
+                    ],
+                    400,
+                );
             }
 
-            Log::info("ItemController::moveDown - Moving item {$itemId} down in manuscript {$manuscriptId}");
+            Log::info(
+                "ItemController::moveDown - Moving item {$itemId} down in manuscript {$manuscriptId}",
+            );
 
             // Swap order_index values
             $itemBelowOrder = $itemBelow->order_index;
@@ -655,23 +818,26 @@ class ItemController extends Controller
             Log::info("Item {$itemId} moved down successfully");
 
             return response()->json([
-                'data' => [
-                    'id' => $itemId,
-                    'order_index' => $manuscriptItem->order_index,
+                "data" => [
+                    "id" => $itemId,
+                    "order_index" => $manuscriptItem->order_index,
                 ],
-                'message' => 'Item moved down successfully'
+                "message" => "Item moved down successfully",
             ]);
         } catch (\Exception $e) {
-            Log::error('Failed to move item down', [
-                'manuscript_id' => $manuscriptId,
-                'item_id' => $itemId,
-                'error' => $e->getMessage()
+            Log::error("Failed to move item down", [
+                "manuscript_id" => $manuscriptId,
+                "item_id" => $itemId,
+                "error" => $e->getMessage(),
             ]);
 
-            return response()->json([
-                'error' => 'Failed to move item down',
-                'message' => $e->getMessage()
-            ], 500);
+            return response()->json(
+                [
+                    "error" => "Failed to move item down",
+                    "message" => $e->getMessage(),
+                ],
+                500,
+            );
         }
     }
 }
