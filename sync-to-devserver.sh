@@ -1,7 +1,7 @@
 #!/bin/bash
 # Sync code to dev server (excluding .env files and other sensitive/generated files)
 
-echo "🔄 Syncing to dev server (192.168.1.252)..."
+echo "🔄 Syncing to dev server (10.0.0.2)..."
 echo ""
 
 # Get the directory where this script is located
@@ -19,7 +19,7 @@ rsync -av \
   --exclude='bootstrap/cache/*' \
   --progress \
   "$SCRIPT_DIR/" \
-  sduval@192.168.1.252:~/Code/Wrioter/
+  sduval@10.0.0.2:~/Code/Wrioter/
 
 echo ""
 echo "✅ Sync complete!"

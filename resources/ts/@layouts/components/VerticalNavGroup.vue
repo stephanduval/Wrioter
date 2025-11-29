@@ -23,13 +23,15 @@ const emit = defineEmits<{
 const route = useRoute()
 const router = useRouter()
 const configStore = useLayoutConfigStore()
-const hideTitleAndBadge = configStore.isVerticalNavMini()
 
 /*
   ℹ️ We provided default value `ref(false)` because inject will return `T | undefined`
   Docs: https://vuejs.org/api/composition-api-dependency-injection.html#inject
 */
 const isVerticalNavHovered = inject(injectionKeyIsVerticalNavHovered, ref(false))
+
+// Pass hover state to isVerticalNavMini so it responds to hover
+const hideTitleAndBadge = configStore.isVerticalNavMini(isVerticalNavHovered)
 
 const isGroupActive = ref(false)
 const isGroupOpen = ref(false)
