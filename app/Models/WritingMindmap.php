@@ -15,6 +15,7 @@ class WritingMindmap extends Model
         'writing_item_id',
         'user_id',
         'manuscript_id',
+        'folder_id',
         'title',
         'description',
         'settings',
@@ -59,6 +60,14 @@ class WritingMindmap extends Model
     }
 
     /**
+     * Get the folder that owns the mindmap.
+     */
+    public function folder(): BelongsTo
+    {
+        return $this->belongsTo(Item::class, 'folder_id');
+    }
+
+    /**
      * Get the item positions for this mindmap.
      */
     public function positions(): HasMany
@@ -72,6 +81,15 @@ class WritingMindmap extends Model
     public function connections(): HasMany
     {
         return $this->hasMany(MindmapConnection::class, 'mindmap_id');
+    }
+
+    /**
+     * Get the ghost placeholders for this mindmap.
+     * Ghosts represent deleted items that were previously in the mindmap.
+     */
+    public function ghosts(): HasMany
+    {
+        return $this->hasMany(MindmapGhost::class, 'mindmap_id');
     }
 
     /**
@@ -111,6 +129,14 @@ class WritingMindmap extends Model
     public function scopeDefault($query)
     {
         return $query->where('is_default', true);
+    }
+
+    /**
+     * Scope a query to folder-specific mindmaps.
+     */
+    public function scopeForFolder($query, int $folderId)
+    {
+        return $query->where('folder_id', $folderId);
     }
 
     /**

@@ -13,7 +13,7 @@ LLM_Guide.md can help give you context if you need to understand the application
 
 ## Sync Process
 - **User runs sync manually** - Changes won't appear until `./sync-to-devserver.sh` is executed
-- Dev server runs at: `ssh sduval@192.168.1.252`
+- Dev server runs at: `ssh sduval@10.0.0.2`
 - Local path: `/home/rogers/Code/Wrioter Branch 3/`
 - Remote path: `/home/sduval/Code/Wrioter Branch 3/`
 - Documentation in this folder syncs to remote server
@@ -26,7 +26,18 @@ LLM_Guide.md can help give you context if you need to understand the application
 ## Important Sync Rules
 - **NEVER use manual rsync commands** - Always use `./sync-to-devserver.sh`
 - Script ensures `.env*` files are NOT synced (each environment has its own config)
-- This prevents breaking the multi-branch setup by reverting URLs from `192.168.1.252` to `localhost`
+- This prevents breaking the multi-branch setup by reverting URLs from `10.0.0.2` to `localhost`
+
+
+# Code Standards
+
+## TypeScript-Only Project
+⚠️ **CRITICAL**: This is a TypeScript project - all source files MUST be `.ts` or `.vue`
+
+- **NEVER create `.js` files** in the source code
+- All new files in `resources/ts/` must be TypeScript
+- Vue components use `<script setup lang="ts">`
+- Only exception: root config files (e.g., `vite.config.ts`, `cypress.config.cjs`)
 
 
 # Claude Efficiency Guidelines

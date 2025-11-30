@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\WritingMindmap;
 use App\Models\MindmapItemPosition;
 use App\Models\MindmapConnection;
+use App\Models\MindmapGhost;
 use App\Models\Item;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -56,7 +57,7 @@ class MindMapController extends Controller
     }
 
     /**
-     * Display the specified mindmap with items and connections.
+     * Display the specified mindmap with items, connections, and ghosts.
      */
     public function show($id): JsonResponse
     {
@@ -64,7 +65,8 @@ class MindMapController extends Controller
             ->with([
                 'positions.item',
                 'connections.fromItem',
-                'connections.toItem'
+                'connections.toItem',
+                'ghosts'
             ])
             ->findOrFail($id);
 
@@ -82,9 +84,27 @@ class MindMapController extends Controller
             ];
         });
 
+        // Transform ghosts for frontend
+        $ghosts = $mindmap->ghosts->map(function ($ghost) {
+            return [
+                'id' => 'ghost_' . $ghost->id,
+                'ghost_id' => $ghost->id,
+                'original_item_id' => $ghost->original_item_id,
+                'label' => $ghost->label,
+                'item_type' => $ghost->item_type,
+                'position' => $ghost->position,
+                'size' => $ghost->size,
+                'style' => $ghost->style,
+                'z_index' => $ghost->z_index,
+                'deleted_at' => $ghost->deleted_at,
+                'is_ghost' => true,
+            ];
+        });
+
         return response()->json([
             'mindmap' => $mindmap,
             'nodes' => $nodes,
+            'ghosts' => $ghosts,
             'edges' => $mindmap->connections,
         ]);
     }
@@ -482,5 +502,25 @@ class MindMapController extends Controller
                 $y = $index * 150;
                 return ['x' => $x, 'y' => $y];
         }
+    }
+
+    /**
+     * Dismiss a ghost placeholder from the mindmap.
+     *
+     * This permanently removes the ghost - the user acknowledges the item was deleted.
+     */
+    public function dismissGhost($mindmapId, $ghostId): JsonResponse
+    {
+        // Verify user owns the mindmap
+        $mindmap = WritingMindmap::where('user_id', Auth::id())->findOrFail($mindmapId);
+
+        // Find and delete the ghost
+        $ghost = MindmapGhost::where('id', $ghostId)
+            ->where('mindmap_id', $mindmapId)
+            ->firstOrFail();
+
+        $ghost->delete();
+
+        return response()->json(['message' => 'Ghost dismissed successfully']);
     }
 }
