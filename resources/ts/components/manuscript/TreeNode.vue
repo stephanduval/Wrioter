@@ -18,6 +18,7 @@
         'is-folder': hasChildren,
         'is-loading': node.state.isLoading,
         'is-dragging': isDragging,
+        'is-multi-dragging': isBeingDragged && !isDragging,
         'drop-target': isDropTarget,
         'in-scrivening-selection': isInScriveningSelection,
       }"
@@ -130,8 +131,10 @@
         :selected-node="selectedNode"
         :show-metadata="showMetadata"
         :dragging-node-id="draggingNodeId"
+        :dragging-node-ids="draggingNodeIds"
         :selection-mode="selectionMode"
         :scrivening-selections="scriveningSelections"
+        :all-nodes="allNodes"
         @node-click="$emit('node-click', $event)"
         @node-toggle="$emit('node-toggle', $event)"
         @node-context="$emit('node-context', $event)"
@@ -148,9 +151,10 @@
 
 <script setup lang="ts">
 import { computed, ref, watch, nextTick, onBeforeUnmount } from "vue";
-import { useDragAndDrop } from "@/composables/useDragAndDrop";
+import { useDragAndDrop, isDropResultMulti } from "@/composables/useDragAndDrop";
 import { useManuscriptStore } from "@/stores/manuscript";
-import type { DropPosition } from "@/composables/useDragAndDrop";
+import { useSelectionStore } from "@/stores/selection";
+import type { DropPosition, DropResult, DropResultMulti } from "@/composables/useDragAndDrop";
 
 interface TreeNode {
   id: string;
@@ -181,8 +185,10 @@ interface Props {
   selectedNode: string | null;
   showMetadata?: boolean;
   draggingNodeId: string | null;
+  draggingNodeIds?: Set<string>;  // For multi-drag support
   selectionMode?: boolean;
   scriveningSelections?: Set<string>;
+  allNodes?: TreeNode[];  // All nodes for building drag data
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -190,23 +196,17 @@ const props = withDefaults(defineProps<Props>(), {
   showMetadata: false,
   selectionMode: false,
   scriveningSelections: () => new Set(),
+  draggingNodeIds: () => new Set(),
+  allNodes: () => [],
 });
 
 const emit = defineEmits<{
   "node-click": [id: string];
   "node-toggle": [id: string];
   "node-context": [{ nodeId: string; event: MouseEvent | TouchEvent }];
-  "node-drag-start": [id: string];
+  "node-drag-start": [ids: string[]];  // Now supports multiple IDs
   "node-drag-end": [];
-  "node-drop": [
-    {
-      sourceId: string | number;
-      sourceItemId: number;
-      targetId: string | number;
-      targetItemId: number;
-      position: DropPosition;
-    },
-  ];
+  "node-drop": [DropResult | DropResultMulti];  // Supports both single and multi
   "scrivening-selection-toggle": [
     { nodeId: string; itemId: number; checked: boolean },
   ];
@@ -217,14 +217,17 @@ const isRenaming = ref(false);
 const renameValue = ref("");
 const renameInputRef = ref<HTMLInputElement | null>(null);
 
-// Store
+// Stores
 const manuscriptStore = useManuscriptStore();
+const selectionStore = useSelectionStore();
 
 // Drag & Drop composable
 const {
   isDragging,
   dropPosition,
+  draggingIds,
   handleDragStart: dragStart,
+  handleDragStartMulti: dragStartMulti,
   handleDragEnd: dragEnd,
   handleDragOver: dragOver,
   handleDragLeave: dragLeave,
@@ -234,7 +237,10 @@ const {
 // Computed properties
 const hasChildren = computed(() => props.node.children.length > 0);
 const isExpanded = computed(() => props.expandedNodes.has(props.node.id));
-const isSelected = computed(() => props.selectedNode === props.node.id);
+// isSelected now checks BOTH the navigation selection AND the multi-select store
+const isNavigationSelected = computed(() => props.selectedNode === props.node.id);
+const isMultiSelected = computed(() => selectionStore.isSelected(props.node.id));
+const isSelected = computed(() => isNavigationSelected.value || isMultiSelected.value);
 const isInScriveningSelection = computed(
   () => props.scriveningSelections?.has(props.node.id) || false,
 );
@@ -243,44 +249,77 @@ const isInScriveningSelection = computed(
 // Track local hover state for this specific node
 const localDropPosition = ref<DropPosition>(null);
 
+// Check if this node is being dragged (single or multi)
+const isBeingDragged = computed(() => {
+  // Check props (passed from parent for multi-drag)
+  if (props.draggingNodeIds?.has(props.node.id)) return true;
+  // Check local composable state
+  if (draggingIds.value.has(props.node.id)) return true;
+  // Check single drag
+  return props.draggingNodeId === props.node.id;
+});
+
 const showDropZoneAbove = computed(
   () =>
-    props.draggingNodeId &&
-    props.draggingNodeId !== props.node.id &&
+    (props.draggingNodeId || props.draggingNodeIds?.size) &&
+    !isBeingDragged.value &&
     localDropPosition.value === "above",
 );
 
 const showDropZoneBelow = computed(
   () =>
-    props.draggingNodeId &&
-    props.draggingNodeId !== props.node.id &&
+    (props.draggingNodeId || props.draggingNodeIds?.size) &&
+    !isBeingDragged.value &&
     localDropPosition.value === "below",
 );
 
 const isDropTarget = computed(
   () =>
-    props.draggingNodeId &&
-    props.draggingNodeId !== props.node.id &&
+    (props.draggingNodeId || props.draggingNodeIds?.size) &&
+    !isBeingDragged.value &&
     localDropPosition.value === "inside",
 );
 
 // Methods
 const handleNodeClick = (event: MouseEvent) => {
-  // Shift-click toggles scrivening selection
+  const nodeId = props.node.id;
+
+  // Shift-click toggles scrivening selection (when in selection mode)
   if (event.shiftKey && props.selectionMode) {
     event.preventDefault();
     event.stopPropagation();
     const isCurrentlySelected = isInScriveningSelection.value;
     emit("scrivening-selection-toggle", {
-      nodeId: props.node.id,
+      nodeId: nodeId,
       itemId: props.node.itemId,
       checked: !isCurrentlySelected,
     });
     return;
   }
 
-  // Normal click - navigate
-  emit("node-click", props.node.id);
+  // Ctrl+Click (or Cmd+Click on Mac) - toggle multi-selection
+  if (event.ctrlKey || event.metaKey) {
+    event.preventDefault();
+    event.stopPropagation();
+    selectionStore.toggleItem(nodeId);
+    console.log('[MULTI-SELECT] Ctrl+Click toggled:', nodeId, 'Selection:', selectionStore.getSelectionSummary());
+    return;
+  }
+
+  // Shift+Click - extend range selection (for multi-select, not scrivening)
+  if (event.shiftKey && !props.selectionMode) {
+    event.preventDefault();
+    event.stopPropagation();
+    selectionStore.extendSelection(nodeId);
+    console.log('[MULTI-SELECT] Shift+Click extended to:', nodeId, 'Selection:', selectionStore.getSelectionSummary());
+    return;
+  }
+
+  // Normal click - clear multi-selection and navigate
+  if (selectionStore.hasSelection) {
+    selectionStore.clearSelection();
+  }
+  emit("node-click", nodeId);
 };
 
 const handleToggleExpansion = () => {
@@ -315,15 +354,81 @@ const handleTouchMove = () => {
   }
 };
 
+// Helper to find node data by ID from allNodes tree
+const findNodeById = (nodes: TreeNode[], id: string): TreeNode | null => {
+  for (const node of nodes) {
+    if (node.id === id) return node;
+    if (node.children.length > 0) {
+      const found = findNodeById(node.children, id);
+      if (found) return found;
+    }
+  }
+  return null;
+};
+
 // Drag handlers
 const handleDragStart = (event: DragEvent) => {
-  dragStart(event, {
-    id: props.node.id,
-    itemId: props.node.itemId,
-    type: props.node.type,
-    title: props.node.title,
+  const nodeId = props.node.id;
+  const isNodeSelected = selectionStore.isSelected(nodeId);
+
+  console.log('[DRAG-START] Node:', nodeId, {
+    isNodeSelected,
+    selectedCount: selectionStore.selectedCount,
+    selectedArray: selectionStore.selectedArray,
+    allNodesCount: props.allNodes.length,
   });
-  emit("node-drag-start", props.node.id);
+
+  // If node is selected and there are multiple selections, drag all selected
+  if (isNodeSelected && selectionStore.selectedCount > 1) {
+    // Build drag data for all selected items
+    const selectedIds = selectionStore.selectedArray;
+    console.log('[DRAG-START] Multi-drag mode! Dragging', selectedIds.length, 'items:', selectedIds);
+    const dragItems = selectedIds.map(id => {
+      // Try to find node in allNodes prop, fallback to current node data
+      const foundNode = props.allNodes.length > 0 ? findNodeById(props.allNodes, id) : null;
+      if (foundNode) {
+        return {
+          id: foundNode.id,
+          itemId: foundNode.itemId,
+          type: foundNode.type,
+          title: foundNode.title,
+        };
+      }
+      // If not found and it's the current node, use current node data
+      if (id === nodeId) {
+        return {
+          id: props.node.id,
+          itemId: props.node.itemId,
+          type: props.node.type,
+          title: props.node.title,
+        };
+      }
+      // Fallback: minimal data
+      return {
+        id,
+        itemId: parseInt(id),
+        type: 'unknown',
+        title: 'Item',
+      };
+    });
+
+    dragStartMulti(event, dragItems, nodeId);
+    emit("node-drag-start", selectedIds);
+  } else {
+    // Single item drag
+    // If not selected, select this item (replaces selection)
+    if (!isNodeSelected) {
+      selectionStore.selectItem(nodeId);
+    }
+
+    dragStart(event, {
+      id: props.node.id,
+      itemId: props.node.itemId,
+      type: props.node.type,
+      title: props.node.title,
+    });
+    emit("node-drag-start", [props.node.id]);
+  }
 };
 
 const handleDragEnd = () => {
@@ -356,13 +461,8 @@ const handleDrop = async (event: DragEvent, position: DropPosition) => {
   const result = drop(event, props.node.id, props.node.itemId, position);
 
   if (result) {
-    emit("node-drop", {
-      sourceId: result.sourceId,
-      sourceItemId: result.sourceItemId,
-      targetId: result.targetId,
-      targetItemId: result.targetItemId,
-      position: result.position,
-    });
+    // Emit the full result (single or multi)
+    emit("node-drop", result);
   }
   // Clear local drop position after drop
   localDropPosition.value = null;
@@ -468,7 +568,8 @@ onBeforeUnmount(() => {
     opacity: 0.6;
   }
 
-  &.is-dragging {
+  &.is-dragging,
+  &.is-multi-dragging {
     opacity: 0.7;
     background-color: rgba(59, 130, 246, 0.1);
   }

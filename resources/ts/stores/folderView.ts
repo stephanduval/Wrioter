@@ -139,6 +139,11 @@ export const useFolderViewStore = defineStore('folderView', () => {
   const scriveningMetadata = ref<ScriveningMetadata | null>(null)
   const scriveningSeparators = ref<Map<number, ScriveningSeparator>>(new Map())
 
+  // Convert Map to Array for component consumption (components expect arrays, not Maps)
+  const scriveningSeparatorsArray = computed(() => {
+    return Array.from(scriveningSeparators.value.values())
+  })
+
   // Getters
   const hasFolder = computed(() => currentFolderId.value !== null)
 
@@ -184,7 +189,8 @@ export const useFolderViewStore = defineStore('folderView', () => {
     }
 
     // Save preference if folder is loaded
-    if (currentFolderId.value) {
+    // Don't save preferences for ephemeral views like 'item' and 'mindmap' which are context-specific
+    if (currentFolderId.value && !['item', 'mindmap'].includes(mode)) {
       await saveViewPreference(currentFolderId.value, { view_mode: mode })
     }
 
@@ -617,6 +623,7 @@ export const useFolderViewStore = defineStore('folderView', () => {
     scriveningItems,
     scriveningMetadata,
     scriveningSeparators,
+    scriveningSeparatorsArray,  // Array version for components
 
     // Getters
     hasFolder,
