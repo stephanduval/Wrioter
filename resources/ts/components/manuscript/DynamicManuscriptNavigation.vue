@@ -11,6 +11,7 @@
   <div
     v-if="manuscriptStore.hasSelectedManuscript"
     class="manuscript-navigation-wrapper"
+    :class="{ 'sidebar-collapsed': isSidebarCollapsed }"
   >
     <!-- Manuscript Header -->
     <div
@@ -108,6 +109,8 @@
         :selection-mode="selectionMode"
         :scrivening-selections="scriveningSelections"
         :all-nodes="manuscriptStore.manuscriptTree"
+        :max-depth="maxTreeDepth"
+        :sidebar-collapsed="isSidebarCollapsed"
         @node-click="handleNodeClick"
         @node-toggle="handleNodeToggle"
         @node-context="handleNodeContext"
@@ -132,7 +135,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from "vue";
+import { ref, computed, watch, inject } from "vue";
 import { useRouter } from "vue-router";
 import { useManuscriptStore } from "@/stores/manuscript";
 import { useManuscriptNavigationStore } from "@/stores/manuscript-navigation";
@@ -142,6 +145,8 @@ import { usePaneStore } from "@/stores/pane";
 import { useContextMenu } from "@/composables/useContextMenu";
 import { ContextDetectionService } from "@/services/contextDetection";
 import { isDropResultMulti, type DropResult, type DropResultMulti } from "@/composables/useDragAndDrop";
+import { useLayoutConfigStore } from "@layouts/stores/config";
+import { injectionKeyIsVerticalNavHovered } from "@layouts/symbols";
 import TreeNode from "./TreeNode.vue";
 import ScriveningSelectorPanel from "@/components/scrivening/ScriveningSelectorPanel.vue";
 
@@ -150,9 +155,30 @@ const manuscriptStore = useManuscriptStore();
 const navigationStore = useManuscriptNavigationStore();
 const selectionStore = useSelectionStore();
 const router = useRouter();
+const configStore = useLayoutConfigStore();
 
 // Context menu composable
 const contextMenu = useContextMenu();
+
+// Inject sidebar hover state (same pattern as VerticalNavGroup)
+const isVerticalNavHovered = inject(injectionKeyIsVerticalNavHovered, ref(false));
+
+// Computed: detect if sidebar is collapsed (isVerticalNavMini returns a ComputedRef)
+const isSidebarCollapsed = configStore.isVerticalNavMini(isVerticalNavHovered);
+
+// Computed: max depth based on sidebar state
+const maxTreeDepth = computed(() => (isSidebarCollapsed.value ? 1 : Infinity));
+
+// Debug: Watch collapse state
+if (import.meta.env.DEV) {
+  watch([isSidebarCollapsed, isVerticalNavHovered], ([collapsed, hovered]) => {
+    console.log('[DynamicManuscriptNav] Sidebar state:', {
+      collapsed,
+      hovered,
+      maxDepth: maxTreeDepth.value
+    });
+  });
+}
 
 // Local state
 const showSearch = ref(false);
@@ -527,5 +553,35 @@ console.log(
   padding: 8px 0 4px;
   border-top: 1px solid rgb(var(--v-theme-surface-variant));
   margin-top: 8px;
+}
+
+/* Collapsed sidebar styling */
+.manuscript-navigation-wrapper.sidebar-collapsed {
+  padding: 8px 4px;
+
+  :deep(.tree-node) {
+    padding: 4px;
+
+    .node-label {
+      display: none; // Hide all text
+    }
+
+    .node-content {
+      justify-content: center;
+    }
+
+    .expansion-toggle {
+      display: none; // Hide chevrons
+    }
+  }
+
+  :deep(.child-count-badge) {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    min-width: 16px;
+    height: 16px;
+    font-size: 10px;
+  }
 }
 </style>

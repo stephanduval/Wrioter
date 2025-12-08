@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Create backup directory with timestamp
-BACKUP_BASE="/home/rogers/Code/Wrioter_gitIgnored_backups"
+BACKUP_BASE="/home/sduval/Code/Wrioter_gitIgnored_backups"
 BACKUP_DIR="$BACKUP_BASE/backup_$(date +%Y%m%d_%H%M%S)"
 mkdir -p "$BACKUP_DIR"
 

@@ -40,7 +40,7 @@
       <div class="node-content">
         <!-- Expansion Toggle -->
         <button
-          v-if="hasChildren"
+          v-if="hasChildren && !sidebarCollapsed"
           class="expansion-toggle"
           @click.stop="handleToggleExpansion"
         >
@@ -58,6 +58,15 @@
           class="node-icon"
           :color="getIconColor()"
         />
+
+        <!-- Child Count Badge (shown when sidebar collapsed and has children) -->
+        <VChip
+          v-if="sidebarCollapsed && hasChildren && level < maxDepth"
+          size="x-small"
+          class="child-count-badge"
+        >
+          {{ node.children.length }}
+        </VChip>
 
         <!-- Node Label (clickable to select/navigate or double-click to rename) -->
         <div
@@ -121,7 +130,7 @@
     />
 
     <!-- Child Nodes -->
-    <div v-if="hasChildren && isExpanded" class="child-nodes">
+    <div v-if="canShowChildren" class="child-nodes">
       <TreeNode
         v-for="child in node.children"
         :key="child.id"
@@ -135,6 +144,8 @@
         :selection-mode="selectionMode"
         :scrivening-selections="scriveningSelections"
         :all-nodes="allNodes"
+        :max-depth="maxDepth"
+        :sidebar-collapsed="sidebarCollapsed"
         @node-click="$emit('node-click', $event)"
         @node-toggle="$emit('node-toggle', $event)"
         @node-context="$emit('node-context', $event)"
@@ -189,6 +200,8 @@ interface Props {
   selectionMode?: boolean;
   scriveningSelections?: Set<string>;
   allNodes?: TreeNode[];  // All nodes for building drag data
+  maxDepth?: number;
+  sidebarCollapsed?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -198,6 +211,8 @@ const props = withDefaults(defineProps<Props>(), {
   scriveningSelections: () => new Set(),
   draggingNodeIds: () => new Set(),
   allNodes: () => [],
+  maxDepth: Infinity,
+  sidebarCollapsed: false,
 });
 
 const emit = defineEmits<{
@@ -243,6 +258,11 @@ const isMultiSelected = computed(() => selectionStore.isSelected(props.node.id))
 const isSelected = computed(() => isNavigationSelected.value || isMultiSelected.value);
 const isInScriveningSelection = computed(
   () => props.scriveningSelections?.has(props.node.id) || false,
+);
+
+// Computed: determine if children can be shown based on depth limit
+const canShowChildren = computed(
+  () => hasChildren.value && isExpanded.value && props.level < props.maxDepth,
 );
 
 // Show drop zones when dragging

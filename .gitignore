@@ -98,3 +98,8 @@ docker-deploy.tar.gz
 *.deb
 docker-deploy.tar.gz
 pandoc-*.deb
+
+# Sync scripts (environment-specific)
+sync-to-devserver.sh
+sync-docs-unison.sh
+sync-docs-three-way.sh

@@ -2,9 +2,10 @@
 import { layoutConfig } from '@layouts'
 import { can } from '@layouts/plugins/casl'
 import { useLayoutConfigStore } from '@layouts/stores/config'
+import { injectionKeyIsVerticalNavHovered } from '@layouts/symbols'
 import type { NavLink } from '@layouts/types'
 import { getComputedNavLinkToProp, getDynamicI18nProps, isNavLinkActive } from '@layouts/utils'
-import { ref, nextTick, onMounted, onBeforeUnmount } from 'vue'
+import { ref, inject, nextTick, onMounted, onBeforeUnmount } from 'vue'
 
 const props = defineProps<{
   item: NavLink & { custom?: boolean, editable?: boolean }
@@ -15,7 +16,12 @@ const emit = defineEmits<{
 }>()
 
 const configStore = useLayoutConfigStore()
-const hideTitleAndBadge = configStore.isVerticalNavMini()
+
+// Inject hover state from parent VerticalNav
+const isVerticalNavHovered = inject(injectionKeyIsVerticalNavHovered, ref(false))
+
+// Pass hover state to isVerticalNavMini so it responds to hover
+const hideTitleAndBadge = configStore.isVerticalNavMini(isVerticalNavHovered)
 
 // In-place editing state
 const isEditing = ref(false)
