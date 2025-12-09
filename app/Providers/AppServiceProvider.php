@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Models\Item;
+use App\Observers\ItemObserver;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
 
@@ -21,6 +23,9 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Schema::defaultStringLength(191);
+
+        // Register observers
+        Item::observe(ItemObserver::class);
     }
     protected function mapApiRoutes()
 {

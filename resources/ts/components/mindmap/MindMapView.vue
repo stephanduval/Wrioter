@@ -217,6 +217,14 @@ async function loadOrCreateMindmap() {
     // Try to load existing mindmap for this folder
     await mindmapStore.loadFolderMindmap(props.folderId)
 
+    // Debug logging
+    console.log('[MindMapView] Loaded mindmap:', {
+      currentMindmap: currentMindmap.value,
+      nodes: mindmapNodes.value,
+      edges: mindmapEdges.value,
+      folderId: props.folderId
+    })
+
     // If no mindmap exists, we'll show the empty state
     if (!currentMindmap.value) {
       console.log('No mindmap found for folder', props.folderId)

@@ -563,25 +563,78 @@ export const useMindmapStore = defineStore('mindmap', () => {
 
   // Folder-based mindmap operations
   const loadFolderMindmap = async (folderId: number): Promise<void> => {
-    // Check cache first
-    if (folderMindmaps.value.has(folderId)) {
-      currentMindmap.value = folderMindmaps.value.get(folderId) || null
-      return
-    }
-
     loading.value = true
     error.value = null
     try {
-      // Try to load mindmap for this folder
+      // Load mindmap for this folder - backend auto-creates if doesn't exist
       const response = await axios.get(`/folders/${folderId}/mindmap`)
-      if (response.data) {
-        const mindmap = response.data
+
+      console.log('[mindmap store] API response:', response.data)
+
+      if (response.data?.mindmap) {
+        const { mindmap, nodes: backendNodes, ghosts, edges: backendEdges } = response.data
+
+        console.log('[mindmap store] Processing data:', {
+          mindmapId: mindmap?.id,
+          nodeCount: backendNodes?.length || 0,
+          ghostCount: ghosts?.length || 0,
+          hierarchyEdges: backendEdges?.hierarchy?.length || 0,
+          customEdges: backendEdges?.custom?.length || 0
+        })
+
+        // Cache and set current mindmap
         folderMindmaps.value.set(folderId, mindmap)
         currentMindmap.value = mindmap
-        // Load nodes and edges if available
-        if (mindmap.id) {
-          await loadMindmap(mindmap.id)
+
+        // Transform nodes for Vue Flow
+        nodes.value = (backendNodes || []).map((node: any) => ({
+          id: `item-${node.id}`,
+          type: node.data?.type || 'default',
+          position: node.position || { x: 0, y: 0 },
+          data: {
+            label: node.data?.title || 'Untitled',
+            content: node.data?.content,
+            synopsis: node.data?.synopsis,
+            metadata: node.data?.metadata,
+            itemId: node.id,
+            itemType: node.data?.type,
+            style: node.style,
+          },
+        }))
+
+        // Add ghost nodes if any (for deleted items)
+        if (ghosts?.length) {
+          ghosts.forEach((ghost: any) => {
+            nodes.value.push({
+              id: ghost.id, // Already prefixed with 'ghost_'
+              type: 'ghost',
+              position: ghost.position || { x: 0, y: 0 },
+              data: {
+                label: ghost.label,
+                ghostId: ghost.ghost_id,
+                originalItemId: ghost.original_item_id,
+                itemType: ghost.item_type,
+                deletedAt: ghost.deleted_at,
+                isGhost: true,
+              },
+            })
+          })
         }
+
+        // Combine hierarchy edges (from folder structure) and custom edges (user-created)
+        const hierarchyEdges = (backendEdges?.hierarchy || []).map((e: any) => ({
+          ...e,
+          style: { stroke: '#999', strokeDasharray: '0' }, // Solid gray for hierarchy
+        }))
+
+        const customEdges = (backendEdges?.custom || []).map((e: any) => ({
+          ...e,
+          style: { stroke: '#3b82f6', strokeDasharray: '5,5' }, // Dashed blue for custom
+        }))
+
+        edges.value = [...hierarchyEdges, ...customEdges]
+
+        hasUnsavedChanges.value = false
       }
     } catch (err: any) {
       // Folder might not have a mindmap yet, which is okay
