@@ -9,24 +9,18 @@ LLM_Guide.md can help give you context if you need to understand the application
 
 
 # Remote Dev Server Sync Rules
-⚠️ **CRITICAL**: Changes made locally must be synced to see them on the dev server!
+⚠️ **NOTE**: A background sync script runs automatically - no need to manually sync.
 
 ## Sync Process
-- **User runs sync manually** - Changes won't appear until `./sync-to-devserver.sh` is executed
-- Dev server runs at: `ssh sduval@192.168.1.252`
-- Local path: `/home/rogers/Code/Wrioter Branch 3/`
-- Remote path: `/home/sduval/Code/Wrioter Branch 3/`
-- Documentation in this folder syncs to remote server
-
-## If code isn't updating after changes:
-1. User likely hasn't run `./sync-to-devserver.sh` yet
-2. Wait for sync to complete before testing
-3. Refresh browser after sync completes
+- **Sync runs automatically in background** - Changes sync continuously
+- Dev server runs at: `ssh sduval@10.0.0.2`
+- Local path: `/home/sduval/Code/Wrioter Branch 2/`
+- Remote path: `/home/sduval/Code/Wrioter Branch 2/`
 
 ## Important Sync Rules
-- **NEVER use manual rsync commands** - Always use `./sync-to-devserver.sh`
+- **NEVER use manual rsync commands** - Background sync handles it
 - Script ensures `.env*` files are NOT synced (each environment has its own config)
-- This prevents breaking the multi-branch setup by reverting URLs from `192.168.1.252` to `localhost`
+- LLM does NOT need to sync after changes - it happens automatically
 
 
 # Code Standards

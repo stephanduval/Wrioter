@@ -407,6 +407,34 @@ export const useManuscriptStore = defineStore('manuscript', () => {
     }
   }
 
+  // Batch reorder multiple items within a manuscript
+  async function batchReorderItems(data: {
+    sourceItemIds: number[]
+    targetItemId: number
+    position: 'above' | 'below' | 'inside'
+    manuscriptId: number
+  }) {
+    try {
+      loading.value = true
+      error.value = null
+
+      const response = await api.post(`/manuscripts/${data.manuscriptId}/items/batch-reorder`, {
+        source_item_ids: data.sourceItemIds,
+        target_item_id: data.targetItemId,
+        position: data.position
+      })
+
+      console.log('Items batch reordered successfully:', response)
+      return response.data
+    } catch (err: any) {
+      error.value = err.message || 'Failed to batch reorder items'
+      console.error('Error batch reordering items:', err)
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
   // Delete an item from the manuscript
   async function deleteItem(manuscriptId: number, itemId: number) {
     try {
@@ -524,6 +552,7 @@ export const useManuscriptStore = defineStore('manuscript', () => {
     searchItems,
     clearSearch,
     reorderItem,
+    batchReorderItems,
     deleteItem,
     renameItem,
     convertFolderToItem,

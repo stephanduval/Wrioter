@@ -105,8 +105,10 @@
         :expanded-nodes="navigationStore.expandedNodes"
         :selected-node="navigationStore.selectedNode"
         :dragging-node-id="draggingNodeId"
+        :dragging-node-ids="draggingNodeIds"
         :selection-mode="selectionMode"
         :scrivening-selections="scriveningSelections"
+        :all-nodes="manuscriptStore.manuscriptTree"
         :max-depth="maxTreeDepth"
         :sidebar-collapsed="isSidebarCollapsed"
         @node-click="handleNodeClick"
@@ -142,6 +144,7 @@ import { useSelectionStore } from "@/stores/selection";
 import { usePaneStore } from "@/stores/pane";
 import { useContextMenu } from "@/composables/useContextMenu";
 import { ContextDetectionService } from "@/services/contextDetection";
+import { isDropResultMulti, type DropResult, type DropResultMulti } from "@/composables/useDragAndDrop";
 import { useLayoutConfigStore } from "@layouts/stores/config";
 import { injectionKeyIsVerticalNavHovered } from "@layouts/symbols";
 import TreeNode from "./TreeNode.vue";
@@ -180,6 +183,7 @@ if (import.meta.env.DEV) {
 // Local state
 const showSearch = ref(false);
 const draggingNodeId = ref<string | null>(null);
+const draggingNodeIds = ref<Set<string>>(new Set());  // For multi-drag
 const selectionMode = ref(true);
 
 // Computed
@@ -353,23 +357,19 @@ const formatWordCount = (count: number): string => {
 };
 
 // Drag and Drop handlers
-const handleNodeDragStart = (nodeId: string) => {
-  console.log("Drag start:", nodeId);
-  draggingNodeId.value = nodeId;
+const handleNodeDragStart = (nodeIds: string[]) => {
+  console.log("Drag start:", nodeIds);
+  draggingNodeId.value = nodeIds[0] || null;
+  draggingNodeIds.value = new Set(nodeIds);
 };
 
 const handleNodeDragEnd = () => {
   console.log("Drag end");
   draggingNodeId.value = null;
+  draggingNodeIds.value = new Set();
 };
 
-const handleNodeDrop = async (data: {
-  sourceId: string | number;
-  sourceItemId: number;
-  targetId: string | number;
-  targetItemId: number;
-  position: "above" | "below" | "inside";
-}) => {
+const handleNodeDrop = async (data: DropResult | DropResultMulti) => {
   console.log("Drop event:", data);
 
   if (!manuscriptStore.selectedManuscriptId) {
@@ -378,20 +378,37 @@ const handleNodeDrop = async (data: {
   }
 
   try {
-    // Call the API to reorder items
-    await manuscriptStore.reorderItem({
-      sourceItemId: data.sourceItemId,
-      targetItemId: data.targetItemId,
-      position: data.position,
-      manuscriptId: manuscriptStore.selectedManuscriptId,
-    });
+    // Check if this is a multi-item drop
+    if (isDropResultMulti(data)) {
+      console.log("Multi-item drop:", data.sourceItems.length, "items");
+
+      // Call the batch reorder API
+      await manuscriptStore.batchReorderItems({
+        sourceItemIds: data.sourceItems.map(item => item.itemId),
+        targetItemId: data.targetItemId,
+        position: data.position,
+        manuscriptId: manuscriptStore.selectedManuscriptId,
+      });
+
+      // Clear selection after successful move
+      selectionStore.clearSelection();
+    } else {
+      // Single item drop (backward compatible)
+      await manuscriptStore.reorderItem({
+        sourceItemId: data.sourceItemId,
+        targetItemId: data.targetItemId,
+        position: data.position,
+        manuscriptId: manuscriptStore.selectedManuscriptId,
+      });
+    }
 
     // Reload the tree to reflect changes
     await manuscriptStore.fetchManuscriptItems(
       manuscriptStore.selectedManuscriptId,
     );
   } catch (error) {
-    console.error("Error reordering item:", error);
+    console.error("Error reordering item(s):", error);
+    // Keep selection on error so user can retry
     // TODO: Show error notification to user
   }
 };

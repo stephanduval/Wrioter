@@ -140,8 +140,12 @@
     <!-- Context menu -->
     <VMenu
       v-model="showContextMenu"
-      :location="contextMenuPosition"
       absolute
+      :style="{
+        position: 'fixed',
+        left: `${contextMenuPosition[0]}px`,
+        top: `${contextMenuPosition[1]}px`
+      }"
     >
       <VList>
         <VListItem

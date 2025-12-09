@@ -171,7 +171,7 @@
           :folder="currentFolder"
           :items="displayItems"
           :scrivening-mode="scriveningMode"
-          :scrivening-separators="scriveningSeparators"
+          :scrivening-separators="scriveningSeparatorsArray"
         />
 
         <CorkboardView
@@ -180,7 +180,7 @@
           :folder="currentFolder"
           :items="displayItems"
           :scrivening-mode="scriveningMode"
-          :scrivening-separators="scriveningSeparators"
+          :scrivening-separators="scriveningSeparatorsArray"
         />
 
         <OutlineView
@@ -189,7 +189,7 @@
           :folder="currentFolder"
           :items="displayItems"
           :scrivening-mode="scriveningMode"
-          :scrivening-separators="scriveningSeparators"
+          :scrivening-separators="scriveningSeparatorsArray"
         />
 
         <MindMapView
@@ -287,7 +287,7 @@ const {
   scriveningMode,
   scriveningItemCount,
   displayItems,
-  scriveningSeparators,
+  scriveningSeparatorsArray,  // Use array version instead of Map
   isViewLocked
 } = storeToRefs(folderViewStore)
 

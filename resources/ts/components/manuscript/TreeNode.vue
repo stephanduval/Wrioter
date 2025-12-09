@@ -123,8 +123,10 @@
         :selected-node="selectedNode"
         :show-metadata="showMetadata"
         :dragging-node-id="draggingNodeId"
+        :dragging-node-ids="draggingNodeIds"
         :selection-mode="selectionMode"
         :scrivening-selections="scriveningSelections"
+        :all-nodes="allNodes"
         :max-depth="maxDepth"
         :sidebar-collapsed="sidebarCollapsed"
         @node-click="$emit('node-click', $event)"
@@ -142,10 +144,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch, nextTick, onBeforeUnmount } from "vue";
+import type { DropPosition, DropResult, DropResultMulti } from "@/composables/useDragAndDrop";
 import { useDragAndDrop } from "@/composables/useDragAndDrop";
 import { useManuscriptStore } from "@/stores/manuscript";
-import type { DropPosition } from "@/composables/useDragAndDrop";
+import { useSelectionStore } from "@/stores/selection";
+import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
 
 interface TreeNode {
   id: string;
@@ -176,8 +179,10 @@ interface Props {
   selectedNode: string | null;
   showMetadata?: boolean;
   draggingNodeId: string | null;
+  draggingNodeIds?: Set<string>;  // For multi-drag support
   selectionMode?: boolean;
   scriveningSelections?: Set<string>;
+  allNodes?: TreeNode[];  // All nodes for building drag data
   maxDepth?: number;
   sidebarCollapsed?: boolean;
 }
@@ -187,6 +192,8 @@ const props = withDefaults(defineProps<Props>(), {
   showMetadata: false,
   selectionMode: false,
   scriveningSelections: () => new Set(),
+  draggingNodeIds: () => new Set(),
+  allNodes: () => [],
   maxDepth: Infinity,
   sidebarCollapsed: false,
 });
@@ -195,17 +202,9 @@ const emit = defineEmits<{
   "node-click": [id: string];
   "node-toggle": [id: string];
   "node-context": [{ nodeId: string; event: MouseEvent | TouchEvent }];
-  "node-drag-start": [id: string];
+  "node-drag-start": [ids: string[]];  // Now supports multiple IDs
   "node-drag-end": [];
-  "node-drop": [
-    {
-      sourceId: string | number;
-      sourceItemId: number;
-      targetId: string | number;
-      targetItemId: number;
-      position: DropPosition;
-    },
-  ];
+  "node-drop": [DropResult | DropResultMulti];  // Supports both single and multi
   "scrivening-selection-toggle": [
     { nodeId: string; itemId: number; checked: boolean },
   ];
@@ -216,13 +215,15 @@ const isRenaming = ref(false);
 const renameValue = ref("");
 const renameInputRef = ref<HTMLInputElement | null>(null);
 
-// Store
+// Stores
 const manuscriptStore = useManuscriptStore();
+const selectionStore = useSelectionStore();
 
 // Drag & Drop composable
 const {
   isDragging,
   handleDragStart: dragStart,
+  handleDragStartMulti: dragStartMulti,
   handleDragEnd: dragEnd,
   handleDragOver: dragOver,
   handleDragLeave: dragLeave,
@@ -232,7 +233,10 @@ const {
 // Computed properties
 const hasChildren = computed(() => props.node.children.length > 0);
 const isExpanded = computed(() => props.expandedNodes.has(props.node.id));
-const isSelected = computed(() => props.selectedNode === props.node.id);
+// isSelected now checks BOTH the navigation selection AND the multi-select store
+const isNavigationSelected = computed(() => props.selectedNode === props.node.id);
+const isMultiSelected = computed(() => selectionStore.isSelected(props.node.id));
+const isSelected = computed(() => isNavigationSelected.value || isMultiSelected.value);
 const isInScriveningSelection = computed(
   () => props.scriveningSelections?.has(props.node.id) || false,
 );
@@ -247,21 +251,44 @@ const localDropPosition = ref<DropPosition>(null);
 
 // Methods
 const handleNodeClick = (event: MouseEvent) => {
-  // Shift-click toggles scrivening selection
+  const nodeId = props.node.id;
+
+  // Shift-click toggles scrivening selection (when in selection mode)
   if (event.shiftKey && props.selectionMode) {
     event.preventDefault();
     event.stopPropagation();
     const isCurrentlySelected = isInScriveningSelection.value;
     emit("scrivening-selection-toggle", {
-      nodeId: props.node.id,
+      nodeId: nodeId,
       itemId: props.node.itemId,
       checked: !isCurrentlySelected,
     });
     return;
   }
 
-  // Normal click - navigate
-  emit("node-click", props.node.id);
+  // Ctrl+Click (or Cmd+Click on Mac) - toggle multi-selection
+  if (event.ctrlKey || event.metaKey) {
+    event.preventDefault();
+    event.stopPropagation();
+    selectionStore.toggleItem(nodeId);
+    console.log('[MULTI-SELECT] Ctrl+Click toggled:', nodeId, 'Selection:', selectionStore.getSelectionSummary());
+    return;
+  }
+
+  // Shift+Click - extend range selection (for multi-select, not scrivening)
+  if (event.shiftKey && !props.selectionMode) {
+    event.preventDefault();
+    event.stopPropagation();
+    selectionStore.extendSelection(nodeId);
+    console.log('[MULTI-SELECT] Shift+Click extended to:', nodeId, 'Selection:', selectionStore.getSelectionSummary());
+    return;
+  }
+
+  // Normal click - clear multi-selection and navigate
+  if (selectionStore.hasSelection) {
+    selectionStore.clearSelection();
+  }
+  emit("node-click", nodeId);
 };
 
 const handleToggleExpansion = () => {
@@ -296,15 +323,81 @@ const handleTouchMove = () => {
   }
 };
 
+// Helper to find node data by ID from allNodes tree
+const findNodeById = (nodes: TreeNode[], id: string): TreeNode | null => {
+  for (const node of nodes) {
+    if (node.id === id) return node;
+    if (node.children.length > 0) {
+      const found = findNodeById(node.children, id);
+      if (found) return found;
+    }
+  }
+  return null;
+};
+
 // Drag handlers
 const handleDragStart = (event: DragEvent) => {
-  dragStart(event, {
-    id: props.node.id,
-    itemId: props.node.itemId,
-    type: props.node.type,
-    title: props.node.title,
+  const nodeId = props.node.id;
+  const isNodeSelected = selectionStore.isSelected(nodeId);
+
+  console.log('[DRAG-START] Node:', nodeId, {
+    isNodeSelected,
+    selectedCount: selectionStore.selectedCount,
+    selectedArray: selectionStore.selectedArray,
+    allNodesCount: props.allNodes.length,
   });
-  emit("node-drag-start", props.node.id);
+
+  // If node is selected and there are multiple selections, drag all selected
+  if (isNodeSelected && selectionStore.selectedCount > 1) {
+    // Build drag data for all selected items
+    const selectedIds = selectionStore.selectedArray;
+    console.log('[DRAG-START] Multi-drag mode! Dragging', selectedIds.length, 'items:', selectedIds);
+    const dragItems = selectedIds.map(id => {
+      // Try to find node in allNodes prop, fallback to current node data
+      const foundNode = props.allNodes.length > 0 ? findNodeById(props.allNodes, id) : null;
+      if (foundNode) {
+        return {
+          id: foundNode.id,
+          itemId: foundNode.itemId,
+          type: foundNode.type,
+          title: foundNode.title,
+        };
+      }
+      // If not found and it's the current node, use current node data
+      if (id === nodeId) {
+        return {
+          id: props.node.id,
+          itemId: props.node.itemId,
+          type: props.node.type,
+          title: props.node.title,
+        };
+      }
+      // Fallback: minimal data
+      return {
+        id,
+        itemId: parseInt(id),
+        type: 'unknown',
+        title: 'Item',
+      };
+    });
+
+    dragStartMulti(event, dragItems, nodeId);
+    emit("node-drag-start", selectedIds);
+  } else {
+    // Single item drag
+    // If not selected, select this item (replaces selection)
+    if (!isNodeSelected) {
+      selectionStore.selectItem(nodeId);
+    }
+
+    dragStart(event, {
+      id: props.node.id,
+      itemId: props.node.itemId,
+      type: props.node.type,
+      title: props.node.title,
+    });
+    emit("node-drag-start", [props.node.id]);
+  }
 };
 
 const handleDragEnd = () => {
@@ -361,13 +454,8 @@ const handleDrop = async (event: DragEvent) => {
   const result = drop(event, props.node.id, props.node.itemId, position);
 
   if (result) {
-    emit("node-drop", {
-      sourceId: result.sourceId,
-      sourceItemId: result.sourceItemId,
-      targetId: result.targetId,
-      targetItemId: result.targetItemId,
-      position: result.position,
-    });
+    // Emit the full result (single or multi)
+    emit("node-drop", result);
   }
   // Clear local drop position after drop
   localDropPosition.value = null;
@@ -459,11 +547,13 @@ onBeforeUnmount(() => {
 <style scoped lang="scss">
 .tree-node {
   position: relative;
-  cursor: grab;
   border-radius: 4px;
+  cursor: grab;
+  margin-block: 2px;
+  margin-inline: 0;
+  padding-block: 6px;
+  padding-inline: 8px;
   transition: background-color 0.2s;
-  padding: 6px 8px;
-  margin: 2px 0;
 
   &:active {
     cursor: grabbing;
@@ -473,19 +563,20 @@ onBeforeUnmount(() => {
     opacity: 0.6;
   }
 
-  &.is-dragging {
+  &.is-dragging,
+  &.is-multi-dragging {
+    background-color: rgba(59, 130, 246, 10%);
     opacity: 0.7;
-    background-color: rgba(59, 130, 246, 0.1);
   }
 
   &.is-selected {
-    background-color: rgba(59, 130, 246, 0.1);
-    border: 1px solid rgba(59, 130, 246, 0.3);
+    border: 1px solid rgba(59, 130, 246, 30%);
+    background-color: rgba(59, 130, 246, 10%);
   }
 
   &.in-scrivening-selection {
-    background-color: rgba(59, 130, 246, 0.15);
-    border-left: 3px solid #3b82f6;
+    background-color: rgba(59, 130, 246, 15%);
+    border-inline-start: 3px solid #3b82f6;
 
     .node-title {
       font-weight: 500;
@@ -493,7 +584,7 @@ onBeforeUnmount(() => {
   }
 
   &:hover {
-    background-color: rgba(0, 0, 0, 0.05);
+    background-color: rgba(0, 0, 0, 5%);
 
     .node-label {
       cursor: pointer;
@@ -509,21 +600,21 @@ onBeforeUnmount(() => {
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 20px;
-      height: 20px;
       padding: 0;
       border: none;
       background: none;
+      block-size: 20px;
       cursor: pointer;
+      inline-size: 20px;
       transition: transform 0.2s;
 
       &:hover {
-        background-color: rgba(0, 0, 0, 0.05);
+        background-color: rgba(0, 0, 0, 5%);
       }
     }
 
     .expansion-spacer {
-      width: 20px;
+      inline-size: 20px;
     }
 
     .node-icon {
@@ -531,39 +622,40 @@ onBeforeUnmount(() => {
     }
 
     .node-label {
-      flex: 1;
       display: flex;
+      flex: 1;
       align-items: center;
-      gap: 8px;
-      min-width: 0;
       cursor: pointer;
+      gap: 8px;
+      min-inline-size: 0;
 
       .node-title {
-        white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+        white-space: nowrap;
       }
 
       .node-rename-input {
         flex: 1;
-        padding: 4px 8px;
         border: 2px solid #3b82f6;
         border-radius: 4px;
         font-family: inherit;
         font-size: inherit;
+        padding-block: 4px;
+        padding-inline: 8px;
 
         &:focus {
+          box-shadow: 0 0 0 3px rgba(59, 130, 246, 10%);
           outline: none;
-          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
         }
       }
 
       .node-metadata {
         display: flex;
         align-items: center;
-        gap: 4px;
-        font-size: 0.75rem;
         color: #9ca3af;
+        font-size: 0.75rem;
+        gap: 4px;
 
         .word-count {
           white-space: nowrap;
@@ -577,10 +669,10 @@ onBeforeUnmount(() => {
     }
 
     .status-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
       flex-shrink: 0;
+      border-radius: 50%;
+      block-size: 8px;
+      inline-size: 8px;
 
       &.status-draft {
         background-color: #e5e7eb;
@@ -602,9 +694,9 @@ onBeforeUnmount(() => {
 
   // Drop target styles - inside (folder drop)
   &.drop-target-inside {
-    background-color: rgba(59, 130, 246, 15%);
     border: 2px dashed #3b82f6;
     border-radius: 4px;
+    background-color: rgba(59, 130, 246, 15%);
   }
 
   // Drop target styles - above (insert before)
@@ -639,6 +731,6 @@ onBeforeUnmount(() => {
 }
 
 .child-nodes {
-  margin-left: 0;
+  margin-inline-start: 0;
 }
 </style>
