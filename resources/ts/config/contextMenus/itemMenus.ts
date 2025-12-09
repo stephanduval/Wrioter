@@ -14,6 +14,7 @@ interface ManuscriptItem {
   type: string
   item_order?: number
   order_index?: number
+  childCount?: number
   metadata?: {
     status?: 'draft' | 'in_progress' | 'completed' | 'archived'
     isCompilable?: boolean
@@ -39,6 +40,20 @@ export const getItemMenuItems = (item: ManuscriptItem, manuscriptId: number): Me
 
   const isFolder = () => {
     return item.type === 'folder'
+  }
+
+  const isEmptyFolder = () => {
+    // Check if it's a folder with no children
+    if (item.type !== 'folder') return false
+
+    // If childCount is provided, use it
+    if (item.childCount !== undefined) {
+      return item.childCount === 0
+    }
+
+    // Otherwise, check via the manuscript tree
+    const node = manuscriptStore.findNodeById(`item-${item.itemId}`)
+    return node ? node.children.length === 0 : false
   }
 
   return [
@@ -71,6 +86,25 @@ export const getItemMenuItems = (item: ManuscriptItem, manuscriptId: number): Me
       hidden: () => !isFolder()
     },
     { separator: true, hidden: () => !isFolder() },
+
+    // Convert empty folder to item
+    {
+      id: 'convert-to-item',
+      label: t('contextMenu.item.convertToItem') || 'Convert to Item',
+      icon: 'bx-file',
+      action: async () => {
+        try {
+          console.log('Converting folder to item:', item.itemId)
+          await manuscriptStore.convertFolderToItem(manuscriptId, item.itemId)
+          console.log('Folder converted to item successfully')
+        } catch (error) {
+          console.error('Failed to convert folder to item:', error)
+          alert(t('contextMenu.item.convertToItemError') || 'Failed to convert folder to item')
+        }
+      },
+      hidden: () => !isEmptyFolder()
+    },
+    { separator: true, hidden: () => !isEmptyFolder() },
 
     // Regular item options
     {

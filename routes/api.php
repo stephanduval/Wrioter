@@ -146,6 +146,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/manuscripts/{manuscriptId}/items/{itemId}/duplicate', [ItemController::class, 'duplicate']);
     Route::patch('/manuscripts/{manuscriptId}/items/{itemId}/move-up', [ItemController::class, 'moveUp']);
     Route::patch('/manuscripts/{manuscriptId}/items/{itemId}/move-down', [ItemController::class, 'moveDown']);
+    Route::patch('/manuscripts/{manuscriptId}/items/{itemId}/convert-to-item', [ItemController::class, 'convertToItem']);
 });
 
 // Admin Routes for Raw Files

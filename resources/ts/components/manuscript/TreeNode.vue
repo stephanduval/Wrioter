@@ -1,14 +1,5 @@
 <template>
   <div>
-    <!-- Drop Zone Above -->
-    <div
-      v-if="showDropZoneAbove"
-      class="drop-zone drop-zone-above"
-      @drop.stop="handleDrop($event, 'above')"
-      @dragover.prevent.stop="handleDragOver($event, 'above')"
-      @dragleave.stop="handleDragLeave('above')"
-    />
-
     <!-- Main Tree Node -->
     <div
       class="tree-node"
@@ -18,7 +9,9 @@
         'is-folder': hasChildren,
         'is-loading': node.state.isLoading,
         'is-dragging': isDragging,
-        'drop-target': isDropTarget,
+        'drop-target-inside': localDropPosition === 'inside' && props.draggingNodeId && props.draggingNodeId !== node.id,
+        'drop-target-above': localDropPosition === 'above' && props.draggingNodeId && props.draggingNodeId !== node.id,
+        'drop-target-below': localDropPosition === 'below' && props.draggingNodeId && props.draggingNodeId !== node.id,
         'in-scrivening-selection': isInScriveningSelection,
       }"
       :style="{ paddingLeft: `${level * 20}px` }"
@@ -31,9 +24,9 @@
       @touchmove="handleTouchMove"
       @dragstart="handleDragStart"
       @dragend="handleDragEnd"
-      @dragover.prevent.stop="handleDragOver($event, 'inside')"
-      @dragleave.stop="handleDragLeave('inside')"
-      @drop.stop="handleDrop($event, 'inside')"
+      @dragover.prevent.stop="handleDragOver"
+      @dragleave.stop="handleDragLeave"
+      @drop.stop="handleDrop"
     >
       <!-- Node Content -->
       <div class="node-content">
@@ -118,15 +111,6 @@
         <div class="status-dot" :class="`status-${node.metadata.status}`" />
       </div>
     </div>
-
-    <!-- Drop Zone Below -->
-    <div
-      v-if="showDropZoneBelow"
-      class="drop-zone drop-zone-below"
-      @drop.stop="handleDrop($event, 'below')"
-      @dragover.prevent.stop="handleDragOver($event, 'below')"
-      @dragleave.stop="handleDragLeave('below')"
-    />
 
     <!-- Child Nodes -->
     <div v-if="canShowChildren" class="child-nodes">
@@ -238,7 +222,6 @@ const manuscriptStore = useManuscriptStore();
 // Drag & Drop composable
 const {
   isDragging,
-  dropPosition,
   handleDragStart: dragStart,
   handleDragEnd: dragEnd,
   handleDragOver: dragOver,
@@ -259,30 +242,8 @@ const canShowChildren = computed(
   () => hasChildren.value && isExpanded.value && props.level < props.maxDepth,
 );
 
-// Show drop zones when dragging
 // Track local hover state for this specific node
 const localDropPosition = ref<DropPosition>(null);
-
-const showDropZoneAbove = computed(
-  () =>
-    props.draggingNodeId &&
-    props.draggingNodeId !== props.node.id &&
-    localDropPosition.value === "above",
-);
-
-const showDropZoneBelow = computed(
-  () =>
-    props.draggingNodeId &&
-    props.draggingNodeId !== props.node.id &&
-    localDropPosition.value === "below",
-);
-
-const isDropTarget = computed(
-  () =>
-    props.draggingNodeId &&
-    props.draggingNodeId !== props.node.id &&
-    localDropPosition.value === "inside",
-);
 
 // Methods
 const handleNodeClick = (event: MouseEvent) => {
@@ -351,28 +312,52 @@ const handleDragEnd = () => {
   emit("node-drag-end");
 };
 
-const handleDragOver = (event: DragEvent, position: DropPosition) => {
+// Calculate drop position based on cursor Y position within the node
+const calculateDropPosition = (event: DragEvent): 'above' | 'below' | 'inside' => {
+  const target = event.currentTarget as HTMLElement;
+  if (!target) return 'below';
+
+  const rect = target.getBoundingClientRect();
+  const y = event.clientY - rect.top;
+  const height = rect.height;
+
+  // Can only drop "inside" if target is a folder or has children
+  const canDropInside = props.node.type === 'folder' || hasChildren.value;
+
+  if (y < height * 0.25) {
+    return 'above';
+  } else if (y > height * 0.75) {
+    return 'below';
+  } else {
+    // Middle zone - drop inside if folder, otherwise below
+    return canDropInside ? 'inside' : 'below';
+  }
+};
+
+const handleDragOver = (event: DragEvent) => {
   event.preventDefault();
   event.stopPropagation();
 
+  const position = calculateDropPosition(event);
   const allowInside = props.node.type === "folder" || hasChildren.value;
+
   dragOver(event, props.node.id, position, {
     allowInside,
     preventSelf: true,
   });
+
   // Update local drop position for this node
   localDropPosition.value = position;
 };
 
-const handleDragLeave = (position: DropPosition) => {
-  dragLeave(position);
+const handleDragLeave = () => {
+  dragLeave(localDropPosition.value);
   // Clear local drop position when leaving this node
-  if (localDropPosition.value === position) {
-    localDropPosition.value = null;
-  }
+  localDropPosition.value = null;
 };
 
-const handleDrop = async (event: DragEvent, position: DropPosition) => {
+const handleDrop = async (event: DragEvent) => {
+  const position = localDropPosition.value || 'below';
   const result = drop(event, props.node.id, props.node.itemId, position);
 
   if (result) {
@@ -615,38 +600,41 @@ onBeforeUnmount(() => {
     }
   }
 
-  &.drop-target {
-    background-color: rgba(59, 130, 246, 0.15);
+  // Drop target styles - inside (folder drop)
+  &.drop-target-inside {
+    background-color: rgba(59, 130, 246, 15%);
     border: 2px dashed #3b82f6;
     border-radius: 4px;
   }
-}
 
-.drop-zone {
-  position: relative;
-  height: 8px;
-  margin: 2px 0;
-  z-index: 10;
-
-  &::before {
-    content: "";
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    height: 3px;
-    background-color: #3b82f6;
-    box-shadow: 0 0 6px rgba(59, 130, 246, 0.6);
-    border-radius: 2px;
+  // Drop target styles - above (insert before)
+  &.drop-target-above {
+    &::before {
+      position: absolute;
+      z-index: 10;
+      border-radius: 2px;
+      background-color: #3b82f6;
+      block-size: 3px;
+      box-shadow: 0 0 6px rgba(59, 130, 246, 60%);
+      content: "";
+      inset-block-start: -2px;
+      inset-inline: 0;
+    }
   }
 
-  &.drop-zone-above {
-    margin-bottom: 2px;
-  }
-
-  &.drop-zone-below {
-    margin-top: 2px;
+  // Drop target styles - below (insert after)
+  &.drop-target-below {
+    &::after {
+      position: absolute;
+      z-index: 10;
+      border-radius: 2px;
+      background-color: #3b82f6;
+      block-size: 3px;
+      box-shadow: 0 0 6px rgba(59, 130, 246, 60%);
+      content: "";
+      inset-block-end: -2px;
+      inset-inline: 0;
+    }
   }
 }
 

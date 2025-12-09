@@ -840,4 +840,87 @@ class ItemController extends Controller
             );
         }
     }
+
+    /**
+     * Convert a folder to a regular item (text type).
+     * Only allowed if the folder has no children.
+     */
+    public function convertToItem(string $manuscriptId, string $itemId)
+    {
+        try {
+            // Verify the manuscript belongs to the user
+            $manuscript = Manuscript::where("id", $manuscriptId)
+                ->where("user_id", Auth::id())
+                ->firstOrFail();
+
+            // Get the item
+            $item = Item::where("id", $itemId)
+                ->where("user_id", Auth::id())
+                ->firstOrFail();
+
+            // Verify the item belongs to the manuscript
+            ManuscriptItem::where("manuscript_id", $manuscriptId)
+                ->where("item_id", $itemId)
+                ->firstOrFail();
+
+            // Check if item is a folder
+            if ($item->type !== "folder") {
+                return response()->json(
+                    [
+                        "error" => "Item is not a folder",
+                        "message" => "Only folders can be converted to items",
+                    ],
+                    400,
+                );
+            }
+
+            // Check if folder has children
+            $childCount = Item::where("parent_id", $itemId)->count();
+            if ($childCount > 0) {
+                return response()->json(
+                    [
+                        "error" => "Folder has children",
+                        "message" => "Cannot convert a folder that contains items. Please move or delete the items first.",
+                    ],
+                    400,
+                );
+            }
+
+            Log::info(
+                "ItemController::convertToItem - Converting folder {$itemId} to item in manuscript {$manuscriptId}",
+            );
+
+            // Convert folder to text item
+            $item->type = "text";
+            $item->folder_type = null;
+            $item->save();
+
+            Log::info("Folder {$itemId} converted to item successfully");
+
+            return response()->json([
+                "data" => [
+                    "id" => $item->id,
+                    "title" => $item->title,
+                    "type" => $item->type,
+                    "parent_id" => $item->parent_id,
+                    "updated_at" => $item->updated_at->toISOString(),
+                ],
+                "message" => "Folder converted to item successfully",
+            ]);
+        } catch (\Exception $e) {
+            Log::error("Failed to convert folder to item", [
+                "manuscript_id" => $manuscriptId,
+                "item_id" => $itemId,
+                "error" => $e->getMessage(),
+            ]);
+
+            return response()->json(
+                [
+                    "error" => "Failed to convert folder to item",
+                    "message" => $e->getMessage(),
+                ],
+                500,
+            );
+        }
+    }
 }

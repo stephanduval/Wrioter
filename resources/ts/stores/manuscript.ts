@@ -459,6 +459,31 @@ export const useManuscriptStore = defineStore('manuscript', () => {
     }
   }
 
+  // Convert a folder to a regular item (remove folder status)
+  async function convertFolderToItem(manuscriptId: number, itemId: number) {
+    try {
+      loading.value = true
+      error.value = null
+
+      console.log(`Converting folder ${itemId} to item in manuscript ${manuscriptId}`)
+
+      const response = await api.patch(`/manuscripts/${manuscriptId}/items/${itemId}/convert-to-item`)
+
+      console.log('Folder converted to item successfully:', response.data)
+
+      // Refresh the manuscript items to reflect the change
+      await fetchManuscriptItems(manuscriptId)
+
+      return response.data
+    } catch (err: any) {
+      error.value = err.response?.data?.message || 'Failed to convert folder to item'
+      console.error('Error converting folder to item:', err)
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
   function $reset() {
     manuscripts.value = []
     currentManuscript.value = null
@@ -501,6 +526,7 @@ export const useManuscriptStore = defineStore('manuscript', () => {
     reorderItem,
     deleteItem,
     renameItem,
+    convertFolderToItem,
     $reset,
 
     // Navigation methods
