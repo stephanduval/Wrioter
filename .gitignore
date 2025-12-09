@@ -103,3 +103,6 @@ pandoc-*.deb
 sync-to-devserver.sh
 sync-docs-unison.sh
 sync-docs-three-way.sh
+
+# Project configuration (environment-specific)
+CLAUDE.md
