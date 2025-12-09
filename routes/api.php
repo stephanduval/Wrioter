@@ -15,6 +15,7 @@ use App\Http\Controllers\ManuscriptController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\ScrivenerImportController;
 use App\Http\Controllers\ItemController;
+use App\Http\Controllers\Api\FolderMindmapController;
 use Illuminate\Support\Facades\Mail;
 
 /*
@@ -268,6 +269,13 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Import manuscript items
     Route::post('/mindmaps/{id}/import-manuscript', [App\Http\Controllers\Api\MindMapController::class, 'importManuscript']);
+
+    // Ghost management
+    Route::delete('/mindmaps/{id}/ghosts/{ghostId}', [App\Http\Controllers\Api\MindMapController::class, 'dismissGhost']);
+
+    // Folder Mindmaps
+    Route::get('/folders/{folderId}/mindmap', [App\Http\Controllers\Api\FolderMindmapController::class, 'show']);
+    Route::post('/folders/{folderId}/mindmap/sync', [App\Http\Controllers\Api\FolderMindmapController::class, 'sync']);
 });
 
 // User Preferences Routes
