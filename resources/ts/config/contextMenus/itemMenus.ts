@@ -85,7 +85,7 @@ export const getItemMenuItems = (item: ManuscriptItem, manuscriptId: number): Me
       },
       hidden: () => !isFolder()
     },
-    { separator: true, hidden: () => !isFolder() },
+    { id: 'sep-folder-views', separator: true, hidden: () => !isFolder() },
 
     // Convert empty folder to item
     {
@@ -104,7 +104,7 @@ export const getItemMenuItems = (item: ManuscriptItem, manuscriptId: number): Me
       },
       hidden: () => !isEmptyFolder()
     },
-    { separator: true, hidden: () => !isEmptyFolder() },
+    { id: 'sep-convert', separator: true, hidden: () => !isEmptyFolder() },
 
     // Regular item options
     {
@@ -136,7 +136,7 @@ export const getItemMenuItems = (item: ManuscriptItem, manuscriptId: number): Me
         }
       }
     },
-    { separator: true },
+    { id: 'sep-new-page', separator: true },
     {
       id: 'edit',
       label: t('contextMenu.item.edit'),
@@ -154,7 +154,7 @@ export const getItemMenuItems = (item: ManuscriptItem, manuscriptId: number): Me
         navigateTo(`/manuscripts/${manuscriptId}/items/${item.id}`)
       }
     },
-    { separator: true },
+    { id: 'sep-view', separator: true },
     {
       id: 'move-up',
       label: t('contextMenu.item.moveUp'),
@@ -175,7 +175,7 @@ export const getItemMenuItems = (item: ManuscriptItem, manuscriptId: number): Me
       },
       disabled: () => !canMoveDown()
     },
-    { separator: true },
+    { id: 'sep-move', separator: true },
     {
       id: 'status',
       label: t('contextMenu.item.changeStatus'),
@@ -194,7 +194,7 @@ export const getItemMenuItems = (item: ManuscriptItem, manuscriptId: number): Me
         // TODO: Implement toggle compile functionality
       }
     },
-    { separator: true },
+    { id: 'sep-status', separator: true },
     {
       id: 'rename',
       label: t('contextMenu.item.rename'),
@@ -222,7 +222,7 @@ export const getItemMenuItems = (item: ManuscriptItem, manuscriptId: number): Me
         // TODO: Implement duplicate functionality
       }
     },
-    { separator: true },
+    { id: 'sep-rename', separator: true },
     {
       id: 'delete',
       label: t('contextMenu.item.delete'),

@@ -6,7 +6,7 @@
       :style="menuStyle"
       @click.stop
     >
-      <template v-for="item in visibleItems" :key="item.id || `separator-${Math.random()}`">
+      <template v-for="item in visibleItems" :key="item.id">
         <div v-if="item.separator" class="menu-separator" />
         <div
           v-else
