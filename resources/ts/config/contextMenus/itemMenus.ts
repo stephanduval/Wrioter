@@ -1,8 +1,8 @@
 import type { MenuItem } from '@/composables/useContextMenu'
 import { router } from '@/plugins/1.router'
-import { useManuscriptStore } from '@/stores/manuscript'
-import { useItemStore } from '@/stores/item'
 import { getI18n } from '@/plugins/i18n'
+import { useItemStore } from '@/stores/item'
+import { useManuscriptStore } from '@/stores/manuscript'
 import { navigateTo } from '@/utils/navigation'
 
 interface ManuscriptItem {
