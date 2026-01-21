@@ -27,7 +27,6 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useItemStore } from '@/stores/item'
-import { useManuscriptStore } from '@/stores/manuscript'
 
 interface Props {
   modelValue: string
@@ -38,6 +37,7 @@ interface Props {
   wordCount?: number
   characterCount?: number
   debounceMs?: number
+  /** @deprecated Navigation tree now syncs automatically via dataSync events */
   autoRefreshNav?: boolean
 }
 
@@ -45,7 +45,7 @@ const props = withDefaults(defineProps<Props>(), {
   placeholder: 'Enter title...',
   showMetadata: false,
   debounceMs: 500,
-  autoRefreshNav: true
+  autoRefreshNav: true // Kept for backwards compatibility but no longer used
 })
 
 const emit = defineEmits<{
@@ -58,7 +58,6 @@ const emit = defineEmits<{
 }>()
 
 const itemStore = useItemStore()
-const manuscriptStore = useManuscriptStore()
 
 const localTitle = ref(props.modelValue)
 
@@ -78,12 +77,9 @@ const handleTitleChange = async (newTitle: string) => {
 
   titleTimeout = setTimeout(async () => {
     // Update title in the item store
+    // This will emit a dataSync event that manuscriptStore listens to,
+    // so the navigation tree updates automatically - no manual refresh needed
     await itemStore.updateTitle(newTitle)
-
-    // Refresh the navigation tree if auto-refresh is enabled
-    if (props.autoRefreshNav && manuscriptStore.selectedManuscriptId) {
-      await manuscriptStore.fetchManuscriptItems(manuscriptStore.selectedManuscriptId)
-    }
 
     // Emit save event
     emit('titleSaved', newTitle)

@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import axios from '@/../js/axios'
 import type { Node, Edge } from '@vue-flow/core'
+import { dataSync } from '@/services/dataSync'
 
 interface MindMap {
   id: number
@@ -62,6 +63,47 @@ export const useMindmapStore = defineStore('mindmap', () => {
 
   // Computed
   const hasUnsavedChanges = ref(false)
+
+  // === DATA SYNC EVENT LISTENERS ===
+  // Listen for item updates
+  dataSync.on('item:updated', ({ itemId, changes }) => {
+    const nodeId = `item-${itemId}`
+    const node = nodes.value.find(n => n.id === nodeId)
+    if (node) {
+      if (changes.title && node.data) {
+        node.data.label = changes.title
+        console.log(`[MindmapStore] Updated label for node ${nodeId}`)
+      }
+    }
+
+    // Also update cached item
+    const item = items.value.get(itemId)
+    if (item && changes.title) {
+      item.title = changes.title
+    }
+  })
+
+  // Listen for item deletion
+  dataSync.on('item:deleted', ({ itemId }) => {
+    const nodeId = `item-${itemId}`
+    const nodeIndex = nodes.value.findIndex(n => n.id === nodeId)
+
+    if (nodeIndex !== -1) {
+      // Remove the node
+      nodes.value.splice(nodeIndex, 1)
+
+      // Remove any edges connected to this node
+      edges.value = edges.value.filter(e => e.source !== nodeId && e.target !== nodeId)
+
+      // Remove from items cache
+      items.value.delete(itemId)
+
+      // Clear selection if this node was selected
+      selectedNodes.value = selectedNodes.value.filter(id => id !== nodeId)
+
+      console.log(`[MindmapStore] Removed node and edges for item ${itemId}`)
+    }
+  })
 
   const selectedNode = computed(() => {
     if (selectedNodes.value.length === 1) {

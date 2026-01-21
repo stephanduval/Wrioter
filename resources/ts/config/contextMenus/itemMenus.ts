@@ -126,6 +126,8 @@ export const getItemMenuItems = (item: ManuscriptItem, manuscriptId: number): Me
           console.log('New item created:', newItem)
 
           // Refresh the manuscript store to show the new item
+          // Note: item:created event is emitted but adding to tree in-place is complex,
+          // so we still do a full refresh for creates
           await manuscriptStore.fetchManuscriptItems(manuscriptId)
 
           // Navigate to the new item
