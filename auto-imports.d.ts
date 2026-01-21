@@ -64,6 +64,8 @@ declare global {
   const integerValidator: typeof import('./resources/ts/@core/utils/validators')['integerValidator']
   const isAuthenticated: typeof import('./resources/ts/utils/api')['isAuthenticated']
   const isDefined: typeof import('@vueuse/core')['isDefined']
+  const isDragDataMulti: typeof import('./resources/ts/composables/useDragAndDrop')['isDragDataMulti']
+  const isDropResultMulti: typeof import('./resources/ts/composables/useDragAndDrop')['isDropResultMulti']
   const isEmpty: typeof import('./resources/ts/@core/utils/helpers')['isEmpty']
   const isEmptyArray: typeof import('./resources/ts/@core/utils/helpers')['isEmptyArray']
   const isNullOrUndefined: typeof import('./resources/ts/@core/utils/helpers')['isNullOrUndefined']
@@ -443,6 +445,8 @@ declare module 'vue' {
     readonly integerValidator: UnwrapRef<typeof import('./resources/ts/@core/utils/validators')['integerValidator']>
     readonly isAuthenticated: UnwrapRef<typeof import('./resources/ts/utils/api')['isAuthenticated']>
     readonly isDefined: UnwrapRef<typeof import('@vueuse/core')['isDefined']>
+    readonly isDragDataMulti: UnwrapRef<typeof import('./resources/ts/composables/useDragAndDrop')['isDragDataMulti']>
+    readonly isDropResultMulti: UnwrapRef<typeof import('./resources/ts/composables/useDragAndDrop')['isDropResultMulti']>
     readonly isEmpty: UnwrapRef<typeof import('./resources/ts/@core/utils/helpers')['isEmpty']>
     readonly isEmptyArray: UnwrapRef<typeof import('./resources/ts/@core/utils/helpers')['isEmptyArray']>
     readonly isNullOrUndefined: UnwrapRef<typeof import('./resources/ts/@core/utils/helpers')['isNullOrUndefined']>

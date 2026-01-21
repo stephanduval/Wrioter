@@ -670,16 +670,64 @@ export const useMindmapStore = defineStore('mindmap', () => {
     }
   }
 
-  const addNode = (node: Node) => {
-    nodes.value.push(node)
-    hasUnsavedChanges.value = true
+  const addNode = async (node: Node, folderId?: number): Promise<Node> => {
+    if (!currentMindmap.value) throw new Error('No mindmap loaded')
+
+    // If the node has a temporary ID (starts with 'node-'), create it in the backend
+    if (node.id.toString().startsWith('node-')) {
+      const itemData = {
+        type: node.data?.itemType || node.type || 'text',
+        title: node.data?.label || 'Untitled',
+        content: node.data?.content || '',
+        synopsis: node.data?.synopsis,
+        parent_id: folderId, // Set folder as parent if provided
+        position: node.position || { x: 200, y: 200 },
+      }
+
+      // Use existing createNewItem function
+      const createdNode = await createNewItem(itemData)
+      return createdNode
+    } else {
+      // Node already has a real ID, just add it locally
+      nodes.value.push(node)
+      hasUnsavedChanges.value = true
+      return node
+    }
   }
 
-  const updateNode = (updatedNode: Node) => {
+  const updateNode = async (updatedNode: Node): Promise<void> => {
     const index = nodes.value.findIndex(n => n.id === updatedNode.id)
-    if (index >= 0) {
+    if (index < 0) return
+
+    const itemId = updatedNode.data?.itemId
+    if (!itemId || !currentMindmap.value) {
+      // Just update locally if no item ID
       nodes.value[index] = updatedNode
       hasUnsavedChanges.value = true
+      return
+    }
+
+    try {
+      // Update the item content in the database
+      await axios.put(`/mindmaps/${currentMindmap.value.id}/items/${itemId}`, {
+        title: updatedNode.data?.label,
+        content: updatedNode.data?.content,
+        synopsis: updatedNode.data?.synopsis,
+        type: updatedNode.data?.itemType,
+      })
+
+      // Update position if it changed
+      const oldNode = nodes.value[index]
+      if (oldNode.position.x !== updatedNode.position.x || oldNode.position.y !== updatedNode.position.y) {
+        await updateNodePosition(updatedNode.id, updatedNode.position)
+      }
+
+      // Update local state
+      nodes.value[index] = updatedNode
+      hasUnsavedChanges.value = false
+    } catch (err: any) {
+      error.value = err.message || 'Failed to update node'
+      throw err
     }
   }
 
@@ -689,6 +737,12 @@ export const useMindmapStore = defineStore('mindmap', () => {
       edges.value[index] = updatedEdge
       hasUnsavedChanges.value = true
     }
+  }
+
+  const deleteNode = async (nodeId: string): Promise<void> => {
+    // Use the existing removeItemFromMindmap function
+    // This removes the item from the mindmap but keeps it in the database
+    await removeItemFromMindmap(nodeId)
   }
 
   // Reset
@@ -735,6 +789,7 @@ export const useMindmapStore = defineStore('mindmap', () => {
     addNode,
     updateNode,
     updateEdge,
+    deleteNode,
 
     // Item Operations (renamed from node operations)
     addExistingItem,
