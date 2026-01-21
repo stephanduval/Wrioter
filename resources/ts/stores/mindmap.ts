@@ -390,6 +390,22 @@ export const useMindmapStore = defineStore('mindmap', () => {
 
       nodes.value.push(newNode)
       hasUnsavedChanges.value = false // Already saved to backend
+
+      // Emit item creation event for other stores to sync
+      if (currentMindmap.value.manuscript_id) {
+        dataSync.emit('item:created', {
+          manuscriptId: currentMindmap.value.manuscript_id,
+          item: {
+            id: item.id,
+            itemId: item.id,
+            title: item.title,
+            parentId: item.parent_id ?? null,
+            order: 0,
+            type: item.type,
+          },
+        })
+      }
+
       return newNode
     } catch (err: any) {
       error.value = err.message || 'Failed to create item'
@@ -466,6 +482,14 @@ export const useMindmapStore = defineStore('mindmap', () => {
       edges.value = edges.value.filter(e => e.source !== nodeId && e.target !== nodeId)
 
       hasUnsavedChanges.value = false
+
+      // Emit item deletion event for other stores to sync
+      if (currentMindmap.value.manuscript_id) {
+        dataSync.emit('item:deleted', {
+          manuscriptId: currentMindmap.value.manuscript_id,
+          itemId,
+        })
+      }
     } catch (err: any) {
       error.value = err.message || 'Failed to remove item'
       throw err
@@ -767,6 +791,19 @@ export const useMindmapStore = defineStore('mindmap', () => {
       // Update local state
       nodes.value[index] = updatedNode
       hasUnsavedChanges.value = false
+
+      // Emit item update event for other stores to sync
+      if (currentMindmap.value.manuscript_id) {
+        dataSync.emit('item:updated', {
+          manuscriptId: currentMindmap.value.manuscript_id,
+          itemId,
+          changes: {
+            title: updatedNode.data?.label,
+            content: updatedNode.data?.content,
+            metadata: updatedNode.data?.metadata,
+          },
+        })
+      }
     } catch (err: any) {
       error.value = err.message || 'Failed to update node'
       throw err
