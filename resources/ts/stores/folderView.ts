@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { $api } from '@/utils/api'
 import type { SplitNode } from '@/types/splitView'
+import { dataSync } from '@/services/dataSync'
 
 export type ViewMode = 'manuscript' | 'corkboard' | 'outline' | 'mindmap' | 'item'
 
@@ -142,6 +143,61 @@ export const useFolderViewStore = defineStore('folderView', () => {
   // Convert Map to Array for component consumption (components expect arrays, not Maps)
   const scriveningSeparatorsArray = computed(() => {
     return Array.from(scriveningSeparators.value.values())
+  })
+
+  // === DATA SYNC EVENT LISTENERS ===
+  // Listen for item updates
+  dataSync.on('item:updated', ({ itemId, changes }) => {
+    const item = folderItems.value.find(i => i.id === itemId)
+    if (item) {
+      if (changes.title) {
+        item.title = changes.title
+        console.log(`[FolderViewStore] Updated title for item ${itemId}`)
+      }
+    }
+
+    // Also update in scrivening items if active
+    if (scriveningMode.value) {
+      const scriveningItem = scriveningItems.value.find(i => i.id === itemId)
+      if (scriveningItem && changes.title) {
+        scriveningItem.title = changes.title
+      }
+    }
+  })
+
+  // Listen for item deletion
+  dataSync.on('item:deleted', ({ itemId }) => {
+    const index = folderItems.value.findIndex(i => i.id === itemId)
+    if (index !== -1) {
+      folderItems.value.splice(index, 1)
+      console.log(`[FolderViewStore] Removed item ${itemId} from folder view`)
+    }
+
+    // Also remove from scrivening items if active
+    if (scriveningMode.value) {
+      const scriveningIndex = scriveningItems.value.findIndex(i => i.id === itemId)
+      if (scriveningIndex !== -1) {
+        scriveningItems.value.splice(scriveningIndex, 1)
+      }
+    }
+  })
+
+  // Listen for new items
+  dataSync.on('item:created', ({ item }) => {
+    // Add to folder view if it belongs to the current folder
+    if (item.parentId === currentFolderId.value) {
+      folderItems.value.push({
+        id: item.id,
+        title: item.title,
+        type: item.type,
+        item_order: item.order,
+        updated_at: new Date().toISOString()
+      })
+
+      // Re-sort by order
+      folderItems.value.sort((a, b) => (a.item_order || 0) - (b.item_order || 0))
+      console.log(`[FolderViewStore] Added new item ${item.id} to folder view`)
+    }
   })
 
   // Getters

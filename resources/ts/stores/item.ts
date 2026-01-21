@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { itemsApi, type Item, type ItemUpdatePayload, type ItemCreatePayload } from '@/api/items'
+import { dataSync } from '@/services/dataSync'
 
 export type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
 
@@ -26,6 +27,29 @@ export const useItemStore = defineStore('item', () => {
     lastSaved: null,
     autoSaveEnabled: true,
     error: null
+  })
+
+  // === DATA SYNC EVENT LISTENERS ===
+  // Listen for external updates (e.g., rename from tree or context menu)
+  dataSync.on('item:updated', ({ itemId, changes }) => {
+    // Only update if this is the currently loaded item
+    if (state.value.currentItem?.id === itemId) {
+      if (changes.title && changes.title !== state.value.currentItem.title) {
+        state.value.currentItem.title = changes.title
+        console.log(`[ItemStore] Updated title from external source: "${changes.title}"`)
+      }
+    }
+  })
+
+  // Listen for item deletion
+  dataSync.on('item:deleted', ({ itemId }) => {
+    if (state.value.currentItem?.id === itemId) {
+      // Clear current item if it was deleted
+      state.value.currentItem = null
+      state.value.hasUnsavedChanges = false
+      state.value.saveStatus = 'idle'
+      console.log(`[ItemStore] Current item ${itemId} was deleted, clearing state`)
+    }
   })
 
   // Computed
@@ -111,6 +135,13 @@ export const useItemStore = defineStore('item', () => {
       state.value.lastSaved = new Date()
       state.value.error = null
 
+      // Emit sync event so other stores can update
+      dataSync.emit('item:updated', {
+        manuscriptId: state.value.manuscriptId,
+        itemId: updatedItem.id,
+        changes: payload
+      })
+
       // Clear saved status after 2 seconds
       setTimeout(() => {
         if (state.value.saveStatus === 'saved') {
@@ -150,6 +181,13 @@ export const useItemStore = defineStore('item', () => {
       state.value.saveStatus = 'saved'
       state.value.lastSaved = new Date()
       state.value.error = null
+
+      // Emit sync event so other stores can update
+      dataSync.emit('item:updated', {
+        manuscriptId: state.value.manuscriptId,
+        itemId: updatedItem.id,
+        changes: payload
+      })
 
       console.log('Manual save successful')
     } catch (error) {
@@ -195,6 +233,19 @@ export const useItemStore = defineStore('item', () => {
 
       console.log('Item created successfully:', newItem.title)
       state.value.saveStatus = 'saved'
+
+      // Emit sync event so other stores can update
+      dataSync.emit('item:created', {
+        manuscriptId,
+        item: {
+          id: newItem.id,
+          itemId: newItem.id,
+          title: newItem.title,
+          parentId: newItem.parent_id || null,
+          order: newItem.item_order || 0,
+          type: newItem.type
+        }
+      })
 
       // Clear saved status after 2 seconds
       setTimeout(() => {

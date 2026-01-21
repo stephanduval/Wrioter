@@ -54,7 +54,7 @@ export const getManuscriptMenuItems = (manuscript: Manuscript): MenuItem[] => {
         // TODO: Implement export functionality
       }
     },
-    { separator: true },
+    { id: 'sep-actions', separator: true },
     {
       id: 'delete',
       label: t('contextMenu.manuscript.delete'),

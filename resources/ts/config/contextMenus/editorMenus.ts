@@ -33,7 +33,7 @@ export const getEditorMenuItems = (selection?: string): MenuItem[] => {
         document.execCommand('paste')
       }
     },
-    { separator: true },
+    { id: 'sep-clipboard', separator: true },
     {
       id: 'select-all',
       label: t('contextMenu.editor.selectAll'),
@@ -42,7 +42,7 @@ export const getEditorMenuItems = (selection?: string): MenuItem[] => {
         document.execCommand('selectAll')
       }
     },
-    { separator: true },
+    { id: 'sep-select', separator: true },
     {
       id: 'bold',
       label: t('contextMenu.editor.bold'),

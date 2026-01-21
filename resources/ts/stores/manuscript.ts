@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { useApi } from '@/composables/useApi'
+import { dataSync } from '@/services/dataSync'
 
 interface Manuscript {
   id: number
@@ -66,6 +67,49 @@ type NodeType = 'folder' | 'text' | 'research' | 'character' | 'mindmap' | 'imag
 
 export const useManuscriptStore = defineStore('manuscript', () => {
   const { api } = useApi()
+
+  // === DATA SYNC EVENT LISTENERS ===
+  // Listen for item updates from other stores (e.g., itemStore editing title)
+  dataSync.on('item:updated', ({ manuscriptId, itemId, changes }) => {
+    // Only process if this is the currently selected manuscript
+    if (manuscriptId !== selectedManuscriptId.value) return
+
+    // Update in flatItemsIndex (O(1) lookup)
+    const nodeId = `item-${itemId}`
+    const node = flatItemsIndex.value.get(nodeId)
+    if (node) {
+      if (changes.title) {
+        node.title = changes.title
+        console.log(`[ManuscriptStore] Updated title for item ${itemId} to "${changes.title}"`)
+      }
+    }
+  })
+
+  // Listen for item deletions from other stores
+  dataSync.on('item:deleted', ({ manuscriptId, itemId }) => {
+    if (manuscriptId !== selectedManuscriptId.value) return
+
+    const nodeId = `item-${itemId}`
+    const node = flatItemsIndex.value.get(nodeId)
+    if (node) {
+      // Remove from flat index
+      flatItemsIndex.value.delete(nodeId)
+
+      // Remove from parent's children or root nodes
+      if (node.parent) {
+        const index = node.parent.children.indexOf(node)
+        if (index !== -1) {
+          node.parent.children.splice(index, 1)
+        }
+      } else {
+        const index = manuscriptTree.value.indexOf(node)
+        if (index !== -1) {
+          manuscriptTree.value.splice(index, 1)
+        }
+      }
+      console.log(`[ManuscriptStore] Removed item ${itemId} from tree`)
+    }
+  })
 
   // State - Pure Pinia reactivity, no localStorage persistence
   const manuscripts = ref<Manuscript[]>([])
@@ -447,8 +491,32 @@ export const useManuscriptStore = defineStore('manuscript', () => {
 
       console.log('Item deleted successfully')
 
-      // Refresh the manuscript items to reflect the deletion
-      await fetchManuscriptItems(manuscriptId)
+      // Remove from local tree immediately (no refetch needed)
+      const nodeId = `item-${itemId}`
+      const node = flatItemsIndex.value.get(nodeId)
+      if (node) {
+        // Remove from flat index
+        flatItemsIndex.value.delete(nodeId)
+
+        // Remove from parent's children or root nodes
+        if (node.parent) {
+          const index = node.parent.children.indexOf(node)
+          if (index !== -1) {
+            node.parent.children.splice(index, 1)
+          }
+        } else {
+          const index = manuscriptTree.value.indexOf(node)
+          if (index !== -1) {
+            manuscriptTree.value.splice(index, 1)
+          }
+        }
+      }
+
+      // Emit sync event so other stores can update
+      dataSync.emit('item:deleted', {
+        manuscriptId,
+        itemId
+      })
 
       return true
     } catch (err: any) {
@@ -474,8 +542,19 @@ export const useManuscriptStore = defineStore('manuscript', () => {
 
       console.log('Item renamed successfully:', response.data)
 
-      // Refresh the manuscript items to reflect the rename
-      await fetchManuscriptItems(manuscriptId)
+      // Update local tree immediately (no refetch needed)
+      const nodeId = `item-${itemId}`
+      const node = flatItemsIndex.value.get(nodeId)
+      if (node) {
+        node.title = newTitle
+      }
+
+      // Emit sync event so other stores can update
+      dataSync.emit('item:updated', {
+        manuscriptId,
+        itemId,
+        changes: { title: newTitle }
+      })
 
       return response.data
     } catch (err: any) {

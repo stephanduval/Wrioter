@@ -1,8 +1,9 @@
 import { defineStore } from 'pinia'
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, readonly } from 'vue'
 import { corkboardApi, type CorkboardCard, type CorkboardSettings, type CorkboardLayout } from '@/api/corkboard'
 import { useSelectionStore } from '@/stores/selection'
 import { useDragDropStore } from '@/stores/dragDrop'
+import { dataSync } from '@/services/dataSync'
 
 // Corkboard view configuration
 export interface CorkboardViewConfig {
@@ -86,6 +87,36 @@ export const useCorkboardStore = defineStore('corkboard', () => {
   // Selection integration
   const selectionStore = useSelectionStore()
   const dragDropStore = useDragDropStore()
+
+  // === DATA SYNC EVENT LISTENERS ===
+  // Listen for item updates
+  dataSync.on('item:updated', ({ itemId, changes }) => {
+    // Corkboard cards use string IDs, items use number IDs
+    const card = cards.value.find(c => c.id === String(itemId) || c.itemId === itemId)
+    if (card) {
+      if (changes.title) {
+        card.title = changes.title
+        console.log(`[CorkboardStore] Updated title for card ${card.id}`)
+      }
+    }
+  })
+
+  // Listen for item deletion
+  dataSync.on('item:deleted', ({ itemId }) => {
+    const index = cards.value.findIndex(c => c.id === String(itemId) || c.itemId === itemId)
+    if (index !== -1) {
+      const cardId = cards.value[index].id
+      cards.value.splice(index, 1)
+
+      // Remove from selection if selected
+      selectionStore.removeFromSelection(cardId)
+
+      // Remove position data
+      cardPositions.value.delete(cardId)
+
+      console.log(`[CorkboardStore] Removed card for item ${itemId}`)
+    }
+  })
 
   // Computed properties
   const filteredCards = computed(() => {
