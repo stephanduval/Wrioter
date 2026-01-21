@@ -6,7 +6,7 @@
       :style="menuStyle"
       @click.stop
     >
-      <template v-for="item in visibleItems" :key="item.id || `separator-${Math.random()}`">
+      <template v-for="item in visibleItems" :key="item.id">
         <div v-if="item.separator" class="menu-separator" />
         <div
           v-else
@@ -29,8 +29,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
-import type { MenuItem } from '@/composables/useContextMenu'
+import type { MenuItem } from '@/composables/useContextMenu';
+import { computed, ref, watch } from 'vue';
 
 interface Props {
   visible: boolean
@@ -115,20 +115,22 @@ watch(() => props.visible, (newVal) => {
 <style scoped lang="scss">
 .context-menu {
   position: fixed;
-  background: rgb(var(--v-theme-surface));
-  border-radius: 6px;
-  box-shadow: 0 3px 14px 0 rgb(0 0 0 / 15%), 0 0 0 1px rgb(0 0 0 / 5%);
-  padding: 6px 0;
-  min-width: 180px;
-  max-width: 280px;
   z-index: 9999;
+  border-radius: 6px;
   animation: fadeIn 0.15s ease-out;
+  background: rgb(var(--v-theme-surface));
+  box-shadow: 0 3px 14px 0 rgb(0 0 0 / 15%), 0 0 0 1px rgb(0 0 0 / 5%);
+  max-inline-size: 280px;
+  min-inline-size: 180px;
+  padding-block: 6px;
+  padding-inline: 0;
 
   @keyframes fadeIn {
     from {
       opacity: 0;
       transform: scale(0.95);
     }
+
     to {
       opacity: 1;
       transform: scale(1);
@@ -136,28 +138,30 @@ watch(() => props.visible, (newVal) => {
   }
 
   .menu-separator {
-    height: 1px;
-    margin: 6px 0;
     background: rgb(var(--v-theme-on-surface) / 12%);
+    block-size: 1px;
+    margin-block: 6px;
+    margin-inline: 0;
   }
 
   .menu-item {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 8px 14px;
-    cursor: pointer;
-    transition: background-color 0.15s;
-    font-size: 14px;
     color: rgb(var(--v-theme-on-surface));
+    cursor: pointer;
+    font-size: 14px;
+    gap: 10px;
+    padding-block: 8px;
+    padding-inline: 14px;
+    transition: background-color 0.15s;
 
     &:hover:not(.disabled) {
       background: rgb(var(--v-theme-primary) / 8%);
     }
 
     &.disabled {
-      opacity: 0.5;
       cursor: not-allowed;
+      opacity: 0.5;
       pointer-events: none;
     }
 
@@ -181,10 +185,10 @@ watch(() => props.visible, (newVal) => {
     }
 
     .menu-label {
-      flex: 1;
-      white-space: nowrap;
       overflow: hidden;
+      flex: 1;
       text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     .menu-chevron {
