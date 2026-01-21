@@ -25,7 +25,8 @@
         >
           <VCard
             variant="outlined"
-            class="mb-2"
+            class="mb-2 manuscript-card"
+            @click="selectManuscript(manuscript)"
           >
             <VCardText>
               <div class="d-flex align-center justify-space-between mb-2">
@@ -63,6 +64,8 @@
 <script setup lang="ts">
 import axios from 'axios'
 import { onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { useManuscriptStore } from '@/stores/manuscript'
 
 // Configure axios
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '/api'
@@ -114,6 +117,9 @@ interface Manuscript {
   user_id: number
 }
 
+const router = useRouter()
+const manuscriptStore = useManuscriptStore()
+
 const manuscripts = ref<Manuscript[]>([])
 const loading = ref(true)
 const error = ref<string | null>(null)
@@ -143,10 +149,35 @@ const fetchManuscripts = async () => {
   }
 }
 
+const selectManuscript = async (manuscript: Manuscript) => {
+  try {
+    // Store the selected manuscript
+    manuscriptStore.selectManuscript(manuscript)
+
+    // Fetch manuscript with items for navigation
+    await manuscriptStore.fetchManuscript(manuscript.id, true)
+
+    // Navigate to manuscript view
+    router.push(`/manuscripts/${manuscript.id}`)
+  } catch (e) {
+    console.error('Error selecting manuscript:', e)
+    error.value = 'Failed to load manuscript'
+  }
+}
+
 onMounted(() => {
   fetchManuscripts()
 })
 </script>
 
 <style scoped>
+.manuscript-card {
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.manuscript-card:hover {
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 15%);
+  transform: translateY(-2px);
+}
 </style> 

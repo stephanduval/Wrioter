@@ -5,7 +5,7 @@ export function useMenuTranslations() {
   const { t } = useI18n()
 
   const menuItems = computed(() => [
-    { heading: 'Freynet-Gagné' },
+    { heading: 'Wrioter' },
     {
       title: t('menu.userManagement'),
       icon: { icon: 'bx-user' },
