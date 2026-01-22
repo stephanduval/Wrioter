@@ -74,7 +74,7 @@
     </VToolbar>
 
     <!-- Mindmap Canvas -->
-    <div class="mindmap-canvas">
+    <div class="mindmap-canvas" @contextmenu="handleEmptySpaceContextMenu">
       <MindMapCanvas
         v-if="currentMindmap && mindmapNodes.length > 0"
         :nodes="mindmapNodes"
@@ -159,6 +159,9 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useMindmapStore } from '@/stores/mindmap'
+import { useManuscriptStore } from '@/stores/manuscript'
+import { useContextMenu } from '@/composables/useContextMenu'
+import { getEmptySpaceMenuItems } from '@/config/contextMenus'
 import MindMapCanvas from './MindMapCanvas.vue'
 import type { FolderItem } from '@/stores/folderView'
 
@@ -178,6 +181,37 @@ const emit = defineEmits<{
 
 // Store
 const mindmapStore = useMindmapStore()
+const manuscriptStore = useManuscriptStore()
+const contextMenu = useContextMenu()
+
+// Computed: Get manuscript ID from folder or store
+const manuscriptId = computed(() =>
+  props.folder?.manuscript_id || manuscriptStore.currentManuscript?.id
+)
+
+// Empty space context menu handler
+function handleEmptySpaceContextMenu(event: MouseEvent) {
+  const target = event.target as HTMLElement
+
+  // If clicking on a node, don't show empty space menu
+  // VueFlow uses .vue-flow__node class for nodes
+  if (target.closest('.vue-flow__node') || target.closest('[data-node-id]')) {
+    return
+  }
+
+  // Only show menu if we have the required context
+  if (!manuscriptId.value) {
+    console.warn('Cannot show context menu: no manuscript ID available')
+    return
+  }
+
+  const menuItems = getEmptySpaceMenuItems({
+    folderId: props.folderId,
+    manuscriptId: manuscriptId.value
+  })
+
+  contextMenu.show(event, { items: menuItems })
+}
 
 // Local state
 const nodeEditDialog = ref(false)
