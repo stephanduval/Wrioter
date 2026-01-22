@@ -27,7 +27,7 @@
     />
 
     <!-- Main content area -->
-    <div class="corkboard-content">
+    <div class="corkboard-content" @contextmenu="handleEmptySpaceContextMenu">
       <!-- Loading state -->
       <div
         v-if="isLoading"
@@ -189,8 +189,11 @@ import CorkboardGrid from './CorkboardGrid.vue'
 import { useCorkboardStore } from '@/stores/corkboard'
 import { useFolderViewStore, type FolderItem, type FolderData } from '@/stores/folderView'
 import { useSelectionStore } from '@/stores/selection'
+import { useManuscriptStore } from '@/stores/manuscript'
 import { useBoxSelection } from '@/composables/useSelection'
+import { useContextMenu } from '@/composables/useContextMenu'
 import { reorderFolderItems } from '@/api/folders'
+import { getEmptySpaceMenuItems } from '@/config/contextMenus'
 import type { CorkboardCard } from '@/api/corkboard'
 
 /**
@@ -224,6 +227,13 @@ const route = useRoute()
 // Stores
 const corkboardStore = useCorkboardStore()
 const selectionStore = useSelectionStore()
+const manuscriptStore = useManuscriptStore()
+const contextMenu = useContextMenu()
+
+// Computed: Get manuscript ID from folder or store
+const manuscriptId = computed(() =>
+  props.folder?.manuscript_id || manuscriptStore.currentManuscript?.id
+)
 
 // Reactive state
 const showContextMenu = ref(false)
@@ -342,6 +352,28 @@ const handleCardDrop = async (draggedCardIds: string[], targetIndex: number, tar
   } catch (error) {
     console.error('Failed to handle card drop:', error)
   }
+}
+
+const handleEmptySpaceContextMenu = (event: MouseEvent) => {
+  const target = event.target as HTMLElement
+
+  // If clicking on a card or inside a card, let the card's context menu handle it
+  if (target.closest('[data-card-id]') || target.closest('.corkboard-card')) {
+    return
+  }
+
+  // Only show menu if we have the required context
+  if (!manuscriptId.value) {
+    console.warn('Cannot show context menu: no manuscript ID available')
+    return
+  }
+
+  const menuItems = getEmptySpaceMenuItems({
+    folderId: props.folderId,
+    manuscriptId: manuscriptId.value
+  })
+
+  contextMenu.show(event, { items: menuItems })
 }
 
 const handleContextMenu = (cardIds: string[], event: MouseEvent) => {

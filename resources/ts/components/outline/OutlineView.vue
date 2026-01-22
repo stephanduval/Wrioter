@@ -79,7 +79,7 @@
     </VToolbar>
 
     <!-- Table Container -->
-    <div class="outline-table-container">
+    <div class="outline-table-container" @contextmenu="handleEmptySpaceContextMenu">
       <VTable
         fixed-header
         class="outline-table"
@@ -236,7 +236,10 @@ import { storeToRefs } from 'pinia'
 import { useOutlineStore } from '@/stores/outline'
 import { useFolderViewStore, type FolderItem, type FolderData } from '@/stores/folderView'
 import { useSelectionStore } from '@/stores/selection'
+import { useManuscriptStore } from '@/stores/manuscript'
+import { useContextMenu } from '@/composables/useContextMenu'
 import { reorderFolderItems } from '@/api/folders'
+import { getEmptySpaceMenuItems } from '@/config/contextMenus'
 import OutlineRow from './OutlineRow.vue'
 
 interface ScriveningSeparator {
@@ -267,6 +270,36 @@ const emit = defineEmits<{
 const outlineStore = useOutlineStore()
 const folderViewStore = useFolderViewStore()
 const selectionStore = useSelectionStore()
+const manuscriptStore = useManuscriptStore()
+const contextMenu = useContextMenu()
+
+// Computed: Get manuscript ID from folder or store
+const manuscriptId = computed(() =>
+  props.folder?.manuscript_id || manuscriptStore.currentManuscript?.id
+)
+
+// Empty space context menu handler
+function handleEmptySpaceContextMenu(event: MouseEvent) {
+  const target = event.target as HTMLElement
+
+  // If clicking on a row or inside a row, don't show empty space menu
+  if (target.closest('.outline-row') || target.closest('tr[data-item-id]') || target.closest('tbody tr:not(.scrivening-separator-row)')) {
+    return
+  }
+
+  // Only show menu if we have the required context
+  if (!manuscriptId.value) {
+    console.warn('Cannot show context menu: no manuscript ID available')
+    return
+  }
+
+  const menuItems = getEmptySpaceMenuItems({
+    folderId: props.folderId,
+    manuscriptId: manuscriptId.value
+  })
+
+  contextMenu.show(event, { items: menuItems })
+}
 
 const {
   availableColumns,
