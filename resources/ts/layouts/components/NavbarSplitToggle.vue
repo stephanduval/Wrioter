@@ -1,7 +1,7 @@
 <template>
   <div
     @click="handleToggleSplitView"
-    style="border: 2px solid red; padding: 4px; cursor: pointer; background: yellow; min-width: 50px; min-height: 50px;"
+    style="padding: 4px; cursor: pointer; min-block-size: 50px; min-inline-size: 50px;"
   >
     <VBtn
       icon

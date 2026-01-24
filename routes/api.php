@@ -218,7 +218,7 @@ Route::get('/send-message-notification', function () {
         Mail::mailer($mailer)
             ->send('emails.new-message-alert', ['msg' => $message], function($mail) use ($message) {
                 $mail->to('stephan.duval@gmail.com')
-                     ->subject('Freynet-Gagné Portal - New Message: ' . $message->subject);
+                     ->subject('Wrioter - New Message: ' . $message->subject);
             });
 
         return response()->json([

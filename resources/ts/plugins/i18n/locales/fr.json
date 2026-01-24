@@ -217,7 +217,7 @@
     }
   },
   "menu": {
-    "heading": "Freynet-Gagné",
+    "heading": "Wrioter",
     "userManagement": "Gestion des utilisateurs",
     "companyList": "Liste des entreprises",
     "projects": "Projets",
@@ -264,7 +264,7 @@
     "name": "Français"
   },
   "dashboard": {
-    "title": "Portail Client Freynet-Gagné",
+    "title": "Portail Client Wrioter",
     "requests": "Demandes",
     "dueToday": "Demandes dues aujourd'hui",
     "newTasks": "Nouvelles tâches",
