@@ -176,4 +176,38 @@ class Item extends Model
     {
         return $this->hasMany(ItemAttachment::class);
     }
+
+    /**
+     * Get the snippet references for this collection item.
+     * Only applicable when type is 'snippet_collection'.
+     */
+    public function snippetReferences(): HasMany
+    {
+        return $this->hasMany(SnippetReference::class, 'collection_item_id')
+            ->orderBy('order_index');
+    }
+
+    /**
+     * Get all snippets that reference this item as a source.
+     */
+    public function referencedInSnippets(): HasMany
+    {
+        return $this->hasMany(SnippetReference::class, 'source_item_id');
+    }
+
+    /**
+     * Check if this item is a snippet collection.
+     */
+    public function isSnippetCollection(): bool
+    {
+        return $this->type === 'snippet_collection';
+    }
+
+    /**
+     * Scope a query to only include snippet collections.
+     */
+    public function scopeSnippetCollections($query)
+    {
+        return $query->where('type', 'snippet_collection');
+    }
 } 

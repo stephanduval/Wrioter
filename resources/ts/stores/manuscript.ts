@@ -155,7 +155,8 @@ export const useManuscriptStore = defineStore('manuscript', () => {
       mindmap: 'bx-network-chart',
       image: 'bx-image',
       file: 'bx-file',
-      link: 'bx-link'
+      link: 'bx-link',
+      snippet_collection: 'bx-collection'
     }
     return iconMap[type] || 'bx-file'
   }

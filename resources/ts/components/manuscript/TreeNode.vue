@@ -479,6 +479,7 @@ const getIconColor = (): string => {
     character: "red",
     location: "purple",
     item: "orange",
+    snippet_collection: "deep-purple",
     default: "gray",
   };
   return colorMap[type] || colorMap.default;
