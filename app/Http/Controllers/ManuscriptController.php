@@ -246,6 +246,18 @@ class ManuscriptController extends Controller
                         ])
                         ->withCount(['comments' => function ($query) {
                             $query->where('status', 'active');
+                        }])
+                        ->with(['snippetReferences' => function ($query) {
+                            $query->select([
+                                'id',
+                                'collection_item_id',
+                                'source_item_id',
+                                'reference_text',
+                                'status',
+                                'order_index',
+                            ])
+                            ->with('sourceItem:id,title')
+                            ->orderBy('order_index');
                         }]);
                     }
                 ])
@@ -256,7 +268,7 @@ class ManuscriptController extends Controller
 
                     if ($item) {
                         // Transform for navigation
-                        return [
+                        $data = [
                             'id' => $item->id,
                             'parent_id' => $item->parent_id,
                             'title' => $item->title,
@@ -271,6 +283,22 @@ class ManuscriptController extends Controller
                             'has_comments' => $item->comments_count > 0,
                             'comment_count' => $item->comments_count,
                         ];
+
+                        // Include snippet references for collection items
+                        if ($item->type === 'snippet_collection' && $item->snippetReferences) {
+                            $data['snippet_references'] = $item->snippetReferences->map(function ($ref) {
+                                return [
+                                    'id' => $ref->id,
+                                    'source_item_id' => $ref->source_item_id,
+                                    'source_item_title' => $ref->sourceItem?->title,
+                                    'reference_text' => $ref->reference_text,
+                                    'status' => $ref->status,
+                                    'order_index' => $ref->order_index,
+                                ];
+                            })->values()->toArray();
+                        }
+
+                        return $data;
                     }
 
                     return null;
