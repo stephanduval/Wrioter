@@ -7,8 +7,8 @@
         :manuscript-id="props.manuscriptId"
         :item-id="props.itemId"
         :show-metadata="true"
-        :word-count="itemStore.state.currentItem?.word_count"
-        :character-count="itemStore.state.currentItem?.character_count"
+        :word-count="localItem?.word_count"
+        :character-count="localItem?.character_count"
         @contextmenu="handleContextMenu"
         @touchstart="handleTouchStart"
         @touchend="handleTouchEnd"
@@ -18,21 +18,21 @@
 
       <div class="editor-actions">
         <!-- Save Status Indicator -->
-        <div class="save-status" :class="`status-${itemStore.state.saveStatus}`">
+        <div class="save-status" :class="`status-${saveStatus}`">
           <VIcon
-            v-if="itemStore.state.saveStatus === 'saving'"
+            v-if="saveStatus === 'saving'"
             icon="bx-loader-alt"
             size="16"
             class="rotating"
           />
           <VIcon
-            v-else-if="itemStore.state.saveStatus === 'saved'"
+            v-else-if="saveStatus === 'saved'"
             icon="bx-check"
             size="16"
             color="success"
           />
           <VIcon
-            v-else-if="itemStore.state.saveStatus === 'error'"
+            v-else-if="saveStatus === 'error'"
             icon="bx-error"
             size="16"
             color="error"
@@ -42,27 +42,27 @@
 
         <!-- Auto-save Toggle -->
         <VTooltip text="Toggle auto-save">
-          <template #activator="{ props }">
+          <template #activator="{ props: tooltipProps }">
             <VBtn
-              v-bind="props"
+              v-bind="tooltipProps"
               icon
               size="small"
               variant="text"
-              :color="itemStore.state.autoSaveEnabled ? 'primary' : 'default'"
-              @click="itemStore.toggleAutoSave"
+              :color="autoSaveEnabled ? 'primary' : 'default'"
+              @click="autoSaveEnabled = !autoSaveEnabled"
             >
-              <VIcon :icon="itemStore.state.autoSaveEnabled ? 'bx-save' : 'bx-save'" />
+              <VIcon :icon="autoSaveEnabled ? 'bx-save' : 'bx-save'" />
             </VBtn>
           </template>
         </VTooltip>
 
         <!-- Manual Save Button -->
         <VBtn
-          v-if="itemStore.canSave"
+          v-if="hasUnsavedChanges"
           size="small"
           color="primary"
-          :loading="itemStore.isLoading"
-          @click="itemStore.saveManually"
+          :loading="saveStatus === 'saving'"
+          @click="saveManually"
         >
           Save
         </VBtn>
@@ -71,14 +71,14 @@
 
     <!-- Error Alert -->
     <VAlert
-      v-if="itemStore.state.error"
+      v-if="error"
       type="error"
       variant="tonal"
       closable
       class="mb-4"
-      @click:close="itemStore.clearError"
+      @click:close="error = null"
     >
-      {{ itemStore.state.error }}
+      {{ error }}
     </VAlert>
 
     <!-- Editor Content -->
@@ -126,8 +126,8 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
-import { useRoute } from 'vue-router'
-import { useItemStore } from '@/stores/item'
+import { itemsApi, type Item, type ItemUpdatePayload } from '@/api/items'
+import { dataSync } from '@/services/dataSync'
 import { useContextMenu } from '@/composables/useContextMenu'
 import { getEditorMenuItems } from '@/config/contextMenus/editorMenus'
 import TiptapEditor from '@/@core/components/TiptapEditor.vue'
@@ -137,24 +137,30 @@ interface Props {
   manuscriptId: number
   itemId: number
   showSynopsis?: boolean
+  paneId?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  showSynopsis: false
+  showSynopsis: false,
+  paneId: undefined
 })
 
-const route = useRoute()
-const itemStore = useItemStore()
 const contextMenu = useContextMenu()
 
-// Local reactive state for the editor
+// ===== LOCAL STATE (per-instance, not shared) =====
+const localItem = ref<Item | null>(null)
 const localTitle = ref('')
 const localContent = ref<string | null>(null)
 const localSynopsis = ref('')
+const originalContent = ref('')
+const hasUnsavedChanges = ref(false)
+const saveStatus = ref<'idle' | 'saving' | 'saved' | 'error'>('idle')
+const autoSaveEnabled = ref(true)
+const error = ref<string | null>(null)
 
 // Computed
 const saveStatusText = computed(() => {
-  switch (itemStore.state.saveStatus) {
+  switch (saveStatus.value) {
     case 'saving':
       return 'Saving...'
     case 'saved':
@@ -162,64 +168,211 @@ const saveStatusText = computed(() => {
     case 'error':
       return 'Save failed'
     default:
-      return itemStore.state.autoSaveEnabled ? 'Auto-save on' : 'Auto-save off'
+      return autoSaveEnabled.value ? 'Auto-save on' : 'Auto-save off'
   }
 })
 
-// Debounced handlers to prevent excessive API calls
+// Debounced auto-save
+const debouncedAutoSave = itemsApi.createDebouncedUpdate(2000)
+
+// ===== ITEM LOADING (local, not via shared store) =====
+const loadItem = async (manuscriptId: number, itemId: number) => {
+  try {
+    error.value = null
+    saveStatus.value = 'saving' // Using 'saving' as loading indicator
+    localContent.value = null // Show loading state
+
+    const item = await itemsApi.getItem(manuscriptId, itemId)
+
+    // Check that props haven't changed during the async call
+    if (props.manuscriptId !== manuscriptId || props.itemId !== itemId) {
+      console.log(`[ItemEditor${props.paneId ? ` pane:${props.paneId}` : ''}] Props changed during load, discarding result`)
+      return
+    }
+
+    localItem.value = item
+    localTitle.value = item.title
+    localContent.value = item.content || ''
+    localSynopsis.value = item.synopsis || ''
+    originalContent.value = item.content || ''
+    hasUnsavedChanges.value = false
+    saveStatus.value = 'idle'
+
+    console.log(`[ItemEditor${props.paneId ? ` pane:${props.paneId}` : ''}] Item loaded: ${item.title}`)
+  } catch (err) {
+    console.error(`[ItemEditor${props.paneId ? ` pane:${props.paneId}` : ''}] Failed to load item:`, err)
+    error.value = err instanceof Error ? err.message : 'Failed to load item'
+    saveStatus.value = 'error'
+  }
+}
+
+// ===== CONTENT & SAVE HANDLERS =====
 let contentTimeout: NodeJS.Timeout | null = null
 let synopsisTimeout: NodeJS.Timeout | null = null
 
 const handleTitleSaved = (newTitle: string) => {
-  console.log('Title saved:', newTitle)
+  console.log(`[ItemEditor${props.paneId ? ` pane:${props.paneId}` : ''}] Title saved: ${newTitle}`)
 }
 
 const handleContentChange = (newContent: string) => {
   if (contentTimeout) clearTimeout(contentTimeout)
 
-  contentTimeout = setTimeout(() => {
-    itemStore.updateContent(newContent)
-  }, 800)
+  const hasChanged = newContent !== originalContent.value
+  hasUnsavedChanges.value = hasChanged
+
+  if (localItem.value) {
+    localItem.value.content = newContent
+  }
+
+  if (autoSaveEnabled.value && hasChanged && localItem.value) {
+    contentTimeout = setTimeout(() => {
+      triggerAutoSave({ content: newContent })
+    }, 800)
+  }
 }
 
 const handleSynopsisChange = (newSynopsis: string) => {
   if (synopsisTimeout) clearTimeout(synopsisTimeout)
 
   synopsisTimeout = setTimeout(() => {
-    // Update synopsis if item store supports it
-    // For now, we'll just log it
-    console.log('Synopsis updated:', newSynopsis)
+    console.log(`[ItemEditor${props.paneId ? ` pane:${props.paneId}` : ''}] Synopsis updated`)
   }, 1000)
 }
 
-// Watch for changes from the store to update local state
-watch(() => itemStore.state.currentItem, (newItem) => {
-  if (newItem) {
-    localTitle.value = newItem.title
-    localContent.value = newItem.content || ''
-    localSynopsis.value = newItem.synopsis || ''
-  }
-}, { immediate: true })
+const triggerAutoSave = async (payload: ItemUpdatePayload) => {
+  if (!localItem.value) return
 
-// Load the item when component mounts
+  try {
+    saveStatus.value = 'saving'
+
+    const updatedItem = await debouncedAutoSave(
+      props.manuscriptId,
+      localItem.value.id,
+      payload
+    )
+
+    // Only update if we're still editing the same item
+    if (localItem.value && localItem.value.id === updatedItem.id) {
+      localItem.value = updatedItem
+      originalContent.value = updatedItem.content || ''
+      hasUnsavedChanges.value = false
+      saveStatus.value = 'saved'
+      error.value = null
+
+      // Emit sync event so other stores (nav tree, etc.) can update
+      dataSync.emit('item:updated', {
+        manuscriptId: props.manuscriptId,
+        itemId: updatedItem.id,
+        changes: payload
+      })
+
+      // Clear saved status after 2 seconds
+      setTimeout(() => {
+        if (saveStatus.value === 'saved') {
+          saveStatus.value = 'idle'
+        }
+      }, 2000)
+    }
+  } catch (err) {
+    console.error(`[ItemEditor${props.paneId ? ` pane:${props.paneId}` : ''}] Auto-save failed:`, err)
+    saveStatus.value = 'error'
+    error.value = err instanceof Error ? err.message : 'Save failed'
+  }
+}
+
+const saveManually = async () => {
+  if (!hasUnsavedChanges.value || !localItem.value) return
+
+  try {
+    saveStatus.value = 'saving'
+
+    const payload: ItemUpdatePayload = {
+      title: localItem.value.title,
+      content: localItem.value.content,
+      content_format: localItem.value.content_format
+    }
+
+    const updatedItem = await itemsApi.updateItem(
+      props.manuscriptId,
+      localItem.value.id,
+      payload
+    )
+
+    if (localItem.value && localItem.value.id === updatedItem.id) {
+      localItem.value = updatedItem
+      originalContent.value = updatedItem.content || ''
+      hasUnsavedChanges.value = false
+      saveStatus.value = 'saved'
+      error.value = null
+
+      dataSync.emit('item:updated', {
+        manuscriptId: props.manuscriptId,
+        itemId: updatedItem.id,
+        changes: payload
+      })
+    }
+
+    console.log(`[ItemEditor${props.paneId ? ` pane:${props.paneId}` : ''}] Manual save successful`)
+  } catch (err) {
+    console.error(`[ItemEditor${props.paneId ? ` pane:${props.paneId}` : ''}] Manual save failed:`, err)
+    saveStatus.value = 'error'
+    error.value = err instanceof Error ? err.message : 'Save failed'
+  }
+}
+
+// ===== EXTERNAL SYNC (listen for renames from nav tree, etc.) =====
+const handleExternalUpdate = ({ itemId, changes }: { itemId: number, changes: any }) => {
+  if (localItem.value?.id === itemId) {
+    if (changes.title && changes.title !== localItem.value.title) {
+      localItem.value.title = changes.title
+      localTitle.value = changes.title
+    }
+  }
+}
+
+const handleExternalDelete = ({ itemId }: { itemId: number }) => {
+  if (localItem.value?.id === itemId) {
+    localItem.value = null
+    localContent.value = null
+    hasUnsavedChanges.value = false
+    saveStatus.value = 'idle'
+  }
+}
+
+// ===== LIFECYCLE =====
 onMounted(async () => {
-  console.log('ItemEditor mounted, loading item:', props.itemId)
-  await itemStore.loadItem(props.manuscriptId, props.itemId)
+  console.log(`[ItemEditor${props.paneId ? ` pane:${props.paneId}` : ''}] Mounted, loading item: ${props.itemId}`)
+  await loadItem(props.manuscriptId, props.itemId)
+
+  // Listen for external updates
+  dataSync.on('item:updated', handleExternalUpdate)
+  dataSync.on('item:deleted', handleExternalDelete)
 })
 
-// Watch for prop changes to reload item when navigating
+// Watch for prop changes to reload item
 watch([() => props.manuscriptId, () => props.itemId], async ([newManuscriptId, newItemId], [oldManuscriptId, oldItemId]) => {
-  // Only reload if the IDs actually changed
   if (newManuscriptId !== oldManuscriptId || newItemId !== oldItemId) {
-    console.log('ItemEditor props changed, loading new item:', newItemId)
-    await itemStore.loadItem(newManuscriptId, newItemId)
+    console.log(`[ItemEditor${props.paneId ? ` pane:${props.paneId}` : ''}] Props changed, loading new item: ${newItemId}`)
+    await loadItem(newManuscriptId, newItemId)
   }
 }, { immediate: false })
 
-// Cleanup when component unmounts
 onUnmounted(() => {
   if (contentTimeout) clearTimeout(contentTimeout)
   if (synopsisTimeout) clearTimeout(synopsisTimeout)
+
+  // Remove external sync listeners
+  dataSync.off('item:updated', handleExternalUpdate)
+  dataSync.off('item:deleted', handleExternalDelete)
+})
+
+// Expose state for parent components (e.g., the standalone edit page)
+defineExpose({
+  localItem,
+  hasUnsavedChanges,
+  saveStatus,
+  saveManually,
+  error
 })
 
 // Context menu handler
@@ -227,7 +380,6 @@ const handleContextMenu = (event: MouseEvent) => {
   event.preventDefault()
   event.stopPropagation()
 
-  // Get selected text
   const selection = window.getSelection()?.toString()
   const menuItems = getEditorMenuItems(selection)
 
@@ -265,11 +417,10 @@ const handleTouchMove = () => {
 
 // Keyboard shortcuts
 const handleKeydown = (event: KeyboardEvent) => {
-  // Ctrl/Cmd + S for manual save
   if ((event.ctrlKey || event.metaKey) && event.key === 's') {
     event.preventDefault()
-    if (itemStore.canSave) {
-      itemStore.saveManually()
+    if (hasUnsavedChanges.value) {
+      saveManually()
     }
   }
 }
@@ -277,7 +428,6 @@ const handleKeydown = (event: KeyboardEvent) => {
 onMounted(() => {
   document.addEventListener('keydown', handleKeydown)
 
-  // Add context menu listeners to the editor content area
   const editorContent = document.querySelector('.editor-content')
   if (editorContent) {
     editorContent.addEventListener('contextmenu', handleContextMenu)
@@ -290,7 +440,6 @@ onMounted(() => {
 onUnmounted(() => {
   document.removeEventListener('keydown', handleKeydown)
 
-  // Clean up context menu listeners
   const editorContent = document.querySelector('.editor-content')
   if (editorContent) {
     editorContent.removeEventListener('contextmenu', handleContextMenu)

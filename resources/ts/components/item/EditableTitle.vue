@@ -26,7 +26,8 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import { useItemStore } from '@/stores/item'
+import { itemsApi } from '@/api/items'
+import { dataSync } from '@/services/dataSync'
 
 interface Props {
   modelValue: string
@@ -57,8 +58,6 @@ const emit = defineEmits<{
   (e: 'touchmove', event: TouchEvent): void
 }>()
 
-const itemStore = useItemStore()
-
 const localTitle = ref(props.modelValue)
 
 // Watch for external changes to modelValue
@@ -76,13 +75,22 @@ const handleTitleChange = async (newTitle: string) => {
   if (titleTimeout) clearTimeout(titleTimeout)
 
   titleTimeout = setTimeout(async () => {
-    // Update title in the item store
-    // This will emit a dataSync event that manuscriptStore listens to,
-    // so the navigation tree updates automatically - no manual refresh needed
-    await itemStore.updateTitle(newTitle)
+    try {
+      // Save title directly via API (not through shared store)
+      await itemsApi.updateItem(props.manuscriptId, props.itemId, { title: newTitle })
 
-    // Emit save event
-    emit('titleSaved', newTitle)
+      // Emit dataSync event so nav tree and other components update
+      dataSync.emit('item:updated', {
+        manuscriptId: props.manuscriptId,
+        itemId: props.itemId,
+        changes: { title: newTitle }
+      })
+
+      // Emit save event
+      emit('titleSaved', newTitle)
+    } catch (err) {
+      console.error('Failed to save title:', err)
+    }
   }, props.debounceMs)
 }
 

@@ -41,6 +41,11 @@ export interface PaneState {
   folderItems?: any[] // The items in this folder (cached per pane)
   editingItemId?: number // For edit mode
 
+  // Placeholder state (when duplicate content is detected)
+  isPlaceholder?: boolean
+  duplicatePaneId?: string // Which pane has the actual content
+  placeholderMessage?: string // Custom message to display
+
   // Selection state
   selectedItemIds: Set<number>
   focusedItemId?: number
@@ -204,11 +209,80 @@ export const usePaneStore = defineStore('pane', () => {
   }
 
   /**
+   * Check if a folder or item is already open in another pane
+   */
+  function findPaneWithContent(
+    folderId?: number,
+    itemId?: number,
+    excludePaneId?: string
+  ): string | null {
+    for (const [paneId, pane] of panes.value.entries()) {
+      if (paneId === excludePaneId || pane.isPlaceholder) {
+        continue
+      }
+
+      if (folderId !== undefined && pane.folderId === folderId && pane.folderItems && pane.folderItems.length > 0) {
+        return paneId
+      }
+
+      if (itemId !== undefined && pane.editingItemId === itemId) {
+        return paneId
+      }
+    }
+
+    return null
+  }
+
+  /**
+   * Clear placeholder state and prepare pane for new content
+   */
+  function clearPanePlaceholder(paneId: string) {
+    const pane = panes.value.get(paneId)
+    if (!pane) return
+
+    pane.isPlaceholder = false
+    pane.duplicatePaneId = undefined
+    pane.placeholderMessage = undefined
+    pane.folderId = undefined
+    pane.editingItemId = undefined
+    pane.folderItems = []
+
+    console.log(`[PaneStore] Cleared placeholder state for pane ${paneId}`)
+  }
+
+  /**
    * Load folder content for a specific pane
    */
   async function loadFolderForPane(paneId: string, folderId: number) {
     const pane = panes.value.get(paneId)
     if (!pane) return
+
+    // Check for duplicates before loading
+    const duplicateId = findPaneWithContent(folderId, undefined, paneId)
+
+    if (duplicateId) {
+      console.log(
+        `[PaneStore] Folder ${folderId} already open in pane ${duplicateId}. ` +
+        `Setting pane ${paneId} to placeholder.`
+      )
+
+      pane.isPlaceholder = true
+      pane.duplicatePaneId = duplicateId
+      pane.folderId = folderId
+      pane.folderItems = []
+      pane.folderData = null
+      pane.editingItemId = undefined
+      pane.isLoading = false
+      pane.error = undefined
+      pane.placeholderMessage = 'This folder is already open in the other pane.'
+
+      return
+    }
+
+    // Reset placeholder state if loading real content
+    pane.isPlaceholder = false
+    pane.duplicatePaneId = undefined
+    pane.placeholderMessage = undefined
 
     pane.isLoading = true
     pane.error = undefined
@@ -224,22 +298,32 @@ export const usePaneStore = defineStore('pane', () => {
         method: 'GET'
       })
 
+      // Re-fetch pane reference after async call (pane may have been recreated)
+      const currentPane = panes.value.get(paneId)
+      if (!currentPane) {
+        console.warn(`[PaneStore] Pane ${paneId} no longer exists after API call`)
+        return
+      }
+
       // Store folder data in the pane
-      pane.folderId = folderId
-      pane.folderData = response.folder
-      pane.folderItems = response.items || []
+      currentPane.folderId = folderId
+      currentPane.folderData = response.folder
+      currentPane.folderItems = response.items || []
 
       // Clear selection when changing folders
-      pane.selectedItemIds.clear()
-      pane.focusedItemId = undefined
+      currentPane.selectedItemIds.clear()
+      currentPane.focusedItemId = undefined
+      currentPane.isLoading = false
 
-      console.log(`[PaneStore] Loaded ${pane.folderItems.length} items for pane ${paneId}`)
+      console.log(`[PaneStore] Loaded ${currentPane.folderItems.length} items for pane ${paneId}`)
     } catch (error) {
       console.error(`[PaneStore] Failed to load folder for pane ${paneId}:`, error)
-      pane.error = 'Failed to load folder contents'
-      pane.folderItems = []
-    } finally {
-      pane.isLoading = false
+      const currentPane = panes.value.get(paneId)
+      if (currentPane) {
+        currentPane.error = 'Failed to load folder contents'
+        currentPane.folderItems = []
+        currentPane.isLoading = false
+      }
     }
   }
 
@@ -250,8 +334,32 @@ export const usePaneStore = defineStore('pane', () => {
     const pane = panes.value.get(paneId)
     if (!pane) return
 
+    // Check for duplicates
+    const duplicateId = findPaneWithContent(undefined, itemId, paneId)
+
+    if (duplicateId) {
+      console.log(
+        `[PaneStore] Item ${itemId} already open in pane ${duplicateId}. ` +
+        `Setting pane ${paneId} to placeholder.`
+      )
+
+      pane.isPlaceholder = true
+      pane.duplicatePaneId = duplicateId
+      pane.editingItemId = itemId
+      pane.viewMode = 'edit'
+      pane.folderItems = []
+      pane.placeholderMessage = 'This document is already open in the other pane.'
+
+      return
+    }
+
+    // Reset placeholder state
+    pane.isPlaceholder = false
+    pane.duplicatePaneId = undefined
+    pane.placeholderMessage = undefined
+
     pane.editingItemId = itemId
-    pane.viewMode = 'edit' // Auto-switch to edit mode
+    pane.viewMode = 'edit'
 
     console.log(`[PaneStore] Pane ${paneId} editing item: ${itemId}`)
   }
@@ -361,10 +469,15 @@ export const usePaneStore = defineStore('pane', () => {
 
   /**
    * Initialize default panes for split view
+   * Skips initialization if panes already exist (to avoid race conditions
+   * with loadFolderForPane being called before mount)
    */
   function initializeDefaultPanes() {
-    // Clear any existing panes
-    clearAllPanes()
+    // If panes already exist, don't reinitialize (avoids clearing loaded content)
+    if (panes.value.size > 0) {
+      console.log('[PaneStore] Panes already initialized, skipping')
+      return
+    }
 
     // Create two default panes
     createPane('pane-1', {
@@ -460,6 +573,8 @@ export const usePaneStore = defineStore('pane', () => {
     setPaneViewLock,
     initializeDefaultPanes,
     getNextPane,
+    findPaneWithContent,
+    clearPanePlaceholder,
     $reset
   }
 })

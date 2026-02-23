@@ -269,20 +269,11 @@ const handleNodeClick = (nodeId: string) => {
     const paneStore = usePaneStore();
 
     if (folderViewStore.splitEnabled && paneStore.activePaneId) {
-      // Split view handling - existing behavior
+      // Split view handling - update only the active pane
       if (node.type === "text" && manuscriptStore.selectedManuscriptId) {
-        // Split view is active - update the active pane to edit mode with this item
-        console.log(
-          `[Nav] Opening item ${node.itemId} in active pane ${paneStore.activePaneId}`,
-        );
         paneStore.setEditingItem(paneStore.activePaneId, node.itemId);
       } else if (node.type === "folder") {
-        // Split view: Load folder content in the active pane only
-        console.log(
-          `[Nav] Loading folder ${node.itemId} in active pane ${paneStore.activePaneId}`,
-        );
-
-        // Use the new loadFolderForPane method to fetch and store folder content per pane
+        // Load folder content in the active pane only
         paneStore.loadFolderForPane(paneStore.activePaneId, node.itemId);
 
         // Switch pane to a view mode (not edit) if currently in edit mode
@@ -292,7 +283,6 @@ const handleNodeClick = (nodeId: string) => {
         }
       }
     } else {
-      // Single view mode - NEW behavior: Always go to FolderView
       if (node.type === "folder" && manuscriptStore.selectedManuscriptId) {
         // Navigate to folder view for folders
         router.push(

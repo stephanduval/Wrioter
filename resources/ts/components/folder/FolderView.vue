@@ -226,8 +226,16 @@
             @sync-selection="handlePaneSyncSelection(paneId)"
             @export="handlePaneExport(paneId)"
           >
+            <!-- Show placeholder if pane has duplicate content -->
+            <PanePlaceholder
+              v-if="isPanePlaceholder(paneId)"
+              :pane-id="paneId"
+              :duplicate-pane-id="getPaneDuplicateId(paneId)"
+              :message="getPlaceholderMessage(paneId)"
+            />
             <!-- Render view based on pane's specific view mode -->
             <component
+              v-else
               :is="getPaneComponent(paneId)"
               :folder-id="folderId"
               :folder="currentFolder"
@@ -256,6 +264,7 @@ import ItemView from '@/components/item/ItemView.vue'
 import ItemEditor from '@/components/manuscript/ItemEditor.vue'
 import SimpleSplitWrapper from '@/components/splitView/SimpleSplitWrapper.vue'
 import PaneWrapper from '@/components/splitView/PaneWrapper.vue'
+import PanePlaceholder from '@/components/splitView/PanePlaceholder.vue'
 import ViewModeSwitcher from '@/components/shared/ViewModeSwitcher.vue'
 
 const props = defineProps<{
@@ -318,22 +327,36 @@ function getPaneComponent(paneId: string) {
 function getPaneItems(paneId: string) {
   const pane = paneStore.getPane(paneId)
 
-  // Use the pane's own folderItems if available (for independent pane content)
-  // Otherwise fall back to global folderItems (for initial load or single view)
-  const items = pane?.folderItems || folderItems.value
+  // Each pane should only show its own loaded content
+  // Don't fall back to global folderItems - that causes both panes to show the same content
+  const items = pane?.folderItems || []
 
-  // For edit mode, we might want to filter to just the editing item
+  // For edit mode, filter to just the editing item
   if (pane?.viewMode === 'edit' && pane.editingItemId) {
     return items.filter(item => item.id === pane.editingItemId)
   }
 
-  // For other modes, return all items (they'll handle their own filtering based on selection)
   return items
 }
 
 function getPaneEditingItemId(paneId: string): number | undefined {
   const pane = paneStore.getPane(paneId)
   return pane?.editingItemId
+}
+
+function isPanePlaceholder(paneId: string): boolean {
+  const pane = paneStore.getPane(paneId)
+  return pane?.isPlaceholder || false
+}
+
+function getPaneDuplicateId(paneId: string): string | undefined {
+  const pane = paneStore.getPane(paneId)
+  return pane?.duplicatePaneId
+}
+
+function getPlaceholderMessage(paneId: string): string | undefined {
+  const pane = paneStore.getPane(paneId)
+  return pane?.placeholderMessage
 }
 
 function handlePaneViewModeChange(paneId: string, mode: PaneViewMode) {
@@ -377,13 +400,16 @@ function handleToggleViewLock() {
 function toggleSplitView() {
   folderViewStore.toggleSplitView()
 
-  // When enabling split view, set the folder for all panes
-  if (!splitEnabled.value && props.folderId) {
-    // Wait for next tick to ensure panes are created
+  // When enabling split view, initialize panes and load folder in first pane only
+  if (splitEnabled.value && props.folderId) {
+    // Initialize panes immediately (before SimpleSplitWrapper mounts)
+    // so that loadFolderForPane has valid pane references
+    paneStore.initializeDefaultPanes()
+
+    // Load folder in first pane after panes are created
     nextTick(() => {
-      paneStore.allPanes.forEach(pane => {
-        paneStore.setPaneFolder(pane.id, props.folderId)
-      })
+      paneStore.loadFolderForPane('pane-1', props.folderId)
+      paneStore.setActivePane('pane-1')
     })
   }
 }
