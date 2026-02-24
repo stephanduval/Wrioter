@@ -258,6 +258,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Mindmap Items Management
     Route::post('/mindmaps/{id}/items/add', [App\Http\Controllers\Api\MindMapController::class, 'addItem']);
     Route::post('/mindmaps/{id}/items/create', [App\Http\Controllers\Api\MindMapController::class, 'createItem']);
+    Route::put('/mindmaps/{id}/items/{itemId}', [App\Http\Controllers\Api\MindMapController::class, 'updateItem']);
     Route::put('/mindmaps/{id}/items/{itemId}/position', [App\Http\Controllers\Api\MindMapController::class, 'updatePosition']);
     Route::delete('/mindmaps/{id}/items/{itemId}', [App\Http\Controllers\Api\MindMapController::class, 'removeItem']);
 

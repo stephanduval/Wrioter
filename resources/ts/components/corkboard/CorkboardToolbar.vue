@@ -90,15 +90,6 @@
       </template>
 
       <VList>
-        <VListItem @click="$emit('create-card')">
-          <template #prepend>
-            <VIcon icon="bx-plus" />
-          </template>
-          <VListItemTitle>Add Card</VListItemTitle>
-        </VListItem>
-
-        <VDivider />
-
         <VListItem @click="$emit('toggle-selection-mode')">
           <template #prepend>
             <VIcon icon="bx-select-multiple" />

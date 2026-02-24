@@ -211,9 +211,19 @@ class MindMapController extends Controller
 
         DB::beginTransaction();
         try {
+            // Get project_id from parent if provided
+            $projectId = null;
+            if (!empty($validated['parent_id'])) {
+                $parentItem = Item::find($validated['parent_id']);
+                if ($parentItem) {
+                    $projectId = $parentItem->project_id;
+                }
+            }
+
             // Create item in items table
             $item = Item::create([
                 'user_id' => Auth::id(),
+                'project_id' => $projectId,
                 'type' => $validated['type'],
                 'title' => $validated['title'],
                 'content' => $validated['content'] ?? null,
@@ -238,13 +248,44 @@ class MindMapController extends Controller
             ], 201);
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json(['error' => 'Failed to create item'], 500);
+            \Log::error('Failed to create item in mindmap: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json([
+                'error' => 'Failed to create item',
+                'message' => $e->getMessage()
+            ], 500);
         }
     }
 
     /**
      * Update item position in mindmap.
      */
+    /**
+     * Update item content (title, content, synopsis, type).
+     */
+    public function updateItem(Request $request, $mindmapId, $itemId): JsonResponse
+    {
+        $mindmap = WritingMindmap::where('user_id', Auth::id())->findOrFail($mindmapId);
+
+        $validated = $request->validate([
+            'title' => 'nullable|string|max:191',
+            'content' => 'nullable|string',
+            'synopsis' => 'nullable|string',
+            'type' => 'nullable|in:text,folder,character,location,research,note',
+        ]);
+
+        // Verify the item exists and belongs to the user
+        $item = Item::where('user_id', Auth::id())->findOrFail($itemId);
+
+        // Update only the fields that were provided
+        $item->update(array_filter($validated, function($value) {
+            return $value !== null;
+        }));
+
+        return response()->json(['item' => $item]);
+    }
+
     public function updatePosition(Request $request, $mindmapId, $itemId): JsonResponse
     {
         $mindmap = WritingMindmap::where('user_id', Auth::id())->findOrFail($mindmapId);

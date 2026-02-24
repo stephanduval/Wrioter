@@ -334,26 +334,42 @@ function closeNodeDialog() {
 }
 
 async function saveNode() {
-  if (editingNode.value) {
-    // Update existing node
-    mindmapStore.updateNode({
-      ...editingNode.value,
-      data: {
-        ...editingNode.value.data,
-        ...nodeForm.value
-      }
-    })
-  } else {
-    // Add new node
-    mindmapStore.addNode({
-      id: `node-${Date.now()}`,
-      type: 'default',
-      position: { x: 200, y: 200 }, // Default position, should be calculated
-      data: nodeForm.value
-    })
-  }
+  try {
+    isSaving.value = true
 
-  closeNodeDialog()
+    if (editingNode.value) {
+      // Update existing node
+      await mindmapStore.updateNode({
+        ...editingNode.value,
+        data: {
+          ...editingNode.value.data,
+          label: nodeForm.value.label,
+          content: nodeForm.value.content,
+          itemId: nodeForm.value.itemId,
+        }
+      })
+    } else {
+      // Add new node - will create item in DB with folder as parent
+      await mindmapStore.addNode({
+        id: `node-${Date.now()}`,
+        type: 'default',
+        position: { x: 200, y: 200 }, // Default position, should be calculated
+        data: {
+          label: nodeForm.value.label,
+          content: nodeForm.value.content,
+          itemId: nodeForm.value.itemId,
+        }
+      }, props.folderId) // Pass folder ID so new items become children
+    }
+
+    closeNodeDialog()
+  } catch (error: any) {
+    console.error('Failed to save node:', error)
+    // You might want to show an error notification here
+    emit('update:error', error.message || 'Failed to save node')
+  } finally {
+    isSaving.value = false
+  }
 }
 
 async function handleSave() {
