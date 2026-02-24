@@ -4,6 +4,8 @@ import { getI18n } from '@/plugins/i18n'
 import { useItemStore } from '@/stores/item'
 import { useManuscriptStore } from '@/stores/manuscript'
 import { navigateTo } from '@/utils/navigation'
+import { eventBus } from '@/services/eventBus'
+import { itemsApi } from '@/api/items'
 
 interface ManuscriptItem {
   id: number
@@ -222,6 +224,31 @@ export const getItemMenuItems = (item: ManuscriptItem, manuscriptId: number): Me
       action: async () => {
         console.log('Duplicate item:', item.id)
         // TODO: Implement duplicate functionality
+      }
+    },
+    {
+      id: 'add-to-collection',
+      label: 'Add to Collection',
+      icon: 'bx-collection',
+      action: async () => {
+        try {
+          // Fetch the full item content
+          const fullItem = await itemsApi.getItem(manuscriptId, item.id)
+          const content = fullItem.content || `[${item.title}]`
+
+          // Emit event to trigger AddToCollectionDialog
+          eventBus.emit('snippet:add-to-collection', {
+            selectedText: content,
+            sourceItemId: item.itemId,
+            manuscriptId,
+            positionData: { from: 0, to: content.length }
+          })
+
+          console.log('Add to collection triggered for item:', item.id)
+        } catch (error) {
+          console.error('Failed to add item to collection:', error)
+          alert('Failed to add item to collection. Please try again.')
+        }
       }
     },
     { id: 'sep-rename', separator: true },

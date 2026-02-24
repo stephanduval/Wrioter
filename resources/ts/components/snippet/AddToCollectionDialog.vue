@@ -115,7 +115,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import {
   VDialog,
   VCard,
@@ -153,7 +153,7 @@ const isLoading = ref(false)
 const eventData = ref<AddToCollectionEvent | null>(null)
 
 // Computed
-const collections = store.collections
+const collections = computed(() => store.collections)
 
 const truncatedText = computed(() => {
   const text = eventData.value?.selectedText || ''
@@ -194,6 +194,8 @@ const handleAddToExisting = async () => {
     })
 
     if (snippet) {
+      // Refresh manuscript tree to reflect any changes
+      await manuscriptStore.fetchManuscriptItems(eventData.value.manuscriptId)
       handleClose()
     }
   } finally {

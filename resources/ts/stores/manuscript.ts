@@ -123,6 +123,16 @@ export const useManuscriptStore = defineStore('manuscript', () => {
     }
   })
 
+  // Listen for item creation (e.g., new collection from snippet feature)
+  dataSync.on('item:created', ({ manuscriptId }) => {
+    if (manuscriptId !== selectedManuscriptId.value) return
+
+    // Rebuild the entire tree to include the new item
+    fetchManuscriptItems(manuscriptId).catch(error => {
+      console.error('[ManuscriptStore] Failed to rebuild tree after item creation:', error)
+    })
+  })
+
   // State - Pure Pinia reactivity, no localStorage persistence
   const manuscripts = ref<Manuscript[]>([])
   const currentManuscript = ref<Manuscript | null>(null)
