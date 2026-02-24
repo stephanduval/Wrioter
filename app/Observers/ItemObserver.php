@@ -5,10 +5,25 @@ namespace App\Observers;
 use App\Models\Item;
 use App\Models\MindmapGhost;
 use App\Models\MindmapItemPosition;
+use App\Models\SnippetReference;
 use App\Models\WritingMindmap;
+use App\Services\SnippetService;
 
 class ItemObserver
 {
+    /**
+     * Handle the Item "updated" event.
+     *
+     * Updates snippet references when source content changes.
+     */
+    public function updated(Item $item): void
+    {
+        // When content changes, update all snippets referencing this item
+        if ($item->isDirty('content')) {
+            $this->handleContentUpdate($item);
+        }
+    }
+
     /**
      * Handle the Item "updating" event.
      *
@@ -30,10 +45,14 @@ class ItemObserver
      * Handle the Item "deleting" event.
      *
      * Creates ghost placeholders in mindmaps before the item is deleted.
+     * Marks snippet references as ghosts when source item is deleted.
      * This runs BEFORE cascade deletes remove the position records.
      */
     public function deleting(Item $item): void
     {
+        // Mark all snippet references to this item as ghosts
+        $this->handleSourceDeletion($item);
+
         // Find all mindmap positions for this item
         $positions = MindmapItemPosition::where('item_id', $item->id)->get();
 
@@ -91,6 +110,51 @@ class ItemObserver
 
             // Remove old position
             $position->delete();
+        }
+    }
+
+    /**
+     * Handle source item content update.
+     *
+     * Updates all snippet references that point to this item with auto-update enabled.
+     */
+    protected function handleContentUpdate(Item $item): void
+    {
+        try {
+            $snippetService = app(SnippetService::class);
+            $snippetService->handleSourceUpdate($item);
+        } catch (\Exception $e) {
+            // Log error but don't fail the main update
+            \Log::warning('Failed to update snippet references', [
+                'item_id' => $item->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * Handle source item deletion.
+     *
+     * Marks all snippet references to this item as ghosts.
+     */
+    protected function handleSourceDeletion(Item $item): void
+    {
+        try {
+            // Directly update snippet references to mark as ghosts
+            // We do this directly instead of through service to avoid circular dependencies
+            SnippetReference::where('source_item_id', $item->id)
+                ->where('status', '!=', 'ghost')
+                ->update([
+                    'status' => 'ghost',
+                    'became_ghost_at' => now(),
+                    'current_text' => \DB::raw('reference_text'),
+                ]);
+        } catch (\Exception $e) {
+            // Log error but don't fail the main delete
+            \Log::warning('Failed to mark snippet references as ghosts', [
+                'item_id' => $item->id,
+                'error' => $e->getMessage(),
+            ]);
         }
     }
 }

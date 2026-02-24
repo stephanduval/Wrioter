@@ -17,7 +17,7 @@
       :style="{ paddingLeft: `${level * 20}px` }"
       :data-node-id="node.id"
       :data-item-id="node.itemId"
-      draggable="true"
+      :draggable="node.type !== 'snippet_reference'"
       @contextmenu="handleContextMenu"
       @touchstart="handleTouchStart"
       @touchend="handleTouchEnd"
@@ -479,6 +479,8 @@ const getIconColor = (): string => {
     character: "red",
     location: "purple",
     item: "orange",
+    snippet_collection: "deep-purple",
+    snippet_reference: "deep-purple-lighten-2",
     default: "gray",
   };
   return colorMap[type] || colorMap.default;

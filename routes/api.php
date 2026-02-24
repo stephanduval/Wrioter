@@ -16,6 +16,8 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\ScrivenerImportController;
 use App\Http\Controllers\ItemController;
 use App\Http\Controllers\Api\FolderMindmapController;
+use App\Http\Controllers\SnippetCollectionController;
+use App\Http\Controllers\SnippetReferenceController;
 use Illuminate\Support\Facades\Mail;
 
 /*
@@ -284,4 +286,24 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/preferences/folder-views/{folderId}', [App\Http\Controllers\UserPreferencesController::class, 'getFolderViewPreferences']);
     Route::post('/preferences/folder-views/{folderId}', [App\Http\Controllers\UserPreferencesController::class, 'saveFolderViewPreferences']);
     Route::delete('/preferences/folder-views/{folderId}', [App\Http\Controllers\UserPreferencesController::class, 'deleteFolderViewPreferences']);
+});
+
+// Snippet Collection Routes
+Route::middleware('auth:sanctum')->group(function () {
+    // Snippet collections (as Items with type='snippet_collection')
+    Route::get('/manuscripts/{manuscriptId}/snippet-collections', [SnippetCollectionController::class, 'index']);
+    Route::post('/manuscripts/{manuscriptId}/snippet-collections', [SnippetCollectionController::class, 'store']);
+    Route::get('/snippet-collections/{id}', [SnippetCollectionController::class, 'show']);
+    Route::put('/snippet-collections/{id}', [SnippetCollectionController::class, 'update']);
+    Route::delete('/snippet-collections/{id}', [SnippetCollectionController::class, 'destroy']);
+    Route::post('/snippet-collections/{id}/verify-all', [SnippetCollectionController::class, 'verifyAll']);
+    Route::post('/snippet-collections/{id}/clear-ghosts', [SnippetCollectionController::class, 'clearGhosts']);
+
+    // Snippet references within collections
+    Route::get('/snippet-collections/{collectionId}/snippets', [SnippetReferenceController::class, 'index']);
+    Route::post('/snippet-collections/{collectionId}/snippets', [SnippetReferenceController::class, 'store']);
+    Route::post('/snippet-collections/{collectionId}/snippets/reorder', [SnippetReferenceController::class, 'reorder']);
+    Route::put('/snippets/{id}', [SnippetReferenceController::class, 'update']);
+    Route::delete('/snippets/{id}', [SnippetReferenceController::class, 'destroy']);
+    Route::post('/snippets/{id}/verify', [SnippetReferenceController::class, 'verify']);
 });

@@ -306,6 +306,31 @@ const handleNodeClick = (nodeId: string) => {
             `/manuscripts/${manuscriptStore.selectedManuscriptId}/items/${node.itemId}/edit`,
           );
         }
+      } else if (node.type === "snippet_collection" && manuscriptStore.selectedManuscriptId) {
+        // Navigate to snippet collection view
+        router.push(
+          `/manuscripts/${manuscriptStore.selectedManuscriptId}/snippet-collections/${node.itemId}/view`,
+        );
+      } else if (node.type === "snippet_reference" && manuscriptStore.selectedManuscriptId) {
+        // Navigate to the source item
+        const sourceItemId = node.metadata?.sourceItemId;
+        if (sourceItemId) {
+          const sourceNodeId = `item-${sourceItemId}`;
+          const sourceParent = manuscriptStore.findParentOfNode(sourceNodeId);
+          if (sourceParent && sourceParent.type === "folder") {
+            router.push({
+              path: `/manuscripts/${manuscriptStore.selectedManuscriptId}/folders/${sourceParent.itemId}`,
+              query: {
+                view: "item",
+                itemId: String(sourceItemId),
+              },
+            });
+          } else {
+            router.push(
+              `/manuscripts/${manuscriptStore.selectedManuscriptId}/items/${sourceItemId}/edit`,
+            );
+          }
+        }
       } else if (node.path) {
         // For other types, use the existing path if available
         router.push(node.path);

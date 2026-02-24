@@ -1,5 +1,5 @@
 <template>
-  <div class="item-editor">
+  <div class="item-editor" :data-item-id="props.itemId" :data-manuscript-id="props.manuscriptId">
     <!-- Header with title and save status -->
     <div class="editor-header">
       <EditableTitle
@@ -129,7 +129,8 @@ import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { itemsApi, type Item, type ItemUpdatePayload } from '@/api/items'
 import { dataSync } from '@/services/dataSync'
 import { useContextMenu } from '@/composables/useContextMenu'
-import { getEditorMenuItems } from '@/config/contextMenus/editorMenus'
+import { getEditorMenuItems, type EditorMenuContext } from '@/config/contextMenus/editorMenus'
+import { ContextDetectionService } from '@/services/contextDetection'
 import TiptapEditor from '@/@core/components/TiptapEditor.vue'
 import EditableTitle from '@/components/item/EditableTitle.vue'
 
@@ -381,7 +382,15 @@ const handleContextMenu = (event: MouseEvent) => {
   event.stopPropagation()
 
   const selection = window.getSelection()?.toString()
-  const menuItems = getEditorMenuItems(selection)
+
+  // Build editor context with item and manuscript IDs
+  const editorContext: EditorMenuContext = {
+    itemId: props.itemId,
+    manuscriptId: props.manuscriptId,
+    selectionPosition: ContextDetectionService.getSelectionPosition()
+  }
+
+  const menuItems = getEditorMenuItems(selection, editorContext)
 
   if (menuItems.length > 0) {
     contextMenu.show(event, {

@@ -14,13 +14,22 @@ interface Manuscript {
   items?: Item[]
 }
 
+interface SnippetRefData {
+  id: number
+  source_item_id: number | null
+  source_item_title: string | null
+  reference_text: string
+  status: 'active' | 'ghost'
+  order_index: number
+}
+
 interface Item {
   id: number
   manuscript_id?: number
   parent_id: number | null
   title: string
   content?: string
-  type: 'folder' | 'text' | 'research' | 'character' | 'mindmap' | 'image' | 'file' | 'link'
+  type: 'folder' | 'text' | 'research' | 'character' | 'mindmap' | 'image' | 'file' | 'link' | 'snippet_collection'
   item_order?: number
   order_index?: number // For backward compatibility
   scrivener_uuid?: string
@@ -31,6 +40,7 @@ interface Item {
   metadata?: any
   include_in_compile?: boolean
   updated_at: string
+  snippet_references?: SnippetRefData[]
 }
 
 interface TreeNode {
@@ -54,6 +64,8 @@ interface NodeMetadata {
   hasComments: boolean
   isCompilable: boolean
   synopsis?: string
+  sourceItemId?: number
+  snippetStatus?: 'active' | 'ghost'
 }
 
 interface NodeState {
@@ -63,7 +75,7 @@ interface NodeState {
   isDragging: boolean
 }
 
-type NodeType = 'folder' | 'text' | 'research' | 'character' | 'mindmap' | 'image' | 'file' | 'link'
+type NodeType = 'folder' | 'text' | 'research' | 'character' | 'mindmap' | 'image' | 'file' | 'link' | 'snippet_collection' | 'snippet_reference'
 
 export const useManuscriptStore = defineStore('manuscript', () => {
   const { api } = useApi()
@@ -155,7 +167,9 @@ export const useManuscriptStore = defineStore('manuscript', () => {
       mindmap: 'bx-network-chart',
       image: 'bx-image',
       file: 'bx-file',
-      link: 'bx-link'
+      link: 'bx-link',
+      snippet_collection: 'bx-collection',
+      snippet_reference: 'bx-text'
     }
     return iconMap[type] || 'bx-file'
   }
@@ -218,11 +232,77 @@ export const useManuscriptStore = defineStore('manuscript', () => {
       }
     })
 
-    // Phase 3: Sort by order
+    // Phase 2.5: Add virtual snippet reference children to snippet_collection nodes
+    // Build a lookup of item positions for sorting snippets by manuscript order
+    const itemOrderMap = new Map<number, { parentOrder: number; itemOrder: number }>()
+    items.forEach(item => {
+      const parentItem = item.parent_id ? items.find(i => i.id === item.parent_id) : null
+      itemOrderMap.set(item.id, {
+        parentOrder: parentItem ? (parentItem.item_order || parentItem.order_index || 0) : 0,
+        itemOrder: item.item_order || item.order_index || 0
+      })
+    })
+
+    items.forEach(item => {
+      if (item.type === 'snippet_collection' && item.snippet_references?.length) {
+        const collectionNode = nodeMap.get(item.id)!
+
+        // Sort snippets by source item's manuscript position
+        const sortedRefs = [...item.snippet_references].sort((a, b) => {
+          const aPos = a.source_item_id ? itemOrderMap.get(a.source_item_id) : null
+          const bPos = b.source_item_id ? itemOrderMap.get(b.source_item_id) : null
+          if (!aPos && !bPos) return a.order_index - b.order_index
+          if (!aPos) return 1
+          if (!bPos) return -1
+          // Sort by parent folder order first, then item order
+          if (aPos.parentOrder !== bPos.parentOrder) return aPos.parentOrder - bPos.parentOrder
+          return aPos.itemOrder - bPos.itemOrder
+        })
+
+        sortedRefs.forEach(ref => {
+          const truncatedText = ref.reference_text.length > 40
+            ? ref.reference_text.substring(0, 40) + '...'
+            : ref.reference_text
+          const snippetNode: TreeNode = {
+            id: `snippet-${ref.id}`,
+            itemId: ref.id,
+            title: truncatedText,
+            type: 'snippet_reference' as NodeType,
+            icon: getIconForItemType('snippet_reference'),
+            path: '',
+            children: [],
+            parent: collectionNode,
+            metadata: {
+              wordCount: 0,
+              characterCount: 0,
+              status: 'draft',
+              lastModified: '',
+              hasComments: false,
+              isCompilable: false,
+              sourceItemId: ref.source_item_id ?? undefined,
+              snippetStatus: ref.status
+            },
+            state: {
+              isExpanded: false,
+              isSelected: false,
+              isLoading: false,
+              isDragging: false
+            }
+          }
+          collectionNode.children.push(snippetNode)
+          flatItemsIndex.value.set(snippetNode.id, snippetNode)
+        })
+      }
+    })
+
+    // Phase 3: Sort by order (skip virtual snippet_reference nodes - already sorted)
     const sortNodes = (nodes: TreeNode[]) => {
       nodes.sort((a, b) => {
-        const aItem = items.find(item => item.id === a.itemId)!
-        const bItem = items.find(item => item.id === b.itemId)!
+        // Virtual snippet nodes keep their insertion order
+        if (a.type === 'snippet_reference' || b.type === 'snippet_reference') return 0
+        const aItem = items.find(item => item.id === a.itemId)
+        const bItem = items.find(item => item.id === b.itemId)
+        if (!aItem || !bItem) return 0
         const aOrder = aItem.item_order || aItem.order_index || 0
         const bOrder = bItem.item_order || bItem.order_index || 0
         return aOrder - bOrder

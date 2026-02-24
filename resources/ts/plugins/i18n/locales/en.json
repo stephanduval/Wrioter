@@ -631,7 +631,8 @@
       "selectAll": "Select All",
       "bold": "Bold",
       "italic": "Italic",
-      "underline": "Underline"
+      "underline": "Underline",
+      "addToCollection": "Add to Collection"
     },
     "default": {
       "reload": "Reload",
