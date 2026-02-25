@@ -5,10 +5,11 @@
       v-model:nodes="modelNodes"
       v-model:edges="modelEdges"
       :node-types="nodeTypes"
-      :edge-types="edgeTypes"
       :default-viewport="{ x: 0, y: 0, zoom: 1 }"
       :min-zoom="0.1"
       :max-zoom="4"
+      :connect-on-click="false"
+      :edges-updatable="true"
       @nodes-change="onNodesChange"
       @edges-change="onEdgesChange"
       @node-click="onNodeClick"
@@ -30,50 +31,50 @@
       <!-- Custom Node Types -->
       <template #node-default="{ data, id }">
         <div class="vue-flow__node-default">
-          <Handle type="target" position="top" />
+          <Handle type="target" position="top" :connectable="true" />
           <div class="node-content">
             <div class="node-label">{{ data.label }}</div>
             <div v-if="data.content" class="node-description">
               {{ data.content }}
             </div>
           </div>
-          <Handle type="source" position="bottom" />
+          <Handle type="source" position="bottom" :connectable="true" />
         </div>
       </template>
 
       <template #node-text="{ data }">
         <div class="vue-flow__node-text">
-          <Handle type="target" position="top" />
+          <Handle type="target" position="top" :connectable="true" />
           <VIcon class="node-icon">bx-file-blank</VIcon>
           <div class="node-label">{{ data.label }}</div>
-          <Handle type="source" position="bottom" />
+          <Handle type="source" position="bottom" :connectable="true" />
         </div>
       </template>
 
       <template #node-folder="{ data }">
         <div class="vue-flow__node-folder">
-          <Handle type="target" position="top" />
+          <Handle type="target" position="top" :connectable="true" />
           <VIcon class="node-icon" color="primary">bx-folder</VIcon>
           <div class="node-label">{{ data.label }}</div>
-          <Handle type="source" position="bottom" />
+          <Handle type="source" position="bottom" :connectable="true" />
         </div>
       </template>
 
       <template #node-character="{ data }">
         <div class="vue-flow__node-character">
-          <Handle type="target" position="top" />
+          <Handle type="target" position="top" :connectable="true" />
           <VIcon class="node-icon" color="info">bx-user</VIcon>
           <div class="node-label">{{ data.label }}</div>
-          <Handle type="source" position="bottom" />
+          <Handle type="source" position="bottom" :connectable="true" />
         </div>
       </template>
 
       <template #node-research="{ data }">
         <div class="vue-flow__node-research">
-          <Handle type="target" position="top" />
+          <Handle type="target" position="top" :connectable="true" />
           <VIcon class="node-icon" color="warning">bx-bulb</VIcon>
           <div class="node-label">{{ data.label }}</div>
-          <Handle type="source" position="bottom" />
+          <Handle type="source" position="bottom" :connectable="true" />
         </div>
       </template>
 
@@ -95,6 +96,15 @@ const props = defineProps<{
   nodes: any[]
   edges: any[]
 }>()
+
+// Watch for edge changes
+watch(() => props.edges, (newEdges, oldEdges) => {
+  console.log('[MindMapCanvas] edges prop changed:', {
+    oldCount: oldEdges?.length,
+    newCount: newEdges?.length,
+    newEdges: newEdges
+  })
+}, { deep: true })
 
 const emit = defineEmits<{
   'nodes-change': [nodes: any[]]
@@ -119,7 +129,10 @@ const modelNodes = computed({
 })
 
 const modelEdges = computed({
-  get: () => props.edges,
+  get: () => {
+    console.log('[MindMapCanvas] modelEdges getter called, edges count:', props.edges?.length)
+    return props.edges
+  },
   set: (value) => emit('update:edges', value),
 })
 
@@ -134,6 +147,9 @@ const nodeTypes = {
 
 const edgeTypes = {
   default: 'default',
+  hierarchy: 'default', // Use default rendering for hierarchy edges
+  'one-way': 'default',
+  'two-way': 'default',
 }
 
 // Event handlers
@@ -154,6 +170,7 @@ const onEdgeClick = (event: MouseEvent, edge: any) => {
 }
 
 const onConnect = (params: any) => {
+  console.log('MindMapCanvas onConnect triggered:', params)
   emit('connect', params)
 }
 
@@ -308,6 +325,29 @@ defineExpose({
 .vue-flow__edge.selected .vue-flow__edge-path {
   stroke: rgb(var(--v-theme-primary));
   stroke-width: 3;
+}
+
+/* Hierarchy Edge - solid gray, non-editable */
+.vue-flow__edge[data-type="hierarchy"] .vue-flow__edge-path {
+  stroke: #999;
+  stroke-width: 2;
+  stroke-dasharray: 0;
+}
+
+.vue-flow__edge[data-type="hierarchy"]:hover .vue-flow__edge-path {
+  stroke: #666;
+  stroke-width: 2;
+}
+
+.vue-flow__edge[data-type="hierarchy"].selected .vue-flow__edge-path {
+  stroke: #666;
+  stroke-width: 2;
+}
+
+/* Custom edges - dashed blue, user-created */
+.vue-flow__edge[data-editable="true"] .vue-flow__edge-path {
+  stroke: #3b82f6;
+  stroke-dasharray: 5, 5;
 }
 
 /* Controls */

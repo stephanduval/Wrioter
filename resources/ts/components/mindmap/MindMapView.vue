@@ -82,6 +82,7 @@
         @node-click="handleNodeClick"
         @nodes-change="handleNodesChange"
         @edges-change="handleEdgesChange"
+        @connect="handleConnectNode"
       />
 
       <!-- Empty State -->
@@ -314,13 +315,102 @@ function handleNodesChange(changes: any[]) {
 }
 
 function handleEdgesChange(changes: any[]) {
-  // Handle edge changes
-  console.log('Edges changed:', changes)
+  // Handle edge changes, but prevent deletion of hierarchy edges
+  const filteredChanges = changes.filter(change => {
+    if (change.type === 'remove') {
+      // Find the edge being removed
+      const edge = mindmapEdges.value.find(e => e.id === change.id)
+
+      // Prevent deletion of hierarchy edges
+      if (edge?.data?.is_hierarchy === true || edge?.type === 'hierarchy') {
+        console.log('Cannot delete hierarchy edge:', edge)
+        emit('update:error', 'Hierarchy edges cannot be deleted')
+        return false
+      }
+
+      // Allow deletion of custom edges
+      if (edge?.data?.dbId) {
+        // Delete from backend
+        mindmapStore.deleteConnection(change.id).catch(err => {
+          console.error('Failed to delete connection:', err)
+          emit('update:error', 'Failed to delete connection')
+        })
+      }
+    }
+    return true
+  })
+
+  console.log('Edges changed:', filteredChanges)
 }
 
-function handleConnectNode() {
-  // Implement node connection logic
-  console.log('Connect node:', selectedNodeId.value)
+async function handleConnectNode(params: any) {
+  // Handle drag-and-drop connection creation from Vue Flow
+  console.log('MindMapView handleConnectNode called with params:', params)
+  try {
+    // Extract item IDs from node IDs (format: "item-{id}")
+    const sourceId = params.source?.replace('item-', '')
+    const targetId = params.target?.replace('item-', '')
+
+    console.log('Extracted IDs:', { sourceId, targetId })
+
+    const fromItemId = parseInt(sourceId, 10)
+    const toItemId = parseInt(targetId, 10)
+
+    console.log('Parsed IDs:', { fromItemId, toItemId, fromIsNaN: isNaN(fromItemId), toIsNaN: isNaN(toItemId) })
+
+    // Validate IDs
+    if (!fromItemId || !toItemId || isNaN(fromItemId) || isNaN(toItemId)) {
+      console.error('Invalid connection - ID validation failed:', params)
+      emit('update:error', 'Invalid connection - could not parse node IDs')
+      return
+    }
+
+    // Prevent self-connections
+    if (fromItemId === toItemId) {
+      console.error('Invalid connection - self connection')
+      emit('update:error', 'Cannot connect a node to itself')
+      return
+    }
+
+    // Check if connection already exists
+    console.log('Checking for existing connection, current edges:', mindmapEdges.value)
+    const existingConnection = mindmapEdges.value.find(
+      edge =>
+        (edge.source === params.source && edge.target === params.target) ||
+        (edge.source === params.target && edge.target === params.source && edge.type === 'two-way')
+    )
+
+    if (existingConnection) {
+      console.error('Connection already exists:', existingConnection)
+      emit('update:error', 'Connection already exists between these nodes')
+      return
+    }
+
+    console.log('All validations passed!')
+
+    // Determine connection type based on modifier keys
+    // Default: one-way, Shift key: two-way
+    const connectionType = params.shiftKey ? 'two-way' : 'one-way'
+
+    console.log('Creating connection:', {
+      from: fromItemId,
+      to: toItemId,
+      type: connectionType
+    })
+
+    // Create connection via store
+    await mindmapStore.createConnection({
+      from_item_id: fromItemId,
+      to_item_id: toItemId,
+      connection_type: connectionType,
+    })
+
+    console.log('Connection created successfully')
+
+  } catch (error: any) {
+    console.error('Failed to create connection:', error)
+    emit('update:error', error.message || 'Failed to create connection')
+  }
 }
 
 function closeNodeDialog() {

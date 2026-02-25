@@ -507,21 +507,30 @@ export const useMindmapStore = defineStore('mindmap', () => {
     if (!currentMindmap.value) throw new Error('No mindmap loaded')
 
     try {
+      console.log('[mindmap store] Creating connection:', connection)
       const response = await axios.post(`/mindmaps/${currentMindmap.value.id}/connections`, connection)
+      console.log('[mindmap store] Connection created, response:', response.data)
 
       const newEdge: Edge = {
         id: `edge-${response.data.id}`,
         source: `item-${connection.from_item_id}`,
         target: `item-${connection.to_item_id}`,
-        type: connection.connection_type === 'two-way' ? 'bidirectional' : 'default',
+        type: 'default', // Use Vue Flow's default edge type
+        style: { stroke: '#3b82f6', strokeDasharray: '5,5' }, // Dashed blue for custom edges
         data: {
           label: connection.label,
           relationship_type: connection.relationship_type,
           dbId: response.data.id,
+          is_hierarchy: false,
+          editable: true,
+          connection_type: connection.connection_type, // Store the actual type in data
         },
       }
 
-      edges.value.push(newEdge)
+      // Create a new array to trigger reactivity (don't mutate with push)
+      edges.value = [...edges.value, newEdge]
+      console.log('[mindmap store] Edge added to edges array. Total edges:', edges.value.length)
+      console.log('[mindmap store] New edge:', newEdge)
       hasUnsavedChanges.value = false
       return newEdge
     } catch (err: any) {
@@ -690,15 +699,29 @@ export const useMindmapStore = defineStore('mindmap', () => {
         // Combine hierarchy edges (from folder structure) and custom edges (user-created)
         const hierarchyEdges = (backendEdges?.hierarchy || []).map((e: any) => ({
           ...e,
+          type: 'default', // Use Vue Flow's default edge type
           style: { stroke: '#999', strokeDasharray: '0' }, // Solid gray for hierarchy
+          data: {
+            ...(e.data || {}),
+            is_hierarchy: true,
+            editable: false,
+          },
         }))
 
         const customEdges = (backendEdges?.custom || []).map((e: any) => ({
           ...e,
+          type: 'default', // Use Vue Flow's default edge type
           style: { stroke: '#3b82f6', strokeDasharray: '5,5' }, // Dashed blue for custom
+          data: {
+            ...(e.data || {}),
+            is_hierarchy: false,
+            editable: true,
+            connection_type: e.type, // Store original connection type (one-way/two-way) in data
+          },
         }))
 
         edges.value = [...hierarchyEdges, ...customEdges]
+        console.log('[mindmap store] Edges loaded:', edges.value)
 
         hasUnsavedChanges.value = false
       }
