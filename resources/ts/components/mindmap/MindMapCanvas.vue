@@ -15,6 +15,7 @@
       @node-click="onNodeClick"
       @edge-click="onEdgeClick"
       @connect="onConnect"
+      @node-double-click="onNodeDoubleClick"
       @node-context-menu="onNodeContextMenu"
       @pane-context-menu="onPaneContextMenu"
       @node-drag-stop="onNodeDragStop"
@@ -33,7 +34,17 @@
         <div class="vue-flow__node-default">
           <Handle type="target" position="top" :connectable="true" />
           <div class="node-content">
-            <div class="node-label">{{ data.label }}</div>
+            <input
+              v-if="editingNodeId === id"
+              class="node-label-input"
+              :value="data.label"
+              @blur="finishEditing(id, ($event.target as HTMLInputElement).value)"
+              @keydown.enter="($event.target as HTMLInputElement).blur()"
+              @keydown.escape="cancelEditing"
+              @click.stop
+              @mousedown.stop
+            />
+            <div v-else class="node-label" @click.stop="startEditing(id)">{{ data.label }}</div>
             <div v-if="data.content" class="node-description">
               {{ data.content }}
             </div>
@@ -42,38 +53,78 @@
         </div>
       </template>
 
-      <template #node-text="{ data }">
+      <template #node-text="{ data, id }">
         <div class="vue-flow__node-text">
           <Handle type="target" position="top" :connectable="true" />
           <VIcon class="node-icon">bx-file-blank</VIcon>
-          <div class="node-label">{{ data.label }}</div>
+          <input
+            v-if="editingNodeId === id"
+            class="node-label-input"
+            :value="data.label"
+            @blur="finishEditing(id, ($event.target as HTMLInputElement).value)"
+            @keydown.enter="($event.target as HTMLInputElement).blur()"
+            @keydown.escape="cancelEditing"
+            @click.stop
+            @mousedown.stop
+          />
+          <div v-else class="node-label" @click.stop="startEditing(id)">{{ data.label }}</div>
           <Handle type="source" position="bottom" :connectable="true" />
         </div>
       </template>
 
-      <template #node-folder="{ data }">
+      <template #node-folder="{ data, id }">
         <div class="vue-flow__node-folder">
           <Handle type="target" position="top" :connectable="true" />
           <VIcon class="node-icon" color="primary">bx-folder</VIcon>
-          <div class="node-label">{{ data.label }}</div>
+          <input
+            v-if="editingNodeId === id"
+            class="node-label-input"
+            :value="data.label"
+            @blur="finishEditing(id, ($event.target as HTMLInputElement).value)"
+            @keydown.enter="($event.target as HTMLInputElement).blur()"
+            @keydown.escape="cancelEditing"
+            @click.stop
+            @mousedown.stop
+          />
+          <div v-else class="node-label" @click.stop="startEditing(id)">{{ data.label }}</div>
           <Handle type="source" position="bottom" :connectable="true" />
         </div>
       </template>
 
-      <template #node-character="{ data }">
+      <template #node-character="{ data, id }">
         <div class="vue-flow__node-character">
           <Handle type="target" position="top" :connectable="true" />
           <VIcon class="node-icon" color="info">bx-user</VIcon>
-          <div class="node-label">{{ data.label }}</div>
+          <input
+            v-if="editingNodeId === id"
+            class="node-label-input"
+            :value="data.label"
+            @blur="finishEditing(id, ($event.target as HTMLInputElement).value)"
+            @keydown.enter="($event.target as HTMLInputElement).blur()"
+            @keydown.escape="cancelEditing"
+            @click.stop
+            @mousedown.stop
+          />
+          <div v-else class="node-label" @click.stop="startEditing(id)">{{ data.label }}</div>
           <Handle type="source" position="bottom" :connectable="true" />
         </div>
       </template>
 
-      <template #node-research="{ data }">
+      <template #node-research="{ data, id }">
         <div class="vue-flow__node-research">
           <Handle type="target" position="top" :connectable="true" />
           <VIcon class="node-icon" color="warning">bx-bulb</VIcon>
-          <div class="node-label">{{ data.label }}</div>
+          <input
+            v-if="editingNodeId === id"
+            class="node-label-input"
+            :value="data.label"
+            @blur="finishEditing(id, ($event.target as HTMLInputElement).value)"
+            @keydown.enter="($event.target as HTMLInputElement).blur()"
+            @keydown.escape="cancelEditing"
+            @click.stop
+            @mousedown.stop
+          />
+          <div v-else class="node-label" @click.stop="startEditing(id)">{{ data.label }}</div>
           <Handle type="source" position="bottom" :connectable="true" />
         </div>
       </template>
@@ -83,7 +134,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
 import { VueFlow, Handle, useVueFlow } from '@vue-flow/core'
 import { Background } from '@vue-flow/background'
 import { Controls } from '@vue-flow/controls'
@@ -110,12 +161,14 @@ const emit = defineEmits<{
   'nodes-change': [nodes: any[]]
   'edges-change': [edges: any[]]
   'node-click': [event: MouseEvent, node: any]
+  'node-double-click': [event: MouseEvent, node: any]
   'edge-click': [event: MouseEvent, edge: any]
   'connect': [params: any]
   'node-context-menu': [event: MouseEvent, node: any]
   'pane-context-menu': [event: MouseEvent]
   'update:nodes': [nodes: any[]]
   'update:edges': [edges: any[]]
+  'title-updated': [nodeId: string, newTitle: string]
 }>()
 
 // Refs
@@ -152,6 +205,34 @@ const edgeTypes = {
   'two-way': 'default',
 }
 
+// Inline title editing state
+const editingNodeId = ref<string | null>(null)
+
+const startEditing = (nodeId: string) => {
+  editingNodeId.value = nodeId
+  nextTick(() => {
+    // Focus the input after it renders
+    const input = document.querySelector('.node-label-input') as HTMLInputElement
+    if (input) {
+      input.focus()
+      input.select()
+    }
+  })
+}
+
+const finishEditing = (nodeId: string, newTitle: string) => {
+  if (editingNodeId.value !== nodeId) return
+  editingNodeId.value = null
+  const trimmed = newTitle.trim()
+  if (trimmed) {
+    emit('title-updated', nodeId, trimmed)
+  }
+}
+
+const cancelEditing = () => {
+  editingNodeId.value = null
+}
+
 // Event handlers
 const onNodesChange = (changes: any[]) => {
   emit('nodes-change', changes)
@@ -161,8 +242,12 @@ const onEdgesChange = (changes: any[]) => {
   emit('edges-change', changes)
 }
 
-const onNodeClick = (event: MouseEvent, node: any) => {
-  emit('node-click', event, node)
+const onNodeClick = (nodeMouseEvent: { event: MouseEvent; node: any }) => {
+  emit('node-click', nodeMouseEvent.event, nodeMouseEvent.node)
+}
+
+const onNodeDoubleClick = (nodeMouseEvent: { event: MouseEvent; node: any }) => {
+  emit('node-double-click', nodeMouseEvent.event, nodeMouseEvent.node)
 }
 
 const onEdgeClick = (event: MouseEvent, edge: any) => {
@@ -193,6 +278,8 @@ defineExpose({
   zoomIn,
   zoomOut,
   project,
+  startEditing,
+  editingNodeId,
 })
 </script>
 
@@ -281,6 +368,21 @@ defineExpose({
   font-weight: 600;
   font-size: 14px;
   color: #333;
+  cursor: text;
+}
+
+.node-label-input {
+  box-sizing: border-box;
+  border: 1px solid rgb(var(--v-theme-primary));
+  border-radius: 4px;
+  background: white;
+  color: #333;
+  font-size: 14px;
+  font-weight: 600;
+  inline-size: 100%;
+  outline: none;
+  padding-block: 2px;
+  padding-inline: 4px;
 }
 
 .node-description {

@@ -80,6 +80,8 @@
         :nodes="mindmapNodes"
         :edges="mindmapEdges"
         @node-click="handleNodeClick"
+        @node-double-click="handleNodeDoubleClick"
+        @title-updated="handleTitleUpdated"
         @nodes-change="handleNodesChange"
         @edges-change="handleEdgesChange"
         @connect="handleConnectNode"
@@ -159,8 +161,11 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useMindmapStore } from '@/stores/mindmap'
 import { useManuscriptStore } from '@/stores/manuscript'
+import { useFolderViewStore } from '@/stores/folderView'
+import { usePaneStore } from '@/stores/pane'
 import { useContextMenu } from '@/composables/useContextMenu'
 import { getEmptySpaceMenuItems } from '@/config/contextMenus'
 import MindMapCanvas from './MindMapCanvas.vue'
@@ -183,7 +188,9 @@ const emit = defineEmits<{
 // Store
 const mindmapStore = useMindmapStore()
 const manuscriptStore = useManuscriptStore()
+const folderViewStore = useFolderViewStore()
 const contextMenu = useContextMenu()
+const router = useRouter()
 
 // Computed: Get manuscript ID from folder or store
 const manuscriptId = computed(() =>
@@ -304,9 +311,50 @@ function handleAddNode() {
   nodeEditDialog.value = true
 }
 
-function handleNodeClick(event: MouseEvent, node: any) {
+function handleNodeClick(_event: MouseEvent, node: any) {
+  if (!node) return
   selectedNodeId.value = node.id
   mindmapStore.selectNode(node.id)
+}
+
+function handleNodeDoubleClick(_event: MouseEvent, node: any) {
+  if (!node) return
+  const itemId = node.data?.itemId
+  if (!itemId) {
+    console.error('Node has no itemId:', node)
+    return
+  }
+
+  const paneStore = usePaneStore()
+
+  // Check if we're in split view mode
+  if (folderViewStore.splitEnabled && paneStore.activePaneId) {
+    // Split view: Open item in edit mode in the active pane
+    paneStore.setEditingItem(paneStore.activePaneId, itemId)
+  } else {
+    // Single view: Navigate to folder with item view selected
+    router.push({
+      path: `/manuscripts/${manuscriptId.value}/folders/${props.folderId}`,
+      query: {
+        view: 'item',
+        itemId: String(itemId)
+      }
+    })
+  }
+}
+
+function handleTitleUpdated(nodeId: string, newTitle: string) {
+  // Find the node and update its title via the store
+  const node = mindmapNodes.value.find(n => n.id === nodeId)
+  if (!node) return
+
+  mindmapStore.updateNode({
+    ...node,
+    data: {
+      ...node.data,
+      label: newTitle
+    }
+  })
 }
 
 function handleNodesChange(changes: any[]) {
