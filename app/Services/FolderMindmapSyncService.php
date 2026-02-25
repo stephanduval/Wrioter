@@ -175,20 +175,22 @@ class FolderMindmapSyncService
      *
      * These are NOT stored - computed on the fly from folder structure.
      * Returns edge data suitable for frontend rendering.
+     *
+     * This recursively fetches all items under the folder (at any depth level)
+     * and creates hierarchy edges for item-to-item parent-child relationships.
+     * Folder-to-item relationships are NOT shown (only item-to-item nesting).
      */
     public function computeHierarchyEdges(WritingMindmap $mindmap): array
     {
         if (!$mindmap->folder_id) return [];
 
-        $items = Item::where('parent_id', $mindmap->folder_id)
-            ->where('user_id', $mindmap->user_id)
-            ->get();
-
+        // Get all items under this folder at any depth level
+        $items = $this->getAllFolderItems($mindmap->folder_id, $mindmap->user_id);
         $itemIds = $items->pluck('id')->toArray();
 
         $edges = [];
         foreach ($items as $item) {
-            // Only create edge if parent is also in this folder
+            // Only create edge if parent is another item in this folder
             if ($item->parent_id && in_array($item->parent_id, $itemIds)) {
                 $edges[] = [
                     'id' => 'hierarchy_' . $item->parent_id . '_' . $item->id,
@@ -204,5 +206,48 @@ class FolderMindmapSyncService
         }
 
         return $edges;
+    }
+
+    /**
+     * Recursively get all items under a folder at any depth level.
+     *
+     * This traverses the item tree to find all descendants of the folder,
+     * allowing hierarchy edges to be drawn for nested items.
+     */
+    protected function getAllFolderItems(int $folderId, int $userId)
+    {
+        // Start with direct children of the folder
+        $directChildren = Item::where('parent_id', $folderId)
+            ->where('user_id', $userId)
+            ->get();
+
+        $allItems = $directChildren->collect();
+
+        // Recursively fetch all descendants
+        foreach ($directChildren as $item) {
+            $descendants = $this->getAllDescendants($item->id, $userId);
+            $allItems = $allItems->merge($descendants);
+        }
+
+        return $allItems;
+    }
+
+    /**
+     * Recursively get all descendants of an item.
+     */
+    protected function getAllDescendants(int $itemId, int $userId)
+    {
+        $children = Item::where('parent_id', $itemId)
+            ->where('user_id', $userId)
+            ->get();
+
+        $allDescendants = $children->collect();
+
+        foreach ($children as $child) {
+            $descendants = $this->getAllDescendants($child->id, $userId);
+            $allDescendants = $allDescendants->merge($descendants);
+        }
+
+        return $allDescendants;
     }
 }
