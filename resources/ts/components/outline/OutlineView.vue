@@ -158,6 +158,7 @@
               @select="handleRowSelect"
               @edit="handleCellEdit"
               @click="handleRowClick"
+              @open-page="handleOpenPage"
               @drag-start="handleDragStart"
               @drag-end="handleDragEnd"
               @drag-over="handleDragOver"
@@ -233,8 +234,10 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
+import { useRouter } from 'vue-router'
 import { useOutlineStore } from '@/stores/outline'
 import { useFolderViewStore, type FolderItem, type FolderData } from '@/stores/folderView'
+import { usePaneStore } from '@/stores/pane'
 import { useSelectionStore } from '@/stores/selection'
 import { useManuscriptStore } from '@/stores/manuscript'
 import { useContextMenu } from '@/composables/useContextMenu'
@@ -267,8 +270,10 @@ const emit = defineEmits<{
 }>()
 
 // Stores
+const router = useRouter()
 const outlineStore = useOutlineStore()
 const folderViewStore = useFolderViewStore()
+const paneStore = usePaneStore()
 const selectionStore = useSelectionStore()
 const manuscriptStore = useManuscriptStore()
 const contextMenu = useContextMenu()
@@ -402,6 +407,26 @@ function handleRowSelect(itemId: number, selected: boolean) {
 
 function handleRowClick(item: FolderItem) {
   emit('rowClick', item)
+}
+
+function handleOpenPage(itemId: number) {
+  const item = processedItems.value.find(i => i.id === itemId)
+  if (!item) {
+    console.error('Item not found:', itemId)
+    return
+  }
+
+  if (folderViewStore.splitEnabled && paneStore.activePaneId) {
+    paneStore.setEditingItem(paneStore.activePaneId, item.id)
+  } else {
+    router.push({
+      path: `/manuscripts/${manuscriptId.value}/folders/${props.folderId}`,
+      query: {
+        view: 'item',
+        itemId: String(item.id)
+      }
+    })
+  }
 }
 
 function handleCellEdit(itemId: number, columnId: string, value: any) {
