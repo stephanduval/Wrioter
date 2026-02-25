@@ -7,6 +7,7 @@ use App\Models\Manuscript;
 use App\Models\ManuscriptItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class ItemController extends Controller
@@ -1106,6 +1107,391 @@ class ItemController extends Controller
                     "error" => "Failed to convert folder to item",
                     "message" => $e->getMessage(),
                 ],
+                500,
+            );
+        }
+    }
+
+    /**
+     * Ungroup a folder: move its children to the folder's parent, then delete the folder.
+     * This is the inverse of the auto-folder creation when dropping an item onto another.
+     */
+    public function ungroupFolder(string $manuscriptId, string $itemId)
+    {
+        try {
+            $manuscript = Manuscript::where("id", $manuscriptId)
+                ->where("user_id", Auth::id())
+                ->firstOrFail();
+
+            $folder = Item::where("id", $itemId)
+                ->where("user_id", Auth::id())
+                ->firstOrFail();
+
+            ManuscriptItem::where("manuscript_id", $manuscriptId)
+                ->where("item_id", $itemId)
+                ->firstOrFail();
+
+            if ($folder->type !== "folder") {
+                return response()->json(
+                    ["error" => "Item is not a folder", "message" => "Only folders can be ungrouped"],
+                    400,
+                );
+            }
+
+            DB::beginTransaction();
+
+            $children = Item::where("parent_id", $folder->id)
+                ->orderBy("item_order", "asc")
+                ->get();
+
+            // Get the folder's current position among its siblings
+            $folderParentId = $folder->parent_id;
+            $folderOrder = $folder->item_order ?? 0;
+
+            // Move each child to the folder's parent, starting at folder's position
+            foreach ($children as $index => $child) {
+                $child->parent_id = $folderParentId;
+                $child->item_order = $folderOrder + $index;
+                $child->save();
+            }
+
+            // Re-order remaining siblings after the inserted children
+            $siblingsAfter = Item::where("parent_id", $folderParentId)
+                ->where("id", "!=", $folder->id)
+                ->whereNotIn("id", $children->pluck("id")->toArray())
+                ->where("item_order", ">=", $folderOrder)
+                ->orderBy("item_order", "asc")
+                ->get();
+
+            $nextOrder = $folderOrder + $children->count();
+            foreach ($siblingsAfter as $sibling) {
+                $sibling->item_order = $nextOrder++;
+                $sibling->save();
+            }
+
+            // Delete the folder's manuscript_item entry and the folder itself
+            ManuscriptItem::where("manuscript_id", $manuscriptId)
+                ->where("item_id", $folder->id)
+                ->delete();
+
+            $folder->delete();
+
+            DB::commit();
+
+            Log::info("Folder {$itemId} ungrouped successfully", [
+                "manuscript_id" => $manuscriptId,
+                "children_moved" => $children->count(),
+            ]);
+
+            return response()->json([
+                "message" => "Folder ungrouped successfully",
+                "data" => [
+                    "children_moved" => $children->count(),
+                    "new_parent_id" => $folderParentId,
+                ],
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error("Failed to ungroup folder", [
+                "manuscript_id" => $manuscriptId,
+                "item_id" => $itemId,
+                "error" => $e->getMessage(),
+            ]);
+
+            return response()->json(
+                ["error" => "Failed to ungroup folder", "message" => $e->getMessage()],
+                500,
+            );
+        }
+    }
+
+    /**
+     * Sort children of a folder alphabetically or by last modified date.
+     */
+    public function sortChildren(Request $request, string $manuscriptId, string $itemId)
+    {
+        try {
+            $manuscript = Manuscript::where("id", $manuscriptId)
+                ->where("user_id", Auth::id())
+                ->firstOrFail();
+
+            $folder = Item::where("id", $itemId)
+                ->where("user_id", Auth::id())
+                ->firstOrFail();
+
+            ManuscriptItem::where("manuscript_id", $manuscriptId)
+                ->where("item_id", $itemId)
+                ->firstOrFail();
+
+            $validated = $request->validate([
+                "sort_by" => "required|in:title,updated_at",
+                "direction" => "sometimes|in:asc,desc",
+            ]);
+
+            $sortBy = $validated["sort_by"];
+            $direction = $validated["direction"] ?? "asc";
+
+            DB::beginTransaction();
+
+            $children = Item::where("parent_id", $folder->id)
+                ->orderBy($sortBy, $direction)
+                ->get();
+
+            foreach ($children as $index => $child) {
+                $child->item_order = $index;
+                $child->save();
+            }
+
+            DB::commit();
+
+            Log::info("Sorted children of folder {$itemId}", [
+                "manuscript_id" => $manuscriptId,
+                "sort_by" => $sortBy,
+                "direction" => $direction,
+                "children_count" => $children->count(),
+            ]);
+
+            return response()->json([
+                "message" => "Children sorted successfully",
+                "data" => [
+                    "sort_by" => $sortBy,
+                    "direction" => $direction,
+                    "children_sorted" => $children->count(),
+                ],
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error("Failed to sort children", [
+                "manuscript_id" => $manuscriptId,
+                "item_id" => $itemId,
+                "error" => $e->getMessage(),
+            ]);
+
+            return response()->json(
+                ["error" => "Failed to sort children", "message" => $e->getMessage()],
+                500,
+            );
+        }
+    }
+
+    /**
+     * Batch update status for multiple items.
+     */
+    public function batchUpdateStatus(Request $request, string $manuscriptId)
+    {
+        try {
+            $manuscript = Manuscript::where("id", $manuscriptId)
+                ->where("user_id", Auth::id())
+                ->firstOrFail();
+
+            $validated = $request->validate([
+                "item_ids" => "required|array|min:1",
+                "item_ids.*" => "integer|exists:items,id",
+                "status" => "required|in:draft,in_progress,completed,archived",
+            ]);
+
+            // Verify all items belong to the manuscript
+            foreach ($validated["item_ids"] as $itemId) {
+                ManuscriptItem::where("manuscript_id", $manuscriptId)
+                    ->where("item_id", $itemId)
+                    ->firstOrFail();
+            }
+
+            DB::beginTransaction();
+
+            $updatedCount = 0;
+            foreach ($validated["item_ids"] as $itemId) {
+                $item = Item::where("id", $itemId)
+                    ->where("user_id", Auth::id())
+                    ->first();
+
+                if ($item) {
+                    $metadata = $item->metadata ?? [];
+                    $metadata["status"] = $validated["status"];
+                    $item->metadata = $metadata;
+                    $item->save();
+                    $updatedCount++;
+                }
+            }
+
+            DB::commit();
+
+            Log::info("Batch status update completed", [
+                "manuscript_id" => $manuscriptId,
+                "items_updated" => $updatedCount,
+                "new_status" => $validated["status"],
+            ]);
+
+            return response()->json([
+                "message" => "Status updated successfully",
+                "data" => [
+                    "items_updated" => $updatedCount,
+                    "status" => $validated["status"],
+                ],
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error("Failed to batch update status", [
+                "manuscript_id" => $manuscriptId,
+                "error" => $e->getMessage(),
+            ]);
+
+            return response()->json(
+                ["error" => "Failed to update status", "message" => $e->getMessage()],
+                500,
+            );
+        }
+    }
+
+    /**
+     * Batch delete multiple items from a manuscript.
+     */
+    public function batchDelete(Request $request, string $manuscriptId)
+    {
+        try {
+            $manuscript = Manuscript::where("id", $manuscriptId)
+                ->where("user_id", Auth::id())
+                ->firstOrFail();
+
+            $validated = $request->validate([
+                "item_ids" => "required|array|min:1",
+                "item_ids.*" => "integer|exists:items,id",
+            ]);
+
+            // Verify all items belong to the manuscript
+            foreach ($validated["item_ids"] as $itemId) {
+                ManuscriptItem::where("manuscript_id", $manuscriptId)
+                    ->where("item_id", $itemId)
+                    ->firstOrFail();
+            }
+
+            DB::beginTransaction();
+
+            $deletedCount = 0;
+            foreach ($validated["item_ids"] as $itemId) {
+                $item = Item::where("id", $itemId)
+                    ->where("user_id", Auth::id())
+                    ->first();
+
+                if ($item) {
+                    // Move children to parent before deleting
+                    $children = Item::where("parent_id", $item->id)->get();
+                    foreach ($children as $child) {
+                        $child->parent_id = $item->parent_id;
+                        $child->save();
+                    }
+
+                    // Delete manuscript-item relationship
+                    ManuscriptItem::where("manuscript_id", $manuscriptId)
+                        ->where("item_id", $item->id)
+                        ->delete();
+
+                    $item->delete();
+                    $deletedCount++;
+                }
+            }
+
+            DB::commit();
+
+            Log::info("Batch delete completed", [
+                "manuscript_id" => $manuscriptId,
+                "items_deleted" => $deletedCount,
+            ]);
+
+            return response()->json([
+                "message" => "Items deleted successfully",
+                "data" => [
+                    "items_deleted" => $deletedCount,
+                ],
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error("Failed to batch delete items", [
+                "manuscript_id" => $manuscriptId,
+                "error" => $e->getMessage(),
+            ]);
+
+            return response()->json(
+                ["error" => "Failed to delete items", "message" => $e->getMessage()],
+                500,
+            );
+        }
+    }
+
+    /**
+     * Batch move items to a target folder.
+     */
+    public function batchMoveToFolder(Request $request, string $manuscriptId)
+    {
+        try {
+            $manuscript = Manuscript::where("id", $manuscriptId)
+                ->where("user_id", Auth::id())
+                ->firstOrFail();
+
+            $validated = $request->validate([
+                "item_ids" => "required|array|min:1",
+                "item_ids.*" => "integer|exists:items,id",
+                "target_folder_id" => "required|integer|exists:items,id",
+            ]);
+
+            // Verify target is a folder
+            $targetFolder = Item::findOrFail($validated["target_folder_id"]);
+            if ($targetFolder->type !== "folder") {
+                return response()->json(
+                    ["error" => "Target is not a folder"],
+                    400,
+                );
+            }
+
+            // Verify all items belong to the manuscript
+            foreach ($validated["item_ids"] as $itemId) {
+                ManuscriptItem::where("manuscript_id", $manuscriptId)
+                    ->where("item_id", $itemId)
+                    ->firstOrFail();
+            }
+
+            DB::beginTransaction();
+
+            $maxOrder = Item::where("parent_id", $targetFolder->id)->max("item_order") ?? -1;
+
+            $movedCount = 0;
+            foreach ($validated["item_ids"] as $itemId) {
+                $item = Item::where("id", $itemId)
+                    ->where("user_id", Auth::id())
+                    ->first();
+
+                if ($item && $item->id !== $targetFolder->id) {
+                    $item->parent_id = $targetFolder->id;
+                    $item->item_order = ++$maxOrder;
+                    $item->save();
+                    $movedCount++;
+                }
+            }
+
+            DB::commit();
+
+            Log::info("Batch move to folder completed", [
+                "manuscript_id" => $manuscriptId,
+                "items_moved" => $movedCount,
+                "target_folder_id" => $targetFolder->id,
+            ]);
+
+            return response()->json([
+                "message" => "Items moved successfully",
+                "data" => [
+                    "items_moved" => $movedCount,
+                    "target_folder_id" => $targetFolder->id,
+                ],
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error("Failed to batch move items", [
+                "manuscript_id" => $manuscriptId,
+                "error" => $e->getMessage(),
+            ]);
+
+            return response()->json(
+                ["error" => "Failed to move items", "message" => $e->getMessage()],
                 500,
             );
         }

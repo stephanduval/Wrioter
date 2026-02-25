@@ -151,6 +151,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('/manuscripts/{manuscriptId}/items/{itemId}/move-up', [ItemController::class, 'moveUp']);
     Route::patch('/manuscripts/{manuscriptId}/items/{itemId}/move-down', [ItemController::class, 'moveDown']);
     Route::patch('/manuscripts/{manuscriptId}/items/{itemId}/convert-to-item', [ItemController::class, 'convertToItem']);
+    Route::post('/manuscripts/{manuscriptId}/items/{itemId}/ungroup', [ItemController::class, 'ungroupFolder']);
+    Route::post('/manuscripts/{manuscriptId}/items/{itemId}/sort-children', [ItemController::class, 'sortChildren']);
+    Route::post('/manuscripts/{manuscriptId}/items/batch-status', [ItemController::class, 'batchUpdateStatus']);
+    Route::post('/manuscripts/{manuscriptId}/items/batch-delete', [ItemController::class, 'batchDelete']);
+    Route::post('/manuscripts/{manuscriptId}/items/batch-move', [ItemController::class, 'batchMoveToFolder']);
 });
 
 // Admin Routes for Raw Files

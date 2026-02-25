@@ -671,6 +671,147 @@ export const useManuscriptStore = defineStore('manuscript', () => {
     }
   }
 
+  // Ungroup a folder: move children to parent, delete the folder
+  async function ungroupFolder(manuscriptId: number, itemId: number) {
+    try {
+      loading.value = true
+      error.value = null
+
+      const response = await api.post(`/manuscripts/${manuscriptId}/items/${itemId}/ungroup`)
+
+      console.log('Folder ungrouped successfully:', response.data)
+
+      // Refresh the tree
+      await fetchManuscriptItems(manuscriptId)
+
+      return response.data
+    } catch (err: any) {
+      error.value = err.response?.data?.message || 'Failed to ungroup folder'
+      console.error('Error ungrouping folder:', err)
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  // Sort children of a folder
+  async function sortChildren(manuscriptId: number, itemId: number, sortBy: 'title' | 'updated_at', direction: 'asc' | 'desc' = 'asc') {
+    try {
+      loading.value = true
+      error.value = null
+
+      const response = await api.post(`/manuscripts/${manuscriptId}/items/${itemId}/sort-children`, {
+        sort_by: sortBy,
+        direction
+      })
+
+      console.log('Children sorted successfully:', response.data)
+
+      // Refresh the tree
+      await fetchManuscriptItems(manuscriptId)
+
+      return response.data
+    } catch (err: any) {
+      error.value = err.response?.data?.message || 'Failed to sort children'
+      console.error('Error sorting children:', err)
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  // Batch update status for multiple items
+  async function batchUpdateStatus(manuscriptId: number, itemIds: number[], status: 'draft' | 'in_progress' | 'completed' | 'archived') {
+    try {
+      loading.value = true
+      error.value = null
+
+      const response = await api.post(`/manuscripts/${manuscriptId}/items/batch-status`, {
+        item_ids: itemIds,
+        status
+      })
+
+      console.log('Batch status update successful:', response.data)
+
+      // Refresh the tree
+      await fetchManuscriptItems(manuscriptId)
+
+      return response.data
+    } catch (err: any) {
+      error.value = err.response?.data?.message || 'Failed to update status'
+      console.error('Error batch updating status:', err)
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  // Batch delete multiple items
+  async function batchDeleteItems(manuscriptId: number, itemIds: number[]) {
+    try {
+      loading.value = true
+      error.value = null
+
+      const response = await api.post(`/manuscripts/${manuscriptId}/items/batch-delete`, {
+        item_ids: itemIds
+      })
+
+      console.log('Batch delete successful:', response.data)
+
+      // Refresh the tree
+      await fetchManuscriptItems(manuscriptId)
+
+      return response.data
+    } catch (err: any) {
+      error.value = err.response?.data?.message || 'Failed to delete items'
+      console.error('Error batch deleting items:', err)
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  // Batch move items to a folder
+  async function batchMoveToFolder(manuscriptId: number, itemIds: number[], targetFolderId: number) {
+    try {
+      loading.value = true
+      error.value = null
+
+      const response = await api.post(`/manuscripts/${manuscriptId}/items/batch-move`, {
+        item_ids: itemIds,
+        target_folder_id: targetFolderId
+      })
+
+      console.log('Batch move successful:', response.data)
+
+      // Refresh the tree
+      await fetchManuscriptItems(manuscriptId)
+
+      return response.data
+    } catch (err: any) {
+      error.value = err.response?.data?.message || 'Failed to move items'
+      console.error('Error batch moving items:', err)
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  // Get all folders in the tree (for "Move to folder" picker)
+  const getAllFolders = (): Array<{ id: number; title: string; depth: number }> => {
+    const folders: Array<{ id: number; title: string; depth: number }> = []
+    const collectFolders = (nodes: TreeNode[], depth = 0) => {
+      for (const node of nodes) {
+        if (node.type === 'folder') {
+          folders.push({ id: node.itemId, title: node.title, depth })
+          collectFolders(node.children, depth + 1)
+        }
+      }
+    }
+    collectFolders(manuscriptTree.value)
+    return folders
+  }
+
   function $reset() {
     manuscripts.value = []
     currentManuscript.value = null
@@ -715,6 +856,12 @@ export const useManuscriptStore = defineStore('manuscript', () => {
     deleteItem,
     renameItem,
     convertFolderToItem,
+    ungroupFolder,
+    sortChildren,
+    batchUpdateStatus,
+    batchDeleteItems,
+    batchMoveToFolder,
+    getAllFolders,
     $reset,
 
     // Navigation methods

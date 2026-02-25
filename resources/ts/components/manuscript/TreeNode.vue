@@ -140,6 +140,15 @@
         "
       />
     </div>
+
+    <!-- Empty Folder Hint -->
+    <div
+      v-if="isEmptyFolder && isExpanded && !sidebarCollapsed"
+      class="empty-folder-hint"
+      :style="{ paddingLeft: `${(level + 1) * 20 + 28}px` }"
+    >
+      Drop items here
+    </div>
   </div>
 </template>
 
@@ -232,6 +241,7 @@ const {
 
 // Computed properties
 const hasChildren = computed(() => props.node.children.length > 0);
+const isEmptyFolder = computed(() => props.node.type === 'folder' && !hasChildren.value);
 const isExpanded = computed(() => props.expandedNodes.has(props.node.id));
 // isSelected now checks BOTH the navigation selection AND the multi-select store
 const isNavigationSelected = computed(() => props.selectedNode === props.node.id);
@@ -414,8 +424,9 @@ const calculateDropPosition = (event: DragEvent): 'above' | 'below' | 'inside' =
   const y = event.clientY - rect.top;
   const height = rect.height;
 
-  // Can only drop "inside" if target is a folder or has children
-  const canDropInside = props.node.type === 'folder' || hasChildren.value;
+  // Allow dropping inside any item (except snippet_reference)
+  // When dropping onto a leaf text item, the backend auto-creates a folder
+  const canDropInside = props.node.type !== 'snippet_reference';
 
   if (y < height * 0.25) {
     return 'above';
@@ -432,7 +443,7 @@ const handleDragOver = (event: DragEvent) => {
   event.stopPropagation();
 
   const position = calculateDropPosition(event);
-  const allowInside = props.node.type === "folder" || hasChildren.value;
+  const allowInside = props.node.type !== 'snippet_reference';
 
   dragOver(event, props.node.id, position, {
     allowInside,
@@ -734,5 +745,13 @@ onBeforeUnmount(() => {
 
 .child-nodes {
   margin-inline-start: 0;
+}
+
+.empty-folder-hint {
+  color: #9ca3af;
+  font-size: 0.75rem;
+  font-style: italic;
+  opacity: 0.7;
+  padding-block: 4px;
 }
 </style>
