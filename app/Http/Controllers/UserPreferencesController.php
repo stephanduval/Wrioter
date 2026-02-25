@@ -150,7 +150,7 @@ class UserPreferencesController extends Controller
                 'zoom' => 'medium',
                 'layout' => 'grid',
                 'columns' => 4,
-                'display_mode' => 'synopsis'
+                'display_mode' => 'excerpt'
             ],
             'outline' => [
                 'visible_columns' => [

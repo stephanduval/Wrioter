@@ -87,6 +87,7 @@
         @card-reorder="handleCardReorder"
         @card-drop="handleCardDrop"
         @context-menu="handleContextMenu"
+        @open-page="handleOpenPage"
       />
     </div>
 
@@ -190,6 +191,7 @@ import { useCorkboardStore } from '@/stores/corkboard'
 import { useFolderViewStore, type FolderItem, type FolderData } from '@/stores/folderView'
 import { useSelectionStore } from '@/stores/selection'
 import { useManuscriptStore } from '@/stores/manuscript'
+import { usePaneStore } from '@/stores/pane'
 import { useBoxSelection } from '@/composables/useSelection'
 import { useContextMenu } from '@/composables/useContextMenu'
 import { reorderFolderItems } from '@/api/folders'
@@ -351,6 +353,35 @@ const handleCardDrop = async (draggedCardIds: string[], targetIndex: number, tar
     await folderViewStore.loadFolderContents(props.folderId)
   } catch (error) {
     console.error('Failed to handle card drop:', error)
+  }
+}
+
+const handleOpenPage = (cardId: string) => {
+  // Get the card to find its itemId
+  const card = adaptedCards.value.find(c => c.id === cardId)
+  if (!card) {
+    console.error('Card not found:', cardId)
+    return
+  }
+
+  const folderViewStore = useFolderViewStore()
+  const paneStore = usePaneStore()
+
+  // Check if we're in split view mode
+  if (folderViewStore.splitEnabled && paneStore.activePaneId) {
+    // Split view: Open item in edit mode in the active pane
+    console.log('Opening card in edit mode (split view):', card.itemId)
+    paneStore.setEditingItem(paneStore.activePaneId, card.itemId)
+  } else {
+    // Single view: Navigate to folder with item view selected
+    console.log('Opening card in item view (single view):', card.itemId)
+    router.push({
+      path: `/manuscripts/${manuscriptId.value}/folders/${props.folderId}`,
+      query: {
+        view: 'item',
+        itemId: String(card.itemId)
+      }
+    })
   }
 }
 

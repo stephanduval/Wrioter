@@ -60,7 +60,7 @@ export const useCorkboardStore = defineStore('corkboard', () => {
   const viewConfig = ref<CorkboardViewConfig>({
     zoom: 'medium',
     layout: 'grid',
-    displayMode: 'synopsis',
+    displayMode: 'excerpt',
     columns: 4,
     cardSpacing: 16,
     showWordCount: true,

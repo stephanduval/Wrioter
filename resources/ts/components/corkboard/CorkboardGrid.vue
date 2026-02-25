@@ -36,6 +36,7 @@
           @context-menu="handleContextMenu"
           @drag-start="handleDragStart"
           @drag-end="handleDragEnd"
+          @open-page="emit('open-page', $event)"
         />
       </template>
     </TransitionGroup>
@@ -67,6 +68,7 @@ interface Emits {
   (e: 'card-reorder', operations: any[]): void
   (e: 'card-drop', draggedCardIds: string[], targetIndex: number, targetPosition?: any): void
   (e: 'context-menu', cardIds: string[], event: MouseEvent): void
+  (e: 'open-page', cardId: string): void
 }
 
 const props = withDefaults(defineProps<Props>(), {

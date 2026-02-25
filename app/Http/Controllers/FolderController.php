@@ -153,7 +153,7 @@ class FolderController extends Controller
                         'zoom' => 'medium',
                         'layout' => 'grid',
                         'columns' => 4,
-                        'display_mode' => 'synopsis'
+                        'display_mode' => 'excerpt'
                     ],
                     'outline' => [
                         'visible_columns' => ['title', 'type', 'synopsis', 'word_count', 'status', 'include_in_compile', 'updated_at'],
