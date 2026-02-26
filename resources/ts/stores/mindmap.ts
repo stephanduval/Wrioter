@@ -832,6 +832,82 @@ export const useMindmapStore = defineStore('mindmap', () => {
     }
   }
 
+  const autoLayoutFolderMindmap = async (folderId: number): Promise<void> => {
+    loading.value = true
+    error.value = null
+    try {
+      const response = await axios.post(`/folders/${folderId}/mindmap/auto-layout`)
+
+      if (response.data?.mindmap) {
+        const { mindmap, nodes: backendNodes, ghosts, edges: backendEdges } = response.data
+
+        folderMindmaps.value.set(folderId, mindmap)
+        currentMindmap.value = mindmap
+
+        nodes.value = (backendNodes || []).map((node: any) => ({
+          id: `item-${node.id}`,
+          type: node.data?.type || 'default',
+          position: node.position || { x: 0, y: 0 },
+          data: {
+            label: node.data?.title || 'Untitled',
+            content: node.data?.content,
+            synopsis: node.data?.synopsis,
+            metadata: node.data?.metadata,
+            itemId: node.id,
+            itemType: node.data?.type,
+            style: node.style,
+            isCollapsed: node.is_collapsed ?? false,
+            hasChildren: node.has_children ?? false,
+            childCount: node.child_count ?? 0,
+            isRootFolder: node.is_root_folder ?? false,
+            isCollapsible: !(node.is_root_folder ?? false) && (node.has_children ?? false),
+            isDeletable: !(node.is_root_folder ?? false),
+          },
+        }))
+
+        if (ghosts?.length) {
+          ghosts.forEach((ghost: any) => {
+            nodes.value.push({
+              id: ghost.id,
+              type: 'ghost',
+              position: ghost.position || { x: 0, y: 0 },
+              data: {
+                label: ghost.label,
+                ghostId: ghost.ghost_id,
+                originalItemId: ghost.original_item_id,
+                itemType: ghost.item_type,
+                deletedAt: ghost.deleted_at,
+                isGhost: true,
+              },
+            })
+          })
+        }
+
+        const hierarchyEdges = (backendEdges?.hierarchy || []).map((e: any) => ({
+          ...e,
+          type: 'default',
+          style: { stroke: '#999', strokeDasharray: '0' },
+          data: { ...(e.data || {}), is_hierarchy: true, editable: false },
+        }))
+
+        const customEdges = (backendEdges?.custom || []).map((e: any) => ({
+          ...e,
+          type: 'default',
+          style: { stroke: '#3b82f6', strokeDasharray: '5,5' },
+          data: { ...(e.data || {}), is_hierarchy: false, editable: true, connection_type: e.type },
+        }))
+
+        edges.value = [...hierarchyEdges, ...customEdges]
+        hasUnsavedChanges.value = false
+      }
+    } catch (err: any) {
+      error.value = err.message || 'Failed to auto-layout mindmap'
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
   const getMindmapByFolderId = (folderId: number): MindMap | null => {
     return folderMindmaps.value.get(folderId) || null
   }
@@ -981,6 +1057,7 @@ export const useMindmapStore = defineStore('mindmap', () => {
     loadMindmap,
     loadManuscriptDefaultMindmap,
     loadFolderMindmap,
+    autoLayoutFolderMindmap,
     getMindmapByFolderId,
     createMindmap,
     updateMindmap,

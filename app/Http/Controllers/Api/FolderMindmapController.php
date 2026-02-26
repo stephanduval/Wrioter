@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Item;
 use App\Models\MindmapItemPosition;
 use App\Services\FolderMindmapSyncService;
+use App\Services\MindmapLayoutService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 
@@ -160,5 +161,18 @@ class FolderMindmapController extends Controller
             'message' => 'Mindmap synced successfully',
             'mindmap_id' => $mindmap->id,
         ]);
+    }
+
+    /**
+     * Apply auto-layout to arrange nodes in a hierarchical tree.
+     */
+    public function autoLayout(int $folderId, MindmapLayoutService $layoutService): JsonResponse
+    {
+        $mindmap = $this->syncService->getOrCreateAndSync($folderId, Auth::id());
+
+        $positions = $layoutService->computeHierarchicalLayout($mindmap);
+        $layoutService->applyLayout($mindmap, $positions);
+
+        return $this->show($folderId);
     }
 }

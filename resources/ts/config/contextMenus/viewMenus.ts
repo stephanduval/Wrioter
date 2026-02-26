@@ -7,6 +7,7 @@ import { useManuscriptStore } from '@/stores/manuscript'
 interface ViewMenuContext {
   folderId: number
   manuscriptId: number
+  onAutoLayout?: () => void
 }
 
 /**
@@ -18,7 +19,7 @@ export const getEmptySpaceMenuItems = (context: ViewMenuContext): MenuItem[] => 
   const manuscriptStore = useManuscriptStore()
   const { t } = getI18n().global
 
-  return [
+  const items: MenuItem[] = [
     {
       id: 'new-page',
       label: t('contextMenu.item.newPage'),
@@ -42,4 +43,15 @@ export const getEmptySpaceMenuItems = (context: ViewMenuContext): MenuItem[] => 
       }
     }
   ]
+
+  if (context.onAutoLayout) {
+    items.push({
+      id: 'auto-layout',
+      label: 'Auto Layout',
+      icon: 'bx-git-branch',
+      action: () => context.onAutoLayout!()
+    })
+  }
+
+  return items
 }

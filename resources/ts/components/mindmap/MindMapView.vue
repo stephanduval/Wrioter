@@ -76,6 +76,7 @@
     <!-- Mindmap Canvas -->
     <div class="mindmap-canvas" @contextmenu="handleEmptySpaceContextMenu">
       <MindMapCanvas
+        ref="mindmapCanvasRef"
         v-if="currentMindmap && mindmapNodes.length > 0"
         :nodes="mindmapNodes"
         :edges="mindmapEdges"
@@ -161,7 +162,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useMindmapStore } from '@/stores/mindmap'
 import { useManuscriptStore } from '@/stores/manuscript'
@@ -216,11 +217,15 @@ function handleEmptySpaceContextMenu(event: MouseEvent) {
 
   const menuItems = getEmptySpaceMenuItems({
     folderId: props.folderId,
-    manuscriptId: manuscriptId.value
+    manuscriptId: manuscriptId.value,
+    onAutoLayout: handleAutoLayout,
   })
 
   contextMenu.show(event, { items: menuItems })
 }
+
+// Refs
+const mindmapCanvasRef = ref<InstanceType<typeof MindMapCanvas> | null>(null)
 
 // Local state
 const nodeEditDialog = ref(false)
@@ -536,6 +541,19 @@ async function handleSave() {
     emit('update:error', 'Failed to save mind map')
   } finally {
     isSaving.value = false
+  }
+}
+
+async function handleAutoLayout() {
+  try {
+    await mindmapStore.autoLayoutFolderMindmap(props.folderId)
+    // Fit view after layout with animation
+    nextTick(() => {
+      mindmapCanvasRef.value?.fitView({ duration: 800, padding: 0.2 })
+    })
+  } catch (error: any) {
+    console.error('Failed to auto-layout:', error)
+    emit('update:error', error.message || 'Failed to auto-layout mindmap')
   }
 }
 

@@ -280,6 +280,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/folders/{folderId}/mindmap', [App\Http\Controllers\Api\FolderMindmapController::class, 'show']);
     Route::post('/folders/{folderId}/mindmap/sync', [App\Http\Controllers\Api\FolderMindmapController::class, 'sync']);
     Route::put('/folders/{folderId}/mindmap/items/{itemId}/toggle-collapse', [App\Http\Controllers\Api\FolderMindmapController::class, 'toggleCollapse']);
+    Route::post('/folders/{folderId}/mindmap/auto-layout', [App\Http\Controllers\Api\FolderMindmapController::class, 'autoLayout']);
 });
 
 // User Preferences Routes

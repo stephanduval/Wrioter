@@ -342,7 +342,7 @@ class FolderMindmapSyncService
      * This traverses the item tree to find all descendants of the folder,
      * allowing hierarchy edges to be drawn for nested items.
      */
-    protected function getAllFolderItems(int $folderId, int $userId)
+    public function getAllFolderItems(int $folderId, int $userId)
     {
         // Start with direct children of the folder, ordered by item_order for sequential hierarchy
         $directChildren = Item::where('parent_id', $folderId)

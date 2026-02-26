@@ -10,6 +10,7 @@
       :max-zoom="4"
       :connect-on-click="false"
       :edges-updatable="true"
+      :pan-on-drag="isPanEnabled"
       @nodes-change="onNodesChange"
       @edges-change="onEdgesChange"
       @node-click="onNodeClick"
@@ -19,6 +20,8 @@
       @node-context-menu="onNodeContextMenu"
       @pane-context-menu="onPaneContextMenu"
       @node-drag-stop="onNodeDragStop"
+      @mousedown="handleMouseDown"
+      @mouseup="handleMouseUp"
     >
       <!-- Background -->
       <Background variant="dots" :gap="16" />
@@ -197,6 +200,7 @@ const emit = defineEmits<{
 // Refs
 const vueFlowRef = ref(null)
 const { fitView, zoomIn, zoomOut, project } = useVueFlow()
+const isPanEnabled = ref(true)
 
 // Model binding
 const modelNodes = computed({
@@ -293,6 +297,19 @@ const onPaneContextMenu = (event: MouseEvent) => {
 const onNodeDragStop = (event: MouseEvent, node: any) => {
   // Auto-save position after drag
   console.log('Node drag stopped:', node)
+}
+
+// Pan/zoom control - disable panning on right-click to allow context menu
+const handleMouseDown = (event: MouseEvent) => {
+  // Disable panning when right-clicking (button 2 = right click)
+  if (event.button === 2) {
+    isPanEnabled.value = false
+  }
+}
+
+const handleMouseUp = (event: MouseEvent) => {
+  // Re-enable panning on any mouse up
+  isPanEnabled.value = true
 }
 
 // Expose methods
