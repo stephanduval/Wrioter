@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { useApi } from '@/composables/useApi'
 import { dataSync } from '@/services/dataSync'
+import { manuscriptsApi } from '@/api/manuscripts'
 
 interface Manuscript {
   id: number
@@ -615,6 +616,47 @@ export const useManuscriptStore = defineStore('manuscript', () => {
     }
   }
 
+  // Delete a manuscript
+  async function deleteManuscript(manuscriptId: number) {
+    try {
+      loading.value = true
+      error.value = null
+
+      console.log(`Deleting manuscript ${manuscriptId}`)
+
+      await manuscriptsApi.deleteManuscript(manuscriptId)
+
+      // Remove from manuscripts list
+      manuscripts.value = manuscripts.value.filter(m => m.id !== manuscriptId)
+
+      // Clear selection if deleted manuscript was selected
+      if (selectedManuscriptId.value === manuscriptId) {
+        clearSelection()
+        manuscriptTree.value = []
+        flatItemsIndex.value.clear()
+      }
+
+      // Clear as current manuscript if it was the active one
+      if (currentManuscript.value?.id === manuscriptId) {
+        currentManuscript.value = null
+      }
+
+      // Emit sync event so other components can update
+      dataSync.emit('manuscript:deleted', {
+        manuscriptId
+      })
+
+      console.log('Manuscript deleted successfully')
+      return true
+    } catch (err: any) {
+      error.value = err.response?.data?.message || 'Failed to delete manuscript'
+      console.error('Error deleting manuscript:', err)
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
   // Rename an item
   async function renameItem(manuscriptId: number, itemId: number, newTitle: string) {
     try {
@@ -720,6 +762,7 @@ export const useManuscriptStore = defineStore('manuscript', () => {
     reorderItem,
     batchReorderItems,
     deleteItem,
+    deleteManuscript,
     renameItem,
     convertFolderToItem,
     $reset,
