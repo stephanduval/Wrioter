@@ -54,7 +54,15 @@ class FolderMindmapController extends Controller
         ]);
 
         // Compute hierarchy edges (not stored, computed from folder structure)
-        $hierarchyEdges = $this->syncService->computeHierarchyEdges($mindmap);
+        // Only include edges where both source and target are in the mindmap
+        $visibleItemIds = $nodes->pluck('id')->toArray();
+        $allHierarchyEdges = $this->syncService->computeHierarchyEdges($mindmap);
+        $hierarchyEdges = array_filter($allHierarchyEdges, function($edge) use ($visibleItemIds) {
+            // Extract item IDs from the edge source/target (format: 'item-123')
+            $sourceId = (int)str_replace('item-', '', $edge['source']);
+            $targetId = (int)str_replace('item-', '', $edge['target']);
+            return in_array($sourceId, $visibleItemIds) && in_array($targetId, $visibleItemIds);
+        });
 
         // Get custom edges (stored in mindmap_connections)
         $customEdges = $mindmap->connections->map(fn($conn) => [
