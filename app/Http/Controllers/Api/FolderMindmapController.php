@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Item;
+use App\Models\MindmapItemPosition;
 use App\Services\FolderMindmapSyncService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
@@ -26,17 +28,33 @@ class FolderMindmapController extends Controller
 
         $mindmap->load(['positions.item', 'connections', 'ghosts']);
 
-        // Transform positions for frontend
-        $nodes = $mindmap->positions->map(fn($pos) => [
-            'id' => $pos->item_id,
-            'data' => $pos->item,
-            'position' => $pos->position,
-            'size' => $pos->size,
-            'style' => $pos->style,
-            'is_visible' => $pos->is_visible,
-            'is_collapsed' => $pos->is_collapsed,
-            'z_index' => $pos->z_index,
-        ]);
+        // Compute which nodes are visible (respects folder collapse states)
+        $visibleItemIds = $this->syncService->getVisibleNodeIds($mindmap);
+
+        // Count children for each item (so frontend knows which folders are expandable)
+        $allPositionItemIds = $mindmap->positions->pluck('item_id')->toArray();
+        $childCounts = Item::whereIn('parent_id', $allPositionItemIds)
+            ->whereIn('id', $allPositionItemIds)
+            ->selectRaw('parent_id, COUNT(*) as count')
+            ->groupBy('parent_id')
+            ->pluck('count', 'parent_id')
+            ->toArray();
+
+        // Transform positions for frontend — only visible nodes
+        $nodes = $mindmap->positions
+            ->filter(fn($pos) => in_array($pos->item_id, $visibleItemIds))
+            ->map(fn($pos) => [
+                'id' => $pos->item_id,
+                'data' => $pos->item,
+                'position' => $pos->position,
+                'size' => $pos->size,
+                'style' => $pos->style,
+                'is_visible' => $pos->is_visible,
+                'is_collapsed' => $pos->is_collapsed,
+                'z_index' => $pos->z_index,
+                'child_count' => $childCounts[$pos->item_id] ?? 0,
+                'has_children' => ($childCounts[$pos->item_id] ?? 0) > 0,
+            ])->values();
 
         // Transform ghosts for frontend
         $ghosts = $mindmap->ghosts->map(fn($ghost) => [
@@ -54,41 +72,69 @@ class FolderMindmapController extends Controller
         ]);
 
         // Compute hierarchy edges (not stored, computed from folder structure)
-        // Only include edges where both source and target are in the mindmap
-        $visibleItemIds = $nodes->pluck('id')->toArray();
+        // Only include edges where both source and target are visible
         $allHierarchyEdges = $this->syncService->computeHierarchyEdges($mindmap);
         $hierarchyEdges = array_filter($allHierarchyEdges, function($edge) use ($visibleItemIds) {
-            // Extract item IDs from the edge source/target (format: 'item-123')
             $sourceId = (int)str_replace('item-', '', $edge['source']);
             $targetId = (int)str_replace('item-', '', $edge['target']);
             return in_array($sourceId, $visibleItemIds) && in_array($targetId, $visibleItemIds);
         });
 
-        // Get custom edges (stored in mindmap_connections)
-        $customEdges = $mindmap->connections->map(fn($conn) => [
-            'id' => 'edge-' . $conn->id,
-            'source' => 'item-' . $conn->from_item_id,
-            'target' => 'item-' . $conn->to_item_id,
-            'type' => $conn->connection_type,
-            'data' => [
-                'label' => $conn->label,
-                'relationship_type' => $conn->relationship_type,
-                'style' => $conn->style,
-                'dbId' => $conn->id,
-                'is_hierarchy' => false,
-                'editable' => true,
-            ],
-        ]);
+        // Filter custom edges to only visible nodes too
+        $customEdges = $mindmap->connections
+            ->filter(fn($conn) => in_array($conn->from_item_id, $visibleItemIds)
+                && in_array($conn->to_item_id, $visibleItemIds))
+            ->map(fn($conn) => [
+                'id' => 'edge-' . $conn->id,
+                'source' => 'item-' . $conn->from_item_id,
+                'target' => 'item-' . $conn->to_item_id,
+                'type' => $conn->connection_type,
+                'data' => [
+                    'label' => $conn->label,
+                    'relationship_type' => $conn->relationship_type,
+                    'style' => $conn->style,
+                    'dbId' => $conn->id,
+                    'is_hierarchy' => false,
+                    'editable' => true,
+                ],
+            ])->values();
 
         return response()->json([
             'mindmap' => $mindmap,
             'nodes' => $nodes,
             'ghosts' => $ghosts,
             'edges' => [
-                'hierarchy' => $hierarchyEdges,
+                'hierarchy' => array_values($hierarchyEdges),
                 'custom' => $customEdges,
             ],
         ]);
+    }
+
+    /**
+     * Toggle collapse state of a folder node in the mindmap.
+     *
+     * When collapsed, the folder's children are hidden from the canvas.
+     * Returns the full updated mindmap data so the frontend can re-render.
+     */
+    public function toggleCollapse(int $folderId, int $itemId): JsonResponse
+    {
+        $item = Item::where('id', $itemId)
+            ->where('user_id', Auth::id())
+            ->where('type', 'folder')
+            ->firstOrFail();
+
+        $mindmap = $this->syncService->getOrCreateAndSync($folderId, Auth::id());
+
+        $position = MindmapItemPosition::where('mindmap_id', $mindmap->id)
+            ->where('item_id', $itemId)
+            ->firstOrFail();
+
+        $position->update([
+            'is_collapsed' => !$position->is_collapsed,
+        ]);
+
+        // Return updated mindmap data (reuse show logic)
+        return $this->show($folderId);
     }
 
     /**

@@ -85,6 +85,7 @@
         @nodes-change="handleNodesChange"
         @edges-change="handleEdgesChange"
         @connect="handleConnectNode"
+        @toggle-collapse="handleToggleCollapse"
       />
 
       <!-- Empty State -->
@@ -389,6 +390,15 @@ function handleEdgesChange(changes: any[]) {
   })
 
   console.log('Edges changed:', filteredChanges)
+}
+
+async function handleToggleCollapse(nodeId: string) {
+  try {
+    await mindmapStore.toggleNodeCollapse(nodeId)
+  } catch (error: any) {
+    console.error('Failed to toggle collapse:', error)
+    emit('update:error', error.message || 'Failed to toggle folder collapse')
+  }
 }
 
 async function handleConnectNode(params: any) {

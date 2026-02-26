@@ -73,9 +73,22 @@
       </template>
 
       <template #node-folder="{ data, id }">
-        <div class="vue-flow__node-folder">
+        <div class="vue-flow__node-folder" :class="{ 'folder-collapsed': data.isCollapsed }">
           <Handle type="target" position="top" :connectable="true" />
-          <VIcon class="node-icon" color="primary">bx-folder</VIcon>
+          <div class="folder-header">
+            <button
+              v-if="data.hasChildren"
+              class="collapse-toggle"
+              @click.stop="emit('toggle-collapse', id)"
+            >
+              <VIcon size="small" color="white">
+                {{ data.isCollapsed ? 'bx-chevron-right' : 'bx-chevron-down' }}
+              </VIcon>
+            </button>
+            <VIcon class="node-icon" color="primary">
+              {{ data.isCollapsed ? 'bx-folder' : 'bx-folder-open' }}
+            </VIcon>
+          </div>
           <input
             v-if="editingNodeId === id"
             class="node-label-input"
@@ -87,6 +100,9 @@
             @mousedown.stop
           />
           <div v-else class="node-label" @click.stop="startEditing(id)">{{ data.label }}</div>
+          <span v-if="data.isCollapsed && data.childCount" class="child-count-badge">
+            {{ data.childCount }}
+          </span>
           <Handle type="source" position="bottom" :connectable="true" />
         </div>
       </template>
@@ -169,6 +185,7 @@ const emit = defineEmits<{
   'update:nodes': [nodes: any[]]
   'update:edges': [edges: any[]]
   'title-updated': [nodeId: string, newTitle: string]
+  'toggle-collapse': [nodeId: string]
 }>()
 
 // Refs
@@ -322,16 +339,67 @@ defineExpose({
 }
 
 /* Folder Node */
+/* stylelint-disable liberty/use-logical-spec, order/properties-order */
 .vue-flow__node-folder {
+  position: relative;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
   border: none;
   border-radius: 8px;
   padding: 12px;
   min-width: 140px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 10%);
+  color: white;
   text-align: center;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
+
+.vue-flow__node-folder.folder-collapsed {
+  border: 2px dashed rgba(255, 255, 255, 40%);
+  opacity: 0.85;
+}
+
+.folder-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.collapse-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 20%);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.collapse-toggle:hover {
+  background: rgba(255, 255, 255, 40%);
+}
+
+.child-count-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 10px;
+  background: #f59e0b;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 20%);
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+}
+/* stylelint-enable liberty/use-logical-spec, order/properties-order */
 
 /* Character Node */
 .vue-flow__node-character {

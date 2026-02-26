@@ -45,10 +45,8 @@ class FolderMindmapSyncService
         if (!$mindmap->folder_id) return;
 
         DB::transaction(function () use ($mindmap) {
-            // Get current folder items
-            $folderItems = Item::where('parent_id', $mindmap->folder_id)
-                ->where('user_id', $mindmap->user_id)
-                ->get();
+            // Get all items under this folder recursively (including nested folder children)
+            $folderItems = $this->getAllFolderItems($mindmap->folder_id, $mindmap->user_id);
 
             $folderItemIds = $folderItems->pluck('id')->toArray();
 
@@ -97,6 +95,7 @@ class FolderMindmapSyncService
                 'item_id' => $item->id,
                 'position' => $position,
                 'style' => $mindmap->getDefaultStyleForItem($item),
+                'is_collapsed' => $item->type === 'folder',
             ]);
         }
     }
@@ -206,6 +205,61 @@ class FolderMindmapSyncService
         }
 
         return $edges;
+    }
+
+    /**
+     * Get the IDs of items that should be visible on the mindmap canvas.
+     *
+     * An item is visible if:
+     * - It is a direct child of the viewed folder (always visible as top-level)
+     * - OR none of its ancestor folders (within this mindmap) are collapsed
+     */
+    public function getVisibleNodeIds(WritingMindmap $mindmap): array
+    {
+        if (!$mindmap->folder_id) return [];
+
+        $positions = MindmapItemPosition::where('mindmap_id', $mindmap->id)
+            ->with('item')
+            ->get();
+
+        // Build lookup maps
+        $positionsByItemId = $positions->keyBy('item_id');
+        $itemsById = $positions->pluck('item')->filter()->keyBy('id');
+
+        $visibleIds = [];
+
+        foreach ($positions as $position) {
+            if (!$position->item) continue;
+
+            // Direct children of the viewed folder are always visible
+            if ($position->item->parent_id == $mindmap->folder_id) {
+                $visibleIds[] = $position->item_id;
+                continue;
+            }
+
+            // Walk up the parent chain — if any ancestor folder is collapsed, hide this node
+            $visible = true;
+            $currentItem = $position->item;
+
+            while ($currentItem && $currentItem->parent_id != $mindmap->folder_id) {
+                $parentPosition = $positionsByItemId->get($currentItem->parent_id);
+
+                if ($parentPosition && $parentPosition->is_collapsed) {
+                    $visible = false;
+                    break;
+                }
+
+                // Move up to parent
+                $currentItem = $itemsById->get($currentItem->parent_id);
+                if (!$currentItem) break;
+            }
+
+            if ($visible) {
+                $visibleIds[] = $position->item_id;
+            }
+        }
+
+        return $visibleIds;
     }
 
     /**

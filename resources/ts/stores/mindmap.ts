@@ -583,6 +583,89 @@ export const useMindmapStore = defineStore('mindmap', () => {
     }
   }
 
+  // Collapse/Expand folder nodes
+  const toggleNodeCollapse = async (nodeId: string): Promise<void> => {
+    const node = nodes.value.find(n => n.id === nodeId)
+    if (!node || !currentMindmap.value) return
+
+    const itemId = node.data?.itemId
+    if (!itemId) return
+
+    try {
+      loading.value = true
+      const response = await axios.put(
+        `/folders/${currentMindmap.value.folder_id}/mindmap/items/${itemId}/toggle-collapse`
+      )
+
+      // The toggle endpoint returns the full updated mindmap data
+      if (response.data?.mindmap) {
+        const { mindmap, nodes: backendNodes, ghosts, edges: backendEdges } = response.data
+
+        currentMindmap.value = mindmap
+
+        // Re-transform nodes
+        nodes.value = (backendNodes || []).map((n: any) => ({
+          id: `item-${n.id}`,
+          type: n.data?.type || 'default',
+          position: n.position || { x: 0, y: 0 },
+          data: {
+            label: n.data?.title || 'Untitled',
+            content: n.data?.content,
+            synopsis: n.data?.synopsis,
+            metadata: n.data?.metadata,
+            itemId: n.id,
+            itemType: n.data?.type,
+            style: n.style,
+            isCollapsed: n.is_collapsed ?? false,
+            hasChildren: n.has_children ?? false,
+            childCount: n.child_count ?? 0,
+          },
+        }))
+
+        // Re-add ghosts
+        if (ghosts?.length) {
+          ghosts.forEach((ghost: any) => {
+            nodes.value.push({
+              id: ghost.id,
+              type: 'ghost',
+              position: ghost.position || { x: 0, y: 0 },
+              data: {
+                label: ghost.label,
+                ghostId: ghost.ghost_id,
+                originalItemId: ghost.original_item_id,
+                itemType: ghost.item_type,
+                deletedAt: ghost.deleted_at,
+                isGhost: true,
+              },
+            })
+          })
+        }
+
+        // Re-combine edges
+        const hierarchyEdges = (backendEdges?.hierarchy || []).map((e: any) => ({
+          ...e,
+          type: 'default',
+          style: { stroke: '#999', strokeDasharray: '0' },
+          data: { ...(e.data || {}), is_hierarchy: true, editable: false },
+        }))
+
+        const customEdges = (backendEdges?.custom || []).map((e: any) => ({
+          ...e,
+          type: 'default',
+          style: { stroke: '#3b82f6', strokeDasharray: '5,5' },
+          data: { ...(e.data || {}), is_hierarchy: false, editable: true, connection_type: e.type },
+        }))
+
+        edges.value = [...hierarchyEdges, ...customEdges]
+      }
+    } catch (err: any) {
+      error.value = err.message || 'Failed to toggle collapse'
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
   // Import manuscript items
   const importManuscript = async (options: {
     manuscript_id?: number
@@ -674,6 +757,9 @@ export const useMindmapStore = defineStore('mindmap', () => {
             itemId: node.id,
             itemType: node.data?.type,
             style: node.style,
+            isCollapsed: node.is_collapsed ?? false,
+            hasChildren: node.has_children ?? false,
+            childCount: node.child_count ?? 0,
           },
         }))
 
@@ -904,6 +990,9 @@ export const useMindmapStore = defineStore('mindmap', () => {
     createConnection,
     updateConnection,
     deleteConnection,
+
+    // Collapse/Expand
+    toggleNodeCollapse,
 
     // Import
     importManuscript,
