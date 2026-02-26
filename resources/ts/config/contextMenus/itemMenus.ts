@@ -3,6 +3,7 @@ import { router } from '@/plugins/1.router'
 import { getI18n } from '@/plugins/i18n'
 import { useItemStore } from '@/stores/item'
 import { useManuscriptStore } from '@/stores/manuscript'
+import { useSnippetCollectionStore } from '@/stores/snippetCollection'
 import { navigateTo } from '@/utils/navigation'
 import { eventBus } from '@/services/eventBus'
 import { itemsApi } from '@/api/items'
@@ -42,6 +43,14 @@ export const getItemMenuItems = (item: ManuscriptItem, manuscriptId: number): Me
 
   const isFolder = () => {
     return item.type === 'folder'
+  }
+
+  const isSnippetCollection = () => {
+    return item.type === 'snippet_collection'
+  }
+
+  const isSnippetReference = () => {
+    return item.type === 'snippet_reference'
   }
 
   const isEmptyFolder = () => {
@@ -89,6 +98,18 @@ export const getItemMenuItems = (item: ManuscriptItem, manuscriptId: number): Me
     },
     { id: 'sep-folder-views', separator: true, hidden: () => !isFolder() },
 
+    // Snippet Collection View Option
+    {
+      id: 'view-collection',
+      label: 'View Collection',
+      icon: 'bx-collection',
+      action: () => {
+        navigateTo(`/manuscripts/${manuscriptId}/snippet-collections/${item.itemId}/view`)
+      },
+      hidden: () => !isSnippetCollection()
+    },
+    { id: 'sep-collection-views', separator: true, hidden: () => !isSnippetCollection() },
+
     // Convert empty folder to item
     {
       id: 'convert-to-item',
@@ -113,6 +134,7 @@ export const getItemMenuItems = (item: ManuscriptItem, manuscriptId: number): Me
       id: 'new-page',
       label: t('contextMenu.item.newPage'),
       icon: 'bx-plus',
+      hidden: () => isSnippetCollection(),
       action: async () => {
         try {
           console.log('Create new page as child of:', item.id)
@@ -140,7 +162,7 @@ export const getItemMenuItems = (item: ManuscriptItem, manuscriptId: number): Me
         }
       }
     },
-    { id: 'sep-new-page', separator: true },
+    { id: 'sep-new-page', separator: true, hidden: () => isSnippetCollection() },
     {
       id: 'edit',
       label: t('contextMenu.item.edit'),
@@ -148,7 +170,7 @@ export const getItemMenuItems = (item: ManuscriptItem, manuscriptId: number): Me
       action: () => {
         navigateTo(`/manuscripts/${manuscriptId}/items/${item.id}/edit`)
       },
-      hidden: () => isFolder()
+      hidden: () => isFolder() || isSnippetCollection()
     },
     {
       id: 'view',
@@ -163,6 +185,7 @@ export const getItemMenuItems = (item: ManuscriptItem, manuscriptId: number): Me
       id: 'move-up',
       label: t('contextMenu.item.moveUp'),
       icon: 'bx-up-arrow-alt',
+      hidden: () => isSnippetCollection(),
       action: async () => {
         console.log('Move item up:', item.id)
         // TODO: Implement move up functionality
@@ -173,17 +196,19 @@ export const getItemMenuItems = (item: ManuscriptItem, manuscriptId: number): Me
       id: 'move-down',
       label: t('contextMenu.item.moveDown'),
       icon: 'bx-down-arrow-alt',
+      hidden: () => isSnippetCollection(),
       action: async () => {
         console.log('Move item down:', item.id)
         // TODO: Implement move down functionality
       },
       disabled: () => !canMoveDown()
     },
-    { id: 'sep-move', separator: true },
+    { id: 'sep-move', separator: true, hidden: () => isSnippetCollection() },
     {
       id: 'status',
       label: t('contextMenu.item.changeStatus'),
       icon: 'bx-flag',
+      hidden: () => isSnippetCollection(),
       action: () => {
         console.log('Change status for item:', item.id)
         // TODO: Implement status change dialog
@@ -193,43 +218,42 @@ export const getItemMenuItems = (item: ManuscriptItem, manuscriptId: number): Me
       id: 'compile',
       label: item.metadata?.isCompilable ? t('contextMenu.item.excludeFromCompile') : t('contextMenu.item.includeInCompile'),
       icon: item.metadata?.isCompilable ? 'bx-x-circle' : 'bx-check-circle',
+      hidden: () => isSnippetCollection(),
       action: async () => {
         console.log('Toggle compile for item:', item.id)
         // TODO: Implement toggle compile functionality
       }
     },
-    { id: 'sep-status', separator: true },
-    {
-      id: 'rename',
-      label: t('contextMenu.item.rename'),
-      icon: 'bx-rename',
-      action: async () => {
-        const newTitle = prompt(t('contextMenu.item.renamePrompt', { title: item.title }), item.title)
-        if (newTitle && newTitle.trim() !== '' && newTitle !== item.title) {
-          try {
-            console.log('Rename item:', item.id, 'to:', newTitle)
-            await manuscriptStore.renameItem(manuscriptId, item.itemId, newTitle.trim())
-            console.log('Item renamed successfully')
-          } catch (error) {
-            console.error('Failed to rename item:', error)
-            alert(t('contextMenu.item.renameError') || 'Failed to rename item')
-          }
-        }
-      }
-    },
+    { id: 'sep-status', separator: true, hidden: () => isSnippetCollection() },
     {
       id: 'duplicate',
       label: t('contextMenu.item.duplicate'),
       icon: 'bx-copy',
+      hidden: () => isSnippetReference(),
       action: async () => {
-        console.log('Duplicate item:', item.id)
-        // TODO: Implement duplicate functionality
+        try {
+          if (isSnippetCollection()) {
+            const snippetCollectionStore = useSnippetCollectionStore()
+            const newCollection = await snippetCollectionStore.duplicateCollection(manuscriptId, item.itemId)
+            if (newCollection) {
+              await manuscriptStore.fetchManuscriptItems(manuscriptId)
+              console.log('Snippet collection duplicated:', newCollection.id)
+            }
+          } else {
+            console.log('Duplicate item:', item.id)
+            // TODO: Implement generic item duplicate functionality
+          }
+        } catch (error) {
+          console.error('Failed to duplicate:', error)
+          alert(t('contextMenu.item.duplicateError') || 'Failed to duplicate')
+        }
       }
     },
     {
       id: 'add-to-collection',
       label: 'Add to Collection',
       icon: 'bx-collection',
+      hidden: () => isSnippetCollection() || isSnippetReference(),
       action: async () => {
         try {
           // Fetch the full item content

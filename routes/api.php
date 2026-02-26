@@ -299,12 +299,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/snippet-collections/{id}', [SnippetCollectionController::class, 'destroy']);
     Route::post('/snippet-collections/{id}/verify-all', [SnippetCollectionController::class, 'verifyAll']);
     Route::post('/snippet-collections/{id}/clear-ghosts', [SnippetCollectionController::class, 'clearGhosts']);
+    Route::post('/manuscripts/{manuscriptId}/snippet-collections/{collectionId}/duplicate', [SnippetCollectionController::class, 'duplicate']);
 
     // Snippet references within collections
     Route::get('/snippet-collections/{collectionId}/snippets', [SnippetReferenceController::class, 'index']);
     Route::post('/snippet-collections/{collectionId}/snippets', [SnippetReferenceController::class, 'store']);
     Route::post('/snippet-collections/{collectionId}/snippets/reorder', [SnippetReferenceController::class, 'reorder']);
     Route::put('/snippets/{id}', [SnippetReferenceController::class, 'update']);
+    Route::patch('/snippets/{id}/rename', [SnippetReferenceController::class, 'rename']);
     Route::delete('/snippets/{id}', [SnippetReferenceController::class, 'destroy']);
     Route::post('/snippets/{id}/verify', [SnippetReferenceController::class, 'verify']);
 });

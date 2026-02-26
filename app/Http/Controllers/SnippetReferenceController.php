@@ -185,6 +185,52 @@ class SnippetReferenceController extends Controller
     }
 
     /**
+     * Rename a snippet's reference text.
+     */
+    public function rename(Request $request, string $snippetId)
+    {
+        try {
+            $snippet = SnippetReference::findOrFail($snippetId);
+
+            // Verify the collection belongs to the user
+            Item::where('id', $snippet->collection_item_id)
+                ->where('user_id', Auth::id())
+                ->firstOrFail();
+
+            $validated = $request->validate([
+                'reference_text' => 'required|string|max:10000',
+            ]);
+
+            $snippet->updateReferenceText($validated['reference_text']);
+
+            Log::info('Renamed snippet', [
+                'snippet_id' => $snippetId,
+                'new_text' => $validated['reference_text'],
+            ]);
+
+            return response()->json([
+                'data' => [
+                    'id' => $snippet->id,
+                    'reference_text' => $snippet->reference_text,
+                    'content_hash' => $snippet->content_hash,
+                    'last_verified_at' => $snippet->last_verified_at->toISOString(),
+                    'updated_at' => $snippet->updated_at->toISOString(),
+                ],
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to rename snippet', [
+                'snippet_id' => $snippetId,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'error' => 'Failed to rename snippet',
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
      * Delete a snippet.
      */
     public function destroy(string $snippetId)

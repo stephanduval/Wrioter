@@ -162,6 +162,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onBeforeUnmount } from 'vue'
+import { storeToRefs } from 'pinia'
 import {
   VProgressLinear,
   VAlert,
@@ -198,25 +199,26 @@ const props = defineProps<Props>()
 
 // Store
 const store = useSnippetCollectionStore()
+const {
+  currentCollection: collection,
+  snippets,
+  stats,
+  isLoading,
+  hasGhosts,
+} = storeToRefs(store)
 
 // Local state
 const currentViewMode = ref<ViewMode>('corkboard')
 const isVerifying = ref(false)
 const storeError = ref<string | null>(null)
 
-// Computed from store
-const collection = computed(() => store.currentCollection.value)
-const snippets = computed(() => store.snippets.value)
-const stats = computed(() => store.stats.value)
-const isLoading = computed(() => store.isLoading.value)
-const hasGhosts = computed(() => store.hasGhosts.value)
-
 // Adapt collection to FolderData shape for view components
 const collectionAsFolder = computed<FolderData | null>(() => {
-  if (!collection.value) return null
+  const col = collection.value
+  if (!col) return null
   return {
-    id: collection.value.id,
-    title: collection.value.title,
+    id: col.id,
+    title: col.title,
     type: 'folder',
     manuscript_id: props.manuscriptId,
   }
@@ -224,7 +226,10 @@ const collectionAsFolder = computed<FolderData | null>(() => {
 
 // Adapt SnippetReference[] → FolderItem[] for view components
 const adaptedItems = computed<FolderItem[]>(() => {
-  return snippets.value.map(snippet => {
+  const items = snippets.value
+  if (!items) return []
+
+  return items.map(snippet => {
     const text = snippet.reference_text || ''
     const wordCount = text.split(/\s+/).filter(w => w.length > 0).length
 

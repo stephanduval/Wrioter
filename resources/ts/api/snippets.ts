@@ -138,6 +138,22 @@ export const snippetsApi = {
   },
 
   /**
+   * Duplicate a collection with all its snippet references
+   */
+  async duplicateCollection(
+    manuscriptId: number,
+    collectionId: number
+  ): Promise<SnippetCollection> {
+    const response = await $api(
+      `/manuscripts/${manuscriptId}/snippet-collections/${collectionId}/duplicate`,
+      {
+        method: 'POST',
+      }
+    )
+    return response.data
+  },
+
+  /**
    * Verify all snippets in a collection
    */
   async verifyAll(collectionId: number): Promise<VerifyAllResult> {
@@ -193,6 +209,17 @@ export const snippetsApi = {
     const response = await $api(`/snippets/${snippetId}`, {
       method: 'PUT',
       body: payload,
+    })
+    return response.data
+  },
+
+  /**
+   * Rename a snippet's reference text
+   */
+  async renameSnippet(snippetId: number, referenceText: string): Promise<SnippetReference> {
+    const response = await $api(`/snippets/${snippetId}/rename`, {
+      method: 'PATCH',
+      body: { reference_text: referenceText },
     })
     return response.data
   },

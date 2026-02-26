@@ -270,13 +270,10 @@ export const useManuscriptStore = defineStore('manuscript', () => {
         })
 
         sortedRefs.forEach(ref => {
-          const truncatedText = ref.reference_text.length > 40
-            ? ref.reference_text.substring(0, 40) + '...'
-            : ref.reference_text
           const snippetNode: TreeNode = {
             id: `snippet-${ref.id}`,
             itemId: ref.id,
-            title: truncatedText,
+            title: ref.reference_text,
             type: 'snippet_reference' as NodeType,
             icon: getIconForItemType('snippet_reference'),
             path: '',

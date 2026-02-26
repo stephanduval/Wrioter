@@ -161,6 +161,28 @@ export const useSnippetCollectionStore = defineStore('snippetCollection', () => 
     }
   }
 
+  const renameSnippet = async (snippetId: number, newText: string) => {
+    try {
+      state.value.error = null
+
+      const updatedSnippet = await snippetsApi.renameSnippet(snippetId, newText)
+
+      // Update local state
+      const snippet = state.value.snippets.find(s => s.id === snippetId)
+      if (snippet) {
+        snippet.reference_text = updatedSnippet.reference_text
+        snippet.last_verified_at = updatedSnippet.last_verified_at
+      }
+
+      console.log(`Renamed snippet ${snippetId}`)
+      return updatedSnippet
+    } catch (error) {
+      console.error('Failed to rename snippet:', error)
+      state.value.error = error instanceof Error ? error.message : 'Failed to rename snippet'
+      return null
+    }
+  }
+
   const deleteSnippet = async (snippetId: number) => {
     try {
       state.value.error = null
@@ -288,6 +310,36 @@ export const useSnippetCollectionStore = defineStore('snippetCollection', () => 
     }
   }
 
+  const duplicateCollection = async (
+    manuscriptId: number,
+    collectionId: number
+  ): Promise<SnippetCollection | null> => {
+    try {
+      state.value.isLoading = true
+      state.value.error = null
+
+      const collection = await snippetsApi.duplicateCollection(manuscriptId, collectionId)
+      state.value.collections.push(collection)
+
+      console.log(`Duplicated snippet collection: "${collection.title}"`)
+
+      // Emit dataSync event so manuscript store refreshes the tree
+      dataSync.emit('item:created', {
+        itemId: collection.id,
+        manuscriptId,
+        item: collection,
+      })
+
+      return collection
+    } catch (error) {
+      console.error('Failed to duplicate snippet collection:', error)
+      state.value.error = error instanceof Error ? error.message : 'Failed to duplicate collection'
+      return null
+    } finally {
+      state.value.isLoading = false
+    }
+  }
+
   const reorderSnippets = async (snippetIds: number[]) => {
     if (!state.value.currentCollection) return
 
@@ -341,7 +393,9 @@ export const useSnippetCollectionStore = defineStore('snippetCollection', () => 
     loadCollections,
     loadCollection,
     createCollection,
+    duplicateCollection,
     addSnippet,
+    renameSnippet,
     deleteSnippet,
     verifySnippet,
     verifyAll,
