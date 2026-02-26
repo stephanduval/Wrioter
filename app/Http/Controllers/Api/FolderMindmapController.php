@@ -32,6 +32,7 @@ class FolderMindmapController extends Controller
         $visibleItemIds = $this->syncService->getVisibleNodeIds($mindmap);
 
         // Count children for each item (so frontend knows which folders are expandable)
+        // Include the folder itself in the list for child count computation
         $allPositionItemIds = $mindmap->positions->pluck('item_id')->toArray();
         $childCounts = Item::whereIn('parent_id', $allPositionItemIds)
             ->whereIn('id', $allPositionItemIds)
@@ -54,6 +55,7 @@ class FolderMindmapController extends Controller
                 'z_index' => $pos->z_index,
                 'child_count' => $childCounts[$pos->item_id] ?? 0,
                 'has_children' => ($childCounts[$pos->item_id] ?? 0) > 0,
+                'is_root_folder' => $pos->item_id == $mindmap->folder_id,
             ])->values();
 
         // Transform ghosts for frontend
@@ -118,12 +120,19 @@ class FolderMindmapController extends Controller
      */
     public function toggleCollapse(int $folderId, int $itemId): JsonResponse
     {
+        $mindmap = $this->syncService->getOrCreateAndSync($folderId, Auth::id());
+
+        // Prevent collapsing the root folder itself
+        if ($itemId == $mindmap->folder_id) {
+            return response()->json([
+                'error' => 'Cannot collapse the root folder'
+            ], 400);
+        }
+
         $item = Item::where('id', $itemId)
             ->where('user_id', Auth::id())
             ->where('type', 'folder')
             ->firstOrFail();
-
-        $mindmap = $this->syncService->getOrCreateAndSync($folderId, Auth::id());
 
         $position = MindmapItemPosition::where('mindmap_id', $mindmap->id)
             ->where('item_id', $itemId)

@@ -73,11 +73,17 @@
       </template>
 
       <template #node-folder="{ data, id }">
-        <div class="vue-flow__node-folder" :class="{ 'folder-collapsed': data.isCollapsed }">
+        <div
+          class="vue-flow__node-folder"
+          :class="{
+            'folder-collapsed': data.isCollapsed,
+            'folder-root': data.isRootFolder
+          }"
+        >
           <Handle type="target" position="top" :connectable="true" />
           <div class="folder-header">
             <button
-              v-if="data.hasChildren"
+              v-if="data.isCollapsible !== false && data.hasChildren"
               class="collapse-toggle"
               @click.stop="emit('toggle-collapse', id)"
             >
@@ -397,6 +403,13 @@ defineExpose({
   box-shadow: 0 1px 3px rgba(0, 0, 0, 20%);
   color: white;
   font-size: 11px;
+  font-weight: 700;
+}
+
+.vue-flow__node-folder.folder-root {
+  border: 3px solid rgba(255, 255, 255, 60%);
+  min-width: 220px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 15%), 0 0 20px rgba(102, 126, 234, 30%);
   font-weight: 700;
 }
 /* stylelint-enable liberty/use-logical-spec, order/properties-order */

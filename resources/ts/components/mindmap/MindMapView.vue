@@ -394,6 +394,13 @@ function handleEdgesChange(changes: any[]) {
 
 async function handleToggleCollapse(nodeId: string) {
   try {
+    // Check if node is root folder
+    const node = mindmapStore.nodes.find(n => n.id === nodeId)
+    if (node?.data?.isRootFolder) {
+      console.warn('Cannot collapse root folder')
+      return
+    }
+
     await mindmapStore.toggleNodeCollapse(nodeId)
   } catch (error: any) {
     console.error('Failed to toggle collapse:', error)

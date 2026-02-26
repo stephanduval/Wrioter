@@ -588,6 +588,12 @@ export const useMindmapStore = defineStore('mindmap', () => {
     const node = nodes.value.find(n => n.id === nodeId)
     if (!node || !currentMindmap.value) return
 
+    // Don't allow collapsing the root folder
+    if (node.data?.isRootFolder) {
+      console.warn('[mindmap store] Cannot collapse root folder')
+      return
+    }
+
     const itemId = node.data?.itemId
     if (!itemId) return
 
@@ -619,6 +625,9 @@ export const useMindmapStore = defineStore('mindmap', () => {
             isCollapsed: n.is_collapsed ?? false,
             hasChildren: n.has_children ?? false,
             childCount: n.child_count ?? 0,
+            isRootFolder: n.is_root_folder ?? false,
+            isCollapsible: !(n.is_root_folder ?? false) && (n.has_children ?? false),
+            isDeletable: !(n.is_root_folder ?? false),
           },
         }))
 
@@ -760,6 +769,9 @@ export const useMindmapStore = defineStore('mindmap', () => {
             isCollapsed: node.is_collapsed ?? false,
             hasChildren: node.has_children ?? false,
             childCount: node.child_count ?? 0,
+            isRootFolder: node.is_root_folder ?? false,
+            isCollapsible: !(node.is_root_folder ?? false) && (node.has_children ?? false),
+            isDeletable: !(node.is_root_folder ?? false),
           },
         }))
 

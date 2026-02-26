@@ -35,6 +35,31 @@ class FolderMindmapSyncService
     }
 
     /**
+     * Ensure the folder itself has a position record (root node).
+     */
+    protected function ensureFolderRootNode(WritingMindmap $mindmap): void
+    {
+        // The folder itself should appear as the root node
+        $folderItem = Item::findOrFail($mindmap->folder_id);
+
+        // Check if position already exists
+        $existingPosition = MindmapItemPosition::where('mindmap_id', $mindmap->id)
+            ->where('item_id', $mindmap->folder_id)
+            ->first();
+
+        if (!$existingPosition) {
+            // Create root position at top center
+            MindmapItemPosition::create([
+                'mindmap_id' => $mindmap->id,
+                'item_id' => $mindmap->folder_id,
+                'position' => ['x' => 400, 'y' => 50],
+                'style' => $mindmap->getDefaultStyleForItem($folderItem),
+                'is_collapsed' => false, // Root is never collapsed
+            ]);
+        }
+    }
+
+    /**
      * Sync mindmap with current folder contents.
      *
      * This is the core smart-sync algorithm that preserves user work
@@ -45,6 +70,9 @@ class FolderMindmapSyncService
         if (!$mindmap->folder_id) return;
 
         DB::transaction(function () use ($mindmap) {
+            // Ensure folder itself is on the canvas as root node
+            $this->ensureFolderRootNode($mindmap);
+
             // Get all items under this folder recursively (including nested folder children)
             $folderItems = $this->getAllFolderItems($mindmap->folder_id, $mindmap->user_id);
 
@@ -140,6 +168,11 @@ class FolderMindmapSyncService
     protected function handleRemovedItems(WritingMindmap $mindmap, array $removedItemIds): void
     {
         foreach ($removedItemIds as $itemId) {
+            // NEVER remove or ghost the root folder itself
+            if ($itemId == $mindmap->folder_id) {
+                continue;
+            }
+
             // Check if item still exists (moved, not deleted)
             $item = Item::find($itemId);
 
@@ -170,37 +203,71 @@ class FolderMindmapSyncService
     }
 
     /**
-     * Compute hierarchy edges from parent_id relationships.
+     * Compute hierarchy edges from parent_id relationships and item_order.
      *
      * These are NOT stored - computed on the fly from folder structure.
      * Returns edge data suitable for frontend rendering.
      *
-     * This recursively fetches all items under the folder (at any depth level)
-     * and creates hierarchy edges for item-to-item parent-child relationships.
-     * Folder-to-item relationships are NOT shown (only item-to-item nesting).
+     * Creates edges for:
+     * 1. Parent → first child (based on parent_id)
+     * 2. Child → next sibling (based on item_order within same parent)
+     *
+     * This shows both containment (parent→child) AND sequential flow (item→next item).
      */
     public function computeHierarchyEdges(WritingMindmap $mindmap): array
     {
         if (!$mindmap->folder_id) return [];
 
-        // Get all items under this folder at any depth level
+        // Get all items under this folder at any depth level (already ordered by item_order)
         $items = $this->getAllFolderItems($mindmap->folder_id, $mindmap->user_id);
         $itemIds = $items->pluck('id')->toArray();
 
+        // Add folder ID as a valid parent
+        $validParentIds = array_merge([$mindmap->folder_id], $itemIds);
+
+        // Group items by parent_id
+        $itemsByParent = $items->groupBy('parent_id');
+
         $edges = [];
-        foreach ($items as $item) {
-            // Only create edge if parent is another item in this folder
-            if ($item->parent_id && in_array($item->parent_id, $itemIds)) {
-                $edges[] = [
-                    'id' => 'hierarchy_' . $item->parent_id . '_' . $item->id,
-                    'source' => 'item-' . $item->parent_id,
-                    'target' => 'item-' . $item->id,
-                    'type' => 'hierarchy',
-                    'data' => [
-                        'is_hierarchy' => true,
-                        'editable' => false,
-                    ],
-                ];
+
+        foreach ($itemsByParent as $parentId => $children) {
+            // Skip if parent is not in our mindmap
+            if (!in_array($parentId, $validParentIds)) {
+                continue;
+            }
+
+            // Sort children by item_order (should already be sorted from query, but ensure it)
+            $sortedChildren = $children->sortBy('item_order')->values();
+
+            foreach ($sortedChildren as $index => $child) {
+                if ($index === 0) {
+                    // First child: create edge from parent to first child
+                    $edges[] = [
+                        'id' => 'hierarchy_' . $parentId . '_' . $child->id,
+                        'source' => 'item-' . $parentId,
+                        'target' => 'item-' . $child->id,
+                        'type' => 'hierarchy',
+                        'data' => [
+                            'is_hierarchy' => true,
+                            'editable' => false,
+                            'is_sequential' => false, // parent→child containment
+                        ],
+                    ];
+                } else {
+                    // Subsequent children: create edge from previous sibling (sequential flow)
+                    $previousChild = $sortedChildren[$index - 1];
+                    $edges[] = [
+                        'id' => 'hierarchy_seq_' . $previousChild->id . '_' . $child->id,
+                        'source' => 'item-' . $previousChild->id,
+                        'target' => 'item-' . $child->id,
+                        'type' => 'hierarchy',
+                        'data' => [
+                            'is_hierarchy' => true,
+                            'editable' => false,
+                            'is_sequential' => true, // sibling→sibling sequential flow
+                        ],
+                    ];
+                }
             }
         }
 
@@ -211,6 +278,7 @@ class FolderMindmapSyncService
      * Get the IDs of items that should be visible on the mindmap canvas.
      *
      * An item is visible if:
+     * - It is the root folder itself (always visible)
      * - It is a direct child of the viewed folder (always visible as top-level)
      * - OR none of its ancestor folders (within this mindmap) are collapsed
      */
@@ -229,6 +297,12 @@ class FolderMindmapSyncService
         $visibleIds = [];
 
         foreach ($positions as $position) {
+            // Root folder is ALWAYS visible
+            if ($position->item_id == $mindmap->folder_id) {
+                $visibleIds[] = $position->item_id;
+                continue;
+            }
+
             if (!$position->item) continue;
 
             // Direct children of the viewed folder are always visible
@@ -270,9 +344,10 @@ class FolderMindmapSyncService
      */
     protected function getAllFolderItems(int $folderId, int $userId)
     {
-        // Start with direct children of the folder
+        // Start with direct children of the folder, ordered by item_order for sequential hierarchy
         $directChildren = Item::where('parent_id', $folderId)
             ->where('user_id', $userId)
+            ->orderBy('item_order')
             ->get();
 
         $allItems = $directChildren->collect();
@@ -293,6 +368,7 @@ class FolderMindmapSyncService
     {
         $children = Item::where('parent_id', $itemId)
             ->where('user_id', $userId)
+            ->orderBy('item_order')
             ->get();
 
         $allDescendants = $children->collect();
