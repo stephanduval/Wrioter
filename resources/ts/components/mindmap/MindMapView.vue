@@ -74,7 +74,7 @@
     </VToolbar>
 
     <!-- Mindmap Canvas -->
-    <div class="mindmap-canvas" @contextmenu="handleEmptySpaceContextMenu">
+    <div class="mindmap-canvas" @contextmenu.prevent="handleEmptySpaceContextMenu">
       <MindMapCanvas
         ref="mindmapCanvasRef"
         v-if="currentMindmap && mindmapNodes.length > 0"
@@ -87,6 +87,7 @@
         @edges-change="handleEdgesChange"
         @connect="handleConnectNode"
         @toggle-collapse="handleToggleCollapse"
+        @pane-context-menu="handlePaneContextMenu"
       />
 
       <!-- Empty State -->
@@ -201,6 +202,8 @@ const manuscriptId = computed(() =>
 
 // Empty space context menu handler
 function handleEmptySpaceContextMenu(event: MouseEvent) {
+  event.preventDefault()
+
   const target = event.target as HTMLElement
 
   // If clicking on a node, don't show empty space menu
@@ -222,6 +225,11 @@ function handleEmptySpaceContextMenu(event: MouseEvent) {
   })
 
   contextMenu.show(event, { items: menuItems })
+}
+
+// Handle pane context menu from Vue Flow
+function handlePaneContextMenu(event: MouseEvent) {
+  handleEmptySpaceContextMenu(event)
 }
 
 // Refs
