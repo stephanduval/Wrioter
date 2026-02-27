@@ -157,6 +157,7 @@
             <div class="page-break-line" />
             <VChip
               size="x-small"
+              color="primary"
               variant="tonal"
               class="page-break-label"
             >
@@ -392,14 +393,14 @@ watch(
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  background-color: #f5f5f5;
+  background-color: rgb(var(--v-theme-surface));
   padding: 2rem;
 }
 
 .manuscript-container {
   max-width: 800px;
   margin: 0 auto;
-  background-color: white;
+  background-color: rgb(var(--v-theme-surface));
   padding: 3rem;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   border-radius: 4px;
