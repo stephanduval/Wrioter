@@ -237,6 +237,7 @@ class ManuscriptController extends Controller
                             'items.parent_id',
                             'items.title',
                             'items.type',
+                            'items.item_order',
                             'items.word_count',
                             'items.character_count',
                             'items.synopsis',
@@ -275,13 +276,14 @@ class ManuscriptController extends Controller
                             'type' => $item->type,
                             'word_count' => $item->word_count,
                             'character_count' => $item->character_count,
-                            'item_order' => $manuscriptItem->order_index,
+                            'item_order' => $item->item_order ?? 0,
                             'synopsis' => $item->synopsis,
                             'metadata' => $item->metadata,
                             'include_in_compile' => $item->include_in_compile,
                             'updated_at' => $item->updated_at->toISOString(),
                             'has_comments' => $item->comments_count > 0,
                             'comment_count' => $item->comments_count,
+                            'order_index' => $manuscriptItem->order_index,
                         ];
 
                         // Include snippet references for collection items
