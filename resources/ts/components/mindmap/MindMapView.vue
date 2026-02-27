@@ -40,7 +40,7 @@
       </VBtn>
 
       <VBtn
-        v-if="selectedNodeId"
+        v-if="mindmapStore.selectedNodes.length > 0"
         color="primary"
         variant="tonal"
         size="small"
@@ -51,6 +51,16 @@
       </VBtn>
 
       <VSpacer />
+
+      <VChip
+        v-if="mindmapStore.selectedNodes.length > 1"
+        size="small"
+        color="primary"
+        variant="tonal"
+        class="me-2"
+      >
+        {{ mindmapStore.selectedNodes.length }} selected
+      </VChip>
 
       <VChip
         v-if="hasUnsavedChanges"
@@ -80,6 +90,7 @@
         v-if="currentMindmap && mindmapNodes.length > 0"
         :nodes="mindmapNodes"
         :edges="mindmapEdges"
+        :selected-node-ids="mindmapStore.selectedNodes"
         @node-click="handleNodeClick"
         @node-double-click="handleNodeDoubleClick"
         @title-updated="handleTitleUpdated"
@@ -88,6 +99,7 @@
         @connect="handleConnectNode"
         @toggle-collapse="handleToggleCollapse"
         @pane-context-menu="handlePaneContextMenu"
+        @selection-change="handleSelectionChange"
       />
 
       <!-- Empty State -->
@@ -232,13 +244,17 @@ function handlePaneContextMenu(event: MouseEvent) {
   handleEmptySpaceContextMenu(event)
 }
 
+// Handle selection changes from Vue Flow (box select, click-to-deselect, etc.)
+function handleSelectionChange(selectedIds: string[]) {
+  mindmapStore.syncSelectionFromVueFlow(selectedIds)
+}
+
 // Refs
 const mindmapCanvasRef = ref<InstanceType<typeof MindMapCanvas> | null>(null)
 
 // Local state
 const nodeEditDialog = ref(false)
 const editingNode = ref<any>(null)
-const selectedNodeId = ref<string | null>(null)
 const isSaving = ref(false)
 
 const nodeForm = ref({
@@ -325,10 +341,9 @@ function handleAddNode() {
   nodeEditDialog.value = true
 }
 
-function handleNodeClick(_event: MouseEvent, node: any) {
+function handleNodeClick(event: MouseEvent, node: any) {
   if (!node) return
-  selectedNodeId.value = node.id
-  mindmapStore.selectNode(node.id)
+  mindmapStore.selectNode(node.id, event.shiftKey)
 }
 
 function handleNodeDoubleClick(_event: MouseEvent, node: any) {

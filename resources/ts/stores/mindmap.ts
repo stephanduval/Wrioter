@@ -697,15 +697,41 @@ export const useMindmapStore = defineStore('mindmap', () => {
   }
 
   // Selection
+
+  // Get all descendant node IDs of a given node by traversing hierarchy edges
+  const getDescendantNodeIds = (nodeId: string): string[] => {
+    const descendants: string[] = []
+    const childEdges = edges.value.filter(
+      e => e.data?.is_hierarchy && e.source === nodeId
+    )
+    for (const edge of childEdges) {
+      descendants.push(edge.target)
+      descendants.push(...getDescendantNodeIds(edge.target))
+    }
+    return descendants
+  }
+
   const selectNode = (nodeId: string, multi = false) => {
+    const node = nodes.value.find(n => n.id === nodeId)
+    const isFolder = node?.type === 'folder'
+
+    // Build list of nodes to select (folder + visible children)
+    let targetIds = [nodeId]
+    if (isFolder && !node?.data?.isCollapsed) {
+      targetIds = [nodeId, ...getDescendantNodeIds(nodeId)]
+    }
+
     if (multi) {
-      if (selectedNodes.value.includes(nodeId)) {
-        selectedNodes.value = selectedNodes.value.filter(id => id !== nodeId)
+      // Toggle: if the clicked node is already selected, deselect all targets
+      const isCurrentlySelected = selectedNodes.value.includes(nodeId)
+      if (isCurrentlySelected) {
+        selectedNodes.value = selectedNodes.value.filter(id => !targetIds.includes(id))
       } else {
-        selectedNodes.value.push(nodeId)
+        const newIds = targetIds.filter(id => !selectedNodes.value.includes(id))
+        selectedNodes.value = [...selectedNodes.value, ...newIds]
       }
     } else {
-      selectedNodes.value = [nodeId]
+      selectedNodes.value = targetIds
     }
     selectedEdges.value = []
   }
@@ -721,6 +747,12 @@ export const useMindmapStore = defineStore('mindmap', () => {
       selectedEdges.value = [edgeId]
     }
     selectedNodes.value = []
+  }
+
+  // Sync selection state from Vue Flow's internal selection (e.g. box select)
+  const syncSelectionFromVueFlow = (selectedIds: string[]) => {
+    selectedNodes.value = selectedIds
+    selectedEdges.value = []
   }
 
   const clearSelection = () => {
@@ -1089,6 +1121,8 @@ export const useMindmapStore = defineStore('mindmap', () => {
     // Selection
     selectNode,
     selectEdge,
+    syncSelectionFromVueFlow,
+    getDescendantNodeIds,
     clearSelection,
 
     // Reset

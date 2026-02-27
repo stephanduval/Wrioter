@@ -11,6 +11,10 @@
       :connect-on-click="false"
       :edges-updatable="true"
       :pan-on-drag="isPanEnabled"
+      :selection-key-code="'Shift'"
+      :multi-selection-key-code="'Shift'"
+      :elements-selectable="true"
+      selection-mode="partial"
       @nodes-change="onNodesChange"
       @edges-change="onEdgesChange"
       @node-click="onNodeClick"
@@ -171,6 +175,7 @@ import '@vue-flow/core/dist/theme-default.css'
 const props = defineProps<{
   nodes: any[]
   edges: any[]
+  selectedNodeIds?: string[]
 }>()
 
 // Watch for edge changes
@@ -195,16 +200,20 @@ const emit = defineEmits<{
   'update:edges': [edges: any[]]
   'title-updated': [nodeId: string, newTitle: string]
   'toggle-collapse': [nodeId: string]
+  'selection-change': [selectedIds: string[]]
 }>()
 
 // Refs
 const vueFlowRef = ref(null)
-const { fitView, zoomIn, zoomOut, project } = useVueFlow()
+const { fitView, zoomIn, zoomOut, project, getSelectedNodes, addSelectedNodes, removeSelectedNodes } = useVueFlow()
 const isPanEnabled = ref(true)
 
-// Model binding
+// Model binding — inject `selected` property from parent's selection state
 const modelNodes = computed({
-  get: () => props.nodes,
+  get: () => props.nodes.map(node => ({
+    ...node,
+    selected: props.selectedNodeIds?.includes(node.id) ?? false,
+  })),
   set: (value) => emit('update:nodes', value),
 })
 
@@ -262,6 +271,14 @@ const cancelEditing = () => {
 
 // Event handlers
 const onNodesChange = (changes: any[]) => {
+  const selectionChanges = changes.filter(c => c.type === 'select')
+  if (selectionChanges.length > 0) {
+    // Emit current selected node IDs after Vue Flow processes the changes
+    nextTick(() => {
+      const ids = getSelectedNodes.value.map(n => n.id)
+      emit('selection-change', ids)
+    })
+  }
   emit('nodes-change', changes)
 }
 
@@ -320,6 +337,9 @@ defineExpose({
   project,
   startEditing,
   editingNodeId,
+  getSelectedNodes,
+  addSelectedNodes,
+  removeSelectedNodes,
 })
 </script>
 
@@ -348,7 +368,12 @@ defineExpose({
 
 .vue-flow__node-default.selected {
   border-color: rgb(var(--v-theme-primary));
-  box-shadow: 0 0 0 2px rgba(var(--v-theme-primary-rgb), 0.2);
+  box-shadow: 0 0 0 3px rgba(var(--v-theme-primary-rgb), 30%);
+}
+
+.vue-flow__node-text.selected {
+  border-color: rgb(var(--v-theme-primary));
+  box-shadow: 0 0 0 3px rgba(var(--v-theme-primary-rgb), 30%);
 }
 
 /* Text Node */
@@ -423,11 +448,19 @@ defineExpose({
   font-weight: 700;
 }
 
+.vue-flow__node-folder.selected {
+  box-shadow: 0 0 0 3px rgba(var(--v-theme-primary-rgb), 40%), 0 4px 6px rgba(0, 0, 0, 10%);
+}
+
 .vue-flow__node-folder.folder-root {
   border: 3px solid rgba(255, 255, 255, 60%);
   min-width: 220px;
   box-shadow: 0 8px 16px rgba(0, 0, 0, 15%), 0 0 20px rgba(102, 126, 234, 30%);
   font-weight: 700;
+}
+
+.vue-flow__node-folder.folder-root.selected {
+  box-shadow: 0 0 0 3px rgba(var(--v-theme-primary-rgb), 40%), 0 8px 16px rgba(0, 0, 0, 15%);
 }
 /* stylelint-enable liberty/use-logical-spec, order/properties-order */
 
@@ -441,6 +474,10 @@ defineExpose({
   min-width: 140px;
   text-align: center;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.vue-flow__node-character.selected {
+  box-shadow: 0 0 0 3px rgba(var(--v-theme-primary-rgb), 40%), 0 4px 6px rgba(0, 0, 0, 10%);
 }
 
 /* Research Node */

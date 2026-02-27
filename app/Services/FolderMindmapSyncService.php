@@ -236,8 +236,8 @@ class FolderMindmapSyncService
                 continue;
             }
 
-            // Sort children by item_order (should already be sorted from query, but ensure it)
-            $sortedChildren = $children->sortBy('item_order')->values();
+            // Sort children by item_order descending (to match layout service ordering)
+            $sortedChildren = $children->sortByDesc('item_order')->values();
 
             foreach ($sortedChildren as $index => $child) {
                 if ($index === 0) {
