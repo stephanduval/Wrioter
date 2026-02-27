@@ -158,7 +158,7 @@
             <VChip
               size="x-small"
               color="primary"
-              variant="tonal"
+              variant="flat"
               class="page-break-label"
             >
               {{ item.title }}
