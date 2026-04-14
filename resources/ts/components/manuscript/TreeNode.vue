@@ -30,17 +30,23 @@
     >
       <!-- Node Content -->
       <div class="node-content">
-        <!-- Expansion Toggle -->
-        <button
+        <!-- Expansion Toggle (only rendered for folders) -->
+        <div
           v-if="hasChildren && !sidebarCollapsed"
           class="expansion-toggle"
-          @click.stop="handleToggleExpansion"
+          role="button"
+          tabindex="0"
+          @click.stop="handleToggleExpansion()"
+          @keydown.enter.stop="handleToggleExpansion()"
+          @keydown.space.prevent.stop="handleToggleExpansion()"
         >
           <VIcon
             :icon="isExpanded ? 'bx-chevron-down' : 'bx-chevron-right'"
             size="14"
           />
-        </button>
+        </div>
+
+        <!-- Spacer for items without expansion toggle -->
         <div v-else class="expansion-spacer" />
 
         <!-- Node Icon -->
@@ -110,10 +116,44 @@
         <!-- Status Indicator -->
         <div class="status-dot" :class="`status-${node.metadata.status}`" />
       </div>
+
+      <!-- File SVG (cyan curve for non-folder nested items) -->
+      <svg
+        v-if="level > 0 && node.type !== 'folder'"
+        class="tree-connector-svg"
+        viewBox="0 0 40 100"
+        preserveAspectRatio="none"
+        :style="{ insetInlineStart: `${level * 20}px` }"
+      >
+        <path
+          d="M20 10C20 10 0 14 0 0V60"
+          class="connector-path"
+          style="stroke: cyan;"
+        />
+      </svg>
     </div>
 
-    <!-- Child Nodes -->
-    <div v-if="canShowChildren" class="child-nodes">
+    <!-- Child Nodes + vertical connectors for each nesting level -->
+    <div v-if="canShowChildren" class="child-nodes-wrapper" style="position: relative;">
+      <!-- Multiple vertical lines - one for each nesting level -->
+      <svg
+        v-for="(xPos, idx) in verticalLinePositions"
+        :key="`vertical-${idx}`"
+        class="folder-connector-svg"
+        :viewBox="`0 0 10 ${childNodesHeight}`"
+        preserveAspectRatio="none"
+        :style="{
+          blockSize: `${childNodesHeight}px`,
+          insetInlineStart: `${xPos + 5}px`
+        }"
+      >
+        <path
+          :d="`M 5 0 V${childNodesHeight}`"
+          class="connector-path"
+          :style="`stroke: ${['yellow', 'blue', 'green', 'orange', 'purple'][idx % 5]};`"
+        />
+      </svg>
+      <div class="child-nodes" ref="childNodesRef">
       <TreeNode
         v-for="child in node.children"
         :key="child.id"
@@ -139,6 +179,7 @@
           $emit('scrivening-selection-toggle', $event)
         "
       />
+    </div>
     </div>
 
     <!-- Empty Folder Hint -->
@@ -258,6 +299,38 @@ const canShowChildren = computed(
 
 // Track local hover state for this specific node
 const localDropPosition = ref<DropPosition>(null);
+
+// Folder connector height (tracks child-nodes div height via ResizeObserver)
+const childNodesRef = ref<HTMLElement | null>(null);
+const childNodesHeight = ref(0);
+let resizeObserver: ResizeObserver | null = null;
+
+watch(childNodesRef, (el) => {
+  resizeObserver?.disconnect();
+  if (el) {
+    childNodesHeight.value = el.offsetHeight;
+    resizeObserver = new ResizeObserver(() => {
+      childNodesHeight.value = el.offsetHeight;
+    });
+    resizeObserver.observe(el);
+  } else {
+    childNodesHeight.value = 0;
+  }
+});
+
+onBeforeUnmount(() => resizeObserver?.disconnect());
+
+// Determine how many vertical connector lines to draw
+// - One line for each ancestor level (0 lines at level 0, 1 at level 1, etc.)
+// - Show only if this node has children (folder with expanded children)
+const verticalLineCount = computed(() => {
+  return hasChildren.value && canShowChildren.value ? props.level : 0;
+});
+
+// Generate x-positions for each vertical line (spaced 20px apart, same as indentation)
+const verticalLinePositions = computed(() => {
+  return Array.from({ length: verticalLineCount.value }, (_, i) => i * 20);
+});
 
 // Methods
 const handleNodeClick = (event: MouseEvent) => {
@@ -560,6 +633,7 @@ onBeforeUnmount(() => {
 <style scoped lang="scss">
 .tree-node {
   position: relative;
+  border: 1px solid transparent;
   border-radius: 4px;
   cursor: grab;
   margin-block: 2px;
@@ -611,11 +685,9 @@ onBeforeUnmount(() => {
 
     .expansion-toggle {
       display: flex;
+      flex-shrink: 0;
       align-items: center;
       justify-content: center;
-      padding: 0;
-      border: none;
-      background: none;
       block-size: 20px;
       cursor: pointer;
       inline-size: 20px;
@@ -627,23 +699,32 @@ onBeforeUnmount(() => {
     }
 
     .expansion-spacer {
+      flex-shrink: 0;
       inline-size: 20px;
     }
 
     .node-icon {
       flex-shrink: 0;
+      block-size: 16px;
+      inline-size: 16px;
     }
 
     .node-label {
       display: flex;
       flex: 1;
       align-items: center;
+      padding: 0;
+      margin: 0;
       cursor: pointer;
       gap: 8px;
       min-inline-size: 0;
 
       .node-title {
         overflow: hidden;
+        flex: 1;
+        padding: 0;
+        margin: 0;
+        min-inline-size: 0;
         text-overflow: ellipsis;
         white-space: nowrap;
       }
@@ -741,10 +822,70 @@ onBeforeUnmount(() => {
       inset-inline: 0;
     }
   }
+
+  // SVG Tree connector (animated curved lines for nested items)
+  .tree-connector-svg {
+    position: absolute;
+    animation: fade-in-connector 0.6s ease-out 0.2s forwards;
+    inline-size: 40px;
+    inset-block-start: 0;
+    inset-inline-start: 0;
+    opacity: 0;
+    pointer-events: none;
+
+    .connector-path {
+      animation: draw-connector 0.8s ease-out 0.1s forwards;
+      fill: none;
+      stroke: #fff;
+      stroke-dasharray: 30;
+      stroke-dashoffset: 30;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-width: 1.5;
+    }
+
+    &:hover .connector-path {
+      stroke: #d1d5db;
+      stroke-width: 2;
+    }
+  }
+}
+
+@keyframes fade-in-connector {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes draw-connector {
+  from {
+    stroke-dashoffset: 30;
+  }
+
+  to {
+    stroke-dashoffset: 0;
+  }
 }
 
 .child-nodes {
   margin-inline-start: 0;
+}
+
+.child-nodes-wrapper {
+  position: relative;
+
+  .folder-connector-svg {
+    position: absolute;
+    overflow: visible;
+    inline-size: 10px;
+    inset-block-start: 0;
+    inset-inline-start: 0;
+    pointer-events: none;
+  }
 }
 
 .empty-folder-hint {
