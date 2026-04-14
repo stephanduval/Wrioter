@@ -4,7 +4,10 @@ import { getI18n } from '@/plugins/i18n'
 import { useItemStore } from '@/stores/item'
 import { useManuscriptStore } from '@/stores/manuscript'
 import { useSelectionStore } from '@/stores/selection'
+import { useSnippetCollectionStore } from '@/stores/snippetCollection'
 import { navigateTo } from '@/utils/navigation'
+import { eventBus } from '@/services/eventBus'
+import { itemsApi } from '@/api/items'
 
 interface ManuscriptItem {
   id: number
@@ -30,6 +33,16 @@ export const getItemMenuItems = (item: ManuscriptItem, manuscriptId: number): Me
   const i18n = getI18n()
   const { t } = i18n.global
 
+  const getSiblings = () => {
+    const node = manuscriptStore.findNodeById(`item-${item.itemId}`)
+    if (!node) return { siblings: [] as any[], index: -1 }
+
+    const parent = node.parent
+    const siblings = parent ? parent.children : manuscriptStore.manuscriptTree
+    const index = siblings.findIndex((s: any) => s.id === node.id)
+    return { siblings, index }
+  }
+
   const canMoveUp = () => {
     return item.order_index !== undefined && item.order_index > 0
   }
@@ -40,6 +53,14 @@ export const getItemMenuItems = (item: ManuscriptItem, manuscriptId: number): Me
 
   const isFolder = () => {
     return item.type === 'folder'
+  }
+
+  const isSnippetCollection = () => {
+    return item.type === 'snippet_collection'
+  }
+
+  const isSnippetReference = () => {
+    return item.type === 'snippet_reference'
   }
 
   const isEmptyFolder = () => {
@@ -124,6 +145,18 @@ export const getItemMenuItems = (item: ManuscriptItem, manuscriptId: number): Me
     },
     { id: 'sep-sort', separator: true, hidden: () => !isFolder() || isEmptyFolder() || hasMultiSelection() },
 
+    // Snippet Collection View Option
+    {
+      id: 'view-collection',
+      label: 'View Collection',
+      icon: 'bx-collection',
+      action: () => {
+        navigateTo(`/manuscripts/${manuscriptId}/snippet-collections/${item.itemId}/view`)
+      },
+      hidden: () => !isSnippetCollection()
+    },
+    { id: 'sep-collection-views', separator: true, hidden: () => !isSnippetCollection() },
+
     // Convert empty folder to item
     {
       id: 'convert-to-item',
@@ -188,6 +221,7 @@ export const getItemMenuItems = (item: ManuscriptItem, manuscriptId: number): Me
       id: 'new-page',
       label: t('contextMenu.item.newPage'),
       icon: 'bx-plus',
+      hidden: () => isSnippetCollection(),
       action: async () => {
         try {
           const newItem = await itemStore.createItem(manuscriptId, {
@@ -207,7 +241,7 @@ export const getItemMenuItems = (item: ManuscriptItem, manuscriptId: number): Me
       },
       hidden: () => hasMultiSelection()
     },
-    { id: 'sep-new-page', separator: true, hidden: () => hasMultiSelection() },
+    { id: 'sep-new-page', separator: true, hidden: () => hasMultiSelection() || isSnippetCollection() },
 
     // === Batch Operations (shown when multiple items selected) ===
     {
@@ -327,7 +361,7 @@ export const getItemMenuItems = (item: ManuscriptItem, manuscriptId: number): Me
       action: () => {
         navigateTo(`/manuscripts/${manuscriptId}/items/${item.id}/edit`)
       },
-      hidden: () => isFolder() || hasMultiSelection()
+      hidden: () => isFolder() || isSnippetCollection() || hasMultiSelection()
     },
     {
       id: 'view',
@@ -343,8 +377,23 @@ export const getItemMenuItems = (item: ManuscriptItem, manuscriptId: number): Me
       id: 'move-up',
       label: t('contextMenu.item.moveUp'),
       icon: 'bx-up-arrow-alt',
+      hidden: () => isSnippetCollection(),
       action: async () => {
-        console.log('Move item up:', item.id)
+        try {
+          const { siblings, index } = getSiblings()
+          if (index <= 0) return
+
+          const siblingAbove = siblings[index - 1]
+          await manuscriptStore.reorderItem({
+            sourceItemId: item.itemId,
+            targetItemId: siblingAbove.itemId,
+            position: 'above',
+            manuscriptId,
+          })
+          await manuscriptStore.fetchManuscriptItems(manuscriptId)
+        } catch (error) {
+          console.error('Failed to move item up:', error)
+        }
       },
       disabled: () => !canMoveUp(),
       hidden: () => hasMultiSelection()
@@ -354,12 +403,26 @@ export const getItemMenuItems = (item: ManuscriptItem, manuscriptId: number): Me
       label: t('contextMenu.item.moveDown'),
       icon: 'bx-down-arrow-alt',
       action: async () => {
-        console.log('Move item down:', item.id)
+        try {
+          const { siblings, index } = getSiblings()
+          if (index < 0 || index >= siblings.length - 1) return
+
+          const siblingBelow = siblings[index + 1]
+          await manuscriptStore.reorderItem({
+            sourceItemId: item.itemId,
+            targetItemId: siblingBelow.itemId,
+            position: 'below',
+            manuscriptId,
+          })
+          await manuscriptStore.fetchManuscriptItems(manuscriptId)
+        } catch (error) {
+          console.error('Failed to move item down:', error)
+        }
       },
       disabled: () => !canMoveDown(),
-      hidden: () => hasMultiSelection()
+      hidden: () => isSnippetCollection() || hasMultiSelection()
     },
-    { id: 'sep-move', separator: true, hidden: () => hasMultiSelection() },
+    { id: 'sep-move', separator: true, hidden: () => hasMultiSelection() || isSnippetCollection() },
     {
       id: 'status',
       label: t('contextMenu.item.changeStatus'),
@@ -367,7 +430,7 @@ export const getItemMenuItems = (item: ManuscriptItem, manuscriptId: number): Me
       action: () => {
         console.log('Change status for item:', item.id)
       },
-      hidden: () => hasMultiSelection()
+      hidden: () => isSnippetCollection() || hasMultiSelection()
     },
     {
       id: 'compile',
@@ -376,9 +439,9 @@ export const getItemMenuItems = (item: ManuscriptItem, manuscriptId: number): Me
       action: async () => {
         console.log('Toggle compile for item:', item.id)
       },
-      hidden: () => hasMultiSelection()
+      hidden: () => isSnippetCollection() || hasMultiSelection()
     },
-    { id: 'sep-status', separator: true, hidden: () => hasMultiSelection() },
+    { id: 'sep-status', separator: true, hidden: () => hasMultiSelection() || isSnippetCollection() },
     {
       id: 'rename',
       label: t('contextMenu.item.rename'),
@@ -400,10 +463,51 @@ export const getItemMenuItems = (item: ManuscriptItem, manuscriptId: number): Me
       id: 'duplicate',
       label: t('contextMenu.item.duplicate'),
       icon: 'bx-copy',
+      hidden: () => isSnippetReference() || hasMultiSelection(),
       action: async () => {
-        console.log('Duplicate item:', item.id)
-      },
-      hidden: () => hasMultiSelection()
+        try {
+          if (isSnippetCollection()) {
+            const snippetCollectionStore = useSnippetCollectionStore()
+            const newCollection = await snippetCollectionStore.duplicateCollection(manuscriptId, item.itemId)
+            if (newCollection) {
+              await manuscriptStore.fetchManuscriptItems(manuscriptId)
+              console.log('Snippet collection duplicated:', newCollection.id)
+            }
+          } else {
+            console.log('Duplicate item:', item.id)
+            // TODO: Implement generic item duplicate functionality
+          }
+        } catch (error) {
+          console.error('Failed to duplicate:', error)
+          alert(t('contextMenu.item.duplicateError') || 'Failed to duplicate')
+        }
+      }
+    },
+    {
+      id: 'add-to-collection',
+      label: 'Add to Collection',
+      icon: 'bx-collection',
+      hidden: () => isSnippetCollection() || isSnippetReference(),
+      action: async () => {
+        try {
+          // Fetch the full item content
+          const fullItem = await itemsApi.getItem(manuscriptId, item.id)
+          const content = fullItem.content || `[${item.title}]`
+
+          // Emit event to trigger AddToCollectionDialog
+          eventBus.emit('snippet:add-to-collection', {
+            selectedText: content,
+            sourceItemId: item.itemId,
+            manuscriptId,
+            positionData: { from: 0, to: content.length }
+          })
+
+          console.log('Add to collection triggered for item:', item.id)
+        } catch (error) {
+          console.error('Failed to add item to collection:', error)
+          alert('Failed to add item to collection. Please try again.')
+        }
+      }
     },
     { id: 'sep-rename', separator: true, hidden: () => hasMultiSelection() },
     {

@@ -591,14 +591,24 @@ const confirmRename = async () => {
   try {
     const manuscriptId = manuscriptStore.selectedManuscript?.id;
     if (manuscriptId) {
-      await manuscriptStore.renameItem(
-        manuscriptId,
-        props.node.itemId,
-        newTitle,
-      );
+      if (props.node.type === 'snippet_reference') {
+        // Rename snippet reference
+        const { useSnippetCollectionStore } = await import('@/stores/snippetCollection');
+        const snippetCollectionStore = useSnippetCollectionStore();
+        await snippetCollectionStore.renameSnippet(props.node.itemId, newTitle);
+        // Refresh tree to update display
+        await manuscriptStore.fetchManuscriptItems(manuscriptId);
+      } else {
+        // Rename regular item
+        await manuscriptStore.renameItem(
+          manuscriptId,
+          props.node.itemId,
+          newTitle,
+        );
+      }
     }
   } catch (error) {
-    console.error("Failed to rename item:", error);
+    console.error("Failed to rename:", error);
   }
 };
 

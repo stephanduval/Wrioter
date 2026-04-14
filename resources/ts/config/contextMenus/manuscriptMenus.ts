@@ -1,5 +1,5 @@
 import type { MenuItem } from '@/composables/useContextMenu'
-import { useRouter } from 'vue-router'
+import { router } from '@/plugins/1.router'
 import { useManuscriptStore } from '@/stores/manuscript'
 import { getI18n } from '@/plugins/i18n'
 
@@ -13,8 +13,11 @@ interface Manuscript {
   scrivener_uuid?: string
 }
 
-export const getManuscriptMenuItems = (manuscript: Manuscript): MenuItem[] => {
-  const router = useRouter()
+export interface ManuscriptMenuOptions {
+  onDeleteRequest?: (manuscript: Manuscript) => void
+}
+
+export const getManuscriptMenuItems = (manuscript: Manuscript, options?: ManuscriptMenuOptions): MenuItem[] => {
   const manuscriptStore = useManuscriptStore()
   const i18n = getI18n()
   const { t } = i18n.global
@@ -61,10 +64,23 @@ export const getManuscriptMenuItems = (manuscript: Manuscript): MenuItem[] => {
       icon: 'bx-trash',
       danger: true,
       action: async () => {
-        if (confirm(t('contextMenu.manuscript.deleteConfirm', { title: manuscript.title }))) {
-          console.log('Delete manuscript:', manuscript.id)
-          // TODO: Implement delete functionality when API method is available
-          alert(t('contextMenu.manuscript.deleteNotImplemented'))
+        console.log('Delete action called for manuscript:', manuscript.id, manuscript.title)
+        if (options?.onDeleteRequest) {
+          options.onDeleteRequest(manuscript)
+        } else {
+          // Fallback to browser confirm if no callback provided
+          const confirmMessage = t('contextMenu.manuscript.deleteConfirm', { title: manuscript.title })
+          if (confirm(confirmMessage || `Delete "${manuscript.title}"?`)) {
+            try {
+              console.log('User confirmed deletion of manuscript:', manuscript.id)
+              await manuscriptStore.deleteManuscript(manuscript.id)
+              console.log('Manuscript deleted successfully')
+              router.push('/manuscripts')
+            } catch (error) {
+              console.error('Failed to delete manuscript:', error)
+              alert(t('contextMenu.manuscript.deleteError') || 'Failed to delete manuscript')
+            }
+          }
         }
       },
       disabled: () => {

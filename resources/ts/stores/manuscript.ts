@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { useApi } from '@/composables/useApi'
 import { dataSync } from '@/services/dataSync'
+import { manuscriptsApi } from '@/api/manuscripts'
 
 interface Manuscript {
   id: number
@@ -121,6 +122,16 @@ export const useManuscriptStore = defineStore('manuscript', () => {
       }
       console.log(`[ManuscriptStore] Removed item ${itemId} from tree`)
     }
+  })
+
+  // Listen for item creation (e.g., new collection from snippet feature)
+  dataSync.on('item:created', ({ manuscriptId }) => {
+    if (manuscriptId !== selectedManuscriptId.value) return
+
+    // Rebuild the entire tree to include the new item
+    fetchManuscriptItems(manuscriptId).catch(error => {
+      console.error('[ManuscriptStore] Failed to rebuild tree after item creation:', error)
+    })
   })
 
   // State - Pure Pinia reactivity, no localStorage persistence
@@ -260,13 +271,10 @@ export const useManuscriptStore = defineStore('manuscript', () => {
         })
 
         sortedRefs.forEach(ref => {
-          const truncatedText = ref.reference_text.length > 40
-            ? ref.reference_text.substring(0, 40) + '...'
-            : ref.reference_text
           const snippetNode: TreeNode = {
             id: `snippet-${ref.id}`,
             itemId: ref.id,
-            title: truncatedText,
+            title: ref.reference_text,
             type: 'snippet_reference' as NodeType,
             icon: getIconForItemType('snippet_reference'),
             path: '',
@@ -608,6 +616,47 @@ export const useManuscriptStore = defineStore('manuscript', () => {
     }
   }
 
+  // Delete a manuscript
+  async function deleteManuscript(manuscriptId: number) {
+    try {
+      loading.value = true
+      error.value = null
+
+      console.log(`Deleting manuscript ${manuscriptId}`)
+
+      await manuscriptsApi.deleteManuscript(manuscriptId)
+
+      // Remove from manuscripts list
+      manuscripts.value = manuscripts.value.filter(m => m.id !== manuscriptId)
+
+      // Clear selection if deleted manuscript was selected
+      if (selectedManuscriptId.value === manuscriptId) {
+        clearSelection()
+        manuscriptTree.value = []
+        flatItemsIndex.value.clear()
+      }
+
+      // Clear as current manuscript if it was the active one
+      if (currentManuscript.value?.id === manuscriptId) {
+        currentManuscript.value = null
+      }
+
+      // Emit sync event so other components can update
+      dataSync.emit('manuscript:deleted', {
+        manuscriptId
+      })
+
+      console.log('Manuscript deleted successfully')
+      return true
+    } catch (err: any) {
+      error.value = err.response?.data?.message || 'Failed to delete manuscript'
+      console.error('Error deleting manuscript:', err)
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
   // Rename an item
   async function renameItem(manuscriptId: number, itemId: number, newTitle: string) {
     try {
@@ -854,6 +903,7 @@ export const useManuscriptStore = defineStore('manuscript', () => {
     reorderItem,
     batchReorderItems,
     deleteItem,
+    deleteManuscript,
     renameItem,
     convertFolderToItem,
     ungroupFolder,
