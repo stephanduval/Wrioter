@@ -31,14 +31,24 @@ export const getItemMenuItems = (item: ManuscriptItem, manuscriptId: number): Me
   const i18n = getI18n()
   const { t } = i18n.global
 
+  const getSiblings = () => {
+    const node = manuscriptStore.findNodeById(`item-${item.itemId}`)
+    if (!node) return { siblings: [] as any[], index: -1 }
+
+    const parent = node.parent
+    const siblings = parent ? parent.children : manuscriptStore.manuscriptTree
+    const index = siblings.findIndex((s: any) => s.id === node.id)
+    return { siblings, index }
+  }
+
   const canMoveUp = () => {
-    // TODO: Check if item can move up based on siblings
-    return item.order_index !== undefined && item.order_index > 0
+    const { index } = getSiblings()
+    return index > 0
   }
 
   const canMoveDown = () => {
-    // TODO: Check if item can move down based on siblings
-    return true
+    const { siblings, index } = getSiblings()
+    return index >= 0 && index < siblings.length - 1
   }
 
   const isFolder = () => {
@@ -187,8 +197,21 @@ export const getItemMenuItems = (item: ManuscriptItem, manuscriptId: number): Me
       icon: 'bx-up-arrow-alt',
       hidden: () => isSnippetCollection(),
       action: async () => {
-        console.log('Move item up:', item.id)
-        // TODO: Implement move up functionality
+        try {
+          const { siblings, index } = getSiblings()
+          if (index <= 0) return
+
+          const siblingAbove = siblings[index - 1]
+          await manuscriptStore.reorderItem({
+            sourceItemId: item.itemId,
+            targetItemId: siblingAbove.itemId,
+            position: 'above',
+            manuscriptId,
+          })
+          await manuscriptStore.fetchManuscriptItems(manuscriptId)
+        } catch (error) {
+          console.error('Failed to move item up:', error)
+        }
       },
       disabled: () => !canMoveUp()
     },
@@ -198,8 +221,21 @@ export const getItemMenuItems = (item: ManuscriptItem, manuscriptId: number): Me
       icon: 'bx-down-arrow-alt',
       hidden: () => isSnippetCollection(),
       action: async () => {
-        console.log('Move item down:', item.id)
-        // TODO: Implement move down functionality
+        try {
+          const { siblings, index } = getSiblings()
+          if (index < 0 || index >= siblings.length - 1) return
+
+          const siblingBelow = siblings[index + 1]
+          await manuscriptStore.reorderItem({
+            sourceItemId: item.itemId,
+            targetItemId: siblingBelow.itemId,
+            position: 'below',
+            manuscriptId,
+          })
+          await manuscriptStore.fetchManuscriptItems(manuscriptId)
+        } catch (error) {
+          console.error('Failed to move item down:', error)
+        }
       },
       disabled: () => !canMoveDown()
     },
