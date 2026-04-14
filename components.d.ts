@@ -423,6 +423,7 @@ declare module 'vue' {
     SimpleSplitWrapper: typeof import('./resources/ts/components/splitView/SimpleSplitWrapper.vue')['default']
     SnippetCard: typeof import('./resources/ts/components/snippet/SnippetCard.vue')['default']
     SnippetCollectionEditor: typeof import('./resources/ts/components/snippet/SnippetCollectionEditor.vue')['default']
+    SnippetCollectionView: typeof import('./resources/ts/components/snippet/SnippetCollectionView.vue')['default']
     SnippetStatusBadge: typeof import('./resources/ts/components/snippet/SnippetStatusBadge.vue')['default']
     SplitContainer: typeof import('./resources/ts/components/splitView/SplitContainer.vue')['default']
     SplitViewManager: typeof import('./resources/ts/components/splitView/SplitViewManager.vue')['default']

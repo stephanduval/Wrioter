@@ -117,42 +117,30 @@
         <div class="status-dot" :class="`status-${node.metadata.status}`" />
       </div>
 
-      <!-- File SVG (cyan curve for non-folder nested items) -->
-      <svg
+      <!-- CSS-based curved connector for nested items -->
+      <div
         v-if="level > 0 && node.type !== 'folder'"
-        class="tree-connector-svg"
-        viewBox="0 0 40 100"
-        preserveAspectRatio="none"
-        :style="{ insetInlineStart: `${level * 20}px` }"
-      >
-        <path
-          d="M20 10C20 10 0 14 0 0V60"
-          class="connector-path"
-          style="stroke: cyan;"
-        />
-      </svg>
+        class="tree-connector-css"
+        :style="{
+          '--connector-color': ['red', 'orange', 'yellow', 'green', 'blue', '#4B0082', '#9400D3'][(level - 1) % 7],
+          insetInlineStart: `${level * 20 - 1}px`
+        }"
+      />
     </div>
 
     <!-- Child Nodes + vertical connectors for each nesting level -->
-    <div v-if="canShowChildren" class="child-nodes-wrapper" style="position: relative;">
-      <!-- Multiple vertical lines - one for each nesting level -->
-      <svg
-        v-for="(xPos, idx) in verticalLinePositions"
-        :key="`vertical-${idx}`"
-        class="folder-connector-svg"
-        :viewBox="`0 0 10 ${childNodesHeight}`"
-        preserveAspectRatio="none"
+    <div v-if="canShowChildren" style="position: relative;">
+      <!-- Vertical trunk line connecting this folder's children -->
+      <div
+        v-if="verticalLineCount > 0"
+        class="vertical-trunk-line"
         :style="{
-          blockSize: `${childNodesHeight}px`,
-          insetInlineStart: `${xPos + 5}px`
+          insetInlineStart: `${(level + 1) * 20}px`,
+          borderInlineStartColor: ['red', 'orange', 'yellow', 'green', 'blue', '#4B0082', '#9400D3'][level % 7],
+          insetBlockStart: '0',
+          blockSize: childNodesHeight ? `${childNodesHeight - 18}px` : '0'
         }"
-      >
-        <path
-          :d="`M 5 0 V${childNodesHeight}`"
-          class="connector-path"
-          :style="`stroke: ${['yellow', 'blue', 'green', 'orange', 'purple'][idx % 5]};`"
-        />
-      </svg>
+      />
       <div class="child-nodes" ref="childNodesRef">
       <TreeNode
         v-for="child in node.children"
@@ -321,15 +309,10 @@ watch(childNodesRef, (el) => {
 onBeforeUnmount(() => resizeObserver?.disconnect());
 
 // Determine how many vertical connector lines to draw
-// - One line for each ancestor level (0 lines at level 0, 1 at level 1, etc.)
+// - One line for this folder's direct children (at indent level + 1)
 // - Show only if this node has children (folder with expanded children)
 const verticalLineCount = computed(() => {
-  return hasChildren.value && canShowChildren.value ? props.level : 0;
-});
-
-// Generate x-positions for each vertical line (spaced 20px apart, same as indentation)
-const verticalLinePositions = computed(() => {
-  return Array.from({ length: verticalLineCount.value }, (_, i) => i * 20);
+  return hasChildren.value && canShowChildren.value ? 1 : 0;
 });
 
 // Methods
@@ -833,31 +816,19 @@ onBeforeUnmount(() => {
     }
   }
 
-  // SVG Tree connector (animated curved lines for nested items)
-  .tree-connector-svg {
+  // CSS-based tree connector (elbow shape connecting item to vertical trunk)
+  .tree-connector-css {
     position: absolute;
-    animation: fade-in-connector 0.6s ease-out 0.2s forwards;
-    inline-size: 40px;
+    display: block;
+    animation: fade-in-connector 0.4s ease-out 0.1s forwards;
+    block-size: 50%;
+    border-block-end: 1px solid var(--connector-color);
+    border-end-start-radius: 6px;
+    border-inline-start: 1px solid var(--connector-color);
+    inline-size: 12px;
     inset-block-start: 0;
-    inset-inline-start: 0;
     opacity: 0;
     pointer-events: none;
-
-    .connector-path {
-      animation: draw-connector 0.8s ease-out 0.1s forwards;
-      fill: none;
-      stroke: #fff;
-      stroke-dasharray: 30;
-      stroke-dashoffset: 30;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-      stroke-width: 1.5;
-    }
-
-    &:hover .connector-path {
-      stroke: #d1d5db;
-      stroke-width: 2;
-    }
   }
 }
 
@@ -871,31 +842,16 @@ onBeforeUnmount(() => {
   }
 }
 
-@keyframes draw-connector {
-  from {
-    stroke-dashoffset: 30;
-  }
-
-  to {
-    stroke-dashoffset: 0;
-  }
-}
-
 .child-nodes {
   margin-inline-start: 0;
 }
 
-.child-nodes-wrapper {
-  position: relative;
-
-  .folder-connector-svg {
-    position: absolute;
-    overflow: visible;
-    inline-size: 10px;
-    inset-block-start: 0;
-    inset-inline-start: 0;
-    pointer-events: none;
-  }
+.vertical-trunk-line {
+  position: absolute;
+  box-sizing: border-box;
+  border-inline-start: 1px solid;
+  inline-size: 1px;
+  pointer-events: none;
 }
 
 .empty-folder-hint {
