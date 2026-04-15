@@ -19,6 +19,10 @@ interface ManuscriptItem {
   item_order?: number
   order_index?: number
   childCount?: number
+  icon?: string
+  icon_name?: string | null
+  icon_color?: string | null
+  use_custom_icon?: boolean
   metadata?: {
     status?: 'draft' | 'in_progress' | 'completed' | 'archived'
     isCompilable?: boolean
@@ -509,7 +513,39 @@ export const getItemMenuItems = (item: ManuscriptItem, manuscriptId: number): Me
         }
       }
     },
-    { id: 'sep-rename', separator: true, hidden: () => hasMultiSelection() },
+    { id: 'sep-rename', separator: true, hidden: () => hasMultiSelection() || isSnippetReference() },
+    {
+      id: 'customize-icon',
+      label: 'Customize Icon…',
+      icon: 'bx-palette',
+      action: () => {
+        eventBus.emit('item:customize-icon', {
+          manuscriptId,
+          itemId: item.itemId,
+          title: item.title,
+          currentIconName: item.icon_name ?? null,
+          currentIconColor: item.icon_color ?? null,
+          useCustomIcon: item.use_custom_icon ?? false,
+          defaultIcon: item.icon ?? 'bx-file',
+        })
+      },
+      hidden: () => isSnippetReference() || hasMultiSelection(),
+    },
+    {
+      id: 'toggle-custom-icon',
+      label: item.use_custom_icon ? 'Use Default Icon' : 'Use Custom Icon',
+      icon: item.use_custom_icon ? 'bx-refresh' : 'bx-check-circle',
+      action: async () => {
+        try {
+          await manuscriptStore.toggleItemAppearance(manuscriptId, item.itemId)
+        } catch (error) {
+          console.error('Failed to toggle custom icon:', error)
+          alert('Failed to toggle icon. Please try again.')
+        }
+      },
+      hidden: () => isSnippetReference() || hasMultiSelection() || !item.icon_name,
+    },
+    { id: 'sep-appearance', separator: true, hidden: () => hasMultiSelection() || isSnippetReference() },
     {
       id: 'delete',
       label: t('contextMenu.item.delete'),

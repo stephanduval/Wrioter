@@ -80,12 +80,9 @@ const sources: BundleScriptConfig = {
   ],
 
   icons: [
-    // 'mdi:home',
-    // 'mdi:account',
-    // 'mdi:login',
-    // 'mdi:logout',
-    // 'octicon:book-24',
-    // 'octicon:code-square-24',
+    // Add individual icons from sets NOT bundled in full below (bx is already
+    // bundled entirely via the `json:` block, so any bx-* icon works at runtime).
+    // Format: 'prefix:name', e.g. 'mdi:home', 'tabler:sword'.
   ],
 
   json: [

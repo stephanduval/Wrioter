@@ -11,9 +11,20 @@ export interface AddToCollectionEvent {
   }
 }
 
+export interface CustomizeIconEvent {
+  manuscriptId: number
+  itemId: number
+  title: string
+  currentIconName: string | null
+  currentIconColor: string | null
+  useCustomIcon: boolean
+  defaultIcon: string
+}
+
 // Type-safe event map for UI events
 export type EventBusEvents = {
   'snippet:add-to-collection': AddToCollectionEvent
+  'item:customize-icon': CustomizeIconEvent
 }
 
 // Create typed emitter instance (singleton)

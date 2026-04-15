@@ -42,6 +42,9 @@ interface Item {
   include_in_compile?: boolean
   updated_at: string
   snippet_references?: SnippetRefData[]
+  icon_name?: string | null
+  icon_color?: string | null
+  use_custom_icon?: boolean
 }
 
 interface TreeNode {
@@ -55,6 +58,9 @@ interface TreeNode {
   parent?: TreeNode
   metadata: NodeMetadata
   state: NodeState
+  iconName?: string | null
+  iconColor?: string | null
+  useCustomIcon?: boolean
 }
 
 interface NodeMetadata {
@@ -206,6 +212,9 @@ export const useManuscriptStore = defineStore('manuscript', () => {
         icon: getIconForItemType(item.type),
         path: '/dashboards/analytics', // Temporary redirect until item view is implemented
         children: [],
+        iconName: item.icon_name ?? null,
+        iconColor: item.icon_color ?? null,
+        useCustomIcon: item.use_custom_icon ?? false,
         metadata: {
           wordCount: item.word_count || 0,
           characterCount: item.character_count || 0,
@@ -695,6 +704,59 @@ export const useManuscriptStore = defineStore('manuscript', () => {
     }
   }
 
+  // Update an item's custom icon and/or color
+  async function updateItemAppearance(
+    manuscriptId: number,
+    itemId: number,
+    appearance: { icon_name?: string | null; icon_color?: string | null; use_custom_icon?: boolean }
+  ) {
+    try {
+      const response = await api.patch(
+        `/manuscripts/${manuscriptId}/items/${itemId}/appearance`,
+        appearance
+      )
+
+      const node = flatItemsIndex.value.get(`item-${itemId}`)
+      if (node) {
+        const data = response.data?.data
+        if (data) {
+          node.iconName = data.icon_name
+          node.iconColor = data.icon_color
+          node.useCustomIcon = data.use_custom_icon
+        }
+      }
+
+      return response.data
+    } catch (err: any) {
+      error.value = err.response?.data?.message || 'Failed to update item appearance'
+      console.error('Error updating item appearance:', err)
+      throw err
+    }
+  }
+
+  // Flip use_custom_icon while preserving the saved icon_name/icon_color
+  async function toggleItemAppearance(manuscriptId: number, itemId: number) {
+    try {
+      const response = await api.post(
+        `/manuscripts/${manuscriptId}/items/${itemId}/appearance/toggle`
+      )
+
+      const node = flatItemsIndex.value.get(`item-${itemId}`)
+      if (node) {
+        const data = response.data?.data
+        if (data) {
+          node.useCustomIcon = data.use_custom_icon
+        }
+      }
+
+      return response.data
+    } catch (err: any) {
+      error.value = err.response?.data?.message || 'Failed to toggle item appearance'
+      console.error('Error toggling item appearance:', err)
+      throw err
+    }
+  }
+
   // Convert a folder to a regular item (remove folder status)
   async function convertFolderToItem(manuscriptId: number, itemId: number) {
     try {
@@ -905,6 +967,8 @@ export const useManuscriptStore = defineStore('manuscript', () => {
     deleteItem,
     deleteManuscript,
     renameItem,
+    updateItemAppearance,
+    toggleItemAppearance,
     convertFolderToItem,
     ungroupFolder,
     sortChildren,

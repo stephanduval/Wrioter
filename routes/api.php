@@ -144,6 +144,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/manuscripts/{manuscriptId}/items/{itemId}', [ItemController::class, 'update']);
     Route::delete('/manuscripts/{manuscriptId}/items/{itemId}', [ItemController::class, 'destroy']);
     Route::patch('/manuscripts/{manuscriptId}/items/{itemId}/rename', [ItemController::class, 'rename']);
+    Route::patch('/manuscripts/{manuscriptId}/items/{itemId}/appearance', [ItemController::class, 'updateAppearance']);
+    Route::post('/manuscripts/{manuscriptId}/items/{itemId}/appearance/toggle', [ItemController::class, 'toggleAppearance']);
     Route::get('/manuscripts/{manuscriptId}/items/{itemId}/versions', [ItemController::class, 'versions']);
     Route::post('/manuscripts/{manuscriptId}/items/reorder', [ItemController::class, 'reorder']);
     Route::post('/manuscripts/{manuscriptId}/items/batch-reorder', [ItemController::class, 'batchReorder']);

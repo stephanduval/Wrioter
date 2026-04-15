@@ -77,6 +77,10 @@ export class ContextDetectionService {
                 title: node.title,
                 type: node.type,
                 order_index: 0, // TODO: Get actual order index
+                icon: node.icon,
+                icon_name: node.iconName ?? null,
+                icon_color: node.iconColor ?? null,
+                use_custom_icon: node.useCustomIcon ?? false,
                 metadata: {
                   status: node.metadata.status,
                   isCompilable: node.metadata.isCompilable,
@@ -162,6 +166,10 @@ export class ContextDetectionService {
       title: node.title,
       type: node.type,
       order_index: 0,
+      icon: node.icon,
+      icon_name: node.iconName ?? null,
+      icon_color: node.iconColor ?? null,
+      use_custom_icon: node.useCustomIcon ?? false,
       metadata: {
         status: node.metadata.status,
         isCompilable: node.metadata.isCompilable,

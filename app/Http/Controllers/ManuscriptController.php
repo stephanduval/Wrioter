@@ -243,7 +243,10 @@ class ManuscriptController extends Controller
                             'items.synopsis',
                             'items.metadata',
                             'items.include_in_compile',
-                            'items.updated_at'
+                            'items.updated_at',
+                            'items.icon_name',
+                            'items.icon_color',
+                            'items.use_custom_icon',
                         ])
                         ->withCount(['comments' => function ($query) {
                             $query->where('status', 'active');
@@ -284,6 +287,9 @@ class ManuscriptController extends Controller
                             'has_comments' => $item->comments_count > 0,
                             'comment_count' => $item->comments_count,
                             'order_index' => $manuscriptItem->order_index,
+                            'icon_name' => $item->icon_name,
+                            'icon_color' => $item->icon_color,
+                            'use_custom_icon' => (bool) $item->use_custom_icon,
                         ];
 
                         // Include snippet references for collection items

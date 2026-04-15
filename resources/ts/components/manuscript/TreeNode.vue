@@ -51,7 +51,7 @@
 
         <!-- Node Icon -->
         <VIcon
-          :icon="node.icon"
+          :icon="getIconName()"
           size="16"
           class="node-icon"
           :color="getIconColor()"
@@ -197,6 +197,9 @@ interface TreeNode {
   path: string;
   children: TreeNode[];
   parent?: TreeNode;
+  iconName?: string | null;
+  iconColor?: string | null;
+  useCustomIcon?: boolean;
   metadata: {
     wordCount: number;
     characterCount: number;
@@ -536,8 +539,11 @@ const formatWordCount = (count: number): string => {
   return count.toString();
 };
 
-// Get icon color based on node type
+// Get icon color — honors custom override when use_custom_icon is true
 const getIconColor = (): string => {
+  if (props.node.useCustomIcon && props.node.iconColor) {
+    return props.node.iconColor;
+  }
   const type = props.node.type || "default";
   const colorMap: Record<string, string> = {
     folder: "amber",
@@ -551,6 +557,15 @@ const getIconColor = (): string => {
     default: "gray",
   };
   return colorMap[type] || colorMap.default;
+};
+
+// Get icon name — honors custom override, falls back to type-based default
+// if use_custom_icon is off OR the saved icon is no longer in the registry
+const getIconName = (): string => {
+  if (props.node.useCustomIcon && props.node.iconName) {
+    return props.node.iconName;
+  }
+  return props.node.icon;
 };
 
 // Rename methods

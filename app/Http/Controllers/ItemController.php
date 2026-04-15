@@ -796,6 +796,108 @@ class ItemController extends Controller
     }
 
     /**
+     * Update an item's custom icon and color.
+     */
+    public function updateAppearance(
+        Request $request,
+        string $manuscriptId,
+        string $itemId,
+    ) {
+        try {
+            Manuscript::where("id", $manuscriptId)
+                ->where("user_id", Auth::id())
+                ->firstOrFail();
+
+            $validated = $request->validate([
+                "icon_name" => "nullable|string|max:100",
+                "icon_color" => "nullable|string|max:20|regex:/^#[0-9A-Fa-f]{6}$/",
+                "use_custom_icon" => "nullable|boolean",
+            ]);
+
+            $item = Item::where("id", $itemId)
+                ->where("user_id", Auth::id())
+                ->firstOrFail();
+
+            $updates = [];
+            foreach (["icon_name", "icon_color", "use_custom_icon"] as $field) {
+                if (array_key_exists($field, $validated)) {
+                    $updates[$field] = $validated[$field];
+                }
+            }
+
+            $item->update($updates);
+
+            return response()->json([
+                "data" => [
+                    "id" => $item->id,
+                    "icon_name" => $item->icon_name,
+                    "icon_color" => $item->icon_color,
+                    "use_custom_icon" => $item->use_custom_icon,
+                    "updated_at" => $item->updated_at->toISOString(),
+                ],
+                "message" => "Item appearance updated",
+            ]);
+        } catch (\Exception $e) {
+            Log::error("Failed to update item appearance", [
+                "manuscript_id" => $manuscriptId,
+                "item_id" => $itemId,
+                "error" => $e->getMessage(),
+            ]);
+
+            return response()->json(
+                [
+                    "error" => "Failed to update item appearance",
+                    "message" => $e->getMessage(),
+                ],
+                500,
+            );
+        }
+    }
+
+    /**
+     * Toggle custom icon on/off while preserving the saved icon_name and icon_color.
+     */
+    public function toggleAppearance(string $manuscriptId, string $itemId)
+    {
+        try {
+            Manuscript::where("id", $manuscriptId)
+                ->where("user_id", Auth::id())
+                ->firstOrFail();
+
+            $item = Item::where("id", $itemId)
+                ->where("user_id", Auth::id())
+                ->firstOrFail();
+
+            $item->update(["use_custom_icon" => !$item->use_custom_icon]);
+
+            return response()->json([
+                "data" => [
+                    "id" => $item->id,
+                    "icon_name" => $item->icon_name,
+                    "icon_color" => $item->icon_color,
+                    "use_custom_icon" => $item->use_custom_icon,
+                    "updated_at" => $item->updated_at->toISOString(),
+                ],
+                "message" => "Custom icon toggled",
+            ]);
+        } catch (\Exception $e) {
+            Log::error("Failed to toggle item appearance", [
+                "manuscript_id" => $manuscriptId,
+                "item_id" => $itemId,
+                "error" => $e->getMessage(),
+            ]);
+
+            return response()->json(
+                [
+                    "error" => "Failed to toggle item appearance",
+                    "message" => $e->getMessage(),
+                ],
+                500,
+            );
+        }
+    }
+
+    /**
      * Duplicate an item with all its properties and children.
      */
     public function duplicate(string $manuscriptId, string $itemId)
