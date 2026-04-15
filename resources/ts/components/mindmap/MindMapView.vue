@@ -40,7 +40,7 @@
       </VBtn>
 
       <VBtn
-        v-if="selectedNodeId"
+        v-if="mindmapStore.selectedNodes.length > 0"
         color="primary"
         variant="tonal"
         size="small"
@@ -51,6 +51,16 @@
       </VBtn>
 
       <VSpacer />
+
+      <VChip
+        v-if="mindmapStore.selectedNodes.length > 1"
+        size="small"
+        color="primary"
+        variant="tonal"
+        class="me-2"
+      >
+        {{ mindmapStore.selectedNodes.length }} selected
+      </VChip>
 
       <VChip
         v-if="hasUnsavedChanges"
@@ -74,14 +84,23 @@
     </VToolbar>
 
     <!-- Mindmap Canvas -->
-    <div class="mindmap-canvas" @contextmenu="handleEmptySpaceContextMenu">
+    <div class="mindmap-canvas" @contextmenu.prevent="handleEmptySpaceContextMenu">
       <MindMapCanvas
+        ref="mindmapCanvasRef"
         v-if="currentMindmap && mindmapNodes.length > 0"
         :nodes="mindmapNodes"
         :edges="mindmapEdges"
+        :selected-node-ids="mindmapStore.selectedNodes"
         @node-click="handleNodeClick"
+        @node-double-click="handleNodeDoubleClick"
+        @title-updated="handleTitleUpdated"
         @nodes-change="handleNodesChange"
         @edges-change="handleEdgesChange"
+        @connect="handleConnectNode"
+        @toggle-collapse="handleToggleCollapse"
+        @pane-context-menu="handlePaneContextMenu"
+        @selection-change="handleSelectionChange"
+        @node-drag-stop="handleNodeDragStop"
       />
 
       <!-- Empty State -->
@@ -153,16 +172,69 @@
         </VCardActions>
       </VCard>
     </VDialog>
+
+    <!-- Save Layout Dialog -->
+    <VDialog v-model="saveLayoutDialog" max-width="400">
+      <VCard>
+        <VCardTitle>Save Layout As</VCardTitle>
+        <VCardText>
+          <VTextField
+            v-model="layoutName"
+            label="Layout Name"
+            placeholder="Enter a name for this layout..."
+            autofocus
+            @keyup.enter="confirmSaveLayout"
+          />
+        </VCardText>
+        <VCardActions>
+          <VSpacer />
+          <VBtn variant="text" @click="saveLayoutDialog = false">Cancel</VBtn>
+          <VBtn color="primary" :disabled="!layoutName.trim()" @click="confirmSaveLayout">Save</VBtn>
+        </VCardActions>
+      </VCard>
+    </VDialog>
+
+    <!-- Rename Layout Dialog -->
+    <VDialog v-model="renameLayoutDialog" max-width="400">
+      <VCard>
+        <VCardTitle>Rename Layout</VCardTitle>
+        <VCardText>
+          <VTextField
+            v-model="renameLayoutName"
+            label="New Name"
+            placeholder="Enter new name..."
+            autofocus
+            @keyup.enter="confirmRenameLayout"
+          />
+        </VCardText>
+        <VCardActions>
+          <VSpacer />
+          <VBtn variant="text" @click="renameLayoutDialog = false">Cancel</VBtn>
+          <VBtn color="primary" :disabled="!renameLayoutName.trim()" @click="confirmRenameLayout">Rename</VBtn>
+        </VCardActions>
+      </VCard>
+    </VDialog>
+
+    <!-- Views Modal -->
+    <MindmapViewsModal
+      v-model="viewsModalOpen"
+      :folder-id="folderId"
+      @load-view="handleLoadSavedView"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
+import { useRouter } from 'vue-router'
 import { useMindmapStore } from '@/stores/mindmap'
 import { useManuscriptStore } from '@/stores/manuscript'
+import { useFolderViewStore } from '@/stores/folderView'
+import { usePaneStore } from '@/stores/pane'
 import { useContextMenu } from '@/composables/useContextMenu'
 import { getEmptySpaceMenuItems } from '@/config/contextMenus'
 import MindMapCanvas from './MindMapCanvas.vue'
+import MindmapViewsModal from './MindmapViewsModal.vue'
 import type { FolderItem } from '@/stores/folderView'
 
 interface Props {
@@ -182,7 +254,9 @@ const emit = defineEmits<{
 // Store
 const mindmapStore = useMindmapStore()
 const manuscriptStore = useManuscriptStore()
+const folderViewStore = useFolderViewStore()
 const contextMenu = useContextMenu()
+const router = useRouter()
 
 // Computed: Get manuscript ID from folder or store
 const manuscriptId = computed(() =>
@@ -191,6 +265,8 @@ const manuscriptId = computed(() =>
 
 // Empty space context menu handler
 function handleEmptySpaceContextMenu(event: MouseEvent) {
+  event.preventDefault()
+
   const target = event.target as HTMLElement
 
   // If clicking on a node, don't show empty space menu
@@ -205,18 +281,64 @@ function handleEmptySpaceContextMenu(event: MouseEvent) {
     return
   }
 
+  const activeView = mindmapStore.savedViews.find(v => v.id === mindmapStore.activeSavedViewId)
+
   const menuItems = getEmptySpaceMenuItems({
     folderId: props.folderId,
-    manuscriptId: manuscriptId.value
+    manuscriptId: manuscriptId.value,
+    onAutoLayout: handleAutoLayout,
+    onSaveLayout: handleSaveLayout,
+    onSaveLayoutAs: openSaveLayoutDialog,
+    onLoadSavedView: handleLoadSavedView,
+    onRenameSavedView: openRenameLayoutDialog,
+    onDeleteSavedView: handleDeleteSavedView,
+    savedViews: mindmapStore.savedViews,
+    activeSavedViewName: activeView?.name || null,
   })
 
   contextMenu.show(event, { items: menuItems })
 }
 
+// Handle pane context menu from Vue Flow
+function handlePaneContextMenu(event: MouseEvent) {
+  handleEmptySpaceContextMenu(event)
+}
+
+// Handle selection changes from Vue Flow (box select, click-to-deselect, etc.)
+function handleSelectionChange(selectedIds: string[]) {
+  mindmapStore.syncSelectionFromVueFlow(selectedIds)
+}
+
+// Debounced auto-save: persist node positions after drag
+let dragSaveTimeout: ReturnType<typeof setTimeout> | null = null
+const pendingPositionUpdates = new Map<string, { x: number; y: number }>()
+
+function handleNodeDragStop(draggedNodes: any[]) {
+  for (const node of draggedNodes) {
+    pendingPositionUpdates.set(node.id, { x: node.position.x, y: node.position.y })
+  }
+  if (dragSaveTimeout) clearTimeout(dragSaveTimeout)
+  dragSaveTimeout = setTimeout(async () => {
+    const updates = Array.from(pendingPositionUpdates.entries()).map(
+      ([nodeId, position]) => ({ nodeId, position })
+    )
+    pendingPositionUpdates.clear()
+    if (updates.length > 0) {
+      try {
+        await mindmapStore.batchUpdatePositions(updates)
+      } catch (err) {
+        console.error('Failed to auto-save positions:', err)
+      }
+    }
+  }, 500)
+}
+
+// Refs
+const mindmapCanvasRef = ref<InstanceType<typeof MindMapCanvas> | null>(null)
+
 // Local state
 const nodeEditDialog = ref(false)
 const editingNode = ref<any>(null)
-const selectedNodeId = ref<string | null>(null)
 const isSaving = ref(false)
 
 const nodeForm = ref({
@@ -224,6 +346,14 @@ const nodeForm = ref({
   content: '',
   itemId: null as number | null
 })
+
+// Saved view dialogs
+const saveLayoutDialog = ref(false)
+const layoutName = ref('')
+const viewsModalOpen = ref(false)
+const renameLayoutDialog = ref(false)
+const renameLayoutName = ref('')
+const renameLayoutViewId = ref<number | null>(null)
 
 // Computed
 const currentMindmap = computed(() => {
@@ -304,8 +434,48 @@ function handleAddNode() {
 }
 
 function handleNodeClick(event: MouseEvent, node: any) {
-  selectedNodeId.value = node.id
-  mindmapStore.selectNode(node.id)
+  if (!node) return
+  mindmapStore.selectNode(node.id, event.shiftKey)
+}
+
+function handleNodeDoubleClick(_event: MouseEvent, node: any) {
+  if (!node) return
+  const itemId = node.data?.itemId
+  if (!itemId) {
+    console.error('Node has no itemId:', node)
+    return
+  }
+
+  const paneStore = usePaneStore()
+
+  // Check if we're in split view mode
+  if (folderViewStore.splitEnabled && paneStore.activePaneId) {
+    // Split view: Open item in edit mode in the active pane
+    paneStore.setEditingItem(paneStore.activePaneId, itemId)
+  } else {
+    // Single view: Navigate to folder with item view selected
+    router.push({
+      path: `/manuscripts/${manuscriptId.value}/folders/${props.folderId}`,
+      query: {
+        view: 'item',
+        itemId: String(itemId)
+      }
+    })
+  }
+}
+
+function handleTitleUpdated(nodeId: string, newTitle: string) {
+  // Find the node and update its title via the store
+  const node = mindmapNodes.value.find(n => n.id === nodeId)
+  if (!node) return
+
+  mindmapStore.updateNode({
+    ...node,
+    data: {
+      ...node.data,
+      label: newTitle
+    }
+  })
 }
 
 function handleNodesChange(changes: any[]) {
@@ -314,13 +484,118 @@ function handleNodesChange(changes: any[]) {
 }
 
 function handleEdgesChange(changes: any[]) {
-  // Handle edge changes
-  console.log('Edges changed:', changes)
+  // Handle edge changes, but prevent deletion of hierarchy edges
+  const filteredChanges = changes.filter(change => {
+    if (change.type === 'remove') {
+      // Find the edge being removed
+      const edge = mindmapEdges.value.find(e => e.id === change.id)
+
+      // Prevent deletion of hierarchy edges
+      if (edge?.data?.is_hierarchy === true || edge?.type === 'hierarchy') {
+        console.log('Cannot delete hierarchy edge:', edge)
+        emit('update:error', 'Hierarchy edges cannot be deleted')
+        return false
+      }
+
+      // Allow deletion of custom edges
+      if (edge?.data?.dbId) {
+        // Delete from backend
+        mindmapStore.deleteConnection(change.id).catch(err => {
+          console.error('Failed to delete connection:', err)
+          emit('update:error', 'Failed to delete connection')
+        })
+      }
+    }
+    return true
+  })
+
+  console.log('Edges changed:', filteredChanges)
 }
 
-function handleConnectNode() {
-  // Implement node connection logic
-  console.log('Connect node:', selectedNodeId.value)
+async function handleToggleCollapse(nodeId: string) {
+  try {
+    // Check if node is root folder
+    const node = mindmapStore.nodes.find(n => n.id === nodeId)
+    if (node?.data?.isRootFolder) {
+      console.warn('Cannot collapse root folder')
+      return
+    }
+
+    await mindmapStore.toggleNodeCollapse(nodeId)
+  } catch (error: any) {
+    console.error('Failed to toggle collapse:', error)
+    emit('update:error', error.message || 'Failed to toggle folder collapse')
+  }
+}
+
+async function handleConnectNode(params: any) {
+  // Handle drag-and-drop connection creation from Vue Flow
+  console.log('MindMapView handleConnectNode called with params:', params)
+  try {
+    // Extract item IDs from node IDs (format: "item-{id}")
+    const sourceId = params.source?.replace('item-', '')
+    const targetId = params.target?.replace('item-', '')
+
+    console.log('Extracted IDs:', { sourceId, targetId })
+
+    const fromItemId = parseInt(sourceId, 10)
+    const toItemId = parseInt(targetId, 10)
+
+    console.log('Parsed IDs:', { fromItemId, toItemId, fromIsNaN: isNaN(fromItemId), toIsNaN: isNaN(toItemId) })
+
+    // Validate IDs
+    if (!fromItemId || !toItemId || isNaN(fromItemId) || isNaN(toItemId)) {
+      console.error('Invalid connection - ID validation failed:', params)
+      emit('update:error', 'Invalid connection - could not parse node IDs')
+      return
+    }
+
+    // Prevent self-connections
+    if (fromItemId === toItemId) {
+      console.error('Invalid connection - self connection')
+      emit('update:error', 'Cannot connect a node to itself')
+      return
+    }
+
+    // Check if connection already exists
+    console.log('Checking for existing connection, current edges:', mindmapEdges.value)
+    const existingConnection = mindmapEdges.value.find(
+      edge =>
+        (edge.source === params.source && edge.target === params.target) ||
+        (edge.source === params.target && edge.target === params.source && edge.type === 'two-way')
+    )
+
+    if (existingConnection) {
+      console.error('Connection already exists:', existingConnection)
+      emit('update:error', 'Connection already exists between these nodes')
+      return
+    }
+
+    console.log('All validations passed!')
+
+    // Determine connection type based on modifier keys
+    // Default: one-way, Shift key: two-way
+    const connectionType = params.shiftKey ? 'two-way' : 'one-way'
+
+    console.log('Creating connection:', {
+      from: fromItemId,
+      to: toItemId,
+      type: connectionType
+    })
+
+    // Create connection via store
+    await mindmapStore.createConnection({
+      from_item_id: fromItemId,
+      to_item_id: toItemId,
+      connection_type: connectionType,
+    })
+
+    console.log('Connection created successfully')
+
+  } catch (error: any) {
+    console.error('Failed to create connection:', error)
+    emit('update:error', error.message || 'Failed to create connection')
+  }
 }
 
 function closeNodeDialog() {
@@ -384,6 +659,94 @@ async function handleSave() {
   }
 }
 
+async function handleAutoLayout() {
+  try {
+    await mindmapStore.autoLayoutFolderMindmap(props.folderId)
+    // Fit view after layout with animation
+    nextTick(() => {
+      mindmapCanvasRef.value?.fitView({ duration: 800, padding: 0.2 })
+    })
+  } catch (error: any) {
+    console.error('Failed to auto-layout:', error)
+    emit('update:error', error.message || 'Failed to auto-layout mindmap')
+  }
+}
+
+// === Saved View Handlers ===
+
+function getViewportSettings(): Record<string, any> | undefined {
+  const viewport = mindmapCanvasRef.value?.getViewport?.()
+  return viewport ? { viewport: { x: viewport.x, y: viewport.y, zoom: viewport.zoom } } : undefined
+}
+
+function openSaveLayoutDialog() {
+  layoutName.value = ''
+  saveLayoutDialog.value = true
+}
+
+async function confirmSaveLayout() {
+  if (!layoutName.value.trim()) return
+  try {
+    await mindmapStore.saveCurrentAsView(props.folderId, layoutName.value.trim(), undefined, getViewportSettings())
+    saveLayoutDialog.value = false
+  } catch (err: any) {
+    console.error('Failed to save layout:', err)
+    emit('update:error', err.message || 'Failed to save layout')
+  }
+}
+
+async function handleSaveLayout() {
+  if (!mindmapStore.activeSavedViewId) return
+  try {
+    await mindmapStore.overwriteSavedView(props.folderId, mindmapStore.activeSavedViewId, getViewportSettings())
+  } catch (err: any) {
+    console.error('Failed to save layout:', err)
+    emit('update:error', err.message || 'Failed to save layout')
+  }
+}
+
+async function handleLoadSavedView(viewId: number) {
+  try {
+    const viewSettings = await mindmapStore.loadSavedView(props.folderId, viewId)
+    nextTick(() => {
+      if (viewSettings?.viewport && mindmapCanvasRef.value?.setViewport) {
+        mindmapCanvasRef.value.setViewport(viewSettings.viewport, { duration: 800 })
+      } else {
+        mindmapCanvasRef.value?.fitView({ duration: 800, padding: 0.2 })
+      }
+    })
+  } catch (err: any) {
+    console.error('Failed to load saved view:', err)
+    emit('update:error', err.message || 'Failed to load saved view')
+  }
+}
+
+function openRenameLayoutDialog(viewId: number, currentName: string) {
+  renameLayoutViewId.value = viewId
+  renameLayoutName.value = currentName
+  renameLayoutDialog.value = true
+}
+
+async function confirmRenameLayout() {
+  if (!renameLayoutName.value.trim() || !renameLayoutViewId.value) return
+  try {
+    await mindmapStore.renameSavedView(props.folderId, renameLayoutViewId.value, renameLayoutName.value.trim())
+    renameLayoutDialog.value = false
+  } catch (err: any) {
+    console.error('Failed to rename layout:', err)
+    emit('update:error', err.message || 'Failed to rename layout')
+  }
+}
+
+async function handleDeleteSavedView(viewId: number) {
+  try {
+    await mindmapStore.deleteSavedView(props.folderId, viewId)
+  } catch (err: any) {
+    console.error('Failed to delete saved view:', err)
+    emit('update:error', err.message || 'Failed to delete saved view')
+  }
+}
+
 function handleZoomIn() {
   // Implement zoom in
   console.log('Zoom in')
@@ -400,8 +763,9 @@ function handleFitView() {
 }
 
 // Lifecycle
-onMounted(() => {
-  loadOrCreateMindmap()
+onMounted(async () => {
+  await loadOrCreateMindmap()
+  mindmapStore.loadSavedViews(props.folderId)
 })
 
 // Watch for folder changes
@@ -413,7 +777,7 @@ watch(() => props.folderId, (newFolderId) => {
 
 // Cleanup
 onUnmounted(() => {
-  // Clean up if needed
+  if (dragSaveTimeout) clearTimeout(dragSaveTimeout)
 })
 </script>
 

@@ -58,6 +58,8 @@ export const useMindmapStore = defineStore('mindmap', () => {
   const items = ref<Map<number, Item>>(new Map()) // Cache of items by ID
   const selectedNodes = ref<string[]>([])
   const selectedEdges = ref<string[]>([])
+  const savedViews = ref<Array<{ id: number; name: string; description?: string; is_default: boolean; created_at: string }>>([])
+  const activeSavedViewId = ref<number | null>(null)
   const loading = ref(false)
   const error = ref<string | null>(null)
 
@@ -507,21 +509,30 @@ export const useMindmapStore = defineStore('mindmap', () => {
     if (!currentMindmap.value) throw new Error('No mindmap loaded')
 
     try {
+      console.log('[mindmap store] Creating connection:', connection)
       const response = await axios.post(`/mindmaps/${currentMindmap.value.id}/connections`, connection)
+      console.log('[mindmap store] Connection created, response:', response.data)
 
       const newEdge: Edge = {
         id: `edge-${response.data.id}`,
         source: `item-${connection.from_item_id}`,
         target: `item-${connection.to_item_id}`,
-        type: connection.connection_type === 'two-way' ? 'bidirectional' : 'default',
+        type: 'default', // Use Vue Flow's default edge type
+        style: { stroke: '#3b82f6', strokeDasharray: '5,5' }, // Dashed blue for custom edges
         data: {
           label: connection.label,
           relationship_type: connection.relationship_type,
           dbId: response.data.id,
+          is_hierarchy: false,
+          editable: true,
+          connection_type: connection.connection_type, // Store the actual type in data
         },
       }
 
-      edges.value.push(newEdge)
+      // Create a new array to trigger reactivity (don't mutate with push)
+      edges.value = [...edges.value, newEdge]
+      console.log('[mindmap store] Edge added to edges array. Total edges:', edges.value.length)
+      console.log('[mindmap store] New edge:', newEdge)
       hasUnsavedChanges.value = false
       return newEdge
     } catch (err: any) {
@@ -574,6 +585,98 @@ export const useMindmapStore = defineStore('mindmap', () => {
     }
   }
 
+  // Collapse/Expand folder nodes
+  const toggleNodeCollapse = async (nodeId: string): Promise<void> => {
+    const node = nodes.value.find(n => n.id === nodeId)
+    if (!node || !currentMindmap.value) return
+
+    // Don't allow collapsing the root folder
+    if (node.data?.isRootFolder) {
+      console.warn('[mindmap store] Cannot collapse root folder')
+      return
+    }
+
+    const itemId = node.data?.itemId
+    if (!itemId) return
+
+    try {
+      loading.value = true
+      const response = await axios.put(
+        `/folders/${currentMindmap.value.folder_id}/mindmap/items/${itemId}/toggle-collapse`
+      )
+
+      // The toggle endpoint returns the full updated mindmap data
+      if (response.data?.mindmap) {
+        const { mindmap, nodes: backendNodes, ghosts, edges: backendEdges } = response.data
+
+        currentMindmap.value = mindmap
+
+        // Re-transform nodes
+        nodes.value = (backendNodes || []).map((n: any) => ({
+          id: `item-${n.id}`,
+          type: n.data?.type || 'default',
+          position: n.position || { x: 0, y: 0 },
+          data: {
+            label: n.data?.title || 'Untitled',
+            content: n.data?.content,
+            synopsis: n.data?.synopsis,
+            metadata: n.data?.metadata,
+            itemId: n.id,
+            itemType: n.data?.type,
+            style: n.style,
+            isCollapsed: n.is_collapsed ?? false,
+            hasChildren: n.has_children ?? false,
+            childCount: n.child_count ?? 0,
+            isRootFolder: n.is_root_folder ?? false,
+            isCollapsible: !(n.is_root_folder ?? false) && (n.has_children ?? false),
+            isDeletable: !(n.is_root_folder ?? false),
+          },
+        }))
+
+        // Re-add ghosts
+        if (ghosts?.length) {
+          ghosts.forEach((ghost: any) => {
+            nodes.value.push({
+              id: ghost.id,
+              type: 'ghost',
+              position: ghost.position || { x: 0, y: 0 },
+              data: {
+                label: ghost.label,
+                ghostId: ghost.ghost_id,
+                originalItemId: ghost.original_item_id,
+                itemType: ghost.item_type,
+                deletedAt: ghost.deleted_at,
+                isGhost: true,
+              },
+            })
+          })
+        }
+
+        // Re-combine edges
+        const hierarchyEdges = (backendEdges?.hierarchy || []).map((e: any) => ({
+          ...e,
+          type: 'default',
+          style: { stroke: '#999', strokeDasharray: '0' },
+          data: { ...(e.data || {}), is_hierarchy: true, editable: false },
+        }))
+
+        const customEdges = (backendEdges?.custom || []).map((e: any) => ({
+          ...e,
+          type: 'default',
+          style: { stroke: '#3b82f6', strokeDasharray: '5,5' },
+          data: { ...(e.data || {}), is_hierarchy: false, editable: true, connection_type: e.type },
+        }))
+
+        edges.value = [...hierarchyEdges, ...customEdges]
+      }
+    } catch (err: any) {
+      error.value = err.message || 'Failed to toggle collapse'
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
   // Import manuscript items
   const importManuscript = async (options: {
     manuscript_id?: number
@@ -596,15 +699,41 @@ export const useMindmapStore = defineStore('mindmap', () => {
   }
 
   // Selection
+
+  // Get all descendant node IDs of a given node by traversing hierarchy edges
+  const getDescendantNodeIds = (nodeId: string): string[] => {
+    const descendants: string[] = []
+    const childEdges = edges.value.filter(
+      e => e.data?.is_hierarchy && e.source === nodeId
+    )
+    for (const edge of childEdges) {
+      descendants.push(edge.target)
+      descendants.push(...getDescendantNodeIds(edge.target))
+    }
+    return descendants
+  }
+
   const selectNode = (nodeId: string, multi = false) => {
+    const node = nodes.value.find(n => n.id === nodeId)
+    const isFolder = node?.type === 'folder'
+
+    // Build list of nodes to select (folder + visible children)
+    let targetIds = [nodeId]
+    if (isFolder && !node?.data?.isCollapsed) {
+      targetIds = [nodeId, ...getDescendantNodeIds(nodeId)]
+    }
+
     if (multi) {
-      if (selectedNodes.value.includes(nodeId)) {
-        selectedNodes.value = selectedNodes.value.filter(id => id !== nodeId)
+      // Toggle: if the clicked node is already selected, deselect all targets
+      const isCurrentlySelected = selectedNodes.value.includes(nodeId)
+      if (isCurrentlySelected) {
+        selectedNodes.value = selectedNodes.value.filter(id => !targetIds.includes(id))
       } else {
-        selectedNodes.value.push(nodeId)
+        const newIds = targetIds.filter(id => !selectedNodes.value.includes(id))
+        selectedNodes.value = [...selectedNodes.value, ...newIds]
       }
     } else {
-      selectedNodes.value = [nodeId]
+      selectedNodes.value = targetIds
     }
     selectedEdges.value = []
   }
@@ -620,6 +749,12 @@ export const useMindmapStore = defineStore('mindmap', () => {
       selectedEdges.value = [edgeId]
     }
     selectedNodes.value = []
+  }
+
+  // Sync selection state from Vue Flow's internal selection (e.g. box select)
+  const syncSelectionFromVueFlow = (selectedIds: string[]) => {
+    selectedNodes.value = selectedIds
+    selectedEdges.value = []
   }
 
   const clearSelection = () => {
@@ -665,6 +800,12 @@ export const useMindmapStore = defineStore('mindmap', () => {
             itemId: node.id,
             itemType: node.data?.type,
             style: node.style,
+            isCollapsed: node.is_collapsed ?? false,
+            hasChildren: node.has_children ?? false,
+            childCount: node.child_count ?? 0,
+            isRootFolder: node.is_root_folder ?? false,
+            isCollapsible: !(node.is_root_folder ?? false) && (node.has_children ?? false),
+            isDeletable: !(node.is_root_folder ?? false),
           },
         }))
 
@@ -690,15 +831,29 @@ export const useMindmapStore = defineStore('mindmap', () => {
         // Combine hierarchy edges (from folder structure) and custom edges (user-created)
         const hierarchyEdges = (backendEdges?.hierarchy || []).map((e: any) => ({
           ...e,
+          type: 'default', // Use Vue Flow's default edge type
           style: { stroke: '#999', strokeDasharray: '0' }, // Solid gray for hierarchy
+          data: {
+            ...(e.data || {}),
+            is_hierarchy: true,
+            editable: false,
+          },
         }))
 
         const customEdges = (backendEdges?.custom || []).map((e: any) => ({
           ...e,
+          type: 'default', // Use Vue Flow's default edge type
           style: { stroke: '#3b82f6', strokeDasharray: '5,5' }, // Dashed blue for custom
+          data: {
+            ...(e.data || {}),
+            is_hierarchy: false,
+            editable: true,
+            connection_type: e.type, // Store original connection type (one-way/two-way) in data
+          },
         }))
 
         edges.value = [...hierarchyEdges, ...customEdges]
+        console.log('[mindmap store] Edges loaded:', edges.value)
 
         hasUnsavedChanges.value = false
       }
@@ -706,6 +861,82 @@ export const useMindmapStore = defineStore('mindmap', () => {
       // Folder might not have a mindmap yet, which is okay
       console.log(`No mindmap found for folder ${folderId}`)
       currentMindmap.value = null
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const autoLayoutFolderMindmap = async (folderId: number): Promise<void> => {
+    loading.value = true
+    error.value = null
+    try {
+      const response = await axios.post(`/folders/${folderId}/mindmap/auto-layout`)
+
+      if (response.data?.mindmap) {
+        const { mindmap, nodes: backendNodes, ghosts, edges: backendEdges } = response.data
+
+        folderMindmaps.value.set(folderId, mindmap)
+        currentMindmap.value = mindmap
+
+        nodes.value = (backendNodes || []).map((node: any) => ({
+          id: `item-${node.id}`,
+          type: node.data?.type || 'default',
+          position: node.position || { x: 0, y: 0 },
+          data: {
+            label: node.data?.title || 'Untitled',
+            content: node.data?.content,
+            synopsis: node.data?.synopsis,
+            metadata: node.data?.metadata,
+            itemId: node.id,
+            itemType: node.data?.type,
+            style: node.style,
+            isCollapsed: node.is_collapsed ?? false,
+            hasChildren: node.has_children ?? false,
+            childCount: node.child_count ?? 0,
+            isRootFolder: node.is_root_folder ?? false,
+            isCollapsible: !(node.is_root_folder ?? false) && (node.has_children ?? false),
+            isDeletable: !(node.is_root_folder ?? false),
+          },
+        }))
+
+        if (ghosts?.length) {
+          ghosts.forEach((ghost: any) => {
+            nodes.value.push({
+              id: ghost.id,
+              type: 'ghost',
+              position: ghost.position || { x: 0, y: 0 },
+              data: {
+                label: ghost.label,
+                ghostId: ghost.ghost_id,
+                originalItemId: ghost.original_item_id,
+                itemType: ghost.item_type,
+                deletedAt: ghost.deleted_at,
+                isGhost: true,
+              },
+            })
+          })
+        }
+
+        const hierarchyEdges = (backendEdges?.hierarchy || []).map((e: any) => ({
+          ...e,
+          type: 'default',
+          style: { stroke: '#999', strokeDasharray: '0' },
+          data: { ...(e.data || {}), is_hierarchy: true, editable: false },
+        }))
+
+        const customEdges = (backendEdges?.custom || []).map((e: any) => ({
+          ...e,
+          type: 'default',
+          style: { stroke: '#3b82f6', strokeDasharray: '5,5' },
+          data: { ...(e.data || {}), is_hierarchy: false, editable: true, connection_type: e.type },
+        }))
+
+        edges.value = [...hierarchyEdges, ...customEdges]
+        hasUnsavedChanges.value = false
+      }
+    } catch (err: any) {
+      error.value = err.message || 'Failed to auto-layout mindmap'
+      throw err
     } finally {
       loading.value = false
     }
@@ -721,12 +952,13 @@ export const useMindmapStore = defineStore('mindmap', () => {
     loading.value = true
     error.value = null
     try {
-      // Save current state of nodes and edges
-      const response = await axios.put(`/mindmaps/${currentMindmap.value.id}/save`, {
-        nodes: nodes.value,
-        edges: edges.value
-      })
+      const updates = nodes.value
+        .filter(n => n.data?.itemId)
+        .map(n => ({ nodeId: n.id, position: n.position }))
 
+      if (updates.length > 0) {
+        await batchUpdatePositions(updates)
+      }
       hasUnsavedChanges.value = false
     } catch (err: any) {
       error.value = err.message || 'Failed to save mindmap'
@@ -824,6 +1056,146 @@ export const useMindmapStore = defineStore('mindmap', () => {
     await removeItemFromMindmap(nodeId)
   }
 
+  // === Saved Views ===
+
+  const loadSavedViews = async (folderId: number): Promise<void> => {
+    try {
+      const response = await axios.get(`/folders/${folderId}/mindmap/saved-views`)
+      savedViews.value = response.data.saved_views || []
+    } catch (err: any) {
+      console.error('Failed to load saved views:', err)
+    }
+  }
+
+  const saveCurrentAsView = async (folderId: number, name: string, description?: string, settings?: Record<string, any>): Promise<void> => {
+    try {
+      const response = await axios.post(`/folders/${folderId}/mindmap/saved-views`, {
+        name,
+        description,
+        settings,
+      })
+      const newView = response.data.saved_view
+      savedViews.value.push(newView)
+      activeSavedViewId.value = newView.id
+    } catch (err: any) {
+      error.value = err.message || 'Failed to save view'
+      throw err
+    }
+  }
+
+  const loadSavedView = async (folderId: number, viewId: number): Promise<Record<string, any> | null> => {
+    loading.value = true
+    error.value = null
+    try {
+      const response = await axios.post(`/folders/${folderId}/mindmap/saved-views/${viewId}/load`)
+      const viewSettings = response.data?.view_settings || null
+      activeSavedViewId.value = viewId
+
+      if (response.data?.mindmap) {
+        const { mindmap, nodes: backendNodes, ghosts, edges: backendEdges } = response.data
+
+        folderMindmaps.value.set(folderId, mindmap)
+        currentMindmap.value = mindmap
+
+        nodes.value = (backendNodes || []).map((node: any) => ({
+          id: `item-${node.id}`,
+          type: node.data?.type || 'default',
+          position: node.position || { x: 0, y: 0 },
+          data: {
+            label: node.data?.title || 'Untitled',
+            content: node.data?.content,
+            synopsis: node.data?.synopsis,
+            metadata: node.data?.metadata,
+            itemId: node.id,
+            itemType: node.data?.type,
+            style: node.style,
+            isCollapsed: node.is_collapsed ?? false,
+            hasChildren: node.has_children ?? false,
+            childCount: node.child_count ?? 0,
+            isRootFolder: node.is_root_folder ?? false,
+            isCollapsible: !(node.is_root_folder ?? false) && (node.has_children ?? false),
+            isDeletable: !(node.is_root_folder ?? false),
+          },
+        }))
+
+        if (ghosts?.length) {
+          ghosts.forEach((ghost: any) => {
+            nodes.value.push({
+              id: ghost.id,
+              type: 'ghost',
+              position: ghost.position || { x: 0, y: 0 },
+              data: {
+                label: ghost.label,
+                ghostId: ghost.ghost_id,
+                originalItemId: ghost.original_item_id,
+                itemType: ghost.item_type,
+                deletedAt: ghost.deleted_at,
+                isGhost: true,
+              },
+            })
+          })
+        }
+
+        const hierarchyEdges = (backendEdges?.hierarchy || []).map((e: any) => ({
+          ...e,
+          type: 'default',
+          style: { stroke: '#999', strokeDasharray: '0' },
+          data: { ...(e.data || {}), is_hierarchy: true, editable: false },
+        }))
+
+        const customEdges = (backendEdges?.custom || []).map((e: any) => ({
+          ...e,
+          type: 'default',
+          style: { stroke: '#3b82f6', strokeDasharray: '5,5' },
+          data: { ...(e.data || {}), is_hierarchy: false, editable: true, connection_type: e.type },
+        }))
+
+        edges.value = [...hierarchyEdges, ...customEdges]
+        hasUnsavedChanges.value = false
+      }
+
+      return viewSettings
+    } catch (err: any) {
+      error.value = err.message || 'Failed to load saved view'
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const renameSavedView = async (folderId: number, viewId: number, name: string): Promise<void> => {
+    try {
+      await axios.put(`/folders/${folderId}/mindmap/saved-views/${viewId}`, { name })
+      const view = savedViews.value.find(v => v.id === viewId)
+      if (view) view.name = name
+    } catch (err: any) {
+      error.value = err.message || 'Failed to rename saved view'
+      throw err
+    }
+  }
+
+  const deleteSavedView = async (folderId: number, viewId: number): Promise<void> => {
+    try {
+      await axios.delete(`/folders/${folderId}/mindmap/saved-views/${viewId}`)
+      savedViews.value = savedViews.value.filter(v => v.id !== viewId)
+      if (activeSavedViewId.value === viewId) {
+        activeSavedViewId.value = null
+      }
+    } catch (err: any) {
+      error.value = err.message || 'Failed to delete saved view'
+      throw err
+    }
+  }
+
+  const overwriteSavedView = async (folderId: number, viewId: number, settings?: Record<string, any>): Promise<void> => {
+    try {
+      await axios.post(`/folders/${folderId}/mindmap/saved-views/${viewId}/overwrite`, { settings })
+    } catch (err: any) {
+      error.value = err.message || 'Failed to save layout'
+      throw err
+    }
+  }
+
   // Reset
   const reset = () => {
     currentMindmap.value = null
@@ -835,6 +1207,8 @@ export const useMindmapStore = defineStore('mindmap', () => {
     hasUnsavedChanges.value = false
     error.value = null
     folderMindmaps.value.clear()
+    savedViews.value = []
+    activeSavedViewId.value = null
   }
 
   return {
@@ -860,6 +1234,7 @@ export const useMindmapStore = defineStore('mindmap', () => {
     loadMindmap,
     loadManuscriptDefaultMindmap,
     loadFolderMindmap,
+    autoLayoutFolderMindmap,
     getMindmapByFolderId,
     createMindmap,
     updateMindmap,
@@ -882,12 +1257,27 @@ export const useMindmapStore = defineStore('mindmap', () => {
     updateConnection,
     deleteConnection,
 
+    // Collapse/Expand
+    toggleNodeCollapse,
+
     // Import
     importManuscript,
+
+    // Saved Views
+    savedViews,
+    activeSavedViewId,
+    loadSavedViews,
+    saveCurrentAsView,
+    loadSavedView,
+    renameSavedView,
+    deleteSavedView,
+    overwriteSavedView,
 
     // Selection
     selectNode,
     selectEdge,
+    syncSelectionFromVueFlow,
+    getDescendantNodeIds,
     clearSelection,
 
     // Reset

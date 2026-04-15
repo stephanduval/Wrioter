@@ -93,6 +93,14 @@ class WritingMindmap extends Model
     }
 
     /**
+     * Get the saved views for this mindmap.
+     */
+    public function savedViews(): HasMany
+    {
+        return $this->hasMany(MindmapSavedView::class, 'mindmap_id');
+    }
+
+    /**
      * Get all items in this mindmap through positions.
      */
     public function items()

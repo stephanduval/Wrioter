@@ -87,7 +87,7 @@
     </div>
 
     <!-- Empty State -->
-    <div v-else-if="!manuscriptStore.hasNavigationTree" class="empty-state">
+    <div v-else-if="!manuscriptStore.hasNavigationTree" class="empty-state" @contextmenu.prevent="handleEmptyAreaContext">
       <VIcon icon="bx-folder-open" size="32" color="grey" />
       <div class="empty-text">No content found</div>
       <div class="empty-subtext">
@@ -96,7 +96,7 @@
     </div>
 
     <!-- Navigation Tree Items -->
-    <div v-else class="navigation-tree">
+    <div v-else class="navigation-tree" @contextmenu.self.prevent="handleEmptyAreaContext">
       <TreeNode
         v-for="node in manuscriptStore.manuscriptTree"
         :key="node.id"
@@ -144,6 +144,7 @@ import { useSelectionStore } from "@/stores/selection";
 import { usePaneStore } from "@/stores/pane";
 import { useContextMenu } from "@/composables/useContextMenu";
 import { ContextDetectionService } from "@/services/contextDetection";
+import { getEmptySpaceMenuItems } from "@/config/contextMenus/viewMenus";
 import { isDropResultMulti, type DropResult, type DropResultMulti } from "@/composables/useDragAndDrop";
 import { useLayoutConfigStore } from "@layouts/stores/config";
 import { injectionKeyIsVerticalNavHovered } from "@layouts/symbols";
@@ -341,6 +342,20 @@ const handleNodeClick = (nodeId: string) => {
 
 const handleNodeToggle = (nodeId: string) => {
   navigationStore.toggleNode(nodeId);
+};
+
+const handleEmptyAreaContext = (event: MouseEvent) => {
+  const manuscriptId = manuscriptStore.selectedManuscript?.id;
+  if (!manuscriptId) return;
+
+  const menuItems = getEmptySpaceMenuItems({
+    folderId: manuscriptId,
+    manuscriptId,
+  });
+
+  if (menuItems.length > 0) {
+    contextMenu.show(event, { items: menuItems });
+  }
 };
 
 const handleNodeContext = (data: { nodeId: string; event: MouseEvent }) => {
