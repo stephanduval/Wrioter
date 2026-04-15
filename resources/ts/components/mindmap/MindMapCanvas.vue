@@ -201,11 +201,12 @@ const emit = defineEmits<{
   'title-updated': [nodeId: string, newTitle: string]
   'toggle-collapse': [nodeId: string]
   'selection-change': [selectedIds: string[]]
+  'node-drag-stop': [nodes: any[]]
 }>()
 
 // Refs
 const vueFlowRef = ref(null)
-const { fitView, zoomIn, zoomOut, project, getSelectedNodes, addSelectedNodes, removeSelectedNodes } = useVueFlow()
+const { fitView, zoomIn, zoomOut, project, getSelectedNodes, addSelectedNodes, removeSelectedNodes, getViewport, setViewport } = useVueFlow()
 const isPanEnabled = ref(true)
 
 // Model binding — inject `selected` property from parent's selection state
@@ -311,9 +312,9 @@ const onPaneContextMenu = (event: MouseEvent) => {
   emit('pane-context-menu', event)
 }
 
-const onNodeDragStop = (event: MouseEvent, node: any) => {
-  // Auto-save position after drag
-  console.log('Node drag stopped:', node)
+const onNodeDragStop = (dragEvent: { event: MouseEvent; node: any; nodes: any[] }) => {
+  const draggedNodes = dragEvent.nodes && dragEvent.nodes.length > 0 ? dragEvent.nodes : [dragEvent.node]
+  emit('node-drag-stop', draggedNodes)
 }
 
 // Pan/zoom control - disable panning on right-click to allow context menu
@@ -340,6 +341,8 @@ defineExpose({
   getSelectedNodes,
   addSelectedNodes,
   removeSelectedNodes,
+  getViewport,
+  setViewport,
 })
 </script>
 
@@ -366,15 +369,6 @@ defineExpose({
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
-.vue-flow__node-default.selected {
-  border-color: rgb(var(--v-theme-primary));
-  box-shadow: 0 0 0 3px rgba(var(--v-theme-primary-rgb), 30%);
-}
-
-.vue-flow__node-text.selected {
-  border-color: rgb(var(--v-theme-primary));
-  box-shadow: 0 0 0 3px rgba(var(--v-theme-primary-rgb), 30%);
-}
 
 /* Text Node */
 .vue-flow__node-text {
@@ -448,9 +442,6 @@ defineExpose({
   font-weight: 700;
 }
 
-.vue-flow__node-folder.selected {
-  box-shadow: 0 0 0 3px rgba(var(--v-theme-primary-rgb), 40%), 0 4px 6px rgba(0, 0, 0, 10%);
-}
 
 .vue-flow__node-folder.folder-root {
   border: 3px solid rgba(255, 255, 255, 60%);
@@ -459,9 +450,6 @@ defineExpose({
   font-weight: 700;
 }
 
-.vue-flow__node-folder.folder-root.selected {
-  box-shadow: 0 0 0 3px rgba(var(--v-theme-primary-rgb), 40%), 0 8px 16px rgba(0, 0, 0, 15%);
-}
 /* stylelint-enable liberty/use-logical-spec, order/properties-order */
 
 /* Character Node */
@@ -476,9 +464,6 @@ defineExpose({
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-.vue-flow__node-character.selected {
-  box-shadow: 0 0 0 3px rgba(var(--v-theme-primary-rgb), 40%), 0 4px 6px rgba(0, 0, 0, 10%);
-}
 
 /* Research Node */
 .vue-flow__node-research {
@@ -599,5 +584,34 @@ defineExpose({
   background: white;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+</style>
+
+<style>
+/* Unscoped: Vue Flow applies .selected on internal wrapper elements outside scoped scope */
+.vue-flow__node-default.selected {
+  border-color: rgb(var(--v-theme-primary));
+  box-shadow: 0 0 0 3px rgba(var(--v-theme-primary-rgb), 30%);
+}
+
+.vue-flow__node-text.selected {
+  border-color: rgb(var(--v-theme-primary));
+  box-shadow: 0 0 0 3px rgba(var(--v-theme-primary-rgb), 30%);
+}
+
+.vue-flow__node-folder.selected {
+  box-shadow: 0 0 0 3px rgba(var(--v-theme-primary-rgb), 40%), 0 4px 6px rgba(0, 0, 0, 10%);
+}
+
+.vue-flow__node-folder.folder-root.selected {
+  box-shadow: 0 0 0 3px rgba(var(--v-theme-primary-rgb), 40%), 0 8px 16px rgba(0, 0, 0, 15%);
+}
+
+.vue-flow__node-character.selected {
+  box-shadow: 0 0 0 3px rgba(var(--v-theme-primary-rgb), 40%), 0 4px 6px rgba(0, 0, 0, 10%);
+}
+
+.vue-flow__node-research.selected {
+  box-shadow: 0 0 0 3px rgba(var(--v-theme-primary-rgb), 40%), 0 4px 6px rgba(0, 0, 0, 10%);
 }
 </style>

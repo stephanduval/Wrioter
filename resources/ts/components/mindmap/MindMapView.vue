@@ -100,6 +100,7 @@
         @toggle-collapse="handleToggleCollapse"
         @pane-context-menu="handlePaneContextMenu"
         @selection-change="handleSelectionChange"
+        @node-drag-stop="handleNodeDragStop"
       />
 
       <!-- Empty State -->
@@ -171,6 +172,55 @@
         </VCardActions>
       </VCard>
     </VDialog>
+
+    <!-- Save Layout Dialog -->
+    <VDialog v-model="saveLayoutDialog" max-width="400">
+      <VCard>
+        <VCardTitle>Save Layout As</VCardTitle>
+        <VCardText>
+          <VTextField
+            v-model="layoutName"
+            label="Layout Name"
+            placeholder="Enter a name for this layout..."
+            autofocus
+            @keyup.enter="confirmSaveLayout"
+          />
+        </VCardText>
+        <VCardActions>
+          <VSpacer />
+          <VBtn variant="text" @click="saveLayoutDialog = false">Cancel</VBtn>
+          <VBtn color="primary" :disabled="!layoutName.trim()" @click="confirmSaveLayout">Save</VBtn>
+        </VCardActions>
+      </VCard>
+    </VDialog>
+
+    <!-- Rename Layout Dialog -->
+    <VDialog v-model="renameLayoutDialog" max-width="400">
+      <VCard>
+        <VCardTitle>Rename Layout</VCardTitle>
+        <VCardText>
+          <VTextField
+            v-model="renameLayoutName"
+            label="New Name"
+            placeholder="Enter new name..."
+            autofocus
+            @keyup.enter="confirmRenameLayout"
+          />
+        </VCardText>
+        <VCardActions>
+          <VSpacer />
+          <VBtn variant="text" @click="renameLayoutDialog = false">Cancel</VBtn>
+          <VBtn color="primary" :disabled="!renameLayoutName.trim()" @click="confirmRenameLayout">Rename</VBtn>
+        </VCardActions>
+      </VCard>
+    </VDialog>
+
+    <!-- Views Modal -->
+    <MindmapViewsModal
+      v-model="viewsModalOpen"
+      :folder-id="folderId"
+      @load-view="handleLoadSavedView"
+    />
   </div>
 </template>
 
@@ -184,6 +234,7 @@ import { usePaneStore } from '@/stores/pane'
 import { useContextMenu } from '@/composables/useContextMenu'
 import { getEmptySpaceMenuItems } from '@/config/contextMenus'
 import MindMapCanvas from './MindMapCanvas.vue'
+import MindmapViewsModal from './MindmapViewsModal.vue'
 import type { FolderItem } from '@/stores/folderView'
 
 interface Props {
@@ -230,10 +281,19 @@ function handleEmptySpaceContextMenu(event: MouseEvent) {
     return
   }
 
+  const activeView = mindmapStore.savedViews.find(v => v.id === mindmapStore.activeSavedViewId)
+
   const menuItems = getEmptySpaceMenuItems({
     folderId: props.folderId,
     manuscriptId: manuscriptId.value,
     onAutoLayout: handleAutoLayout,
+    onSaveLayout: handleSaveLayout,
+    onSaveLayoutAs: openSaveLayoutDialog,
+    onLoadSavedView: handleLoadSavedView,
+    onRenameSavedView: openRenameLayoutDialog,
+    onDeleteSavedView: handleDeleteSavedView,
+    savedViews: mindmapStore.savedViews,
+    activeSavedViewName: activeView?.name || null,
   })
 
   contextMenu.show(event, { items: menuItems })
@@ -249,6 +309,30 @@ function handleSelectionChange(selectedIds: string[]) {
   mindmapStore.syncSelectionFromVueFlow(selectedIds)
 }
 
+// Debounced auto-save: persist node positions after drag
+let dragSaveTimeout: ReturnType<typeof setTimeout> | null = null
+const pendingPositionUpdates = new Map<string, { x: number; y: number }>()
+
+function handleNodeDragStop(draggedNodes: any[]) {
+  for (const node of draggedNodes) {
+    pendingPositionUpdates.set(node.id, { x: node.position.x, y: node.position.y })
+  }
+  if (dragSaveTimeout) clearTimeout(dragSaveTimeout)
+  dragSaveTimeout = setTimeout(async () => {
+    const updates = Array.from(pendingPositionUpdates.entries()).map(
+      ([nodeId, position]) => ({ nodeId, position })
+    )
+    pendingPositionUpdates.clear()
+    if (updates.length > 0) {
+      try {
+        await mindmapStore.batchUpdatePositions(updates)
+      } catch (err) {
+        console.error('Failed to auto-save positions:', err)
+      }
+    }
+  }, 500)
+}
+
 // Refs
 const mindmapCanvasRef = ref<InstanceType<typeof MindMapCanvas> | null>(null)
 
@@ -262,6 +346,14 @@ const nodeForm = ref({
   content: '',
   itemId: null as number | null
 })
+
+// Saved view dialogs
+const saveLayoutDialog = ref(false)
+const layoutName = ref('')
+const viewsModalOpen = ref(false)
+const renameLayoutDialog = ref(false)
+const renameLayoutName = ref('')
+const renameLayoutViewId = ref<number | null>(null)
 
 // Computed
 const currentMindmap = computed(() => {
@@ -580,6 +672,81 @@ async function handleAutoLayout() {
   }
 }
 
+// === Saved View Handlers ===
+
+function getViewportSettings(): Record<string, any> | undefined {
+  const viewport = mindmapCanvasRef.value?.getViewport?.()
+  return viewport ? { viewport: { x: viewport.x, y: viewport.y, zoom: viewport.zoom } } : undefined
+}
+
+function openSaveLayoutDialog() {
+  layoutName.value = ''
+  saveLayoutDialog.value = true
+}
+
+async function confirmSaveLayout() {
+  if (!layoutName.value.trim()) return
+  try {
+    await mindmapStore.saveCurrentAsView(props.folderId, layoutName.value.trim(), undefined, getViewportSettings())
+    saveLayoutDialog.value = false
+  } catch (err: any) {
+    console.error('Failed to save layout:', err)
+    emit('update:error', err.message || 'Failed to save layout')
+  }
+}
+
+async function handleSaveLayout() {
+  if (!mindmapStore.activeSavedViewId) return
+  try {
+    await mindmapStore.overwriteSavedView(props.folderId, mindmapStore.activeSavedViewId, getViewportSettings())
+  } catch (err: any) {
+    console.error('Failed to save layout:', err)
+    emit('update:error', err.message || 'Failed to save layout')
+  }
+}
+
+async function handleLoadSavedView(viewId: number) {
+  try {
+    const viewSettings = await mindmapStore.loadSavedView(props.folderId, viewId)
+    nextTick(() => {
+      if (viewSettings?.viewport && mindmapCanvasRef.value?.setViewport) {
+        mindmapCanvasRef.value.setViewport(viewSettings.viewport, { duration: 800 })
+      } else {
+        mindmapCanvasRef.value?.fitView({ duration: 800, padding: 0.2 })
+      }
+    })
+  } catch (err: any) {
+    console.error('Failed to load saved view:', err)
+    emit('update:error', err.message || 'Failed to load saved view')
+  }
+}
+
+function openRenameLayoutDialog(viewId: number, currentName: string) {
+  renameLayoutViewId.value = viewId
+  renameLayoutName.value = currentName
+  renameLayoutDialog.value = true
+}
+
+async function confirmRenameLayout() {
+  if (!renameLayoutName.value.trim() || !renameLayoutViewId.value) return
+  try {
+    await mindmapStore.renameSavedView(props.folderId, renameLayoutViewId.value, renameLayoutName.value.trim())
+    renameLayoutDialog.value = false
+  } catch (err: any) {
+    console.error('Failed to rename layout:', err)
+    emit('update:error', err.message || 'Failed to rename layout')
+  }
+}
+
+async function handleDeleteSavedView(viewId: number) {
+  try {
+    await mindmapStore.deleteSavedView(props.folderId, viewId)
+  } catch (err: any) {
+    console.error('Failed to delete saved view:', err)
+    emit('update:error', err.message || 'Failed to delete saved view')
+  }
+}
+
 function handleZoomIn() {
   // Implement zoom in
   console.log('Zoom in')
@@ -596,8 +763,9 @@ function handleFitView() {
 }
 
 // Lifecycle
-onMounted(() => {
-  loadOrCreateMindmap()
+onMounted(async () => {
+  await loadOrCreateMindmap()
+  mindmapStore.loadSavedViews(props.folderId)
 })
 
 // Watch for folder changes
@@ -609,7 +777,7 @@ watch(() => props.folderId, (newFolderId) => {
 
 // Cleanup
 onUnmounted(() => {
-  // Clean up if needed
+  if (dragSaveTimeout) clearTimeout(dragSaveTimeout)
 })
 </script>
 

@@ -5,10 +5,15 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Item;
 use App\Models\MindmapItemPosition;
+use App\Models\MindmapSavedView;
+use App\Models\MindmapViewPosition;
+use App\Models\WritingMindmap;
 use App\Services\FolderMindmapSyncService;
 use App\Services\MindmapLayoutService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class FolderMindmapController extends Controller
 {
@@ -174,5 +179,190 @@ class FolderMindmapController extends Controller
         $layoutService->applyLayout($mindmap, $positions);
 
         return $this->show($folderId);
+    }
+
+    /**
+     * List all saved views for this folder's mindmap.
+     */
+    public function listSavedViews(int $folderId): JsonResponse
+    {
+        $mindmap = WritingMindmap::forFolder($folderId)
+            ->where('user_id', Auth::id())
+            ->first();
+
+        if (!$mindmap) {
+            return response()->json(['saved_views' => []]);
+        }
+
+        $views = MindmapSavedView::where('mindmap_id', $mindmap->id)
+            ->where('user_id', Auth::id())
+            ->orderBy('name')
+            ->get(['id', 'name', 'description', 'is_default', 'created_at']);
+
+        return response()->json(['saved_views' => $views]);
+    }
+
+    /**
+     * Save current layout as a named view (snapshot positions).
+     */
+    public function createSavedView(Request $request, int $folderId): JsonResponse
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'settings' => 'nullable|array',
+        ]);
+
+        $mindmap = $this->syncService->getOrCreateAndSync($folderId, Auth::id());
+
+        $view = DB::transaction(function () use ($mindmap, $validated) {
+            $view = MindmapSavedView::create([
+                'mindmap_id' => $mindmap->id,
+                'user_id' => Auth::id(),
+                'name' => $validated['name'],
+                'description' => $validated['description'] ?? null,
+                'settings' => $validated['settings'] ?? null,
+            ]);
+
+            // Snapshot all current positions
+            $currentPositions = MindmapItemPosition::where('mindmap_id', $mindmap->id)->get();
+            foreach ($currentPositions as $pos) {
+                MindmapViewPosition::create([
+                    'saved_view_id' => $view->id,
+                    'item_id' => $pos->item_id,
+                    'position' => $pos->position,
+                    'size' => $pos->size,
+                    'style' => $pos->style,
+                    'is_collapsed' => $pos->is_collapsed,
+                    'z_index' => $pos->z_index,
+                ]);
+            }
+
+            return $view;
+        });
+
+        return response()->json(['saved_view' => $view], 201);
+    }
+
+    /**
+     * Load a saved view (restore snapshot positions to working state).
+     */
+    public function loadSavedView(int $folderId, int $viewId): JsonResponse
+    {
+        $mindmap = WritingMindmap::forFolder($folderId)
+            ->where('user_id', Auth::id())
+            ->firstOrFail();
+
+        $view = MindmapSavedView::where('id', $viewId)
+            ->where('mindmap_id', $mindmap->id)
+            ->where('user_id', Auth::id())
+            ->firstOrFail();
+
+        $savedPositions = MindmapViewPosition::where('saved_view_id', $view->id)->get();
+
+        DB::transaction(function () use ($mindmap, $savedPositions) {
+            foreach ($savedPositions as $sp) {
+                MindmapItemPosition::where('mindmap_id', $mindmap->id)
+                    ->where('item_id', $sp->item_id)
+                    ->update([
+                        'position' => $sp->position,
+                        'size' => $sp->size,
+                        'style' => $sp->style,
+                        'is_collapsed' => $sp->is_collapsed,
+                        'z_index' => $sp->z_index,
+                    ]);
+            }
+        });
+
+        $response = $this->show($folderId);
+        $data = $response->getData(true);
+        $data['view_settings'] = $view->settings;
+
+        return response()->json($data);
+    }
+
+    /**
+     * Update a saved view (rename/update description).
+     */
+    public function updateSavedView(Request $request, int $folderId, int $viewId): JsonResponse
+    {
+        $validated = $request->validate([
+            'name' => 'sometimes|required|string|max:255',
+            'description' => 'nullable|string',
+        ]);
+
+        $mindmap = WritingMindmap::forFolder($folderId)
+            ->where('user_id', Auth::id())
+            ->firstOrFail();
+
+        $view = MindmapSavedView::where('id', $viewId)
+            ->where('mindmap_id', $mindmap->id)
+            ->where('user_id', Auth::id())
+            ->firstOrFail();
+
+        $view->update($validated);
+
+        return response()->json(['saved_view' => $view]);
+    }
+
+    /**
+     * Overwrite a saved view (re-snapshot current positions + update settings).
+     */
+    public function overwriteSavedView(Request $request, int $folderId, int $viewId): JsonResponse
+    {
+        $mindmap = WritingMindmap::forFolder($folderId)
+            ->where('user_id', Auth::id())
+            ->firstOrFail();
+
+        $view = MindmapSavedView::where('id', $viewId)
+            ->where('mindmap_id', $mindmap->id)
+            ->where('user_id', Auth::id())
+            ->firstOrFail();
+
+        $currentPositions = MindmapItemPosition::where('mindmap_id', $mindmap->id)->get();
+
+        DB::transaction(function () use ($view, $currentPositions, $request) {
+            // Delete old snapshot positions
+            MindmapViewPosition::where('saved_view_id', $view->id)->delete();
+
+            // Re-snapshot current working positions
+            foreach ($currentPositions as $pos) {
+                MindmapViewPosition::create([
+                    'saved_view_id' => $view->id,
+                    'item_id' => $pos->item_id,
+                    'position' => $pos->position,
+                    'size' => $pos->size,
+                    'style' => $pos->style,
+                    'is_collapsed' => $pos->is_collapsed,
+                    'z_index' => $pos->z_index,
+                ]);
+            }
+
+            // Update settings (viewport) if provided
+            if ($request->has('settings')) {
+                $view->update(['settings' => $request->input('settings')]);
+            }
+        });
+
+        return response()->json(['message' => 'View overwritten']);
+    }
+
+    /**
+     * Delete a saved view.
+     */
+    public function deleteSavedView(int $folderId, int $viewId): JsonResponse
+    {
+        $mindmap = WritingMindmap::forFolder($folderId)
+            ->where('user_id', Auth::id())
+            ->firstOrFail();
+
+        $view = MindmapSavedView::where('id', $viewId)
+            ->where('mindmap_id', $mindmap->id)
+            ->where('user_id', Auth::id())
+            ->firstOrFail();
+
+        $view->delete();
+
+        return response()->json(['message' => 'Saved view deleted']);
     }
 }

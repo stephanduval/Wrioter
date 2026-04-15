@@ -281,6 +281,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/folders/{folderId}/mindmap/sync', [App\Http\Controllers\Api\FolderMindmapController::class, 'sync']);
     Route::put('/folders/{folderId}/mindmap/items/{itemId}/toggle-collapse', [App\Http\Controllers\Api\FolderMindmapController::class, 'toggleCollapse']);
     Route::post('/folders/{folderId}/mindmap/auto-layout', [App\Http\Controllers\Api\FolderMindmapController::class, 'autoLayout']);
+
+    // Saved Views
+    Route::get('/folders/{folderId}/mindmap/saved-views', [App\Http\Controllers\Api\FolderMindmapController::class, 'listSavedViews']);
+    Route::post('/folders/{folderId}/mindmap/saved-views', [App\Http\Controllers\Api\FolderMindmapController::class, 'createSavedView']);
+    Route::post('/folders/{folderId}/mindmap/saved-views/{viewId}/load', [App\Http\Controllers\Api\FolderMindmapController::class, 'loadSavedView']);
+    Route::post('/folders/{folderId}/mindmap/saved-views/{viewId}/overwrite', [App\Http\Controllers\Api\FolderMindmapController::class, 'overwriteSavedView']);
+    Route::put('/folders/{folderId}/mindmap/saved-views/{viewId}', [App\Http\Controllers\Api\FolderMindmapController::class, 'updateSavedView']);
+    Route::delete('/folders/{folderId}/mindmap/saved-views/{viewId}', [App\Http\Controllers\Api\FolderMindmapController::class, 'deleteSavedView']);
 });
 
 // User Preferences Routes

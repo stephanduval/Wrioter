@@ -58,6 +58,8 @@ export const useMindmapStore = defineStore('mindmap', () => {
   const items = ref<Map<number, Item>>(new Map()) // Cache of items by ID
   const selectedNodes = ref<string[]>([])
   const selectedEdges = ref<string[]>([])
+  const savedViews = ref<Array<{ id: number; name: string; description?: string; is_default: boolean; created_at: string }>>([])
+  const activeSavedViewId = ref<number | null>(null)
   const loading = ref(false)
   const error = ref<string | null>(null)
 
@@ -950,12 +952,13 @@ export const useMindmapStore = defineStore('mindmap', () => {
     loading.value = true
     error.value = null
     try {
-      // Save current state of nodes and edges
-      const response = await axios.put(`/mindmaps/${currentMindmap.value.id}/save`, {
-        nodes: nodes.value,
-        edges: edges.value
-      })
+      const updates = nodes.value
+        .filter(n => n.data?.itemId)
+        .map(n => ({ nodeId: n.id, position: n.position }))
 
+      if (updates.length > 0) {
+        await batchUpdatePositions(updates)
+      }
       hasUnsavedChanges.value = false
     } catch (err: any) {
       error.value = err.message || 'Failed to save mindmap'
@@ -1053,6 +1056,146 @@ export const useMindmapStore = defineStore('mindmap', () => {
     await removeItemFromMindmap(nodeId)
   }
 
+  // === Saved Views ===
+
+  const loadSavedViews = async (folderId: number): Promise<void> => {
+    try {
+      const response = await axios.get(`/folders/${folderId}/mindmap/saved-views`)
+      savedViews.value = response.data.saved_views || []
+    } catch (err: any) {
+      console.error('Failed to load saved views:', err)
+    }
+  }
+
+  const saveCurrentAsView = async (folderId: number, name: string, description?: string, settings?: Record<string, any>): Promise<void> => {
+    try {
+      const response = await axios.post(`/folders/${folderId}/mindmap/saved-views`, {
+        name,
+        description,
+        settings,
+      })
+      const newView = response.data.saved_view
+      savedViews.value.push(newView)
+      activeSavedViewId.value = newView.id
+    } catch (err: any) {
+      error.value = err.message || 'Failed to save view'
+      throw err
+    }
+  }
+
+  const loadSavedView = async (folderId: number, viewId: number): Promise<Record<string, any> | null> => {
+    loading.value = true
+    error.value = null
+    try {
+      const response = await axios.post(`/folders/${folderId}/mindmap/saved-views/${viewId}/load`)
+      const viewSettings = response.data?.view_settings || null
+      activeSavedViewId.value = viewId
+
+      if (response.data?.mindmap) {
+        const { mindmap, nodes: backendNodes, ghosts, edges: backendEdges } = response.data
+
+        folderMindmaps.value.set(folderId, mindmap)
+        currentMindmap.value = mindmap
+
+        nodes.value = (backendNodes || []).map((node: any) => ({
+          id: `item-${node.id}`,
+          type: node.data?.type || 'default',
+          position: node.position || { x: 0, y: 0 },
+          data: {
+            label: node.data?.title || 'Untitled',
+            content: node.data?.content,
+            synopsis: node.data?.synopsis,
+            metadata: node.data?.metadata,
+            itemId: node.id,
+            itemType: node.data?.type,
+            style: node.style,
+            isCollapsed: node.is_collapsed ?? false,
+            hasChildren: node.has_children ?? false,
+            childCount: node.child_count ?? 0,
+            isRootFolder: node.is_root_folder ?? false,
+            isCollapsible: !(node.is_root_folder ?? false) && (node.has_children ?? false),
+            isDeletable: !(node.is_root_folder ?? false),
+          },
+        }))
+
+        if (ghosts?.length) {
+          ghosts.forEach((ghost: any) => {
+            nodes.value.push({
+              id: ghost.id,
+              type: 'ghost',
+              position: ghost.position || { x: 0, y: 0 },
+              data: {
+                label: ghost.label,
+                ghostId: ghost.ghost_id,
+                originalItemId: ghost.original_item_id,
+                itemType: ghost.item_type,
+                deletedAt: ghost.deleted_at,
+                isGhost: true,
+              },
+            })
+          })
+        }
+
+        const hierarchyEdges = (backendEdges?.hierarchy || []).map((e: any) => ({
+          ...e,
+          type: 'default',
+          style: { stroke: '#999', strokeDasharray: '0' },
+          data: { ...(e.data || {}), is_hierarchy: true, editable: false },
+        }))
+
+        const customEdges = (backendEdges?.custom || []).map((e: any) => ({
+          ...e,
+          type: 'default',
+          style: { stroke: '#3b82f6', strokeDasharray: '5,5' },
+          data: { ...(e.data || {}), is_hierarchy: false, editable: true, connection_type: e.type },
+        }))
+
+        edges.value = [...hierarchyEdges, ...customEdges]
+        hasUnsavedChanges.value = false
+      }
+
+      return viewSettings
+    } catch (err: any) {
+      error.value = err.message || 'Failed to load saved view'
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const renameSavedView = async (folderId: number, viewId: number, name: string): Promise<void> => {
+    try {
+      await axios.put(`/folders/${folderId}/mindmap/saved-views/${viewId}`, { name })
+      const view = savedViews.value.find(v => v.id === viewId)
+      if (view) view.name = name
+    } catch (err: any) {
+      error.value = err.message || 'Failed to rename saved view'
+      throw err
+    }
+  }
+
+  const deleteSavedView = async (folderId: number, viewId: number): Promise<void> => {
+    try {
+      await axios.delete(`/folders/${folderId}/mindmap/saved-views/${viewId}`)
+      savedViews.value = savedViews.value.filter(v => v.id !== viewId)
+      if (activeSavedViewId.value === viewId) {
+        activeSavedViewId.value = null
+      }
+    } catch (err: any) {
+      error.value = err.message || 'Failed to delete saved view'
+      throw err
+    }
+  }
+
+  const overwriteSavedView = async (folderId: number, viewId: number, settings?: Record<string, any>): Promise<void> => {
+    try {
+      await axios.post(`/folders/${folderId}/mindmap/saved-views/${viewId}/overwrite`, { settings })
+    } catch (err: any) {
+      error.value = err.message || 'Failed to save layout'
+      throw err
+    }
+  }
+
   // Reset
   const reset = () => {
     currentMindmap.value = null
@@ -1064,6 +1207,8 @@ export const useMindmapStore = defineStore('mindmap', () => {
     hasUnsavedChanges.value = false
     error.value = null
     folderMindmaps.value.clear()
+    savedViews.value = []
+    activeSavedViewId.value = null
   }
 
   return {
@@ -1117,6 +1262,16 @@ export const useMindmapStore = defineStore('mindmap', () => {
 
     // Import
     importManuscript,
+
+    // Saved Views
+    savedViews,
+    activeSavedViewId,
+    loadSavedViews,
+    saveCurrentAsView,
+    loadSavedView,
+    renameSavedView,
+    deleteSavedView,
+    overwriteSavedView,
 
     // Selection
     selectNode,
