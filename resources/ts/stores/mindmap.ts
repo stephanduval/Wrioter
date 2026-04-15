@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import axios from '@/../js/axios'
 import type { Node, Edge } from '@vue-flow/core'
 import { dataSync } from '@/services/dataSync'
+import { useManuscriptStore } from '@/stores/manuscript'
 
 interface MindMap {
   id: number
@@ -1024,10 +1025,12 @@ export const useMindmapStore = defineStore('mindmap', () => {
       nodes.value[index] = updatedNode
       hasUnsavedChanges.value = false
 
-      // Emit item update event for other stores to sync
-      if (currentMindmap.value.manuscript_id) {
+      // Emit item update event for other stores to sync (nav tree, corkboard, etc.)
+      const manuscriptId = currentMindmap.value.manuscript_id
+        ?? useManuscriptStore().selectedManuscript?.id
+      if (manuscriptId) {
         dataSync.emit('item:updated', {
-          manuscriptId: currentMindmap.value.manuscript_id,
+          manuscriptId,
           itemId,
           changes: {
             title: updatedNode.data?.label,
