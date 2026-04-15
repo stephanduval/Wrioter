@@ -43,6 +43,10 @@ tar -czf deploy.tar.gz \
     --exclude=.git \
     --exclude=.env \
     --exclude=.env.testing \
+    --exclude=.env.testing.* \
+    --exclude=.env.dev \
+    --exclude=.env.branch2 \
+    --exclude=.env.branch3 \
     --exclude=storage/app/public/* \
     --exclude=storage/app/temp/* \
     --exclude=storage/logs/* \
@@ -54,6 +58,13 @@ tar -czf deploy.tar.gz \
     --exclude=playwright* \
     --exclude=docker* \
     --exclude=Dockerfile* \
+    --exclude=docs \
+    --exclude='*.sql' \
+    --exclude='*.tar.gz' \
+    --exclude='*.deb' \
+    --exclude=Bash \
+    --exclude='Scrivener Zip Files' \
+    --exclude=cypress_backup \
     .
 
 # Step 4: Upload to server
@@ -69,11 +80,17 @@ scp -i "$SSH_KEY" wrioter-scheduler.timer ${SSH_USER}@${SERVER_HOST}:~/wrioter-s
 # Step 5: Execute deployment on server
 echo -e "${YELLOW}🔧 Running deployment on server...${NC}"
 ssh -i "$SSH_KEY" ${SSH_USER}@${SERVER_HOST} << 'ENDSSH'
-    # Create backup
+    # Create backup (keep only last 2)
     echo "Creating backup..."
     mkdir -p ~/backups
-    if [ -d "/home/sduval/htdocs/stephandouglasduval.com" ]; then
-        tar -czf ~/backups/backup-$(date +%Y%m%d-%H%M%S).tar.gz -C /home/sduval/htdocs/stephandouglasduval.com .
+    if [ -d "/home/sduval/htdocs/stephandouglasduval.com/public" ]; then
+        tar -czf ~/backups/backup-$(date +%Y%m%d-%H%M%S).tar.gz \
+            --exclude=docs \
+            --exclude='*.sql' \
+            --exclude='*.tar.gz' \
+            -C /home/sduval/htdocs/stephandouglasduval.com .
+        # Prune to last 2 backups
+        ls -t ~/backups/backup-*.tar.gz 2>/dev/null | tail -n +3 | xargs rm -f
     fi
 
     # Extract new deployment (Laravel files go in site root, NOT in public)

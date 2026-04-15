@@ -10,9 +10,9 @@ use Illuminate\Support\Facades\Log;
 class MindmapLayoutService
 {
     const VERTICAL_SPACING = 150;      // Space between rows (parent to children)
-    const HORIZONTAL_SPACING = 250;    // Space between columns (sibling to sibling)
-    const FOLDER_OFFSET = 300;         // Offset for children of folders (cascading)
-    const ROOT_X = 50;                 // Start at left
+    const HORIZONTAL_SPACING = 300;    // Space between folder branches
+    const ITEM_VERTICAL_SPACING = 130; // Space between sequential items in a branch
+    const ROOT_X = 400;                // Root starts horizontally centered
     const ROOT_Y = 50;
 
     public function __construct(
@@ -22,9 +22,10 @@ class MindmapLayoutService
     /**
      * Compute hierarchical tree layout positions for all items in a mindmap.
      *
-     * Items cascade vertically down from root.
-     * Children of folders are offset horizontally based on folder depth.
-     * Siblings are spaced horizontally next to each other.
+     * Layout rules:
+     * - Root folder is centered at the top
+     * - Sub-folders branch out horizontally (each as a separate column/branch)
+     * - Regular items (non-folders) within a parent chain vertically top-to-bottom
      *
      * @return array<int, array{x: int, y: int}> item_id => position
      */
@@ -44,37 +45,40 @@ class MindmapLayoutService
             $childrenByParent[$parentId][] = $item;
         }
 
-        // Sort each group by item_order (descending to match expected order)
+        // Sort each group by item_order ascending (to match VerticalNavView display order)
         foreach ($childrenByParent as &$children) {
-            usort($children, fn($a, $b) => ($b->item_order ?? 0) <=> ($a->item_order ?? 0));
+            usort($children, fn($a, $b) => ($a->item_order ?? 0) <=> ($b->item_order ?? 0));
         }
         unset($children);
 
-        // Get item types for folder detection
+        // Build item lookup map
         $itemsById = [];
-
-        // Add the root folder to itemsById
         $rootFolder = Item::find($mindmap->folder_id);
         if ($rootFolder) {
             $itemsById[$rootFolder->id] = $rootFolder;
         }
-
         foreach ($items as $item) {
             $itemsById[$item->id] = $item;
         }
 
-        // Position nodes using cascading vertical layout
         $positions = [];
-        $verticalCounter = ['y' => self::ROOT_Y];
 
-        $this->positionNodeCascading(
+        // First pass: compute the total width each subtree needs so we can center branches
+        $subtreeWidths = [];
+        $this->computeSubtreeWidth($mindmap->folder_id, $childrenByParent, $itemsById, $subtreeWidths);
+
+        // Place root centered at top
+        $rootWidth = $subtreeWidths[$mindmap->folder_id] ?? self::HORIZONTAL_SPACING;
+        $rootX = (int) round($rootWidth / 2);
+
+        $this->positionNode(
             $mindmap->folder_id,
-            self::ROOT_X,
+            $rootX,
+            self::ROOT_Y,
             $childrenByParent,
             $itemsById,
-            $positions,
-            $verticalCounter,
-            0  // depth level
+            $subtreeWidths,
+            $positions
         );
 
         return $positions;
@@ -93,65 +97,121 @@ class MindmapLayoutService
     }
 
     /**
-     * Position nodes using cascading vertical layout.
+     * Compute the total horizontal width needed for a subtree.
      *
-     * - Root folder at top left
-     * - All items cascade downward vertically
-     * - Items are positioned based on folder nesting:
-     *   * Direct children of root: x = 50 + (0 * FOLDER_OFFSET)
-     *   * Children of 1st folder: x = 50 + (1 * FOLDER_OFFSET)
-     *   * Children of 2nd folder: x = 50 + (2 * FOLDER_OFFSET), etc.
-     *
-     * @param int $nodeId Current node being positioned
-     * @param float $baseX Horizontal position for this node's children
-     * @param array $childrenByParent Map of parent_id => [children]
-     * @param array $itemsById Map of item_id => Item for type checking
-     * @param array &$positions Accumulator for positions
-     * @param array &$verticalCounter Track of current Y position globally
-     * @param int $folderDepth Count of folders above this node
+     * Folders spread their sub-folder branches horizontally.
+     * Regular items only need a single column width.
      */
-    protected function positionNodeCascading(
+    protected function computeSubtreeWidth(
         int $nodeId,
-        float $baseX,
         array &$childrenByParent,
         array &$itemsById,
-        array &$positions,
-        array &$verticalCounter,
-        int $folderDepth
-    ): void {
-        // Position current node at its parent's X offset
+        array &$subtreeWidths
+    ): int {
+        $children = $childrenByParent[$nodeId] ?? [];
+
+        if (empty($children)) {
+            $subtreeWidths[$nodeId] = self::HORIZONTAL_SPACING;
+            return self::HORIZONTAL_SPACING;
+        }
+
+        $folderChildren = array_filter($children, fn($c) => $c->type === 'folder');
+        $itemChildren = array_filter($children, fn($c) => $c->type !== 'folder');
+
+        // Regular items form a single vertical chain — one column width
+        $itemWidth = !empty($itemChildren) ? self::HORIZONTAL_SPACING : 0;
+
+        // Sub-folders each get their own subtree width
+        $foldersWidth = 0;
+        foreach ($folderChildren as $folder) {
+            $foldersWidth += $this->computeSubtreeWidth($folder->id, $childrenByParent, $itemsById, $subtreeWidths);
+        }
+
+        // Also recurse on item children (they may have sub-folders inside them)
+        foreach ($itemChildren as $item) {
+            $this->computeSubtreeWidth($item->id, $childrenByParent, $itemsById, $subtreeWidths);
+        }
+
+        $totalWidth = max(self::HORIZONTAL_SPACING, $itemWidth + $foldersWidth);
+        $subtreeWidths[$nodeId] = $totalWidth;
+        return $totalWidth;
+    }
+
+    /**
+     * Recursively position nodes.
+     *
+     * - Place the current node at ($centerX, $y)
+     * - Sub-folders spread out horizontally below, each centered in their subtree column
+     * - Regular items chain vertically below the parent (or below last item)
+     */
+    protected function positionNode(
+        int $nodeId,
+        float $centerX,
+        float $startY,
+        array &$childrenByParent,
+        array &$itemsById,
+        array &$subtreeWidths,
+        array &$positions
+    ): float {
+        // Place this node
         $positions[$nodeId] = [
-            'x' => (int) round($baseX),
-            'y' => (int) round($verticalCounter['y']),
+            'x' => (int) round($centerX),
+            'y' => (int) round($startY),
         ];
 
-        // Move down for next item
-        $verticalCounter['y'] += self::VERTICAL_SPACING;
-
-        // Get children sorted by item_order
         $children = $childrenByParent[$nodeId] ?? [];
-        if (empty($children)) return;
-
-        // Check if this node is a folder
-        $isCurrentFolder = $itemsById[$nodeId]->type === 'folder';
-
-        // Calculate X offset for children
-        // If current node is a folder, its children get shifted right
-        $childrenX = $isCurrentFolder
-            ? $baseX + self::FOLDER_OFFSET
-            : $baseX;
-
-        // Process each child vertically, all at the same X offset
-        foreach ($children as $child) {
-            $this->positionNodeCascading(
-                $child->id,
-                $childrenX,
-                $childrenByParent,
-                $itemsById,
-                $positions,
-                $verticalCounter,
-                $isCurrentFolder ? $folderDepth + 1 : $folderDepth
-            );
+        if (empty($children)) {
+            return $startY + self::VERTICAL_SPACING;
         }
+
+        $folderChildren = array_values(array_filter($children, fn($c) => $c->type === 'folder'));
+        $itemChildren = array_values(array_filter($children, fn($c) => $c->type !== 'folder'));
+
+        $childY = $startY + self::VERTICAL_SPACING;
+
+        // Place regular items in a vertical chain, centered under parent
+        $lastItemBottomY = $childY;
+        foreach ($itemChildren as $index => $item) {
+            $itemY = $childY + ($index * self::ITEM_VERTICAL_SPACING);
+            $positions[$item->id] = [
+                'x' => (int) round($centerX),
+                'y' => (int) round($itemY),
+            ];
+
+            // Recurse for any children of this item (rare, but possible)
+            $this->computeSubtreeWidth($item->id, $childrenByParent, $itemsById, $subtreeWidths);
+            $lastItemBottomY = $itemY + self::ITEM_VERTICAL_SPACING;
+        }
+
+        // Place sub-folders spread horizontally
+        if (!empty($folderChildren)) {
+            // Calculate total width of all folder branches
+            $totalFoldersWidth = 0;
+            foreach ($folderChildren as $folder) {
+                $totalFoldersWidth += ($subtreeWidths[$folder->id] ?? self::HORIZONTAL_SPACING);
+            }
+
+            // Start X for first folder branch, centered around parent
+            $folderStartX = $centerX - ($totalFoldersWidth / 2);
+
+            foreach ($folderChildren as $folder) {
+                $folderSubtreeWidth = $subtreeWidths[$folder->id] ?? self::HORIZONTAL_SPACING;
+                $folderCenterX = $folderStartX + ($folderSubtreeWidth / 2);
+
+                $this->positionNode(
+                    $folder->id,
+                    $folderCenterX,
+                    $childY,
+                    $childrenByParent,
+                    $itemsById,
+                    $subtreeWidths,
+                    $positions
+                );
+
+                $folderStartX += $folderSubtreeWidth;
+            }
+        }
+
+        return $lastItemBottomY;
     }
 }

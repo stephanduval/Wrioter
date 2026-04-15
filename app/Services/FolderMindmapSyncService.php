@@ -225,6 +225,15 @@ class FolderMindmapSyncService
         // Add folder ID as a valid parent
         $validParentIds = array_merge([$mindmap->folder_id], $itemIds);
 
+        // Build a lookup of item types so we can distinguish folders from items
+        $itemTypesById = $items->pluck('type', 'id')->toArray();
+
+        // Also include the root folder itself
+        $rootFolder = \App\Models\Item::find($mindmap->folder_id);
+        if ($rootFolder) {
+            $itemTypesById[$rootFolder->id] = $rootFolder->type;
+        }
+
         // Group items by parent_id
         $itemsByParent = $items->groupBy('parent_id');
 
@@ -236,35 +245,55 @@ class FolderMindmapSyncService
                 continue;
             }
 
-            // Sort children by item_order descending (to match layout service ordering)
-            $sortedChildren = $children->sortByDesc('item_order')->values();
+            // Sort children by item_order ascending (to match VerticalNavView display order)
+            $sortedChildren = $children->sortBy('item_order')->values();
 
-            foreach ($sortedChildren as $index => $child) {
+            // Separate folders and non-folder items (documents/text nodes etc.)
+            $folderChildren = $sortedChildren->filter(fn($c) => $c->type === 'folder')->values();
+            $itemChildren = $sortedChildren->filter(fn($c) => $c->type !== 'folder')->values();
+
+            // Folders always branch directly from their parent
+            foreach ($folderChildren as $folder) {
+                $edges[] = [
+                    'id' => 'hierarchy_' . $parentId . '_' . $folder->id,
+                    'source' => 'item-' . $parentId,
+                    'target' => 'item-' . $folder->id,
+                    'type' => 'hierarchy',
+                    'data' => [
+                        'is_hierarchy' => true,
+                        'editable' => false,
+                        'is_sequential' => false, // parent→folder branch
+                    ],
+                ];
+            }
+
+            // Non-folder items: first item branches from parent, rest chain sequentially
+            foreach ($itemChildren as $index => $item) {
                 if ($index === 0) {
-                    // First child: create edge from parent to first child
+                    // First item branches from parent
                     $edges[] = [
-                        'id' => 'hierarchy_' . $parentId . '_' . $child->id,
+                        'id' => 'hierarchy_' . $parentId . '_' . $item->id,
                         'source' => 'item-' . $parentId,
-                        'target' => 'item-' . $child->id,
+                        'target' => 'item-' . $item->id,
                         'type' => 'hierarchy',
                         'data' => [
                             'is_hierarchy' => true,
                             'editable' => false,
-                            'is_sequential' => false, // parent→child containment
+                            'is_sequential' => false, // parent→first item
                         ],
                     ];
                 } else {
-                    // Subsequent children: create edge from previous sibling (sequential flow)
-                    $previousChild = $sortedChildren[$index - 1];
+                    // Subsequent items chain from previous item (sequential flow)
+                    $previousItem = $itemChildren[$index - 1];
                     $edges[] = [
-                        'id' => 'hierarchy_seq_' . $previousChild->id . '_' . $child->id,
-                        'source' => 'item-' . $previousChild->id,
-                        'target' => 'item-' . $child->id,
+                        'id' => 'hierarchy_seq_' . $previousItem->id . '_' . $item->id,
+                        'source' => 'item-' . $previousItem->id,
+                        'target' => 'item-' . $item->id,
                         'type' => 'hierarchy',
                         'data' => [
                             'is_hierarchy' => true,
                             'editable' => false,
-                            'is_sequential' => true, // sibling→sibling sequential flow
+                            'is_sequential' => true, // item→next item sequential flow
                         ],
                     ];
                 }
