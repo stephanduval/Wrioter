@@ -603,6 +603,7 @@
       "view": "View Item",
       "moveUp": "Move Up",
       "moveDown": "Move Down",
+      "unNest": "Unnest",
       "changeStatus": "Change Status",
       "excludeFromCompile": "Exclude from Compile",
       "includeInCompile": "Include in Compile",

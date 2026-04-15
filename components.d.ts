@@ -394,6 +394,7 @@ declare module 'vue' {
     ManuscriptViewMenu: typeof import('./resources/ts/components/ManuscriptViewMenu.vue')['default']
     MindMapCanvas: typeof import('./resources/ts/components/mindmap/MindMapCanvas.vue')['default']
     MindMapView: typeof import('./resources/ts/components/mindmap/MindMapView.vue')['default']
+    MindmapViewsModal: typeof import('./resources/ts/components/mindmap/MindmapViewsModal.vue')['default']
     MobileBottomSheet: typeof import('./resources/ts/components/context-menu/MobileBottomSheet.vue')['default']
     MoreBtn: typeof import('./resources/ts/@core/components/MoreBtn.vue')['default']
     Navbar: typeof import('./resources/ts/components/layout/Navbar.vue')['default']

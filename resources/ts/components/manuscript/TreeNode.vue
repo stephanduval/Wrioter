@@ -126,6 +126,19 @@
           insetInlineStart: `${level * 20 - 1}px`
         }"
       />
+
+      <!-- Un-nest gutter: drag target on left edge for nested items -->
+      <div
+        v-if="level > 0 && props.draggingNodeId && props.draggingNodeId !== node.id"
+        class="un-nest-gutter"
+        :class="{ 'un-nest-gutter--active': isUnNestTarget }"
+        :style="{ insetInlineStart: `${(level - 1) * 20}px` }"
+        @dragover.prevent.stop="handleGutterDragOver"
+        @dragleave.stop="handleGutterDragLeave"
+        @drop.prevent.stop="handleGutterDrop"
+      >
+        <span v-if="isUnNestTarget" class="un-nest-label">↰ Move out</span>
+      </div>
     </div>
 
     <!-- Child Nodes + vertical connectors for each nesting level -->
@@ -288,6 +301,10 @@ const canShowChildren = computed(
 // Track local hover state for this specific node
 const localDropPosition = ref<DropPosition>(null);
 
+// Un-nest gutter state
+const isUnNestTarget = ref(false);
+const gutterHeight = ref(32); // matches tree-node row height
+
 // Folder connector height (tracks child-nodes div height via ResizeObserver)
 const childNodesRef = ref<HTMLElement | null>(null);
 const childNodesHeight = ref(0);
@@ -399,6 +416,52 @@ const findNodeById = (nodes: TreeNode[], id: string): TreeNode | null => {
     }
   }
   return null;
+};
+
+// Un-nest gutter handlers
+const handleGutterDragOver = () => {
+  isUnNestTarget.value = true;
+};
+
+const handleGutterDragLeave = () => {
+  isUnNestTarget.value = false;
+};
+
+const handleGutterDrop = async (event: DragEvent) => {
+  isUnNestTarget.value = false;
+
+  // Get drag data from the event
+  const dataStr = event.dataTransfer?.getData('application/json');
+  if (!dataStr) return;
+
+  let sourceItemId: number | null = null;
+  try {
+    const dragData = JSON.parse(dataStr);
+    sourceItemId = dragData.itemId ?? null;
+  } catch {
+    return;
+  }
+
+  if (!sourceItemId) return;
+
+  const manuscriptId = manuscriptStore.selectedManuscript?.id;
+  if (!manuscriptId) return;
+
+  // Find the dragged node's parent and move source below that parent
+  const sourceNode = manuscriptStore.findNodeById(`item-${sourceItemId}`);
+  if (!sourceNode?.parent) return;
+
+  try {
+    await manuscriptStore.reorderItem({
+      sourceItemId,
+      targetItemId: sourceNode.parent.itemId,
+      position: 'below',
+      manuscriptId,
+    });
+    await manuscriptStore.fetchManuscriptItems(manuscriptId);
+  } catch (error) {
+    console.error('Failed to un-nest item via gutter:', error);
+  }
 };
 
 // Drag handlers
@@ -813,6 +876,41 @@ onBeforeUnmount(() => {
       content: "";
       inset-block-end: -2px;
       inset-inline: 0;
+    }
+  }
+
+  // Un-nest gutter: left-edge drop zone shown during drag for nested items
+  .un-nest-gutter {
+    position: absolute;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    border-radius: 4px;
+    block-size: 100%;
+    cursor: copy;
+    inline-size: 18px;
+    inset-block-start: 0;
+    opacity: 0.4;
+    transition: background-color 0.15s, inline-size 0.15s, opacity 0.15s;
+
+    .un-nest-label {
+      display: none;
+      color: #ec4899;
+      font-size: 10px;
+      padding-inline-start: 4px;
+      white-space: nowrap;
+    }
+  }
+
+  .un-nest-gutter--active,
+  .un-nest-gutter:hover {
+    background-color: rgba(236, 72, 153, 20%);
+    border-inline-start: 2px solid #ec4899;
+    inline-size: 40px;
+    opacity: 1;
+
+    .un-nest-label {
+      display: block;
     }
   }
 
