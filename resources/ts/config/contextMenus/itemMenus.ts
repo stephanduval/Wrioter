@@ -426,6 +426,31 @@ export const getItemMenuItems = (item: ManuscriptItem, manuscriptId: number): Me
       disabled: () => !canMoveDown(),
       hidden: () => isSnippetCollection() || hasMultiSelection()
     },
+    {
+      id: 'un-nest',
+      label: t('contextMenu.item.unNest') || 'Unnest',
+      icon: 'bx-arrow-back',
+      action: async () => {
+        try {
+          const node = manuscriptStore.findNodeById(`item-${item.itemId}`)
+          if (!node?.parent) return
+
+          await manuscriptStore.reorderItem({
+            sourceItemId: item.itemId,
+            targetItemId: node.parent.itemId,
+            position: 'below',
+            manuscriptId,
+          })
+          await manuscriptStore.fetchManuscriptItems(manuscriptId)
+        } catch (error) {
+          console.error('Failed to un-nest item:', error)
+        }
+      },
+      hidden: () => {
+        const node = manuscriptStore.findNodeById(`item-${item.itemId}`)
+        return !node?.parent || isSnippetCollection() || hasMultiSelection()
+      }
+    },
     { id: 'sep-move', separator: true, hidden: () => hasMultiSelection() || isSnippetCollection() },
     {
       id: 'status',

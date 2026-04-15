@@ -607,6 +607,7 @@
       "view": "Voir l'élément",
       "moveUp": "Déplacer vers le haut",
       "moveDown": "Déplacer vers le bas",
+      "unNest": "Désimbriquer",
       "changeStatus": "Changer le statut",
       "excludeFromCompile": "Exclure de la compilation",
       "includeInCompile": "Inclure dans la compilation",
