@@ -62,7 +62,7 @@
 
       <template #node-text="{ data, id }">
         <div class="vue-flow__node-text">
-          <Handle type="target" position="top" :connectable="true" />
+          <Handle type="target" position="left" :connectable="true" />
           <VIcon class="node-icon">bx-file-blank</VIcon>
           <input
             v-if="editingNodeId === id"
@@ -75,7 +75,7 @@
             @mousedown.stop
           />
           <div v-else class="node-label" @click.stop="startEditing(id)">{{ data.label }}</div>
-          <Handle type="source" position="bottom" :connectable="true" />
+          <Handle type="source" position="right" :connectable="true" />
         </div>
       </template>
 
@@ -122,7 +122,7 @@
 
       <template #node-character="{ data, id }">
         <div class="vue-flow__node-character">
-          <Handle type="target" position="top" :connectable="true" />
+          <Handle type="target" position="left" :connectable="true" />
           <VIcon class="node-icon" color="info">bx-user</VIcon>
           <input
             v-if="editingNodeId === id"
@@ -135,13 +135,13 @@
             @mousedown.stop
           />
           <div v-else class="node-label" @click.stop="startEditing(id)">{{ data.label }}</div>
-          <Handle type="source" position="bottom" :connectable="true" />
+          <Handle type="source" position="right" :connectable="true" />
         </div>
       </template>
 
       <template #node-research="{ data, id }">
         <div class="vue-flow__node-research">
-          <Handle type="target" position="top" :connectable="true" />
+          <Handle type="target" position="left" :connectable="true" />
           <VIcon class="node-icon" color="warning">bx-bulb</VIcon>
           <input
             v-if="editingNodeId === id"
@@ -154,7 +154,7 @@
             @mousedown.stop
           />
           <div v-else class="node-label" @click.stop="startEditing(id)">{{ data.label }}</div>
-          <Handle type="source" position="bottom" :connectable="true" />
+          <Handle type="source" position="right" :connectable="true" />
         </div>
       </template>
 
