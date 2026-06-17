@@ -171,7 +171,7 @@
           :folder="currentFolder"
           :items="displayItems"
           :scrivening-mode="scriveningMode"
-          :scrivening-separators="scriveningSeparatorsArray"
+          :scrivening-separators="scriveningSeparators"
         />
 
         <CorkboardView
@@ -296,7 +296,8 @@ const {
   scriveningMode,
   scriveningItemCount,
   displayItems,
-  scriveningSeparatorsArray,  // Use array version instead of Map
+  scriveningSeparators,       // Map version — ManuscriptView expects a Map
+  scriveningSeparatorsArray,  // Array version — Corkboard/Outline expect an array
   isViewLocked
 } = storeToRefs(folderViewStore)
 

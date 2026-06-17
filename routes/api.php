@@ -298,6 +298,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/folders/{folderId}/mindmap/saved-views/{viewId}', [App\Http\Controllers\Api\FolderMindmapController::class, 'deleteSavedView']);
 });
 
+// AI Routes
+Route::middleware('auth:sanctum')->group(function () {
+    // Throttle to 20 calls/min per user to prevent runaway/abusive usage.
+    Route::post('/ai/summarize', [App\Http\Controllers\AiController::class, 'summarize'])
+        ->middleware('throttle:20,1');
+});
+
 // User Preferences Routes
 Route::middleware('auth:sanctum')->group(function () {
     // Folder view preferences

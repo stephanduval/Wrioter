@@ -21,10 +21,15 @@ export interface CustomizeIconEvent {
   defaultIcon: string
 }
 
+export interface SummarizeTextEvent {
+  selectedText: string
+}
+
 // Type-safe event map for UI events
 export type EventBusEvents = {
   'snippet:add-to-collection': AddToCollectionEvent
   'item:customize-icon': CustomizeIconEvent
+  'ai:summarize': SummarizeTextEvent
 }
 
 // Create typed emitter instance (singleton)

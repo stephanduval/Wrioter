@@ -96,6 +96,18 @@ export const getEditorMenuItems = (selection?: string, context?: EditorMenuConte
         }
       },
       disabled: () => !hasSelection || !context?.itemId
+    },
+    { id: 'sep-ai', separator: true },
+    {
+      id: 'summarize',
+      label: t('contextMenu.editor.summarize', 'Summarize'),
+      icon: 'bx-bot',
+      action: () => {
+        if (selection) {
+          eventBus.emit('ai:summarize', { selectedText: selection })
+        }
+      },
+      disabled: () => !hasSelection
     }
   ]
 }

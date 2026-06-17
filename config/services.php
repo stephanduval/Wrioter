@@ -35,4 +35,10 @@ return [
         ],
     ],
 
+    'anthropic' => [
+        'api_key' => env('ANTHROPIC_API_KEY'),
+        // Haiku is the fastest/cheapest Claude model and plenty for summarization.
+        'model' => env('ANTHROPIC_MODEL', 'claude-haiku-4-5'),
+    ],
+
 ];

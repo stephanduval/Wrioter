@@ -429,6 +429,7 @@ declare module 'vue' {
     SnippetStatusBadge: typeof import('./resources/ts/components/snippet/SnippetStatusBadge.vue')['default']
     SplitContainer: typeof import('./resources/ts/components/splitView/SplitContainer.vue')['default']
     SplitViewManager: typeof import('./resources/ts/components/splitView/SplitViewManager.vue')['default']
+    SummarizeDialog: typeof import('./resources/ts/components/ai/SummarizeDialog.vue')['default']
     Tab: typeof import('./resources/ts/components/splitView/Tab.vue')['default']
     TabBar: typeof import('./resources/ts/components/splitView/TabBar.vue')['default']
     TabDragOverlay: typeof import('./resources/ts/components/splitView/TabDragOverlay.vue')['default']

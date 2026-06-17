@@ -3,6 +3,7 @@ import ScrollToTop from '@core/components/ScrollToTop.vue'
 import ContextMenuProvider from '@/components/context-menu/ContextMenuProvider.vue'
 import AddToCollectionDialog from '@/components/snippet/AddToCollectionDialog.vue'
 import CustomizeIconModal from '@/components/manuscript/CustomizeIconModal.vue'
+import SummarizeDialog from '@/components/ai/SummarizeDialog.vue'
 import initCore from '@core/initCore'
 import { initConfigStore, useConfigStore } from '@core/stores/config'
 import { hexToRgb } from '@core/utils/colorConverter'
@@ -33,6 +34,9 @@ const configStore = useConfigStore()
 
       <!-- Global Customize Icon Modal -->
       <CustomizeIconModal />
+
+      <!-- Global AI Summarize Dialog -->
+      <SummarizeDialog />
     </VApp>
   </VLocaleProvider>
 </template>
