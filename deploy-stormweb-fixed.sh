@@ -6,6 +6,7 @@
 # Configuration
 SERVER_HOST="23.180.104.108"
 SSH_USER="sduvalssh" # CloudPanel SSH user
+SSH_KEY="$HOME/.ssh/id_rsa" # SSH key for authentication (key-based auth, no password)
 DOMAIN="stephandouglasduval.com"
 # CloudPanel uses public as document root, Laravel files go one level up
 SITE_ROOT="/home/sduval/htdocs/${DOMAIN}"  # Website still in sduval home, SSH user is sduvalssh
@@ -42,7 +43,12 @@ tar -czf deploy.tar.gz \
     --exclude=.git \
     --exclude=.env \
     --exclude=.env.testing \
+    --exclude=.env.testing.* \
+    --exclude=.env.dev \
+    --exclude=.env.branch2 \
+    --exclude=.env.branch3 \
     --exclude=storage/app/public/* \
+    --exclude=storage/app/temp/* \
     --exclude=storage/logs/* \
     --exclude=storage/framework/cache/* \
     --exclude=storage/framework/sessions/* \
@@ -52,26 +58,39 @@ tar -czf deploy.tar.gz \
     --exclude=playwright* \
     --exclude=docker* \
     --exclude=Dockerfile* \
+    --exclude=docs \
+    --exclude='*.sql' \
+    --exclude='*.tar.gz' \
+    --exclude='*.deb' \
+    --exclude=Bash \
+    --exclude='Scrivener Zip Files' \
+    --exclude=cypress_backup \
     .
 
 # Step 4: Upload to server
 echo -e "${YELLOW}📤 Uploading to StormWeb...${NC}"
-scp deploy.tar.gz ${SSH_USER}@${SERVER_HOST}:~/deploy.tar.gz
+scp -i "$SSH_KEY" deploy.tar.gz ${SSH_USER}@${SERVER_HOST}:~/deploy.tar.gz
 
 # Also upload the systemd service files
 echo -e "${YELLOW}📤 Uploading queue worker and scheduler service files...${NC}"
-scp wrioter-queue.service ${SSH_USER}@${SERVER_HOST}:~/wrioter-queue.service
-scp wrioter-scheduler.service ${SSH_USER}@${SERVER_HOST}:~/wrioter-scheduler.service
-scp wrioter-scheduler.timer ${SSH_USER}@${SERVER_HOST}:~/wrioter-scheduler.timer
+scp -i "$SSH_KEY" wrioter-queue.service ${SSH_USER}@${SERVER_HOST}:~/wrioter-queue.service
+scp -i "$SSH_KEY" wrioter-scheduler.service ${SSH_USER}@${SERVER_HOST}:~/wrioter-scheduler.service
+scp -i "$SSH_KEY" wrioter-scheduler.timer ${SSH_USER}@${SERVER_HOST}:~/wrioter-scheduler.timer
 
 # Step 5: Execute deployment on server
 echo -e "${YELLOW}🔧 Running deployment on server...${NC}"
-ssh ${SSH_USER}@${SERVER_HOST} << 'ENDSSH'
-    # Create backup
+ssh -i "$SSH_KEY" ${SSH_USER}@${SERVER_HOST} << 'ENDSSH'
+    # Create backup (keep only last 2)
     echo "Creating backup..."
     mkdir -p ~/backups
-    if [ -d "/home/sduval/htdocs/stephandouglasduval.com" ]; then
-        tar -czf ~/backups/backup-$(date +%Y%m%d-%H%M%S).tar.gz -C /home/sduval/htdocs/stephandouglasduval.com .
+    if [ -d "/home/sduval/htdocs/stephandouglasduval.com/public" ]; then
+        tar -czf ~/backups/backup-$(date +%Y%m%d-%H%M%S).tar.gz \
+            --exclude=docs \
+            --exclude='*.sql' \
+            --exclude='*.tar.gz' \
+            -C /home/sduval/htdocs/stephandouglasduval.com .
+        # Prune to last 2 backups
+        ls -t ~/backups/backup-*.tar.gz 2>/dev/null | tail -n +3 | xargs rm -f
     fi
 
     # Extract new deployment (Laravel files go in site root, NOT in public)
@@ -80,13 +99,13 @@ ssh ${SSH_USER}@${SERVER_HOST} << 'ENDSSH'
     tar -xzf ~/deploy.tar.gz
     rm ~/deploy.tar.gz
 
-    # Set up .env file from .env.production
+    # Set up .env file from .env.production.stormweb
     echo "Setting up environment..."
-    if [ -f .env.production ]; then
-        cp .env.production .env
+    if [ -f .env.production.stormweb ]; then
+        cp .env.production.stormweb .env
         echo "✅ Environment file configured"
     else
-        echo "⚠️ Warning: .env.production not found!"
+        echo "⚠️ Warning: .env.production.stormweb not found!"
     fi
 
     # Set permissions

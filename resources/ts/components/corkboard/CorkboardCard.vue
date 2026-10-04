@@ -12,6 +12,7 @@
     :style="cardStyle"
     draggable="true"
     @click="handleClick"
+    @dblclick.stop="handleDoubleClick"
     @contextmenu="handleContextMenu"
     @dragstart="handleDragStart"
     @dragend="handleDragEnd"
@@ -26,16 +27,42 @@
     <!-- Card header -->
     <VCardTitle class="card-title">
       <VIcon
-        v-if="card.type"
+        v-if="card.type && !isEditingTitle"
         :icon="getTypeIcon(card.type)"
         size="small"
         class="me-2"
       />
-      {{ card.title || 'Untitled' }}
+
+      <!-- Inline title editing (Input Swap pattern) -->
+      <VTextField
+        v-if="isEditingTitle"
+        ref="titleInputRef"
+        v-model="editValue"
+        variant="plain"
+        density="compact"
+        hide-details
+        autofocus
+        class="inline-title-input"
+        @blur="saveTitle"
+        @keydown.enter="saveTitle"
+        @keydown.escape="cancelEdit"
+        @click.stop
+      />
+      <span
+        v-else
+        class="title-text"
+        @click.stop="startEditingTitle"
+      >
+        {{ card.title || 'Untitled' }}
+      </span>
     </VCardTitle>
 
     <!-- Card content based on display mode -->
-    <VCardText class="card-content">
+    <VCardText
+      class="card-content"
+      :class="{ 'card-content--clickable': hasContent }"
+      @click.stop="handleContentClick"
+    >
       <!-- Synopsis mode -->
       <div v-if="viewConfig.displayMode === 'synopsis' && card.synopsis" class="synopsis">
         {{ card.synopsis }}
@@ -69,7 +96,7 @@
         icon="bx-edit"
         size="x-small"
         variant="text"
-        @click.stop="$emit('edit', card.id)"
+        @click.stop="$emit('open-page', card.id)"
       />
       <VSpacer />
       <VChip
@@ -90,8 +117,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { VCard, VCardTitle, VCardText, VCardActions, VIcon, VBtn, VChip, VSpacer } from 'vuetify/components'
+import { ref, computed, nextTick } from 'vue'
+import { VCard, VCardTitle, VCardText, VCardActions, VIcon, VBtn, VChip, VSpacer, VTextField } from 'vuetify/components'
 import type { CorkboardCard, ViewConfig } from '@/api/corkboard'
 
 interface Props {
@@ -107,12 +134,23 @@ interface Emits {
   (e: 'drag-start', cardId: string, event: DragEvent): void
   (e: 'drag-end', cardId: string, event: DragEvent): void
   (e: 'edit', cardId: string): void
+  (e: 'title-updated', cardId: string, newTitle: string): void
+  (e: 'open-content', cardId: string): void
+  (e: 'open-page', cardId: string): void
 }
 
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
 const isDragging = ref(false)
+
+// Inline title editing state (local refs, not Pinia)
+const isEditingTitle = ref(false)
+const editValue = ref('')
+const titleInputRef = ref<InstanceType<typeof VTextField> | null>(null)
+
+// Click/double-click disambiguation
+let clickTimer: ReturnType<typeof setTimeout> | null = null
 
 // Card style (for freeform positioning)
 const cardStyle = computed(() => {
@@ -124,6 +162,13 @@ const cardStyle = computed(() => {
     }
   }
   return {}
+})
+
+// Check if card has clickable content
+const hasContent = computed(() => {
+  if (props.viewConfig.displayMode === 'synopsis') return !!props.card.synopsis
+  if (props.viewConfig.displayMode === 'excerpt') return !!props.card.excerpt
+  return false
 })
 
 // Get icon for item type
@@ -158,9 +203,67 @@ const formatDate = (dateString: string): string => {
   return date.toLocaleDateString()
 }
 
-// Event handlers
+// --- Title Inline Edit ---
+const startEditingTitle = () => {
+  if (isEditingTitle.value) return
+  editValue.value = props.card.title || ''
+  isEditingTitle.value = true
+  nextTick(() => {
+    // Focus the input after it renders
+    const input = titleInputRef.value?.$el?.querySelector('input')
+    if (input) input.focus()
+  })
+}
+
+const saveTitle = () => {
+  if (!isEditingTitle.value) return
+  const trimmed = editValue.value.trim()
+  isEditingTitle.value = false
+
+  // Only emit if title actually changed
+  if (trimmed && trimmed !== props.card.title) {
+    emit('title-updated', props.card.id, trimmed)
+  }
+}
+
+const cancelEdit = () => {
+  isEditingTitle.value = false
+  editValue.value = ''
+}
+
+// --- Content Click ---
+const handleContentClick = () => {
+  if (hasContent.value) {
+    emit('open-content', props.card.id)
+  }
+}
+
+// --- Click / Double-Click Disambiguation ---
 const handleClick = (event: MouseEvent) => {
-  emit('select', props.card.id, event)
+  // Don't interfere if editing title
+  if (isEditingTitle.value) return
+
+  if (clickTimer) {
+    // Second click arrived before timer expired → double-click
+    clearTimeout(clickTimer)
+    clickTimer = null
+    return // dblclick handler will fire
+  }
+
+  // Start timer: if no second click comes, treat as single-click (select)
+  clickTimer = setTimeout(() => {
+    clickTimer = null
+    emit('select', props.card.id, event)
+  }, 250)
+}
+
+const handleDoubleClick = () => {
+  if (isEditingTitle.value) return
+  if (clickTimer) {
+    clearTimeout(clickTimer)
+    clickTimer = null
+  }
+  emit('open-page', props.card.id)
 }
 
 const handleContextMenu = (event: MouseEvent) => {
@@ -232,6 +335,9 @@ const handleDragEnd = (event: DragEvent) => {
 
   // Card title
   .card-title {
+    display: flex;
+    align-items: center;
+    /* stylelint-disable-next-line liberty/use-logical-spec */
     padding-top: 12px;
     font-size: 1rem;
     font-weight: 500;
@@ -239,10 +345,37 @@ const handleDragEnd = (event: DragEvent) => {
     word-break: break-word;
   }
 
+  .title-text {
+    cursor: text;
+
+    &:hover {
+      text-decoration: underline;
+      text-decoration-style: dotted;
+      text-underline-offset: 3px;
+    }
+  }
+
+  /* stylelint-disable-next-line selector-pseudo-class-no-unknown */
+  .inline-title-input :deep(input) {
+    padding: 0;
+    font-size: 1rem;
+    font-weight: 500;
+    line-height: 1.3;
+  }
+
   // Card content
   .card-content {
     flex: 1;
     overflow: hidden;
+
+    &--clickable {
+      cursor: pointer;
+
+      &:hover {
+        background-color: rgba(var(--v-theme-primary), 0.04);
+        border-radius: 4px;
+      }
+    }
 
     .synopsis,
     .excerpt {

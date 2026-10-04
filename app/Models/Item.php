@@ -27,6 +27,8 @@ class Item extends Model
         'parent_id',
         'folder_type',
         'icon_name',
+        'icon_color',
+        'use_custom_icon',
         'format_metadata',
         'content_markdown',
         'raw_content',
@@ -39,6 +41,7 @@ class Item extends Model
         'metadata' => 'array',
         'format_metadata' => 'array',
         'is_archived' => 'boolean',
+        'use_custom_icon' => 'boolean',
         'item_order' => 'integer',
         'word_count' => 'integer',
         'character_count' => 'integer',
@@ -104,6 +107,16 @@ class Item extends Model
     }
 
     /**
+     * Get all tags for this item.
+     */
+    public function tags(): BelongsToMany
+    {
+        return $this->belongsToMany(Tag::class, 'item_tags')
+            ->withPivot(['context', 'position', 'confidence', 'added_by'])
+            ->withTimestamps();
+    }
+
+    /**
      * Create a new version of this item.
      */
     public function createVersion(array $attributes): ItemVersion
@@ -165,5 +178,39 @@ class Item extends Model
     public function attachments(): HasMany
     {
         return $this->hasMany(ItemAttachment::class);
+    }
+
+    /**
+     * Get the snippet references for this collection item.
+     * Only applicable when type is 'snippet_collection'.
+     */
+    public function snippetReferences(): HasMany
+    {
+        return $this->hasMany(SnippetReference::class, 'collection_item_id')
+            ->orderBy('order_index');
+    }
+
+    /**
+     * Get all snippets that reference this item as a source.
+     */
+    public function referencedInSnippets(): HasMany
+    {
+        return $this->hasMany(SnippetReference::class, 'source_item_id');
+    }
+
+    /**
+     * Check if this item is a snippet collection.
+     */
+    public function isSnippetCollection(): bool
+    {
+        return $this->type === 'snippet_collection';
+    }
+
+    /**
+     * Scope a query to only include snippet collections.
+     */
+    public function scopeSnippetCollections($query)
+    {
+        return $query->where('type', 'snippet_collection');
     }
 } 

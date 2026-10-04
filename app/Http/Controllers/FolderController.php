@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Item;
+use App\Services\ScriveningService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
@@ -81,12 +82,19 @@ class FolderController extends Controller
         // Load user preferences for this folder
         $viewPreferences = $this->loadViewPreferences($folderId);
 
+        // Get the manuscript ID from the folder's relationship
+        // Folders are items, so we need to get the manuscript through the manuscript_items table
+        $manuscriptId = DB::table('manuscript_items')
+            ->where('item_id', $folderId)
+            ->value('manuscript_id');
+
         return response()->json([
             'folder' => [
                 'id' => $folder->id,
                 'title' => $folder->title,
                 'type' => $folder->type,
-                'parent_id' => $folder->parent_id
+                'parent_id' => $folder->parent_id,
+                'manuscript_id' => $manuscriptId
             ],
             'items' => $items,
             'view_preferences' => $viewPreferences
@@ -145,7 +153,7 @@ class FolderController extends Controller
                         'zoom' => 'medium',
                         'layout' => 'grid',
                         'columns' => 4,
-                        'display_mode' => 'synopsis'
+                        'display_mode' => 'excerpt'
                     ],
                     'outline' => [
                         'visible_columns' => ['title', 'type', 'synopsis', 'word_count', 'status', 'include_in_compile', 'updated_at'],
@@ -236,6 +244,75 @@ class FolderController extends Controller
 
             return response()->json([
                 'error' => 'Failed to reorder items',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get combined contents from multiple folders/items for scrivening view
+     *
+     * @param Request $request
+     * @param ScriveningService $scriveningService
+     * @return JsonResponse
+     */
+    public function getScriveningContents(Request $request, ScriveningService $scriveningService): JsonResponse
+    {
+        try {
+            // Validate request
+            $validated = $request->validate([
+                'selections' => 'required|array|min:1',
+                'selections.*.type' => 'required|string|in:folder,item',
+                'selections.*.id' => 'required|integer',
+                'view_mode' => 'sometimes|string|in:manuscript,corkboard,outline,mindmap',
+            ]);
+
+            $selections = $validated['selections'];
+            $viewMode = $validated['view_mode'] ?? 'manuscript';
+
+            // Additional validation
+            if (!$scriveningService->validateSelections($selections)) {
+                return response()->json([
+                    'error' => 'Invalid selection format'
+                ], 400);
+            }
+
+            // Get combined contents
+            $result = $scriveningService->getContents($selections, $viewMode);
+
+            // For corkboard view, generate excerpts
+            if ($viewMode === 'corkboard' && !empty($result['items'])) {
+                $result['items'] = array_map(function ($item) use ($scriveningService) {
+                    if (isset($item['content'])) {
+                        $item['excerpt'] = $scriveningService->generateExcerpt($item['content'], 360);
+                        unset($item['content']);
+                    }
+                    return $item;
+                }, $result['items']);
+            }
+
+            Log::info('Scrivening contents loaded', [
+                'selections_count' => count($selections),
+                'items_count' => $result['metadata']['total_items'],
+                'view_mode' => $viewMode
+            ]);
+
+            return response()->json($result);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'error' => 'Validation failed',
+                'messages' => $e->errors()
+            ], 422);
+
+        } catch (\Exception $e) {
+            Log::error('Failed to load scrivening contents', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'error' => 'Failed to load scrivening contents',
                 'message' => $e->getMessage()
             ], 500);
         }

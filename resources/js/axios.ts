@@ -15,10 +15,6 @@ const getBaseUrl = () => {
 // Set base URL for Axios requests
 axios.defaults.baseURL = getBaseUrl();
 
-// Set default headers for all requests
-axios.defaults.headers.common['Accept'] = 'application/json';
-axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
-
 // Add request interceptor to include auth token
 axios.interceptors.request.use(
   (config) => {

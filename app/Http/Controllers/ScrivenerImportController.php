@@ -29,15 +29,6 @@ class ScrivenerImportController extends Controller
      */
     public function store(Request $request)
     {
-        // Debug logging
-        Log::info('Scrivener import request', [
-            'authenticated' => auth()->check(),
-            'user_id' => auth()->id(),
-            'content_type' => $request->header('Content-Type'),
-            'content_length' => $request->header('Content-Length'),
-            'has_file' => $request->hasFile('file'),
-        ]);
-
         $request->validate([
             'file' => 'required|file|mimes:zip|max:51200', // 50MB max
         ]);

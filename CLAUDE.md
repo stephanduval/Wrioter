@@ -1,47 +1,74 @@
-# Project Information
-LLM_Guide.md can help give you context if you need to understand the application structure, database and documentation:
-/home/rogers/Code/Wrioter/docs/LLM_GUIDE.md
+# Branch-Specific Configuration (Wrioter Main)
 
-## Documentation Location
-Latest docs are in `/home/rogers/Code/Wrioter/docs/` and sync automatically to `sduval@192.168.1.252:~/Code/Wrioter/docs/` via the auto-sync service.
+**Shared rules:** Read `docs/development/claude-rules.md` for code standards, feature checklist, and efficiency guidelines.
+
+**Latest documentation location:**
+/home/sduval/Code/Wrioter/docs/
+
+**Legacy documentation (less recent):**
+/home/sduval/Code/Wrioter/docs/LLM_GUIDE.md
+
 
 # Remote Dev Server Sync Rules
 
-## Important: Code Changes Require Running Sync Service
-⚠️ **The remote dev server at `192.168.1.252` is where the app runs.** If code changes aren't appearing after editing:
-1. Check if the sync service is running: `sync-wrioter-status`
-2. If not running, start it: `sync-wrioter-start`
-3. For immediate sync with progress: `sync-wrioter-manual`
-4. Full sync guide: `/home/rogers/Code/Remote Dev Server/SYNC-GUIDE.md`
+## ⚠️ YOU MUST START SYNC MANUALLY
 
-## Deployment
-⚠️ **NEVER use manual rsync commands** - The auto-sync service handles file synchronization. This ensures `.env*` files are never overwritten, which would break the multi-branch setup by reverting URLs from `192.168.1.252` to `localhost`.
+Sync does **NOT** run automatically on startup. You must start it when you begin development:
 
+```bash
+sync-all-start    # Start syncing all three projects
+```
 
-# Claude Efficiency Guidelines
+## Sync Quick Commands
 
-## Tool Usage
-- Use Task tool for searches spanning multiple files/concepts instead of multiple greps
-- Use MultiEdit for multiple changes to same file instead of separate Edit calls
-- Use Glob first to find files, then targeted Read
-- Batch operations in single messages when possible
+**Start/Stop:**
+```bash
+sync-all-start     # Start syncing all projects
+sync-all-stop      # Stop syncing all projects
+sync-all-status    # Check sync status
+```
 
-## Response Style
-- Be concise - aim for 1-4 lines unless complexity requires more
-- Skip unnecessary explanations unless requested
-- Use fewer tool calls overall
-- No preamble like "Here's what I found..." or "Let me check..."
+**Individual projects:**
+```bash
+sync-wrioter-start      # Wrioter Main
+sync-branch2-start      # Branch 2
+sync-branch3-start      # Branch 3
+```
 
-## Search Strategy
-- Use specific patterns in single Grep calls
-- Use output_mode="files_with_matches" first, then content only if needed
-- Combine related searches in single tool calls
+## How Sync Works
 
-## File References
-- Use markdown links: [file.ts:42](src/file.ts#L42)
-- Avoid backticks for file names
+- **Automatic file monitoring** — inotifywait watches for local file changes
+- **Continuous syncing** — rsync automatically transfers changed files to remote server
+- **Connection fallback** — Tries ethernet (10.0.0.2) first, then WiFi (192.168.1.252)
+- **Incremental transfer** — Only changed files are synced (fast after initial sync)
 
-## Deployment
-- NEVER use rsync directly
-- ALWAYS use ./sync-to-devserver.sh for syncing to remote server
-- This ensures .env* files are never overwritten
+## Important Sync Rules
+
+- **Start sync at beginning of session** — `sync-all-start` before starting development
+- `.env*` files are NOT synced — Each environment has its own config
+- `public/build/` is NOT synced — Server builds its own frontend with correct URLs
+- `node_modules/` and `vendor/` NOT synced — Install on server separately
+- Deleted files are deleted remotely — Sync includes `--delete` flag
+
+## CSS Changes & Refresh
+
+After modifying CSS:
+1. Build completes automatically (watch mode)
+2. Sync transfers files (automatic, no action needed)
+3. Hard refresh in browser: `Ctrl+Shift+R` to clear cache
+
+**If changes don't appear:**
+```bash
+# On remote server - clear build cache and rebuild
+ssh sduval@10.0.0.2 "cd ~/Code/Wrioter && rm -rf public/build node_modules/.vite"
+ssh sduval@10.0.0.2 "tmux kill-session -t wrioter:0"
+# Then restart via tmux
+```
+
+## Full Documentation
+
+See `SYNC-GUIDE.md` in project root for:
+- Manual sync with progress bar
+- Troubleshooting
+- Service configuration
+- Performance notes

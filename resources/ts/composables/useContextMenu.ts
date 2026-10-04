@@ -2,17 +2,25 @@ import { computed, onMounted, onUnmounted } from 'vue'
 import { useDisplay } from 'vuetify'
 import { useContextMenuStore } from '@/stores/contextMenu'
 
-export interface MenuItem {
+export interface MenuItemAction {
   id: string
   label: string
   icon?: string
   action: () => void | Promise<void>
   disabled?: boolean | (() => boolean)
   hidden?: boolean | (() => boolean)
-  separator?: boolean
+  separator?: false
   children?: MenuItem[]
   danger?: boolean
 }
+
+export interface MenuItemSeparator {
+  id: string
+  separator: true
+  hidden?: boolean | (() => boolean)
+}
+
+export type MenuItem = MenuItemAction | MenuItemSeparator
 
 export interface ContextMenuConfig {
   items: MenuItem[]

@@ -15,6 +15,9 @@ use App\Http\Controllers\ManuscriptController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\ScrivenerImportController;
 use App\Http\Controllers\ItemController;
+use App\Http\Controllers\Api\FolderMindmapController;
+use App\Http\Controllers\SnippetCollectionController;
+use App\Http\Controllers\SnippetReferenceController;
 use Illuminate\Support\Facades\Mail;
 
 /*
@@ -26,6 +29,9 @@ use Illuminate\Support\Facades\Mail;
 | RouteServiceProvider and assigned the "api" middleware group.
 |
 */
+
+// Client Error Logging (no auth required - for mobile error tracking)
+Route::post('log-client-error', [App\Http\Controllers\ClientErrorController::class, 'logError']);
 
 // Authentication Routes
 Route::group(['prefix' => 'auth'], function () {
@@ -128,17 +134,30 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/manuscripts/{id}', [ManuscriptController::class, 'update']);
     Route::delete('/manuscripts/{id}', [ManuscriptController::class, 'destroy']);
 
+    // Mindmap routes for manuscripts
+    Route::post('/manuscripts/{id}/sync-mindmap', [ManuscriptController::class, 'syncMindmap']);
+    Route::get('/manuscripts/{id}/default-mindmap', [ManuscriptController::class, 'getDefaultMindmap']);
+
     // Item routes within manuscripts
     Route::post('/manuscripts/{manuscriptId}/items', [ItemController::class, 'store']);
     Route::get('/manuscripts/{manuscriptId}/items/{itemId}', [ItemController::class, 'show']);
     Route::put('/manuscripts/{manuscriptId}/items/{itemId}', [ItemController::class, 'update']);
     Route::delete('/manuscripts/{manuscriptId}/items/{itemId}', [ItemController::class, 'destroy']);
     Route::patch('/manuscripts/{manuscriptId}/items/{itemId}/rename', [ItemController::class, 'rename']);
+    Route::patch('/manuscripts/{manuscriptId}/items/{itemId}/appearance', [ItemController::class, 'updateAppearance']);
+    Route::post('/manuscripts/{manuscriptId}/items/{itemId}/appearance/toggle', [ItemController::class, 'toggleAppearance']);
     Route::get('/manuscripts/{manuscriptId}/items/{itemId}/versions', [ItemController::class, 'versions']);
     Route::post('/manuscripts/{manuscriptId}/items/reorder', [ItemController::class, 'reorder']);
+    Route::post('/manuscripts/{manuscriptId}/items/batch-reorder', [ItemController::class, 'batchReorder']);
     Route::post('/manuscripts/{manuscriptId}/items/{itemId}/duplicate', [ItemController::class, 'duplicate']);
     Route::patch('/manuscripts/{manuscriptId}/items/{itemId}/move-up', [ItemController::class, 'moveUp']);
     Route::patch('/manuscripts/{manuscriptId}/items/{itemId}/move-down', [ItemController::class, 'moveDown']);
+    Route::patch('/manuscripts/{manuscriptId}/items/{itemId}/convert-to-item', [ItemController::class, 'convertToItem']);
+    Route::post('/manuscripts/{manuscriptId}/items/{itemId}/ungroup', [ItemController::class, 'ungroupFolder']);
+    Route::post('/manuscripts/{manuscriptId}/items/{itemId}/sort-children', [ItemController::class, 'sortChildren']);
+    Route::post('/manuscripts/{manuscriptId}/items/batch-status', [ItemController::class, 'batchUpdateStatus']);
+    Route::post('/manuscripts/{manuscriptId}/items/batch-delete', [ItemController::class, 'batchDelete']);
+    Route::post('/manuscripts/{manuscriptId}/items/batch-move', [ItemController::class, 'batchMoveToFolder']);
 });
 
 // Admin Routes for Raw Files
@@ -208,7 +227,7 @@ Route::get('/send-message-notification', function () {
         Mail::mailer($mailer)
             ->send('emails.new-message-alert', ['msg' => $message], function($mail) use ($message) {
                 $mail->to('stephan.duval@gmail.com')
-                     ->subject('Freynet-Gagné Portal - New Message: ' . $message->subject);
+                     ->subject('Wrioter - New Message: ' . $message->subject);
             });
 
         return response()->json([
@@ -234,6 +253,56 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/folders/{folderId}/contents', [App\Http\Controllers\FolderController::class, 'getContents']);
     // Reorder items within a folder
     Route::post('/folders/{folderId}/reorder', [App\Http\Controllers\FolderController::class, 'reorder']);
+    // Get scrivening contents (multiple folders/items combined)
+    Route::post('/folders/scrivening/contents', [App\Http\Controllers\FolderController::class, 'getScriveningContents']);
+});
+
+// Mind Map Routes
+Route::middleware('auth:sanctum')->group(function () {
+    // Mindmap CRUD
+    Route::apiResource('mindmaps', App\Http\Controllers\Api\MindMapController::class);
+
+    // Mindmap Items Management
+    Route::post('/mindmaps/{id}/items/add', [App\Http\Controllers\Api\MindMapController::class, 'addItem']);
+    Route::post('/mindmaps/{id}/items/create', [App\Http\Controllers\Api\MindMapController::class, 'createItem']);
+    Route::put('/mindmaps/{id}/items/{itemId}', [App\Http\Controllers\Api\MindMapController::class, 'updateItem']);
+    Route::put('/mindmaps/{id}/items/{itemId}/position', [App\Http\Controllers\Api\MindMapController::class, 'updatePosition']);
+    Route::delete('/mindmaps/{id}/items/{itemId}', [App\Http\Controllers\Api\MindMapController::class, 'removeItem']);
+
+    // Connections
+    Route::post('/mindmaps/{id}/connections', [App\Http\Controllers\Api\MindMapController::class, 'createConnection']);
+    Route::put('/connections/{id}', [App\Http\Controllers\Api\MindMapController::class, 'updateConnection']);
+    Route::delete('/connections/{id}', [App\Http\Controllers\Api\MindMapController::class, 'deleteConnection']);
+
+    // Bulk operations
+    Route::post('/mindmaps/{id}/positions/batch', [App\Http\Controllers\Api\MindMapController::class, 'batchUpdatePositions']);
+
+    // Import manuscript items
+    Route::post('/mindmaps/{id}/import-manuscript', [App\Http\Controllers\Api\MindMapController::class, 'importManuscript']);
+
+    // Ghost management
+    Route::delete('/mindmaps/{id}/ghosts/{ghostId}', [App\Http\Controllers\Api\MindMapController::class, 'dismissGhost']);
+
+    // Folder Mindmaps
+    Route::get('/folders/{folderId}/mindmap', [App\Http\Controllers\Api\FolderMindmapController::class, 'show']);
+    Route::post('/folders/{folderId}/mindmap/sync', [App\Http\Controllers\Api\FolderMindmapController::class, 'sync']);
+    Route::put('/folders/{folderId}/mindmap/items/{itemId}/toggle-collapse', [App\Http\Controllers\Api\FolderMindmapController::class, 'toggleCollapse']);
+    Route::post('/folders/{folderId}/mindmap/auto-layout', [App\Http\Controllers\Api\FolderMindmapController::class, 'autoLayout']);
+
+    // Saved Views
+    Route::get('/folders/{folderId}/mindmap/saved-views', [App\Http\Controllers\Api\FolderMindmapController::class, 'listSavedViews']);
+    Route::post('/folders/{folderId}/mindmap/saved-views', [App\Http\Controllers\Api\FolderMindmapController::class, 'createSavedView']);
+    Route::post('/folders/{folderId}/mindmap/saved-views/{viewId}/load', [App\Http\Controllers\Api\FolderMindmapController::class, 'loadSavedView']);
+    Route::post('/folders/{folderId}/mindmap/saved-views/{viewId}/overwrite', [App\Http\Controllers\Api\FolderMindmapController::class, 'overwriteSavedView']);
+    Route::put('/folders/{folderId}/mindmap/saved-views/{viewId}', [App\Http\Controllers\Api\FolderMindmapController::class, 'updateSavedView']);
+    Route::delete('/folders/{folderId}/mindmap/saved-views/{viewId}', [App\Http\Controllers\Api\FolderMindmapController::class, 'deleteSavedView']);
+});
+
+// AI Routes
+Route::middleware('auth:sanctum')->group(function () {
+    // Throttle to 20 calls/min per user to prevent runaway/abusive usage.
+    Route::post('/ai/summarize', [App\Http\Controllers\AiController::class, 'summarize'])
+        ->middleware('throttle:20,1');
 });
 
 // User Preferences Routes
@@ -242,4 +311,26 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/preferences/folder-views/{folderId}', [App\Http\Controllers\UserPreferencesController::class, 'getFolderViewPreferences']);
     Route::post('/preferences/folder-views/{folderId}', [App\Http\Controllers\UserPreferencesController::class, 'saveFolderViewPreferences']);
     Route::delete('/preferences/folder-views/{folderId}', [App\Http\Controllers\UserPreferencesController::class, 'deleteFolderViewPreferences']);
+});
+
+// Snippet Collection Routes
+Route::middleware('auth:sanctum')->group(function () {
+    // Snippet collections (as Items with type='snippet_collection')
+    Route::get('/manuscripts/{manuscriptId}/snippet-collections', [SnippetCollectionController::class, 'index']);
+    Route::post('/manuscripts/{manuscriptId}/snippet-collections', [SnippetCollectionController::class, 'store']);
+    Route::get('/snippet-collections/{id}', [SnippetCollectionController::class, 'show']);
+    Route::put('/snippet-collections/{id}', [SnippetCollectionController::class, 'update']);
+    Route::delete('/snippet-collections/{id}', [SnippetCollectionController::class, 'destroy']);
+    Route::post('/snippet-collections/{id}/verify-all', [SnippetCollectionController::class, 'verifyAll']);
+    Route::post('/snippet-collections/{id}/clear-ghosts', [SnippetCollectionController::class, 'clearGhosts']);
+    Route::post('/manuscripts/{manuscriptId}/snippet-collections/{collectionId}/duplicate', [SnippetCollectionController::class, 'duplicate']);
+
+    // Snippet references within collections
+    Route::get('/snippet-collections/{collectionId}/snippets', [SnippetReferenceController::class, 'index']);
+    Route::post('/snippet-collections/{collectionId}/snippets', [SnippetReferenceController::class, 'store']);
+    Route::post('/snippet-collections/{collectionId}/snippets/reorder', [SnippetReferenceController::class, 'reorder']);
+    Route::put('/snippets/{id}', [SnippetReferenceController::class, 'update']);
+    Route::patch('/snippets/{id}/rename', [SnippetReferenceController::class, 'rename']);
+    Route::delete('/snippets/{id}', [SnippetReferenceController::class, 'destroy']);
+    Route::post('/snippets/{id}/verify', [SnippetReferenceController::class, 'verify']);
 });

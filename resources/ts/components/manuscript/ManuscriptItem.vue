@@ -18,6 +18,7 @@
         <VChip
           v-if="item.word_count"
           size="x-small"
+          color="primary"
           variant="tonal"
           class="ms-2"
         >
@@ -151,11 +152,11 @@ function handleClick() {
 }
 
 .item-title {
+  flex-shrink: 0;
+  margin: 0;
+  color: rgb(var(--v-theme-on-surface));
   font-size: 1.5em;
   font-weight: 600;
-  color: rgb(var(--v-theme-on-surface));
-  margin: 0;
-  flex-shrink: 0;
 }
 
 .item-metadata {

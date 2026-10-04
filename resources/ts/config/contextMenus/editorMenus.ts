@@ -1,7 +1,17 @@
 import type { MenuItem } from '@/composables/useContextMenu'
 import { getI18n } from '@/plugins/i18n'
+import { eventBus } from '@/services/eventBus'
 
-export const getEditorMenuItems = (selection?: string): MenuItem[] => {
+export interface EditorMenuContext {
+  itemId?: number
+  manuscriptId?: number
+  selectionPosition?: {
+    from: number
+    to: number
+  }
+}
+
+export const getEditorMenuItems = (selection?: string, context?: EditorMenuContext): MenuItem[] => {
   const i18n = getI18n()
   const { t } = i18n.global
   const hasSelection = !!selection && selection.length > 0
@@ -33,7 +43,7 @@ export const getEditorMenuItems = (selection?: string): MenuItem[] => {
         document.execCommand('paste')
       }
     },
-    { separator: true },
+    { id: 'sep-clipboard', separator: true },
     {
       id: 'select-all',
       label: t('contextMenu.editor.selectAll'),
@@ -42,7 +52,7 @@ export const getEditorMenuItems = (selection?: string): MenuItem[] => {
         document.execCommand('selectAll')
       }
     },
-    { separator: true },
+    { id: 'sep-select', separator: true },
     {
       id: 'bold',
       label: t('contextMenu.editor.bold'),
@@ -67,6 +77,35 @@ export const getEditorMenuItems = (selection?: string): MenuItem[] => {
       icon: 'bx-underline',
       action: () => {
         document.execCommand('underline')
+      },
+      disabled: () => !hasSelection
+    },
+    { id: 'sep-snippets', separator: true },
+    {
+      id: 'add-to-collection',
+      label: t('contextMenu.editor.addToCollection', 'Add to Collection'),
+      icon: 'bx-collection',
+      action: () => {
+        if (selection && context?.itemId && context?.manuscriptId) {
+          eventBus.emit('snippet:add-to-collection', {
+            selectedText: selection,
+            sourceItemId: context.itemId,
+            manuscriptId: context.manuscriptId,
+            positionData: context.selectionPosition || { from: 0, to: 0 }
+          })
+        }
+      },
+      disabled: () => !hasSelection || !context?.itemId
+    },
+    { id: 'sep-ai', separator: true },
+    {
+      id: 'summarize',
+      label: t('contextMenu.editor.summarize', 'Summarize'),
+      icon: 'bx-bot',
+      action: () => {
+        if (selection) {
+          eventBus.emit('ai:summarize', { selectedText: selection })
+        }
       },
       disabled: () => !hasSelection
     }

@@ -1,6 +1,8 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { useApi } from '@/composables/useApi'
+import { dataSync } from '@/services/dataSync'
+import { manuscriptsApi } from '@/api/manuscripts'
 
 interface Manuscript {
   id: number
@@ -13,13 +15,22 @@ interface Manuscript {
   items?: Item[]
 }
 
+interface SnippetRefData {
+  id: number
+  source_item_id: number | null
+  source_item_title: string | null
+  reference_text: string
+  status: 'active' | 'ghost'
+  order_index: number
+}
+
 interface Item {
   id: number
   manuscript_id?: number
   parent_id: number | null
   title: string
   content?: string
-  type: 'folder' | 'text' | 'research' | 'character' | 'mindmap' | 'image' | 'file' | 'link'
+  type: 'folder' | 'text' | 'research' | 'character' | 'mindmap' | 'image' | 'file' | 'link' | 'snippet_collection'
   item_order?: number
   order_index?: number // For backward compatibility
   scrivener_uuid?: string
@@ -30,6 +41,10 @@ interface Item {
   metadata?: any
   include_in_compile?: boolean
   updated_at: string
+  snippet_references?: SnippetRefData[]
+  icon_name?: string | null
+  icon_color?: string | null
+  use_custom_icon?: boolean
 }
 
 interface TreeNode {
@@ -43,6 +58,9 @@ interface TreeNode {
   parent?: TreeNode
   metadata: NodeMetadata
   state: NodeState
+  iconName?: string | null
+  iconColor?: string | null
+  useCustomIcon?: boolean
 }
 
 interface NodeMetadata {
@@ -53,6 +71,8 @@ interface NodeMetadata {
   hasComments: boolean
   isCompilable: boolean
   synopsis?: string
+  sourceItemId?: number
+  snippetStatus?: 'active' | 'ghost'
 }
 
 interface NodeState {
@@ -62,10 +82,63 @@ interface NodeState {
   isDragging: boolean
 }
 
-type NodeType = 'folder' | 'text' | 'research' | 'character' | 'mindmap' | 'image' | 'file' | 'link'
+type NodeType = 'folder' | 'text' | 'research' | 'character' | 'mindmap' | 'image' | 'file' | 'link' | 'snippet_collection' | 'snippet_reference'
 
 export const useManuscriptStore = defineStore('manuscript', () => {
   const { api } = useApi()
+
+  // === DATA SYNC EVENT LISTENERS ===
+  // Listen for item updates from other stores (e.g., itemStore editing title)
+  dataSync.on('item:updated', ({ manuscriptId, itemId, changes }) => {
+    // Only process if this is the currently selected manuscript
+    if (manuscriptId !== selectedManuscriptId.value) return
+
+    // Update in flatItemsIndex (O(1) lookup)
+    const nodeId = `item-${itemId}`
+    const node = flatItemsIndex.value.get(nodeId)
+    if (node) {
+      if (changes.title) {
+        node.title = changes.title
+        console.log(`[ManuscriptStore] Updated title for item ${itemId} to "${changes.title}"`)
+      }
+    }
+  })
+
+  // Listen for item deletions from other stores
+  dataSync.on('item:deleted', ({ manuscriptId, itemId }) => {
+    if (manuscriptId !== selectedManuscriptId.value) return
+
+    const nodeId = `item-${itemId}`
+    const node = flatItemsIndex.value.get(nodeId)
+    if (node) {
+      // Remove from flat index
+      flatItemsIndex.value.delete(nodeId)
+
+      // Remove from parent's children or root nodes
+      if (node.parent) {
+        const index = node.parent.children.indexOf(node)
+        if (index !== -1) {
+          node.parent.children.splice(index, 1)
+        }
+      } else {
+        const index = manuscriptTree.value.indexOf(node)
+        if (index !== -1) {
+          manuscriptTree.value.splice(index, 1)
+        }
+      }
+      console.log(`[ManuscriptStore] Removed item ${itemId} from tree`)
+    }
+  })
+
+  // Listen for item creation (e.g., new collection from snippet feature)
+  dataSync.on('item:created', ({ manuscriptId }) => {
+    if (manuscriptId !== selectedManuscriptId.value) return
+
+    // Rebuild the entire tree to include the new item
+    fetchManuscriptItems(manuscriptId).catch(error => {
+      console.error('[ManuscriptStore] Failed to rebuild tree after item creation:', error)
+    })
+  })
 
   // State - Pure Pinia reactivity, no localStorage persistence
   const manuscripts = ref<Manuscript[]>([])
@@ -111,7 +184,9 @@ export const useManuscriptStore = defineStore('manuscript', () => {
       mindmap: 'bx-network-chart',
       image: 'bx-image',
       file: 'bx-file',
-      link: 'bx-link'
+      link: 'bx-link',
+      snippet_collection: 'bx-collection',
+      snippet_reference: 'bx-text'
     }
     return iconMap[type] || 'bx-file'
   }
@@ -129,24 +204,17 @@ export const useManuscriptStore = defineStore('manuscript', () => {
 
     // Phase 1: Create all nodes
     items.forEach(item => {
-      // Determine the correct path based on item type
-      let itemPath = '/dashboards/analytics' // Default fallback
-      if (item.type === 'folder') {
-        // Folders should navigate to the folder view with corkboard as default
-        itemPath = `/folders/${item.id}?view=corkboard`
-      } else if (item.type === 'text' && selectedManuscriptId.value) {
-        // Text items should navigate to the editor
-        itemPath = `/manuscripts/${selectedManuscriptId.value}/items/${item.id}/edit`
-      }
-
       const node: TreeNode = {
         id: `item-${item.id}`,
         itemId: item.id,
         title: item.title || 'Untitled',
         type: (item.type as NodeType) || 'text',
         icon: getIconForItemType(item.type),
-        path: itemPath,
+        path: '/dashboards/analytics', // Temporary redirect until item view is implemented
         children: [],
+        iconName: item.icon_name ?? null,
+        iconColor: item.icon_color ?? null,
+        useCustomIcon: item.use_custom_icon ?? false,
         metadata: {
           wordCount: item.word_count || 0,
           characterCount: item.character_count || 0,
@@ -184,11 +252,74 @@ export const useManuscriptStore = defineStore('manuscript', () => {
       }
     })
 
-    // Phase 3: Sort by order
+    // Phase 2.5: Add virtual snippet reference children to snippet_collection nodes
+    // Build a lookup of item positions for sorting snippets by manuscript order
+    const itemOrderMap = new Map<number, { parentOrder: number; itemOrder: number }>()
+    items.forEach(item => {
+      const parentItem = item.parent_id ? items.find(i => i.id === item.parent_id) : null
+      itemOrderMap.set(item.id, {
+        parentOrder: parentItem ? (parentItem.item_order || parentItem.order_index || 0) : 0,
+        itemOrder: item.item_order || item.order_index || 0
+      })
+    })
+
+    items.forEach(item => {
+      if (item.type === 'snippet_collection' && item.snippet_references?.length) {
+        const collectionNode = nodeMap.get(item.id)!
+
+        // Sort snippets by source item's manuscript position
+        const sortedRefs = [...item.snippet_references].sort((a, b) => {
+          const aPos = a.source_item_id ? itemOrderMap.get(a.source_item_id) : null
+          const bPos = b.source_item_id ? itemOrderMap.get(b.source_item_id) : null
+          if (!aPos && !bPos) return a.order_index - b.order_index
+          if (!aPos) return 1
+          if (!bPos) return -1
+          // Sort by parent folder order first, then item order
+          if (aPos.parentOrder !== bPos.parentOrder) return aPos.parentOrder - bPos.parentOrder
+          return aPos.itemOrder - bPos.itemOrder
+        })
+
+        sortedRefs.forEach(ref => {
+          const snippetNode: TreeNode = {
+            id: `snippet-${ref.id}`,
+            itemId: ref.id,
+            title: ref.reference_text,
+            type: 'snippet_reference' as NodeType,
+            icon: getIconForItemType('snippet_reference'),
+            path: '',
+            children: [],
+            parent: collectionNode,
+            metadata: {
+              wordCount: 0,
+              characterCount: 0,
+              status: 'draft',
+              lastModified: '',
+              hasComments: false,
+              isCompilable: false,
+              sourceItemId: ref.source_item_id ?? undefined,
+              snippetStatus: ref.status
+            },
+            state: {
+              isExpanded: false,
+              isSelected: false,
+              isLoading: false,
+              isDragging: false
+            }
+          }
+          collectionNode.children.push(snippetNode)
+          flatItemsIndex.value.set(snippetNode.id, snippetNode)
+        })
+      }
+    })
+
+    // Phase 3: Sort by order (skip virtual snippet_reference nodes - already sorted)
     const sortNodes = (nodes: TreeNode[]) => {
       nodes.sort((a, b) => {
-        const aItem = items.find(item => item.id === a.itemId)!
-        const bItem = items.find(item => item.id === b.itemId)!
+        // Virtual snippet nodes keep their insertion order
+        if (a.type === 'snippet_reference' || b.type === 'snippet_reference') return 0
+        const aItem = items.find(item => item.id === a.itemId)
+        const bItem = items.find(item => item.id === b.itemId)
+        if (!aItem || !bItem) return 0
         const aOrder = aItem.item_order || aItem.order_index || 0
         const bOrder = bItem.item_order || bItem.order_index || 0
         return aOrder - bOrder
@@ -226,6 +357,11 @@ export const useManuscriptStore = defineStore('manuscript', () => {
   // Tree query methods
   const findNodeById = (nodeId: string): TreeNode | null => {
     return flatItemsIndex.value.get(nodeId) || null
+  }
+
+  const findParentOfNode = (nodeId: string): TreeNode | null => {
+    const node = findNodeById(nodeId)
+    return node?.parent || null
   }
 
   const getNodePath = (nodeId: string): TreeNode[] => {
@@ -412,6 +548,34 @@ export const useManuscriptStore = defineStore('manuscript', () => {
     }
   }
 
+  // Batch reorder multiple items within a manuscript
+  async function batchReorderItems(data: {
+    sourceItemIds: number[]
+    targetItemId: number
+    position: 'above' | 'below' | 'inside'
+    manuscriptId: number
+  }) {
+    try {
+      loading.value = true
+      error.value = null
+
+      const response = await api.post(`/manuscripts/${data.manuscriptId}/items/batch-reorder`, {
+        source_item_ids: data.sourceItemIds,
+        target_item_id: data.targetItemId,
+        position: data.position
+      })
+
+      console.log('Items batch reordered successfully:', response)
+      return response.data
+    } catch (err: any) {
+      error.value = err.message || 'Failed to batch reorder items'
+      console.error('Error batch reordering items:', err)
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
   // Delete an item from the manuscript
   async function deleteItem(manuscriptId: number, itemId: number) {
     try {
@@ -424,13 +588,78 @@ export const useManuscriptStore = defineStore('manuscript', () => {
 
       console.log('Item deleted successfully')
 
-      // Refresh the manuscript items to reflect the deletion
-      await fetchManuscriptItems(manuscriptId)
+      // Remove from local tree immediately (no refetch needed)
+      const nodeId = `item-${itemId}`
+      const node = flatItemsIndex.value.get(nodeId)
+      if (node) {
+        // Remove from flat index
+        flatItemsIndex.value.delete(nodeId)
+
+        // Remove from parent's children or root nodes
+        if (node.parent) {
+          const index = node.parent.children.indexOf(node)
+          if (index !== -1) {
+            node.parent.children.splice(index, 1)
+          }
+        } else {
+          const index = manuscriptTree.value.indexOf(node)
+          if (index !== -1) {
+            manuscriptTree.value.splice(index, 1)
+          }
+        }
+      }
+
+      // Emit sync event so other stores can update
+      dataSync.emit('item:deleted', {
+        manuscriptId,
+        itemId
+      })
 
       return true
     } catch (err: any) {
       error.value = err.response?.data?.message || 'Failed to delete item'
       console.error('Error deleting item:', err)
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  // Delete a manuscript
+  async function deleteManuscript(manuscriptId: number) {
+    try {
+      loading.value = true
+      error.value = null
+
+      console.log(`Deleting manuscript ${manuscriptId}`)
+
+      await manuscriptsApi.deleteManuscript(manuscriptId)
+
+      // Remove from manuscripts list
+      manuscripts.value = manuscripts.value.filter(m => m.id !== manuscriptId)
+
+      // Clear selection if deleted manuscript was selected
+      if (selectedManuscriptId.value === manuscriptId) {
+        clearSelection()
+        manuscriptTree.value = []
+        flatItemsIndex.value.clear()
+      }
+
+      // Clear as current manuscript if it was the active one
+      if (currentManuscript.value?.id === manuscriptId) {
+        currentManuscript.value = null
+      }
+
+      // Emit sync event so other components can update
+      dataSync.emit('manuscript:deleted', {
+        manuscriptId
+      })
+
+      console.log('Manuscript deleted successfully')
+      return true
+    } catch (err: any) {
+      error.value = err.response?.data?.message || 'Failed to delete manuscript'
+      console.error('Error deleting manuscript:', err)
       throw err
     } finally {
       loading.value = false
@@ -451,8 +680,19 @@ export const useManuscriptStore = defineStore('manuscript', () => {
 
       console.log('Item renamed successfully:', response.data)
 
-      // Refresh the manuscript items to reflect the rename
-      await fetchManuscriptItems(manuscriptId)
+      // Update local tree immediately (no refetch needed)
+      const nodeId = `item-${itemId}`
+      const node = flatItemsIndex.value.get(nodeId)
+      if (node) {
+        node.title = newTitle
+      }
+
+      // Emit sync event so other stores can update
+      dataSync.emit('item:updated', {
+        manuscriptId,
+        itemId,
+        changes: { title: newTitle }
+      })
 
       return response.data
     } catch (err: any) {
@@ -462,6 +702,225 @@ export const useManuscriptStore = defineStore('manuscript', () => {
     } finally {
       loading.value = false
     }
+  }
+
+  // Update an item's custom icon and/or color
+  async function updateItemAppearance(
+    manuscriptId: number,
+    itemId: number,
+    appearance: { icon_name?: string | null; icon_color?: string | null; use_custom_icon?: boolean }
+  ) {
+    try {
+      const response = await api.patch(
+        `/manuscripts/${manuscriptId}/items/${itemId}/appearance`,
+        appearance
+      )
+
+      const node = flatItemsIndex.value.get(`item-${itemId}`)
+      if (node) {
+        const data = response.data?.data
+        if (data) {
+          node.iconName = data.icon_name
+          node.iconColor = data.icon_color
+          node.useCustomIcon = data.use_custom_icon
+        }
+      }
+
+      return response.data
+    } catch (err: any) {
+      error.value = err.response?.data?.message || 'Failed to update item appearance'
+      console.error('Error updating item appearance:', err)
+      throw err
+    }
+  }
+
+  // Flip use_custom_icon while preserving the saved icon_name/icon_color
+  async function toggleItemAppearance(manuscriptId: number, itemId: number) {
+    try {
+      const response = await api.post(
+        `/manuscripts/${manuscriptId}/items/${itemId}/appearance/toggle`
+      )
+
+      const node = flatItemsIndex.value.get(`item-${itemId}`)
+      if (node) {
+        const data = response.data?.data
+        if (data) {
+          node.useCustomIcon = data.use_custom_icon
+        }
+      }
+
+      return response.data
+    } catch (err: any) {
+      error.value = err.response?.data?.message || 'Failed to toggle item appearance'
+      console.error('Error toggling item appearance:', err)
+      throw err
+    }
+  }
+
+  // Convert a folder to a regular item (remove folder status)
+  async function convertFolderToItem(manuscriptId: number, itemId: number) {
+    try {
+      loading.value = true
+      error.value = null
+
+      console.log(`Converting folder ${itemId} to item in manuscript ${manuscriptId}`)
+
+      const response = await api.patch(`/manuscripts/${manuscriptId}/items/${itemId}/convert-to-item`)
+
+      console.log('Folder converted to item successfully:', response.data)
+
+      // Refresh the manuscript items to reflect the change
+      await fetchManuscriptItems(manuscriptId)
+
+      return response.data
+    } catch (err: any) {
+      error.value = err.response?.data?.message || 'Failed to convert folder to item'
+      console.error('Error converting folder to item:', err)
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  // Ungroup a folder: move children to parent, delete the folder
+  async function ungroupFolder(manuscriptId: number, itemId: number) {
+    try {
+      loading.value = true
+      error.value = null
+
+      const response = await api.post(`/manuscripts/${manuscriptId}/items/${itemId}/ungroup`)
+
+      console.log('Folder ungrouped successfully:', response.data)
+
+      // Refresh the tree
+      await fetchManuscriptItems(manuscriptId)
+
+      return response.data
+    } catch (err: any) {
+      error.value = err.response?.data?.message || 'Failed to ungroup folder'
+      console.error('Error ungrouping folder:', err)
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  // Sort children of a folder
+  async function sortChildren(manuscriptId: number, itemId: number, sortBy: 'title' | 'updated_at', direction: 'asc' | 'desc' = 'asc') {
+    try {
+      loading.value = true
+      error.value = null
+
+      const response = await api.post(`/manuscripts/${manuscriptId}/items/${itemId}/sort-children`, {
+        sort_by: sortBy,
+        direction
+      })
+
+      console.log('Children sorted successfully:', response.data)
+
+      // Refresh the tree
+      await fetchManuscriptItems(manuscriptId)
+
+      return response.data
+    } catch (err: any) {
+      error.value = err.response?.data?.message || 'Failed to sort children'
+      console.error('Error sorting children:', err)
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  // Batch update status for multiple items
+  async function batchUpdateStatus(manuscriptId: number, itemIds: number[], status: 'draft' | 'in_progress' | 'completed' | 'archived') {
+    try {
+      loading.value = true
+      error.value = null
+
+      const response = await api.post(`/manuscripts/${manuscriptId}/items/batch-status`, {
+        item_ids: itemIds,
+        status
+      })
+
+      console.log('Batch status update successful:', response.data)
+
+      // Refresh the tree
+      await fetchManuscriptItems(manuscriptId)
+
+      return response.data
+    } catch (err: any) {
+      error.value = err.response?.data?.message || 'Failed to update status'
+      console.error('Error batch updating status:', err)
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  // Batch delete multiple items
+  async function batchDeleteItems(manuscriptId: number, itemIds: number[]) {
+    try {
+      loading.value = true
+      error.value = null
+
+      const response = await api.post(`/manuscripts/${manuscriptId}/items/batch-delete`, {
+        item_ids: itemIds
+      })
+
+      console.log('Batch delete successful:', response.data)
+
+      // Refresh the tree
+      await fetchManuscriptItems(manuscriptId)
+
+      return response.data
+    } catch (err: any) {
+      error.value = err.response?.data?.message || 'Failed to delete items'
+      console.error('Error batch deleting items:', err)
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  // Batch move items to a folder
+  async function batchMoveToFolder(manuscriptId: number, itemIds: number[], targetFolderId: number) {
+    try {
+      loading.value = true
+      error.value = null
+
+      const response = await api.post(`/manuscripts/${manuscriptId}/items/batch-move`, {
+        item_ids: itemIds,
+        target_folder_id: targetFolderId
+      })
+
+      console.log('Batch move successful:', response.data)
+
+      // Refresh the tree
+      await fetchManuscriptItems(manuscriptId)
+
+      return response.data
+    } catch (err: any) {
+      error.value = err.response?.data?.message || 'Failed to move items'
+      console.error('Error batch moving items:', err)
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  // Get all folders in the tree (for "Move to folder" picker)
+  const getAllFolders = (): Array<{ id: number; title: string; depth: number }> => {
+    const folders: Array<{ id: number; title: string; depth: number }> = []
+    const collectFolders = (nodes: TreeNode[], depth = 0) => {
+      for (const node of nodes) {
+        if (node.type === 'folder') {
+          folders.push({ id: node.itemId, title: node.title, depth })
+          collectFolders(node.children, depth + 1)
+        }
+      }
+    }
+    collectFolders(manuscriptTree.value)
+    return folders
   }
 
   function $reset() {
@@ -504,14 +963,26 @@ export const useManuscriptStore = defineStore('manuscript', () => {
     searchItems,
     clearSearch,
     reorderItem,
+    batchReorderItems,
     deleteItem,
+    deleteManuscript,
     renameItem,
+    updateItemAppearance,
+    toggleItemAppearance,
+    convertFolderToItem,
+    ungroupFolder,
+    sortChildren,
+    batchUpdateStatus,
+    batchDeleteItems,
+    batchMoveToFolder,
+    getAllFolders,
     $reset,
 
     // Navigation methods
     buildNavigationTree,
     fetchManuscriptItems,
     findNodeById,
+    findParentOfNode,
     getNodePath,
   }
 })

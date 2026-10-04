@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(top -bn1)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

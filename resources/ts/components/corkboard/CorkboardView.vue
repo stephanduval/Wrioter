@@ -27,7 +27,7 @@
     />
 
     <!-- Main content area -->
-    <div class="corkboard-content">
+    <div class="corkboard-content" @contextmenu="handleEmptySpaceContextMenu">
       <!-- Loading state -->
       <div
         v-if="isLoading"
@@ -81,10 +81,13 @@
         :view-config="corkboardStore.viewConfig"
         :selected-ids="selectionStore.selectedArray"
         :card-positions="corkboardStore.cardPositions"
+        :scrivening-mode="scriveningMode"
+        :scrivening-separators="scriveningSeparators"
         @card-select="handleCardSelect"
         @card-reorder="handleCardReorder"
         @card-drop="handleCardDrop"
         @context-menu="handleContextMenu"
+        @open-page="handleOpenPage"
       />
     </div>
 
@@ -138,8 +141,12 @@
     <!-- Context menu -->
     <VMenu
       v-model="showContextMenu"
-      :location="contextMenuPosition"
       absolute
+      :style="{
+        position: 'fixed',
+        left: `${contextMenuPosition[0]}px`,
+        top: `${contextMenuPosition[1]}px`
+      }"
     >
       <VList>
         <VListItem
@@ -183,8 +190,12 @@ import CorkboardGrid from './CorkboardGrid.vue'
 import { useCorkboardStore } from '@/stores/corkboard'
 import { useFolderViewStore, type FolderItem, type FolderData } from '@/stores/folderView'
 import { useSelectionStore } from '@/stores/selection'
+import { useManuscriptStore } from '@/stores/manuscript'
+import { usePaneStore } from '@/stores/pane'
 import { useBoxSelection } from '@/composables/useSelection'
+import { useContextMenu } from '@/composables/useContextMenu'
 import { reorderFolderItems } from '@/api/folders'
+import { getEmptySpaceMenuItems } from '@/config/contextMenus'
 import type { CorkboardCard } from '@/api/corkboard'
 
 /**
@@ -193,13 +204,24 @@ import type { CorkboardCard } from '@/api/corkboard'
  * Now receives folder and items as props from parent FolderView component.
  * Focuses only on corkboard-specific UI and interactions.
  */
+interface ScriveningSeparator {
+  type: 'dashed' | 'header' | 'dots'
+  title?: string
+  beforeIndex: number
+}
+
 interface Props {
   folderId: number
   folder: FolderData | null
   items: FolderItem[]
+  scriveningMode?: boolean
+  scriveningSeparators?: ScriveningSeparator[]
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  scriveningMode: false,
+  scriveningSeparators: () => []
+})
 
 const router = useRouter()
 const route = useRoute()
@@ -207,6 +229,13 @@ const route = useRoute()
 // Stores
 const corkboardStore = useCorkboardStore()
 const selectionStore = useSelectionStore()
+const manuscriptStore = useManuscriptStore()
+const contextMenu = useContextMenu()
+
+// Computed: Get manuscript ID from folder or store
+const manuscriptId = computed(() =>
+  props.folder?.manuscript_id || manuscriptStore.currentManuscript?.id
+)
 
 // Reactive state
 const showContextMenu = ref(false)
@@ -325,6 +354,57 @@ const handleCardDrop = async (draggedCardIds: string[], targetIndex: number, tar
   } catch (error) {
     console.error('Failed to handle card drop:', error)
   }
+}
+
+const handleOpenPage = (cardId: string) => {
+  // Get the card to find its itemId
+  const card = adaptedCards.value.find(c => c.id === cardId)
+  if (!card) {
+    console.error('Card not found:', cardId)
+    return
+  }
+
+  const folderViewStore = useFolderViewStore()
+  const paneStore = usePaneStore()
+
+  // Check if we're in split view mode
+  if (folderViewStore.splitEnabled && paneStore.activePaneId) {
+    // Split view: Open item in edit mode in the active pane
+    console.log('Opening card in edit mode (split view):', card.itemId)
+    paneStore.setEditingItem(paneStore.activePaneId, card.itemId)
+  } else {
+    // Single view: Navigate to folder with item view selected
+    console.log('Opening card in item view (single view):', card.itemId)
+    router.push({
+      path: `/manuscripts/${manuscriptId.value}/folders/${props.folderId}`,
+      query: {
+        view: 'item',
+        itemId: String(card.itemId)
+      }
+    })
+  }
+}
+
+const handleEmptySpaceContextMenu = (event: MouseEvent) => {
+  const target = event.target as HTMLElement
+
+  // If clicking on a card or inside a card, let the card's context menu handle it
+  if (target.closest('[data-card-id]') || target.closest('.corkboard-card')) {
+    return
+  }
+
+  // Only show menu if we have the required context
+  if (!manuscriptId.value) {
+    console.warn('Cannot show context menu: no manuscript ID available')
+    return
+  }
+
+  const menuItems = getEmptySpaceMenuItems({
+    folderId: props.folderId,
+    manuscriptId: manuscriptId.value
+  })
+
+  contextMenu.show(event, { items: menuItems })
 }
 
 const handleContextMenu = (cardIds: string[], event: MouseEvent) => {

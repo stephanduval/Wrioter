@@ -217,7 +217,7 @@
     }
   },
   "menu": {
-    "heading": "Freynet-Gagné",
+    "heading": "Wrioter",
     "userManagement": "Gestion des utilisateurs",
     "companyList": "Liste des entreprises",
     "projects": "Projets",
@@ -227,6 +227,10 @@
     "manuscriptNew": "Nouveau Manuscrit",
     "manuscriptList": "Tous les Manuscrits",
     "manuscriptView": "Vue Manuscrit",
+    "mindMap": "Cartes Mentales",
+    "mindMapCreate": "Créer une Carte Mentale",
+    "mindMapList": "Mes Cartes Mentales",
+    "mindMapExplorer": "Explorateur de Cartes",
     "manuscriptItems": {
       "chapter": "Chapitre",
       "scene": "Scène",
@@ -260,7 +264,7 @@
     "name": "Français"
   },
   "dashboard": {
-    "title": "Portail Client Freynet-Gagné",
+    "title": "Portail Client Wrioter",
     "requests": "Demandes",
     "dueToday": "Demandes dues aujourd'hui",
     "newTasks": "Nouvelles tâches",
@@ -603,6 +607,7 @@
       "view": "Voir l'élément",
       "moveUp": "Déplacer vers le haut",
       "moveDown": "Déplacer vers le bas",
+      "unNest": "Désimbriquer",
       "changeStatus": "Changer le statut",
       "excludeFromCompile": "Exclure de la compilation",
       "includeInCompile": "Inclure dans la compilation",
@@ -613,7 +618,25 @@
       "deleteError": "Échec de la suppression de l'élément",
       "deleteNotImplemented": "La fonctionnalité de suppression n'est pas encore implémentée",
       "renamePrompt": "Entrez un nouveau nom pour '{title}':",
-      "renameError": "Échec du renommage de l'élément"
+      "renameError": "Échec du renommage de l'élément",
+      "newFolder": "Nouveau Dossier",
+      "untitledFolder": "Dossier sans titre",
+      "createFolderError": "Échec de la création du dossier",
+      "ungroupFolder": "Dégrouper le dossier",
+      "ungroupConfirm": "Dégrouper \"{title}\" ? Ses {count} enfants seront déplacés au niveau parent.",
+      "ungroupError": "Échec du dégroupement du dossier",
+      "sortAlphabetically": "Trier alphabétiquement",
+      "sortByModified": "Trier par dernière modification",
+      "convertToItem": "Convertir en élément",
+      "convertToItemError": "Échec de la conversion du dossier en élément",
+      "batchMove": "Déplacer la sélection vers un dossier...",
+      "batchStatus": "Changer le statut",
+      "batchDelete": "Supprimer la sélection",
+      "batchDeleteConfirm": "Êtes-vous sûr de vouloir supprimer {count} éléments ?",
+      "statusDraft": "Brouillon",
+      "statusInProgress": "En cours",
+      "statusCompleted": "Terminé",
+      "statusArchived": "Archivé"
     },
     "manuscript": {
       "view": "Voir le manuscrit",
@@ -637,5 +660,10 @@
       "reload": "Recharger",
       "goBack": "Retour"
     }
-  }
+  },
+  "Title": "Titre",
+  "Description": "Description",
+  "Search": "Rechercher",
+  "Type": "Type",
+  "Status": "Statut"
 }

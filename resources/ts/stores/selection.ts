@@ -443,6 +443,58 @@ export const useSelectionStore = defineStore('selection', () => {
     })
   }
 
+  // Scrivening support - cross-folder selection tracking
+  const scriveningFolderMap = ref<Map<number, Set<number>>>(new Map()) // folderId -> Set of itemIds
+
+  const addToScriveningSelection = (folderId: number, itemId: number) => {
+    if (!scriveningFolderMap.value.has(folderId)) {
+      scriveningFolderMap.value.set(folderId, new Set())
+    }
+    scriveningFolderMap.value.get(folderId)!.add(itemId)
+    console.log(`Added item ${itemId} from folder ${folderId} to scrivening selection`)
+  }
+
+  const removeFromScriveningSelection = (folderId: number, itemId: number) => {
+    const folderItems = scriveningFolderMap.value.get(folderId)
+    if (folderItems) {
+      folderItems.delete(itemId)
+      if (folderItems.size === 0) {
+        scriveningFolderMap.value.delete(folderId)
+      }
+      console.log(`Removed item ${itemId} from folder ${folderId} from scrivening selection`)
+    }
+  }
+
+  const clearScriveningSelection = () => {
+    scriveningFolderMap.value.clear()
+    console.log('Cleared scrivening selection')
+  }
+
+  const buildScriveningSelections = (): Array<{ type: 'folder' | 'item'; id: number }> => {
+    const selections: Array<{ type: 'folder' | 'item'; id: number }> = []
+
+    scriveningFolderMap.value.forEach((itemIds, folderId) => {
+      // If entire folder is selected (would need folder item count to determine)
+      // For now, add individual items
+      itemIds.forEach(itemId => {
+        selections.push({ type: 'item', id: itemId })
+      })
+    })
+
+    console.log('Built scrivening selections:', selections.length)
+    return selections
+  }
+
+  const getScriveningSelectionCount = (): number => {
+    let count = 0
+    scriveningFolderMap.value.forEach(itemIds => {
+      count += itemIds.size
+    })
+    return count
+  }
+
+  const hasScriveningSelection = computed(() => scriveningFolderMap.value.size > 0)
+
   // Utilities
   const getSelectionSummary = () => {
     return {
@@ -451,12 +503,14 @@ export const useSelectionStore = defineStore('selection', () => {
       lastSelected: lastSelectedId.value,
       anchor: anchorId.value,
       isMulti: isMultiSelection.value,
-      mode: isSelectionMode.value ? 'selection' : 'normal'
+      mode: isSelectionMode.value ? 'selection' : 'normal',
+      scriveningCount: getScriveningSelectionCount()
     }
   }
 
   const reset = () => {
     clearSelection()
+    clearScriveningSelection()
     exitSelectionMode()
     endBoxSelection()
     setFocused(null)
@@ -532,6 +586,15 @@ export const useSelectionStore = defineStore('selection', () => {
 
     // Events
     onSelectionChange,
+
+    // Scrivening support
+    scriveningFolderMap: readonly(scriveningFolderMap),
+    addToScriveningSelection,
+    removeFromScriveningSelection,
+    clearScriveningSelection,
+    buildScriveningSelections,
+    getScriveningSelectionCount,
+    hasScriveningSelection,
 
     // Utilities
     getSelectionSummary,

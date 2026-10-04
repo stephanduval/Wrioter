@@ -1,3 +1,4 @@
+import { h } from 'vue'
 import type { IconAliases, IconProps } from 'vuetify'
 
 import checkboxChecked from '@images/svg/checkbox-checked.svg'
@@ -57,6 +58,16 @@ export const iconify = {
 
       if (iconComponent)
         return h(iconComponent)
+    }
+
+    // For Material Design Icons (mdi-*), render as <i> tag with proper classes
+    if (typeof props.icon === 'string' && props.icon.startsWith('mdi-')) {
+      return h('i', {
+        class: ['mdi', props.icon],
+        style: {
+          fontSize: props.size ? `${props.size}px` : undefined,
+        },
+      })
     }
 
     return h(

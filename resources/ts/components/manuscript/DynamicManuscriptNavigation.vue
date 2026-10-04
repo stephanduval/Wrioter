@@ -1,31 +1,38 @@
 <template>
   <!-- Debug: Always visible test element -->
-  <div v-if="!manuscriptStore.hasSelectedManuscript" class="debug-no-manuscript" style="padding: 8px; font-size: 11px; color: #666;">
+  <div
+    v-if="!manuscriptStore.hasSelectedManuscript"
+    class="debug-no-manuscript"
+    style="padding: 8px; font-size: 11px; color: #666"
+  >
     📋 DynamicManuscriptNavigation loaded - No manuscript selected
   </div>
 
-  <div v-if="manuscriptStore.hasSelectedManuscript" class="manuscript-navigation-wrapper">
+  <div
+    v-if="manuscriptStore.hasSelectedManuscript"
+    class="manuscript-navigation-wrapper"
+    :class="{ 'sidebar-collapsed': isSidebarCollapsed }"
+  >
     <!-- Manuscript Header -->
     <div
       class="manuscript-navigation-header"
       :class="{
         'is-loading': manuscriptStore.loading,
         'has-error': manuscriptStore.error,
-        'is-empty': !manuscriptStore.hasNavigationTree
+        'is-empty': !manuscriptStore.hasNavigationTree,
       }"
     >
       <div class="header-content">
-        <VIcon
-          icon="bx-book"
-          size="20"
-          color="primary"
-        />
+        <VIcon icon="bx-book" size="20" color="primary" />
         <div class="manuscript-info">
           <div class="manuscript-title">
-            {{ manuscriptStore.selectedManuscript?.title || 'Unknown Manuscript' }}
+            {{
+              manuscriptStore.selectedManuscript?.title || "Unknown Manuscript"
+            }}
           </div>
           <div class="manuscript-meta">
-            {{ treeMetadata.totalItems }} items • {{ formatWordCount(treeMetadata.totalWords) }} words
+            {{ treeMetadata.totalItems }} items •
+            {{ formatWordCount(treeMetadata.totalWords) }} words
           </div>
         </div>
       </div>
@@ -34,46 +41,19 @@
           icon
           size="x-small"
           variant="text"
-          @click="handleSearchToggle"
+          :color="selectionMode ? 'primary' : undefined"
+          @click="selectionMode = !selectionMode"
+          title="Toggle Selection Mode for Scrivening"
         >
+          <VIcon icon="bx-checkbox-square" size="18" />
+        </VBtn>
+        <VBtn icon size="x-small" variant="text" @click="handleSearchToggle">
           <VIcon icon="bx-search" size="18" />
         </VBtn>
-        <VBtn
-          icon
-          size="x-small"
-          variant="text"
-          @click="handleExpandAll"
-        >
+        <VBtn icon size="x-small" variant="text" @click="handleExpandAll">
           <VIcon icon="bx-expand-alt" size="18" />
         </VBtn>
       </div>
-    </div>
-
-    <!-- Quick View Mode Buttons -->
-    <div v-if="manuscriptStore.selectedManuscriptId" class="view-mode-buttons">
-      <VBtnGroup density="compact" variant="tonal" divided>
-        <VBtn
-          size="x-small"
-          @click="navigateToView('manuscript')"
-          title="Manuscript View"
-        >
-          <VIcon icon="bx-file-doc" size="16" />
-        </VBtn>
-        <VBtn
-          size="x-small"
-          @click="navigateToView('corkboard')"
-          title="Corkboard View"
-        >
-          <VIcon icon="bx-grid-alt" size="16" />
-        </VBtn>
-        <VBtn
-          size="x-small"
-          @click="navigateToView('outline')"
-          title="Outline View"
-        >
-          <VIcon icon="bx-list-ul" size="16" />
-        </VBtn>
-      </VBtnGroup>
     </div>
 
     <!-- Search Bar -->
@@ -90,46 +70,33 @@
       />
     </div>
 
+    <!-- Scrivening Selector Panel (shown when selections exist) -->
+    <ScriveningSelectorPanel v-if="selectionMode" />
+
     <!-- Loading State -->
     <div v-if="manuscriptStore.loading" class="loading-state">
-      <VProgressCircular
-        indeterminate
-        size="20"
-        color="primary"
-      />
+      <VProgressCircular indeterminate size="20" color="primary" />
       <span>Loading manuscript structure...</span>
     </div>
 
     <!-- Error State -->
     <div v-else-if="manuscriptStore.error" class="error-state">
-      <VIcon
-        icon="bx-error"
-        color="error"
-        size="20"
-      />
+      <VIcon icon="bx-error" color="error" size="20" />
       <span>{{ manuscriptStore.error }}</span>
-      <VBtn
-        size="x-small"
-        variant="text"
-        @click="handleRetry"
-      >
-        Retry
-      </VBtn>
+      <VBtn size="x-small" variant="text" @click="handleRetry"> Retry </VBtn>
     </div>
 
     <!-- Empty State -->
-    <div v-else-if="!manuscriptStore.hasNavigationTree" class="empty-state">
-      <VIcon
-        icon="bx-folder-open"
-        size="32"
-        color="grey"
-      />
+    <div v-else-if="!manuscriptStore.hasNavigationTree" class="empty-state" @contextmenu.prevent="handleEmptyAreaContext">
+      <VIcon icon="bx-folder-open" size="32" color="grey" />
       <div class="empty-text">No content found</div>
-      <div class="empty-subtext">Start by creating your first document or folder.</div>
+      <div class="empty-subtext">
+        Start by creating your first document or folder.
+      </div>
     </div>
 
     <!-- Navigation Tree Items -->
-    <div v-else class="navigation-tree">
+    <div v-else class="navigation-tree" @contextmenu.self.prevent="handleEmptyAreaContext">
       <TreeNode
         v-for="node in manuscriptStore.manuscriptTree"
         :key="node.id"
@@ -138,12 +105,19 @@
         :expanded-nodes="navigationStore.expandedNodes"
         :selected-node="navigationStore.selectedNode"
         :dragging-node-id="draggingNodeId"
+        :dragging-node-ids="draggingNodeIds"
+        :selection-mode="selectionMode"
+        :scrivening-selections="scriveningSelections"
+        :all-nodes="manuscriptStore.manuscriptTree"
+        :max-depth="maxTreeDepth"
+        :sidebar-collapsed="isSidebarCollapsed"
         @node-click="handleNodeClick"
         @node-toggle="handleNodeToggle"
         @node-context="handleNodeContext"
         @node-drag-start="handleNodeDragStart"
         @node-drag-end="handleNodeDragEnd"
         @node-drop="handleNodeDrop"
+        @scrivening-selection-toggle="handleScriveningSelectionToggle"
       />
     </div>
 
@@ -155,209 +129,363 @@
       <span v-else-if="navigationStore.expandedNodeCount > 0">
         {{ navigationStore.expandedNodeCount }} folders expanded
       </span>
-      <span v-else>
-        {{ treeMetadata.totalItems }} items
-      </span>
+      <span v-else> {{ treeMetadata.totalItems }} items </span>
     </div>
-
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
-import { useRouter } from 'vue-router'
-import { useManuscriptStore } from '@/stores/manuscript'
-import { useManuscriptNavigationStore } from '@/stores/manuscript-navigation'
-import { useContextMenu } from '@/composables/useContextMenu'
-import { ContextDetectionService } from '@/services/contextDetection'
-import TreeNode from './TreeNode.vue'
+import { ref, computed, watch, inject } from "vue";
+import { useRouter } from "vue-router";
+import { useManuscriptStore } from "@/stores/manuscript";
+import { useManuscriptNavigationStore } from "@/stores/manuscript-navigation";
+import { useFolderViewStore } from "@/stores/folderView";
+import { useSelectionStore } from "@/stores/selection";
+import { usePaneStore } from "@/stores/pane";
+import { useContextMenu } from "@/composables/useContextMenu";
+import { ContextDetectionService } from "@/services/contextDetection";
+import { getEmptySpaceMenuItems } from "@/config/contextMenus/viewMenus";
+import { isDropResultMulti, type DropResult, type DropResultMulti } from "@/composables/useDragAndDrop";
+import { useLayoutConfigStore } from "@layouts/stores/config";
+import { injectionKeyIsVerticalNavHovered } from "@layouts/symbols";
+import TreeNode from "./TreeNode.vue";
+import ScriveningSelectorPanel from "@/components/scrivening/ScriveningSelectorPanel.vue";
 
 // Stores and router
-const manuscriptStore = useManuscriptStore()
-const navigationStore = useManuscriptNavigationStore()
-const router = useRouter()
+const manuscriptStore = useManuscriptStore();
+const navigationStore = useManuscriptNavigationStore();
+const selectionStore = useSelectionStore();
+const router = useRouter();
+const configStore = useLayoutConfigStore();
 
 // Context menu composable
-const contextMenu = useContextMenu()
+const contextMenu = useContextMenu();
+
+// Inject sidebar hover state (same pattern as VerticalNavGroup)
+const isVerticalNavHovered = inject(injectionKeyIsVerticalNavHovered, ref(false));
+
+// Computed: detect if sidebar is collapsed (isVerticalNavMini returns a ComputedRef)
+const isSidebarCollapsed = configStore.isVerticalNavMini(isVerticalNavHovered);
+
+// Computed: max depth based on sidebar state
+const maxTreeDepth = computed(() => (isSidebarCollapsed.value ? 1 : Infinity));
+
+// Debug: Watch collapse state
+if (import.meta.env.DEV) {
+  watch([isSidebarCollapsed, isVerticalNavHovered], ([collapsed, hovered]) => {
+    console.log('[DynamicManuscriptNav] Sidebar state:', {
+      collapsed,
+      hovered,
+      maxDepth: maxTreeDepth.value
+    });
+  });
+}
 
 // Local state
-const showSearch = ref(false)
-const draggingNodeId = ref<string | null>(null)
+const showSearch = ref(false);
+const draggingNodeId = ref<string | null>(null);
+const draggingNodeIds = ref<Set<string>>(new Set());  // For multi-drag
+const selectionMode = ref(true);
 
 // Computed
-const treeMetadata = computed(() => manuscriptStore.treeMetadata)
+const scriveningSelections = computed(() => {
+  const selections = new Set<string>();
+  for (const [nodeId] of selectionStore.scriveningFolderMap) {
+    selections.add(nodeId);
+  }
+  return selections;
+});
+
+// Computed
+const treeMetadata = computed(() => manuscriptStore.treeMetadata);
 const searchQuery = computed({
   get: () => navigationStore.searchQuery,
-  set: (value: string) => navigationStore.setSearchQuery(value)
-})
+  set: (value: string) => navigationStore.setSearchQuery(value),
+});
 
 // Note: Search is now handled server-side instead of client-side filtering
 
 // Methods
 const handleSearchToggle = async () => {
-  showSearch.value = !showSearch.value
+  showSearch.value = !showSearch.value;
   if (!showSearch.value) {
-    navigationStore.clearSearch()
-    await manuscriptStore.clearSearch()
+    navigationStore.clearSearch();
+    await manuscriptStore.clearSearch();
   }
-}
+};
 
 const handleExpandAll = () => {
   // Get all folder nodes from the tree and expand them
   const expandFolderNodes = (nodes: any[]) => {
-    nodes.forEach(node => {
+    nodes.forEach((node) => {
       if (node.children.length > 0) {
-        navigationStore.expandNode(node.id)
-        expandFolderNodes(node.children)
+        navigationStore.expandNode(node.id);
+        expandFolderNodes(node.children);
       }
-    })
-  }
+    });
+  };
 
-  expandFolderNodes(manuscriptStore.manuscriptTree)
-}
+  expandFolderNodes(manuscriptStore.manuscriptTree);
+};
 
 // Debounce search to avoid too many API calls
-let searchTimeout: NodeJS.Timeout | null = null
+let searchTimeout: NodeJS.Timeout | null = null;
 
 const handleSearch = async (query: string) => {
-  console.log('Search query:', query)
+  console.log("Search query:", query);
 
   // Clear previous timeout
   if (searchTimeout) {
-    clearTimeout(searchTimeout)
+    clearTimeout(searchTimeout);
   }
 
   // Debounce search by 500ms
   searchTimeout = setTimeout(async () => {
-    if (!query || query.trim() === '') {
+    if (!query || query.trim() === "") {
       // Clear search and reload all items
-      await manuscriptStore.clearSearch()
+      await manuscriptStore.clearSearch();
     } else {
       // Search items on server
-      await manuscriptStore.searchItems(query.trim())
+      await manuscriptStore.searchItems(query.trim());
     }
-  }, 500)
-}
+  }, 500);
+};
 
 const handleRetry = async () => {
   if (manuscriptStore.selectedManuscriptId) {
-    await manuscriptStore.fetchManuscriptItems(manuscriptStore.selectedManuscriptId)
+    await manuscriptStore.fetchManuscriptItems(
+      manuscriptStore.selectedManuscriptId,
+    );
   }
-}
+};
 
 const handleNodeClick = (nodeId: string) => {
-  navigationStore.selectNode(nodeId)
+  navigationStore.selectNode(nodeId);
 
   // Navigate to the node
-  const node = manuscriptStore.findNodeById(nodeId)
+  const node = manuscriptStore.findNodeById(nodeId);
   if (node) {
-    // For text items, navigate to the editor
-    if (node.type === 'text' && manuscriptStore.selectedManuscriptId) {
-      router.push(`/manuscripts/${manuscriptStore.selectedManuscriptId}/items/${node.itemId}/edit`)
+    // Check if we're in split view with an active pane
+    const folderViewStore = useFolderViewStore();
+    const paneStore = usePaneStore();
+
+    if (folderViewStore.splitEnabled && paneStore.activePaneId) {
+      // Split view handling - update only the active pane
+      if (node.type === "text" && manuscriptStore.selectedManuscriptId) {
+        paneStore.setEditingItem(paneStore.activePaneId, node.itemId);
+      } else if (node.type === "folder") {
+        // Load folder content in the active pane only
+        paneStore.loadFolderForPane(paneStore.activePaneId, node.itemId);
+
+        // Switch pane to a view mode (not edit) if currently in edit mode
+        const currentPane = paneStore.getPane(paneStore.activePaneId);
+        if (currentPane?.viewMode === "edit") {
+          paneStore.updatePaneMode(paneStore.activePaneId, "manuscript");
+        }
+      }
     } else {
-      // For other types, use the existing path if available
-      router.push(node.path)
+      if (node.type === "folder" && manuscriptStore.selectedManuscriptId) {
+        // Navigate to folder view for folders
+        router.push(
+          `/manuscripts/${manuscriptStore.selectedManuscriptId}/folders/${node.itemId}`,
+        );
+      } else if (node.type === "text" && manuscriptStore.selectedManuscriptId) {
+        // For text items, navigate to parent folder with item view selected
+        const parentNode = manuscriptStore.findParentOfNode(nodeId);
+        if (parentNode && parentNode.type === "folder") {
+          // Navigate to parent folder with item view mode and selected item
+          router.push({
+            path: `/manuscripts/${manuscriptStore.selectedManuscriptId}/folders/${parentNode.itemId}`,
+            query: {
+              view: "item",
+              itemId: String(node.itemId),
+            },
+          });
+        } else {
+          // Fallback: If no parent folder found, use traditional item edit route
+          router.push(
+            `/manuscripts/${manuscriptStore.selectedManuscriptId}/items/${node.itemId}/edit`,
+          );
+        }
+      } else if (node.type === "snippet_collection" && manuscriptStore.selectedManuscriptId) {
+        // Navigate to snippet collection view
+        router.push(
+          `/manuscripts/${manuscriptStore.selectedManuscriptId}/snippet-collections/${node.itemId}/view`,
+        );
+      } else if (node.type === "snippet_reference" && manuscriptStore.selectedManuscriptId) {
+        // Navigate to the source item
+        const sourceItemId = node.metadata?.sourceItemId;
+        if (sourceItemId) {
+          const sourceNodeId = `item-${sourceItemId}`;
+          const sourceParent = manuscriptStore.findParentOfNode(sourceNodeId);
+          if (sourceParent && sourceParent.type === "folder") {
+            router.push({
+              path: `/manuscripts/${manuscriptStore.selectedManuscriptId}/folders/${sourceParent.itemId}`,
+              query: {
+                view: "item",
+                itemId: String(sourceItemId),
+              },
+            });
+          } else {
+            router.push(
+              `/manuscripts/${manuscriptStore.selectedManuscriptId}/items/${sourceItemId}/edit`,
+            );
+          }
+        }
+      } else if (node.path) {
+        // For other types, use the existing path if available
+        router.push(node.path);
+      }
     }
   }
-}
+};
 
 const handleNodeToggle = (nodeId: string) => {
-  navigationStore.toggleNode(nodeId)
-}
+  navigationStore.toggleNode(nodeId);
+};
 
-const handleNodeContext = (data: { nodeId: string; event: MouseEvent }) => {
-  console.log('handleNodeContext called with nodeId:', data.nodeId)
+const handleEmptyAreaContext = (event: MouseEvent) => {
+  const manuscriptId = manuscriptStore.selectedManuscript?.id;
+  if (!manuscriptId) return;
 
-  const menuItems = ContextDetectionService.getMenuItemsForNode(data.nodeId)
-  console.log('Menu items retrieved:', menuItems.length, menuItems)
+  const menuItems = getEmptySpaceMenuItems({
+    folderId: manuscriptId,
+    manuscriptId,
+  });
 
   if (menuItems.length > 0) {
-    console.log('Showing context menu at:', data.event.clientX, data.event.clientY)
+    contextMenu.show(event, { items: menuItems });
+  }
+};
+
+const handleNodeContext = (data: { nodeId: string; event: MouseEvent }) => {
+  console.log("handleNodeContext called with nodeId:", data.nodeId);
+
+  const menuItems = ContextDetectionService.getMenuItemsForNode(data.nodeId);
+  console.log("Menu items retrieved:", menuItems.length, menuItems);
+
+  if (menuItems.length > 0) {
+    console.log(
+      "Showing context menu at:",
+      data.event.clientX,
+      data.event.clientY,
+    );
     contextMenu.show(data.event, {
       items: menuItems,
-      context: { nodeId: data.nodeId }
-    })
+      context: { nodeId: data.nodeId },
+    });
   } else {
-    console.warn('No menu items found for node:', data.nodeId)
+    console.warn("No menu items found for node:", data.nodeId);
   }
-}
+};
 
 const formatWordCount = (count: number): string => {
   if (count >= 1000) {
-    return `${(count / 1000).toFixed(1)}k`
+    return `${(count / 1000).toFixed(1)}k`;
   }
-  return count.toString()
-}
+  return count.toString();
+};
 
 // Drag and Drop handlers
-const handleNodeDragStart = (data: { nodeId: string; itemId: number }) => {
-  console.log('Drag start:', data)
-  draggingNodeId.value = data.nodeId
-}
+const handleNodeDragStart = (nodeIds: string[]) => {
+  console.log("Drag start:", nodeIds);
+  draggingNodeId.value = nodeIds[0] || null;
+  draggingNodeIds.value = new Set(nodeIds);
+};
 
 const handleNodeDragEnd = () => {
-  console.log('Drag end')
-  draggingNodeId.value = null
-}
+  console.log("Drag end");
+  draggingNodeId.value = null;
+  draggingNodeIds.value = new Set();
+};
 
-const handleNodeDrop = async (data: {
-  sourceNodeId: string
-  sourceItemId: number
-  targetNodeId: string
-  targetItemId: number
-  position: 'above' | 'below' | 'inside'
-}) => {
-  console.log('Drop event:', data)
+const handleNodeDrop = async (data: DropResult | DropResultMulti) => {
+  console.log("Drop event:", data);
+
+  if (!manuscriptStore.selectedManuscriptId) {
+    console.error("No manuscript selected");
+    return;
+  }
 
   try {
-    // Call the API to reorder items
-    await manuscriptStore.reorderItem({
-      sourceItemId: data.sourceItemId,
-      targetItemId: data.targetItemId,
-      position: data.position,
-      manuscriptId: manuscriptStore.selectedManuscriptId!
-    })
+    // Check if this is a multi-item drop
+    if (isDropResultMulti(data)) {
+      console.log("Multi-item drop:", data.sourceItems.length, "items");
+
+      // Call the batch reorder API
+      await manuscriptStore.batchReorderItems({
+        sourceItemIds: data.sourceItems.map(item => item.itemId),
+        targetItemId: data.targetItemId,
+        position: data.position,
+        manuscriptId: manuscriptStore.selectedManuscriptId,
+      });
+
+      // Clear selection after successful move
+      selectionStore.clearSelection();
+    } else {
+      // Single item drop (backward compatible)
+      await manuscriptStore.reorderItem({
+        sourceItemId: data.sourceItemId,
+        targetItemId: data.targetItemId,
+        position: data.position,
+        manuscriptId: manuscriptStore.selectedManuscriptId,
+      });
+    }
 
     // Reload the tree to reflect changes
-    await manuscriptStore.fetchManuscriptItems(manuscriptStore.selectedManuscriptId!)
+    await manuscriptStore.fetchManuscriptItems(
+      manuscriptStore.selectedManuscriptId,
+    );
   } catch (error) {
-    console.error('Error reordering item:', error)
+    console.error("Error reordering item(s):", error);
+    // Keep selection on error so user can retry
     // TODO: Show error notification to user
   }
-}
+};
 
-// Navigate to different view modes
-const navigateToView = (viewMode: 'manuscript' | 'corkboard' | 'outline') => {
-  // Get the root folder ID for the manuscript
-  // For now, we'll navigate to the manuscript's root folder
-  // In the future, we might want to navigate to the currently selected folder
-  const manuscriptId = manuscriptStore.selectedManuscriptId
-  if (manuscriptId) {
-    // Navigate to the folders view with the specified mode
-    // Using manuscriptId as the folder ID for the root
-    router.push(`/folders/${manuscriptId}?view=${viewMode}`)
+// Scrivening Selection Handler
+const handleScriveningSelectionToggle = (data: {
+  nodeId: string;
+  itemId: number;
+  checked: boolean;
+}) => {
+  if (data.checked) {
+    selectionStore.addToScriveningSelection(data.nodeId, data.itemId);
+  } else {
+    selectionStore.removeFromScriveningSelection(data.nodeId);
   }
-}
+};
 
-console.log('🎯 DynamicManuscriptNavigation component loaded!')
+console.log("🎯 DynamicManuscriptNavigation component loaded!");
 
 // Initialize navigation when component mounts
-watch(() => manuscriptStore.selectedManuscriptId, (newId) => {
-  console.log('📋 selectedManuscriptId changed:', newId)
-  if (newId) {
-    console.log('Dynamic navigation initialized for manuscript:', newId)
-  }
-}, { immediate: true })
+watch(
+  () => manuscriptStore.selectedManuscriptId,
+  (newId) => {
+    console.log("📋 selectedManuscriptId changed:", newId);
+    if (newId) {
+      console.log("Dynamic navigation initialized for manuscript:", newId);
+    }
+  },
+  { immediate: true },
+);
 
 // Debug component visibility
-watch(() => manuscriptStore.hasSelectedManuscript, (hasSelected) => {
-  console.log('👁️ hasSelectedManuscript changed:', hasSelected)
-  console.log('selectedManuscriptId:', manuscriptStore.selectedManuscriptId)
-  console.log('selectedManuscript:', manuscriptStore.selectedManuscript)
-}, { immediate: true })
+watch(
+  () => manuscriptStore.hasSelectedManuscript,
+  (hasSelected) => {
+    console.log("👁️ hasSelectedManuscript changed:", hasSelected);
+    console.log("selectedManuscriptId:", manuscriptStore.selectedManuscriptId);
+    console.log("selectedManuscript:", manuscriptStore.selectedManuscript);
+  },
+  { immediate: true },
+);
 
 // Debug the component render
-console.log('🔍 Component setup complete, hasSelectedManuscript:', manuscriptStore.hasSelectedManuscript)
+console.log(
+  "🔍 Component setup complete, hasSelectedManuscript:",
+  manuscriptStore.hasSelectedManuscript,
+);
 </script>
 
 <style scoped lang="scss">
@@ -404,21 +532,6 @@ console.log('🔍 Component setup complete, hasSelectedManuscript:', manuscriptS
   .header-actions {
     display: flex;
     gap: 4px;
-  }
-}
-
-.view-mode-buttons {
-  margin-bottom: 12px;
-  display: flex;
-  justify-content: center;
-
-  :deep(.v-btn-group) {
-    width: 100%;
-
-    .v-btn {
-      flex: 1;
-      min-width: 0;
-    }
   }
 }
 
@@ -470,5 +583,35 @@ console.log('🔍 Component setup complete, hasSelectedManuscript:', manuscriptS
   padding: 8px 0 4px;
   border-top: 1px solid rgb(var(--v-theme-surface-variant));
   margin-top: 8px;
+}
+
+/* Collapsed sidebar styling */
+.manuscript-navigation-wrapper.sidebar-collapsed {
+  padding: 8px 4px;
+
+  :deep(.tree-node) {
+    padding: 4px;
+
+    .node-label {
+      display: none; // Hide all text
+    }
+
+    .node-content {
+      justify-content: center;
+    }
+
+    .expansion-toggle {
+      display: none; // Hide chevrons
+    }
+  }
+
+  :deep(.child-count-badge) {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    min-width: 16px;
+    height: 16px;
+    font-size: 10px;
+  }
 }
 </style>

@@ -1,14 +1,5 @@
 <template>
   <div>
-    <!-- Drop Zone Above -->
-    <div
-      v-if="showDropZoneAbove"
-      class="drop-zone drop-zone-above"
-      @drop="handleDrop($event, 'above')"
-      @dragover.prevent="handleDragOver($event, 'above')"
-      @dragleave="handleDragLeave('above')"
-    />
-
     <!-- Main Tree Node -->
     <div
       class="tree-node"
@@ -18,60 +9,92 @@
         'is-folder': hasChildren,
         'is-loading': node.state.isLoading,
         'is-dragging': isDragging,
-        'drop-target': dropPosition === 'inside'
+        'drop-target-inside': localDropPosition === 'inside' && props.draggingNodeId && props.draggingNodeId !== node.id,
+        'drop-target-above': localDropPosition === 'above' && props.draggingNodeId && props.draggingNodeId !== node.id,
+        'drop-target-below': localDropPosition === 'below' && props.draggingNodeId && props.draggingNodeId !== node.id,
+        'in-scrivening-selection': isInScriveningSelection,
       }"
       :style="{ paddingLeft: `${level * 20}px` }"
       :data-node-id="node.id"
       :data-item-id="node.itemId"
-      draggable="true"
-      @click="handleNodeClick"
+      :draggable="node.type !== 'snippet_reference'"
       @contextmenu="handleContextMenu"
       @touchstart="handleTouchStart"
       @touchend="handleTouchEnd"
       @touchmove="handleTouchMove"
       @dragstart="handleDragStart"
       @dragend="handleDragEnd"
-      @dragover.prevent="handleDragOver($event, 'inside')"
-      @dragleave="handleDragLeave('inside')"
-      @drop="handleDrop($event, 'inside')"
+      @dragover.prevent.stop="handleDragOver"
+      @dragleave.stop="handleDragLeave"
+      @drop.stop="handleDrop"
     >
       <!-- Node Content -->
       <div class="node-content">
-        <!-- Expansion Toggle -->
-        <button
-          v-if="hasChildren"
+        <!-- Expansion Toggle (only rendered for folders) -->
+        <div
+          v-if="hasChildren && !sidebarCollapsed"
           class="expansion-toggle"
-          @click.stop="handleToggleExpansion"
+          role="button"
+          tabindex="0"
+          @click.stop="handleToggleExpansion()"
+          @keydown.enter.stop="handleToggleExpansion()"
+          @keydown.space.prevent.stop="handleToggleExpansion()"
         >
           <VIcon
             :icon="isExpanded ? 'bx-chevron-down' : 'bx-chevron-right'"
             size="14"
           />
-        </button>
-        <div
-          v-else
-          class="expansion-spacer"
-        />
+        </div>
+
+        <!-- Spacer for items without expansion toggle -->
+        <div v-else class="expansion-spacer" />
 
         <!-- Node Icon -->
         <VIcon
-          :icon="node.icon"
+          :icon="getIconName()"
           size="16"
           class="node-icon"
           :color="getIconColor()"
         />
 
-        <!-- Node Label -->
-        <div class="node-label">
-          <span class="node-title">{{ node.title }}</span>
+        <!-- Child Count Badge (shown when sidebar collapsed and has children) -->
+        <VChip
+          v-if="sidebarCollapsed && hasChildren && level < maxDepth"
+          size="x-small"
+          class="child-count-badge"
+        >
+          {{ node.children.length }}
+        </VChip>
+
+        <!-- Node Label (clickable to select/navigate or double-click to rename) -->
+        <div
+          class="node-label"
+          @click="handleNodeClick($event)"
+          @dblclick="startInlineRename"
+        >
+          <!-- Inline Rename Input -->
+          <input
+            v-if="isRenaming"
+            ref="renameInputRef"
+            v-model="renameValue"
+            type="text"
+            class="node-rename-input"
+            @keydown.enter="confirmRename"
+            @keydown.escape="cancelRename"
+            @blur="confirmRename"
+            @click.stop
+          />
+          <!-- Display Title -->
+          <span v-else class="node-title">{{ node.title }}</span>
           <div
-            v-if="showMetadata && (node.metadata.wordCount > 0 || node.metadata.hasComments)"
+            v-if="
+              !isRenaming &&
+              showMetadata &&
+              (node.metadata.wordCount > 0 || node.metadata.hasComments)
+            "
             class="node-metadata"
           >
-            <span
-              v-if="node.metadata.wordCount > 0"
-              class="word-count"
-            >
+            <span v-if="node.metadata.wordCount > 0" class="word-count">
               {{ formatWordCount(node.metadata.wordCount) }} words
             </span>
             <VIcon
@@ -91,24 +114,47 @@
         </div>
 
         <!-- Status Indicator -->
-        <div
-          class="status-dot"
-          :class="`status-${node.metadata.status}`"
-        />
+        <div class="status-dot" :class="`status-${node.metadata.status}`" />
+      </div>
+
+      <!-- CSS-based curved connector for nested items -->
+      <div
+        v-if="level > 0 && node.type !== 'folder'"
+        class="tree-connector-css"
+        :style="{
+          '--connector-color': ['red', 'orange', 'yellow', 'green', 'blue', '#4B0082', '#9400D3'][(level - 1) % 7],
+          insetInlineStart: `${level * 20 - 1}px`
+        }"
+      />
+
+      <!-- Un-nest gutter: drag target on left edge for nested items -->
+      <div
+        v-if="level > 0 && props.draggingNodeId && props.draggingNodeId !== node.id"
+        class="un-nest-gutter"
+        :class="{ 'un-nest-gutter--active': isUnNestTarget }"
+        :style="{ insetInlineStart: `${(level - 1) * 20}px` }"
+        @dragover.prevent.stop="handleGutterDragOver"
+        @dragleave.stop="handleGutterDragLeave"
+        @drop.prevent.stop="handleGutterDrop"
+      >
+        <span v-if="isUnNestTarget" class="un-nest-label">↰ Move out</span>
       </div>
     </div>
 
-    <!-- Drop Zone Below -->
-    <div
-      v-if="showDropZoneBelow"
-      class="drop-zone drop-zone-below"
-      @drop="handleDrop($event, 'below')"
-      @dragover.prevent="handleDragOver($event, 'below')"
-      @dragleave="handleDragLeave('below')"
-    />
-
-    <!-- Child Nodes -->
-    <div v-if="hasChildren && isExpanded" class="child-nodes">
+    <!-- Child Nodes + vertical connectors for each nesting level -->
+    <div v-if="canShowChildren" style="position: relative;">
+      <!-- Vertical trunk line connecting this folder's children -->
+      <div
+        v-if="verticalLineCount > 0"
+        class="vertical-trunk-line"
+        :style="{
+          insetInlineStart: `${(level + 1) * 20}px`,
+          borderInlineStartColor: ['red', 'orange', 'yellow', 'green', 'blue', '#4B0082', '#9400D3'][level % 7],
+          insetBlockStart: '0',
+          blockSize: childNodesHeight ? `${childNodesHeight - 18}px` : '0'
+        }"
+      />
+      <div class="child-nodes" ref="childNodesRef">
       <TreeNode
         v-for="child in node.children"
         :key="child.id"
@@ -118,419 +164,814 @@
         :selected-node="selectedNode"
         :show-metadata="showMetadata"
         :dragging-node-id="draggingNodeId"
+        :dragging-node-ids="draggingNodeIds"
+        :selection-mode="selectionMode"
+        :scrivening-selections="scriveningSelections"
+        :all-nodes="allNodes"
+        :max-depth="maxDepth"
+        :sidebar-collapsed="sidebarCollapsed"
         @node-click="$emit('node-click', $event)"
         @node-toggle="$emit('node-toggle', $event)"
         @node-context="$emit('node-context', $event)"
         @node-drag-start="$emit('node-drag-start', $event)"
         @node-drag-end="$emit('node-drag-end')"
         @node-drop="$emit('node-drop', $event)"
+        @scrivening-selection-toggle="
+          $emit('scrivening-selection-toggle', $event)
+        "
       />
+    </div>
+    </div>
+
+    <!-- Empty Folder Hint -->
+    <div
+      v-if="isEmptyFolder && isExpanded && !sidebarCollapsed"
+      class="empty-folder-hint"
+      :style="{ paddingLeft: `${(level + 1) * 20 + 28}px` }"
+    >
+      Drop items here
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import { useDragAndDrop } from '@/composables/useDragAndDrop'
-import type { DropPosition } from '@/composables/useDragAndDrop'
+import type { DropPosition, DropResult, DropResultMulti } from "@/composables/useDragAndDrop";
+import { useDragAndDrop } from "@/composables/useDragAndDrop";
+import { useManuscriptStore } from "@/stores/manuscript";
+import { useSelectionStore } from "@/stores/selection";
+import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
 
 interface TreeNode {
-  id: string
-  itemId: number
-  title: string
-  type: string
-  icon: string
-  path: string
-  children: TreeNode[]
-  parent?: TreeNode
+  id: string;
+  itemId: number;
+  title: string;
+  type: string;
+  icon: string;
+  path: string;
+  children: TreeNode[];
+  parent?: TreeNode;
+  iconName?: string | null;
+  iconColor?: string | null;
+  useCustomIcon?: boolean;
   metadata: {
-    wordCount: number
-    characterCount: number
-    status: 'draft' | 'in_progress' | 'completed' | 'archived'
-    lastModified: string
-    hasComments: boolean
-    isCompilable: boolean
-    synopsis?: string
-  }
+    wordCount: number;
+    characterCount: number;
+    status: "draft" | "in_progress" | "completed" | "archived";
+    lastModified: string;
+    hasComments: boolean;
+    isCompilable: boolean;
+  };
   state: {
-    isExpanded: boolean
-    isSelected: boolean
-    isLoading: boolean
-    isDragging: boolean
-  }
+    isLoading: boolean;
+  };
 }
 
 interface Props {
-  node: TreeNode
-  level: number
-  expandedNodes: Set<string>
-  selectedNode: string | null
-  showMetadata?: boolean
-  draggingNodeId?: string | null
-}
-
-interface Emits {
-  (e: 'node-click', nodeId: string): void
-  (e: 'node-toggle', nodeId: string): void
-  (e: 'node-context', data: { nodeId: string; event: MouseEvent }): void
-  (e: 'node-drag-start', data: { nodeId: string; itemId: number }): void
-  (e: 'node-drag-end'): void
-  (e: 'node-drop', data: {
-    sourceNodeId: string
-    sourceItemId: number
-    targetNodeId: string
-    targetItemId: number
-    position: 'above' | 'below' | 'inside'
-  }): void
+  node: TreeNode;
+  level?: number;
+  expandedNodes: Set<string>;
+  selectedNode: string | null;
+  showMetadata?: boolean;
+  draggingNodeId: string | null;
+  draggingNodeIds?: Set<string>;  // For multi-drag support
+  selectionMode?: boolean;
+  scriveningSelections?: Set<string>;
+  allNodes?: TreeNode[];  // All nodes for building drag data
+  maxDepth?: number;
+  sidebarCollapsed?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  showMetadata: true,
-  draggingNodeId: null
-})
+  level: 0,
+  showMetadata: false,
+  selectionMode: false,
+  scriveningSelections: () => new Set(),
+  draggingNodeIds: () => new Set(),
+  allNodes: () => [],
+  maxDepth: Infinity,
+  sidebarCollapsed: false,
+});
 
-const emit = defineEmits<Emits>()
+const emit = defineEmits<{
+  "node-click": [id: string];
+  "node-toggle": [id: string];
+  "node-context": [{ nodeId: string; event: MouseEvent | TouchEvent }];
+  "node-drag-start": [ids: string[]];  // Now supports multiple IDs
+  "node-drag-end": [];
+  "node-drop": [DropResult | DropResultMulti];  // Supports both single and multi
+  "scrivening-selection-toggle": [
+    { nodeId: string; itemId: number; checked: boolean },
+  ];
+}>();
+
+// Rename state
+const isRenaming = ref(false);
+const renameValue = ref("");
+const renameInputRef = ref<HTMLInputElement | null>(null);
+
+// Stores
+const manuscriptStore = useManuscriptStore();
+const selectionStore = useSelectionStore();
 
 // Drag & Drop composable
 const {
   isDragging,
-  dropPosition,
   handleDragStart: dragStart,
+  handleDragStartMulti: dragStartMulti,
   handleDragEnd: dragEnd,
   handleDragOver: dragOver,
   handleDragLeave: dragLeave,
-  handleDrop: drop
-} = useDragAndDrop()
+  handleDrop: drop,
+} = useDragAndDrop();
 
 // Computed properties
-const hasChildren = computed(() => props.node.children.length > 0)
-const isExpanded = computed(() => props.expandedNodes.has(props.node.id))
-const isSelected = computed(() => props.selectedNode === props.node.id)
+const hasChildren = computed(() => props.node.children.length > 0);
+const isEmptyFolder = computed(() => props.node.type === 'folder' && !hasChildren.value);
+const isExpanded = computed(() => props.expandedNodes.has(props.node.id));
+// isSelected now checks BOTH the navigation selection AND the multi-select store
+const isNavigationSelected = computed(() => props.selectedNode === props.node.id);
+const isMultiSelected = computed(() => selectionStore.isSelected(props.node.id));
+const isSelected = computed(() => isNavigationSelected.value || isMultiSelected.value);
+const isInScriveningSelection = computed(
+  () => props.scriveningSelections?.has(props.node.id) || false,
+);
 
-// Show drop zones when dragging
-const showDropZoneAbove = computed(() =>
-  props.draggingNodeId &&
-  props.draggingNodeId !== props.node.id &&
-  dropPosition.value === 'above'
-)
+// Computed: determine if children can be shown based on depth limit
+const canShowChildren = computed(
+  () => hasChildren.value && isExpanded.value && props.level < props.maxDepth,
+);
 
-const showDropZoneBelow = computed(() =>
-  props.draggingNodeId &&
-  props.draggingNodeId !== props.node.id &&
-  dropPosition.value === 'below'
-)
+// Track local hover state for this specific node
+const localDropPosition = ref<DropPosition>(null);
+
+// Un-nest gutter state
+const isUnNestTarget = ref(false);
+const gutterHeight = ref(32); // matches tree-node row height
+
+// Folder connector height (tracks child-nodes div height via ResizeObserver)
+const childNodesRef = ref<HTMLElement | null>(null);
+const childNodesHeight = ref(0);
+let resizeObserver: ResizeObserver | null = null;
+
+watch(childNodesRef, (el) => {
+  resizeObserver?.disconnect();
+  if (el) {
+    childNodesHeight.value = el.offsetHeight;
+    resizeObserver = new ResizeObserver(() => {
+      childNodesHeight.value = el.offsetHeight;
+    });
+    resizeObserver.observe(el);
+  } else {
+    childNodesHeight.value = 0;
+  }
+});
+
+onBeforeUnmount(() => resizeObserver?.disconnect());
+
+// Determine how many vertical connector lines to draw
+// - One line for this folder's direct children (at indent level + 1)
+// - Show only if this node has children (folder with expanded children)
+const verticalLineCount = computed(() => {
+  return hasChildren.value && canShowChildren.value ? 1 : 0;
+});
 
 // Methods
-const handleNodeClick = () => {
-  emit('node-click', props.node.id)
-}
+const handleNodeClick = (event: MouseEvent) => {
+  const nodeId = props.node.id;
+
+  // Shift-click toggles scrivening selection (when in selection mode)
+  if (event.shiftKey && props.selectionMode) {
+    event.preventDefault();
+    event.stopPropagation();
+    const isCurrentlySelected = isInScriveningSelection.value;
+    emit("scrivening-selection-toggle", {
+      nodeId: nodeId,
+      itemId: props.node.itemId,
+      checked: !isCurrentlySelected,
+    });
+    return;
+  }
+
+  // Ctrl+Click (or Cmd+Click on Mac) - toggle multi-selection
+  if (event.ctrlKey || event.metaKey) {
+    event.preventDefault();
+    event.stopPropagation();
+    selectionStore.toggleItem(nodeId);
+    console.log('[MULTI-SELECT] Ctrl+Click toggled:', nodeId, 'Selection:', selectionStore.getSelectionSummary());
+    return;
+  }
+
+  // Shift+Click - extend range selection (for multi-select, not scrivening)
+  if (event.shiftKey && !props.selectionMode) {
+    event.preventDefault();
+    event.stopPropagation();
+    selectionStore.extendSelection(nodeId);
+    console.log('[MULTI-SELECT] Shift+Click extended to:', nodeId, 'Selection:', selectionStore.getSelectionSummary());
+    return;
+  }
+
+  // Normal click - clear multi-selection and navigate
+  if (selectionStore.hasSelection) {
+    selectionStore.clearSelection();
+  }
+  emit("node-click", nodeId);
+};
 
 const handleToggleExpansion = () => {
-  emit('node-toggle', props.node.id)
-}
+  emit("node-toggle", props.node.id);
+};
 
 const handleContextMenu = (event: MouseEvent) => {
-  event.preventDefault()
-  emit('node-context', { nodeId: props.node.id, event })
-}
+  event.preventDefault();
+  emit("node-context", { nodeId: props.node.id, event });
+};
 
 // Mobile long-press support
-let longPressTimer: NodeJS.Timeout | null = null
-const LONG_PRESS_DURATION = 500
+let longPressTimer: NodeJS.Timeout | null = null;
+const LONG_PRESS_DURATION = 500;
 
 const handleTouchStart = (event: TouchEvent) => {
   longPressTimer = setTimeout(() => {
     // Trigger context menu on long press
-    emit('node-context', { nodeId: props.node.id, event: event as any })
-  }, LONG_PRESS_DURATION)
-}
+    emit("node-context", { nodeId: props.node.id, event: event as any });
+  }, LONG_PRESS_DURATION);
+};
 
 const handleTouchEnd = () => {
   if (longPressTimer) {
-    clearTimeout(longPressTimer)
-    longPressTimer = null
+    clearTimeout(longPressTimer);
   }
-}
+};
 
 const handleTouchMove = () => {
-  // Cancel long press if finger moves
   if (longPressTimer) {
-    clearTimeout(longPressTimer)
-    longPressTimer = null
+    clearTimeout(longPressTimer);
   }
-}
+};
 
-const getIconColor = (): string => {
-  switch (props.node.type) {
-    case 'folder':
-      return 'warning'
-    case 'text':
-      return 'primary'
-    case 'research':
-      return 'info'
-    case 'character':
-      return 'success'
-    case 'mindmap':
-      return 'purple'
-    default:
-      return 'default'
+// Helper to find node data by ID from allNodes tree
+const findNodeById = (nodes: TreeNode[], id: string): TreeNode | null => {
+  for (const node of nodes) {
+    if (node.id === id) return node;
+    if (node.children.length > 0) {
+      const found = findNodeById(node.children, id);
+      if (found) return found;
+    }
   }
-}
+  return null;
+};
 
-const formatWordCount = (count: number): string => {
-  if (count >= 1000) {
-    return `${(count / 1000).toFixed(1)}k`
+// Un-nest gutter handlers
+const handleGutterDragOver = () => {
+  isUnNestTarget.value = true;
+};
+
+const handleGutterDragLeave = () => {
+  isUnNestTarget.value = false;
+};
+
+const handleGutterDrop = async (event: DragEvent) => {
+  isUnNestTarget.value = false;
+
+  // Get drag data from the event
+  const dataStr = event.dataTransfer?.getData('application/json');
+  if (!dataStr) return;
+
+  let sourceItemId: number | null = null;
+  try {
+    const dragData = JSON.parse(dataStr);
+    sourceItemId = dragData.itemId ?? null;
+  } catch {
+    return;
   }
-  return count.toString()
-}
 
-// Drag and Drop handlers using composable
+  if (!sourceItemId) return;
+
+  const manuscriptId = manuscriptStore.selectedManuscript?.id;
+  if (!manuscriptId) return;
+
+  // Find the dragged node's parent and move source below that parent
+  const sourceNode = manuscriptStore.findNodeById(`item-${sourceItemId}`);
+  if (!sourceNode?.parent) return;
+
+  try {
+    await manuscriptStore.reorderItem({
+      sourceItemId,
+      targetItemId: sourceNode.parent.itemId,
+      position: 'below',
+      manuscriptId,
+    });
+    await manuscriptStore.fetchManuscriptItems(manuscriptId);
+  } catch (error) {
+    console.error('Failed to un-nest item via gutter:', error);
+  }
+};
+
+// Drag handlers
 const handleDragStart = (event: DragEvent) => {
-  dragStart(event, {
-    id: props.node.id,
-    itemId: props.node.itemId,
-    type: props.node.type,
-    title: props.node.title
-  })
+  const nodeId = props.node.id;
+  const isNodeSelected = selectionStore.isSelected(nodeId);
 
-  // Emit drag start event
-  emit('node-drag-start', {
-    nodeId: props.node.id,
-    itemId: props.node.itemId
-  })
-}
+  console.log('[DRAG-START] Node:', nodeId, {
+    isNodeSelected,
+    selectedCount: selectionStore.selectedCount,
+    selectedArray: selectionStore.selectedArray,
+    allNodesCount: props.allNodes.length,
+  });
+
+  // If node is selected and there are multiple selections, drag all selected
+  if (isNodeSelected && selectionStore.selectedCount > 1) {
+    // Build drag data for all selected items
+    const selectedIds = selectionStore.selectedArray;
+    console.log('[DRAG-START] Multi-drag mode! Dragging', selectedIds.length, 'items:', selectedIds);
+    const dragItems = selectedIds.map(id => {
+      // Try to find node in allNodes prop, fallback to current node data
+      const foundNode = props.allNodes.length > 0 ? findNodeById(props.allNodes, id) : null;
+      if (foundNode) {
+        return {
+          id: foundNode.id,
+          itemId: foundNode.itemId,
+          type: foundNode.type,
+          title: foundNode.title,
+        };
+      }
+      // If not found and it's the current node, use current node data
+      if (id === nodeId) {
+        return {
+          id: props.node.id,
+          itemId: props.node.itemId,
+          type: props.node.type,
+          title: props.node.title,
+        };
+      }
+      // Fallback: minimal data
+      return {
+        id,
+        itemId: parseInt(id),
+        type: 'unknown',
+        title: 'Item',
+      };
+    });
+
+    dragStartMulti(event, dragItems, nodeId);
+    emit("node-drag-start", selectedIds);
+  } else {
+    // Single item drag
+    // If not selected, select this item (replaces selection)
+    if (!isNodeSelected) {
+      selectionStore.selectItem(nodeId);
+    }
+
+    dragStart(event, {
+      id: props.node.id,
+      itemId: props.node.itemId,
+      type: props.node.type,
+      title: props.node.title,
+    });
+    emit("node-drag-start", [props.node.id]);
+  }
+};
 
 const handleDragEnd = () => {
-  dragEnd()
-  emit('node-drag-end')
-}
+  dragEnd();
+  emit("node-drag-end");
+};
 
-const handleDragOver = (event: DragEvent, position: 'above' | 'below' | 'inside') => {
+// Calculate drop position based on cursor Y position within the node
+const calculateDropPosition = (event: DragEvent): 'above' | 'below' | 'inside' => {
+  const target = event.currentTarget as HTMLElement;
+  if (!target) return 'below';
+
+  const rect = target.getBoundingClientRect();
+  const y = event.clientY - rect.top;
+  const height = rect.height;
+
+  // Allow dropping inside any item (except snippet_reference)
+  // When dropping onto a leaf text item, the backend auto-creates a folder
+  const canDropInside = props.node.type !== 'snippet_reference';
+
+  if (y < height * 0.25) {
+    return 'above';
+  } else if (y > height * 0.75) {
+    return 'below';
+  } else {
+    // Middle zone - drop inside if folder, otherwise below
+    return canDropInside ? 'inside' : 'below';
+  }
+};
+
+const handleDragOver = (event: DragEvent) => {
+  event.preventDefault();
+  event.stopPropagation();
+
+  const position = calculateDropPosition(event);
+  const allowInside = props.node.type !== 'snippet_reference';
+
   dragOver(event, props.node.id, position, {
-    allowInside: hasChildren.value,
-    preventSelf: true
-  })
-}
+    allowInside,
+    preventSelf: true,
+  });
 
-const handleDragLeave = (position: 'above' | 'below' | 'inside') => {
-  dragLeave(position)
-}
+  // Update local drop position for this node
+  localDropPosition.value = position;
+};
 
-const handleDrop = (event: DragEvent, position: 'above' | 'below' | 'inside') => {
-  const result = drop(event, props.node.id, props.node.itemId, position)
+const handleDragLeave = () => {
+  dragLeave(localDropPosition.value);
+  // Clear local drop position when leaving this node
+  localDropPosition.value = null;
+};
+
+const handleDrop = async (event: DragEvent) => {
+  const position = localDropPosition.value || 'below';
+  const result = drop(event, props.node.id, props.node.itemId, position);
 
   if (result) {
-    // Emit drop event with result from composable
-    emit('node-drop', {
-      sourceNodeId: result.sourceId as string,
-      sourceItemId: result.sourceItemId,
-      targetNodeId: result.targetId as string,
-      targetItemId: result.targetItemId,
-      position: result.position
-    })
+    // Emit the full result (single or multi)
+    emit("node-drop", result);
   }
-}
+  // Clear local drop position after drop
+  localDropPosition.value = null;
+};
+
+// Format word count for display
+const formatWordCount = (count: number): string => {
+  if (count >= 1000) {
+    return `${(count / 1000).toFixed(1)}k`;
+  }
+  return count.toString();
+};
+
+// Get icon color — honors custom override when use_custom_icon is true
+const getIconColor = (): string => {
+  if (props.node.useCustomIcon && props.node.iconColor) {
+    return props.node.iconColor;
+  }
+  const type = props.node.type || "default";
+  const colorMap: Record<string, string> = {
+    folder: "amber",
+    document: "blue",
+    scene: "green",
+    character: "red",
+    location: "purple",
+    item: "orange",
+    snippet_collection: "deep-purple",
+    snippet_reference: "deep-purple-lighten-2",
+    default: "gray",
+  };
+  return colorMap[type] || colorMap.default;
+};
+
+// Get icon name — honors custom override, falls back to type-based default
+// if use_custom_icon is off OR the saved icon is no longer in the registry
+const getIconName = (): string => {
+  if (props.node.useCustomIcon && props.node.iconName) {
+    return props.node.iconName;
+  }
+  return props.node.icon;
+};
+
+// Rename methods
+const startInlineRename = () => {
+  isRenaming.value = true;
+  renameValue.value = props.node.title;
+  nextTick(() => {
+    renameInputRef.value?.focus();
+    renameInputRef.value?.select();
+  });
+};
+
+const confirmRename = async () => {
+  const newTitle = renameValue.value.trim();
+  isRenaming.value = false;
+
+  if (!newTitle || newTitle === props.node.title) {
+    return;
+  }
+
+  try {
+    const manuscriptId = manuscriptStore.selectedManuscript?.id;
+    if (manuscriptId) {
+      if (props.node.type === 'snippet_reference') {
+        // Rename snippet reference
+        const { useSnippetCollectionStore } = await import('@/stores/snippetCollection');
+        const snippetCollectionStore = useSnippetCollectionStore();
+        await snippetCollectionStore.renameSnippet(props.node.itemId, newTitle);
+        // Refresh tree to update display
+        await manuscriptStore.fetchManuscriptItems(manuscriptId);
+      } else {
+        // Rename regular item
+        await manuscriptStore.renameItem(
+          manuscriptId,
+          props.node.itemId,
+          newTitle,
+        );
+      }
+    }
+  } catch (error) {
+    console.error("Failed to rename:", error);
+  }
+};
+
+const cancelRename = () => {
+  isRenaming.value = false;
+  renameValue.value = "";
+};
+
+// Keyboard shortcut handler
+const handleKeyDown = (event: KeyboardEvent) => {
+  if (event.key === "F2" && isSelected.value && !isRenaming.value) {
+    event.preventDefault();
+    startInlineRename();
+  }
+};
+
+// Setup keyboard listener when node is selected
+watch(isSelected, (selected) => {
+  if (selected) {
+    window.addEventListener("keydown", handleKeyDown);
+  } else {
+    window.removeEventListener("keydown", handleKeyDown);
+  }
+});
+
+// Cleanup on unmount
+onBeforeUnmount(() => {
+  window.removeEventListener("keydown", handleKeyDown);
+});
 </script>
 
 <style scoped lang="scss">
 .tree-node {
   position: relative;
-  cursor: pointer;
+  border: 1px solid transparent;
   border-radius: 4px;
+  cursor: grab;
+  margin-block: 2px;
+  margin-inline: 0;
+  padding-block: 6px;
+  padding-inline: 8px;
   transition: background-color 0.2s;
-  padding: 6px 8px;
-  margin: 2px 0;
 
-  &:hover {
-    background-color: rgba(var(--v-theme-primary), 0.08);
+  &:active {
+    cursor: grabbing;
   }
 
   &.is-loading {
     opacity: 0.6;
   }
 
-  &.is-dragging {
-    opacity: 0.4;
+  &.is-dragging,
+  &.is-multi-dragging {
+    background-color: rgba(59, 130, 246, 10%);
+    opacity: 0.7;
   }
 
   &.is-selected {
-    background-color: rgba(var(--v-theme-primary), 0.12);
+    border: 1px solid rgba(59, 130, 246, 30%);
+    background-color: rgba(59, 130, 246, 10%);
+  }
+
+  &.in-scrivening-selection {
+    background-color: rgba(59, 130, 246, 15%);
+    border-inline-start: 3px solid #3b82f6;
 
     .node-title {
-      color: rgb(var(--v-theme-primary));
       font-weight: 500;
     }
   }
-}
-
-.node-content {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.expansion-toggle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  padding: 0;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  border-radius: 2px;
-  transition: background-color 0.2s;
 
   &:hover {
-    background-color: rgba(var(--v-theme-primary), 0.08);
+    background-color: rgba(0, 0, 0, 5%);
+
+    .node-label {
+      cursor: pointer;
+    }
+  }
+
+  .node-content {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    .expansion-toggle {
+      display: flex;
+      flex-shrink: 0;
+      align-items: center;
+      justify-content: center;
+      block-size: 20px;
+      cursor: pointer;
+      inline-size: 20px;
+      transition: transform 0.2s;
+
+      &:hover {
+        background-color: rgba(0, 0, 0, 5%);
+      }
+    }
+
+    .expansion-spacer {
+      flex-shrink: 0;
+      inline-size: 20px;
+    }
+
+    .node-icon {
+      flex-shrink: 0;
+      block-size: 16px;
+      inline-size: 16px;
+    }
+
+    .node-label {
+      display: flex;
+      flex: 1;
+      align-items: center;
+      padding: 0;
+      margin: 0;
+      cursor: pointer;
+      gap: 8px;
+      min-inline-size: 0;
+
+      .node-title {
+        overflow: hidden;
+        flex: 1;
+        padding: 0;
+        margin: 0;
+        min-inline-size: 0;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .node-rename-input {
+        flex: 1;
+        border: 2px solid #3b82f6;
+        border-radius: 4px;
+        font-family: inherit;
+        font-size: inherit;
+        padding-block: 4px;
+        padding-inline: 8px;
+
+        &:focus {
+          box-shadow: 0 0 0 3px rgba(59, 130, 246, 10%);
+          outline: none;
+        }
+      }
+
+      .node-metadata {
+        display: flex;
+        align-items: center;
+        color: #9ca3af;
+        font-size: 0.75rem;
+        gap: 4px;
+
+        .word-count {
+          white-space: nowrap;
+        }
+
+        .comment-indicator,
+        .no-compile-indicator {
+          flex-shrink: 0;
+        }
+      }
+    }
+
+    .status-dot {
+      flex-shrink: 0;
+      border-radius: 50%;
+      block-size: 8px;
+      inline-size: 8px;
+
+      &.status-draft {
+        background-color: #e5e7eb;
+      }
+
+      &.status-in_progress {
+        background-color: #fbbf24;
+      }
+
+      &.status-completed {
+        background-color: #34d399;
+      }
+
+      &.status-archived {
+        background-color: #9ca3af;
+      }
+    }
+  }
+
+  // Drop target styles - inside (folder drop)
+  &.drop-target-inside {
+    border: 2px dashed #3b82f6;
+    border-radius: 4px;
+    background-color: rgba(59, 130, 246, 15%);
+  }
+
+  // Drop target styles - above (insert before)
+  &.drop-target-above {
+    &::before {
+      position: absolute;
+      z-index: 10;
+      border-radius: 2px;
+      background-color: #3b82f6;
+      block-size: 3px;
+      box-shadow: 0 0 6px rgba(59, 130, 246, 60%);
+      content: "";
+      inset-block-start: -2px;
+      inset-inline: 0;
+    }
+  }
+
+  // Drop target styles - below (insert after)
+  &.drop-target-below {
+    &::after {
+      position: absolute;
+      z-index: 10;
+      border-radius: 2px;
+      background-color: #3b82f6;
+      block-size: 3px;
+      box-shadow: 0 0 6px rgba(59, 130, 246, 60%);
+      content: "";
+      inset-block-end: -2px;
+      inset-inline: 0;
+    }
+  }
+
+  // Un-nest gutter: left-edge drop zone shown during drag for nested items
+  .un-nest-gutter {
+    position: absolute;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    border-radius: 4px;
+    block-size: 100%;
+    cursor: copy;
+    inline-size: 18px;
+    inset-block-start: 0;
+    opacity: 0.4;
+    transition: background-color 0.15s, inline-size 0.15s, opacity 0.15s;
+
+    .un-nest-label {
+      display: none;
+      color: #ec4899;
+      font-size: 10px;
+      padding-inline-start: 4px;
+      white-space: nowrap;
+    }
+  }
+
+  .un-nest-gutter--active,
+  .un-nest-gutter:hover {
+    background-color: rgba(236, 72, 153, 20%);
+    border-inline-start: 2px solid #ec4899;
+    inline-size: 40px;
+    opacity: 1;
+
+    .un-nest-label {
+      display: block;
+    }
+  }
+
+  // CSS-based tree connector (elbow shape connecting item to vertical trunk)
+  .tree-connector-css {
+    position: absolute;
+    display: block;
+    animation: fade-in-connector 0.4s ease-out 0.1s forwards;
+    block-size: 50%;
+    border-block-end: 1px solid var(--connector-color);
+    border-end-start-radius: 6px;
+    border-inline-start: 1px solid var(--connector-color);
+    inline-size: 12px;
+    inset-block-start: 0;
+    opacity: 0;
+    pointer-events: none;
   }
 }
 
-.expansion-spacer {
-  width: 20px;
-}
-
-.node-icon {
-  flex-shrink: 0;
-}
-
-.node-label {
-  flex: 1;
-  min-width: 0;
-}
-
-.node-title {
-  display: block;
-  font-size: 13px;
-  color: rgb(var(--v-theme-on-surface));
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.node-metadata {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  margin-top: 2px;
-  font-size: 11px;
-  color: rgb(var(--v-theme-on-surface-variant));
-
-  .word-count {
-    font-size: 10px;
+@keyframes fade-in-connector {
+  from {
+    opacity: 0;
   }
 
-  .comment-indicator {
-    color: rgb(var(--v-theme-info));
-  }
-
-  .no-compile-indicator {
-    color: rgb(var(--v-theme-warning));
-  }
-}
-
-.status-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  flex-shrink: 0;
-
-  &.status-draft {
-    background-color: rgb(var(--v-theme-surface-variant));
-  }
-
-  &.status-in_progress {
-    background-color: rgb(var(--v-theme-warning));
-  }
-
-  &.status-completed {
-    background-color: rgb(var(--v-theme-success));
-  }
-
-  &.status-archived {
-    background-color: rgb(var(--v-theme-error));
+  to {
+    opacity: 1;
   }
 }
 
 .child-nodes {
-  position: relative;
-
-  &::before {
-    content: '';
-    position: absolute;
-    left: 10px;
-    top: 0;
-    bottom: 0;
-    width: 1px;
-    background-color: rgba(var(--v-theme-on-surface), 0.12);
-  }
+  margin-inline-start: 0;
 }
 
-// Drop zones
-.drop-zone {
-  position: relative;
-  height: 4px;
-  margin: 2px 0;
-  background-color: transparent;
-  transition: all 0.2s;
-
-  &::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    height: 2px;
-    background-color: rgb(var(--v-theme-primary));
-    opacity: 0;
-    transition: opacity 0.2s;
-  }
-
-  &:hover::before,
-  &.active::before {
-    opacity: 1;
-  }
-
-  &.drop-zone-above {
-    margin-bottom: -2px;
-  }
-
-  &.drop-zone-below {
-    margin-top: -2px;
-  }
+.vertical-trunk-line {
+  position: absolute;
+  box-sizing: border-box;
+  border-inline-start: 1px solid;
+  inline-size: 1px;
+  pointer-events: none;
 }
 
-// Drop target styling (for dropping inside folders)
-.tree-node.drop-target {
-  background-color: rgba(var(--v-theme-primary), 0.15);
-  border: 2px dashed rgb(var(--v-theme-primary));
-
-  &::after {
-    content: 'Drop here';
-    position: absolute;
-    right: 8px;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 10px;
-    color: rgb(var(--v-theme-primary));
-    font-weight: 600;
-    text-transform: uppercase;
-  }
-}
-
-// Dragging cursor
-.tree-node[draggable="true"] {
-  cursor: grab;
-
-  &:active {
-    cursor: grabbing;
-  }
-
-  &.is-dragging {
-    opacity: 0.4;
-    cursor: grabbing;
-  }
+.empty-folder-hint {
+  color: #9ca3af;
+  font-size: 0.75rem;
+  font-style: italic;
+  opacity: 0.7;
+  padding-block: 4px;
 }
 </style>
