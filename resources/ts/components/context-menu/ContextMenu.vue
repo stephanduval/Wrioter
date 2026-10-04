@@ -6,7 +6,7 @@
       :style="menuStyle"
       @click.stop
     >
-      <template v-for="item in visibleItems" :key="item.id || `separator-${Math.random()}`">
+      <template v-for="item in visibleItems" :key="item.id">
         <div v-if="item.separator" class="menu-separator" />
         <div
           v-else
@@ -14,10 +14,13 @@
           :class="{
             disabled: isDisabled(item),
             'has-children': !!item.children,
-            'is-danger': item.danger
+            'is-danger': item.danger,
+            'is-active': item.children && submenuItem?.id === item.id
           }"
           @click="handleClick(item)"
-          @mouseenter="item.children && showSubmenu(item)"
+          :data-menu-id="item.id"
+          @mouseenter="handleMouseEnter($event, item)"
+          @mouseleave="handleMouseLeave"
         >
           <VIcon v-if="item.icon" :icon="item.icon" size="small" class="menu-icon" />
           <span class="menu-label">{{ item.label }}</span>
@@ -25,12 +28,38 @@
         </div>
       </template>
     </div>
+
+    <!-- Flyout submenu -->
+    <div
+      v-if="visible && submenuItem?.children?.length"
+      class="context-menu context-submenu"
+      :style="submenuStyle"
+      @click.stop
+      @mouseenter="cancelSubmenuClose"
+      @mouseleave="scheduleSubmenuClose"
+    >
+      <template v-for="child in submenuChildren" :key="child.id">
+        <div v-if="child.separator" class="menu-separator" />
+        <div
+          v-else
+          class="menu-item"
+          :class="{
+            disabled: isDisabled(child),
+            'is-danger': child.danger
+          }"
+          @click="handleClick(child)"
+        >
+          <VIcon v-if="child.icon" :icon="child.icon" size="small" class="menu-icon" />
+          <span class="menu-label">{{ child.label }}</span>
+        </div>
+      </template>
+    </div>
   </Teleport>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
-import type { MenuItem } from '@/composables/useContextMenu'
+import type { MenuItem } from '@/composables/useContextMenu';
+import { computed, ref, watch } from 'vue';
 
 interface Props {
   visible: boolean
@@ -42,6 +71,8 @@ const props = defineProps<Props>()
 const emit = defineEmits(['close', 'select'])
 
 const submenuItem = ref<MenuItem | null>(null)
+const submenuParentRect = ref<{ x: number; y: number; width: number; height: number } | null>(null)
+let submenuCloseTimer: ReturnType<typeof setTimeout> | null = null
 
 const menuStyle = computed(() => {
   const padding = 10
@@ -78,6 +109,51 @@ const menuStyle = computed(() => {
   }
 })
 
+const submenuChildren = computed(() => {
+  if (!submenuItem.value?.children) return []
+  return submenuItem.value.children.filter(item => {
+    if (typeof item.hidden === 'function') return !item.hidden()
+    return !item.hidden
+  })
+})
+
+const submenuStyle = computed(() => {
+  if (!submenuParentRect.value) return { display: 'none' }
+
+  const padding = 10
+  const parentRight = submenuParentRect.value.x + submenuParentRect.value.width
+  const parentY = submenuParentRect.value.y
+
+  // Estimate submenu width from children labels
+  const estimatedWidth = Math.max(160, submenuChildren.value.reduce((max, item) => {
+    if (item.separator) return max
+    return Math.max(max, item.label.length * 8 + 60)
+  }, 160))
+
+  const estimatedHeight = submenuChildren.value.length * 40 + 20
+
+  // Position to the right of the parent item
+  let x = parentRight + 2
+  let y = parentY
+
+  // If flyout goes off right edge, flip to the left
+  if (x + estimatedWidth > window.innerWidth - padding) {
+    x = submenuParentRect.value.x - estimatedWidth - 2
+  }
+
+  // Clamp Y
+  if (y + estimatedHeight > window.innerHeight - padding) {
+    y = window.innerHeight - estimatedHeight - padding
+  }
+  y = Math.max(padding, y)
+
+  return {
+    left: `${x}px`,
+    top: `${y}px`,
+    minWidth: `${Math.min(estimatedWidth, 260)}px`
+  }
+})
+
 const visibleItems = computed(() =>
   props.items?.filter(item => {
     if (typeof item.hidden === 'function') {
@@ -101,13 +177,43 @@ const handleClick = async (item: MenuItem) => {
   }
 }
 
-const showSubmenu = (item: MenuItem) => {
-  submenuItem.value = item
+const handleMouseEnter = (event: MouseEvent, item: MenuItem) => {
+  cancelSubmenuClose()
+  if (item.children?.length) {
+    const el = event.currentTarget as HTMLElement
+    const rect = el.getBoundingClientRect()
+    submenuParentRect.value = { x: rect.left, y: rect.top, width: rect.width, height: rect.height }
+    submenuItem.value = item
+  } else {
+    submenuItem.value = null
+    submenuParentRect.value = null
+  }
+}
+
+const handleMouseLeave = () => {
+  scheduleSubmenuClose()
+}
+
+const scheduleSubmenuClose = () => {
+  cancelSubmenuClose()
+  submenuCloseTimer = setTimeout(() => {
+    submenuItem.value = null
+    submenuParentRect.value = null
+  }, 200)
+}
+
+const cancelSubmenuClose = () => {
+  if (submenuCloseTimer) {
+    clearTimeout(submenuCloseTimer)
+    submenuCloseTimer = null
+  }
 }
 
 watch(() => props.visible, (newVal) => {
   if (!newVal) {
     submenuItem.value = null
+    submenuParentRect.value = null
+    cancelSubmenuClose()
   }
 })
 </script>
@@ -115,20 +221,22 @@ watch(() => props.visible, (newVal) => {
 <style scoped lang="scss">
 .context-menu {
   position: fixed;
-  background: rgb(var(--v-theme-surface));
-  border-radius: 6px;
-  box-shadow: 0 3px 14px 0 rgb(0 0 0 / 15%), 0 0 0 1px rgb(0 0 0 / 5%);
-  padding: 6px 0;
-  min-width: 180px;
-  max-width: 280px;
   z-index: 9999;
+  border-radius: 6px;
   animation: fadeIn 0.15s ease-out;
+  background: rgb(var(--v-theme-surface));
+  box-shadow: 0 3px 14px 0 rgb(0 0 0 / 15%), 0 0 0 1px rgb(0 0 0 / 5%);
+  max-inline-size: 280px;
+  min-inline-size: 180px;
+  padding-block: 6px;
+  padding-inline: 0;
 
   @keyframes fadeIn {
     from {
       opacity: 0;
       transform: scale(0.95);
     }
+
     to {
       opacity: 1;
       transform: scale(1);
@@ -136,28 +244,34 @@ watch(() => props.visible, (newVal) => {
   }
 
   .menu-separator {
-    height: 1px;
-    margin: 6px 0;
     background: rgb(var(--v-theme-on-surface) / 12%);
+    block-size: 1px;
+    margin-block: 6px;
+    margin-inline: 0;
   }
 
   .menu-item {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 8px 14px;
-    cursor: pointer;
-    transition: background-color 0.15s;
-    font-size: 14px;
     color: rgb(var(--v-theme-on-surface));
+    cursor: pointer;
+    font-size: 14px;
+    gap: 10px;
+    padding-block: 8px;
+    padding-inline: 14px;
+    transition: background-color 0.15s;
 
     &:hover:not(.disabled) {
       background: rgb(var(--v-theme-primary) / 8%);
     }
 
+    &.is-active {
+      background: rgb(var(--v-theme-primary) / 8%);
+    }
+
     &.disabled {
-      opacity: 0.5;
       cursor: not-allowed;
+      opacity: 0.5;
       pointer-events: none;
     }
 
@@ -181,10 +295,10 @@ watch(() => props.visible, (newVal) => {
     }
 
     .menu-label {
-      flex: 1;
-      white-space: nowrap;
       overflow: hidden;
+      flex: 1;
       text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     .menu-chevron {
@@ -193,5 +307,10 @@ watch(() => props.visible, (newVal) => {
       opacity: 0.6;
     }
   }
+}
+
+.context-submenu {
+  z-index: 10000;
+  max-inline-size: 260px;
 }
 </style>

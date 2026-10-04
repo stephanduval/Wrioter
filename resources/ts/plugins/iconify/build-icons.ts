@@ -12,6 +12,13 @@
  */
 import { promises as fs } from 'node:fs'
 import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { createRequire } from 'node:module'
+
+// ES module compatibility for require.resolve and __dirname
+const require = createRequire(import.meta.url)
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
 
 // Installation: npm install --save-dev @iconify/tools @iconify/utils @iconify/json @iconify/iconify
 import { cleanupSVG, importDirectory, isEmptyColor, parseColors, runSVGO } from '@iconify/tools'
@@ -73,12 +80,9 @@ const sources: BundleScriptConfig = {
   ],
 
   icons: [
-    // 'mdi:home',
-    // 'mdi:account',
-    // 'mdi:login',
-    // 'mdi:logout',
-    // 'octicon:book-24',
-    // 'octicon:code-square-24',
+    // Add individual icons from sets NOT bundled in full below (bx is already
+    // bundled entirely via the `json:` block, so any bx-* icon works at runtime).
+    // Format: 'prefix:name', e.g. 'mdi:home', 'tabler:sword'.
   ],
 
   json: [

@@ -98,3 +98,14 @@ docker-deploy.tar.gz
 *.deb
 docker-deploy.tar.gz
 pandoc-*.deb
+
+# Project-specific configuration files
+CLAUDE.md
+
+# Sync scripts (environment-specific)
+sync-to-devserver.sh
+sync-docs-unison.sh
+sync-docs-three-way.sh
+
+# Project configuration (environment-specific)
+CLAUDE.md

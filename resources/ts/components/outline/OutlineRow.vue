@@ -4,6 +4,7 @@
     :class="{ 'is-selected': selected, 'is-dragging': isDragging, 'drag-over': isDragOver }"
     :draggable="true"
     @click="handleClick"
+    @dblclick="handleDoubleClick"
     @dragstart="handleDragStart"
     @dragend="handleDragEnd"
     @dragover="handleDragOver"
@@ -36,7 +37,7 @@
       v-for="column in columns"
       :key="column.id"
       :class="`cell-${column.type}`"
-      @dblclick="column.editable && startEditing(column)"
+      @dblclick="handleCellDoubleClick(column, $event)"
     >
       <!-- Editing Mode -->
       <template v-if="isEditingColumn(column.id)">
@@ -158,6 +159,7 @@ const emit = defineEmits<{
   select: [itemId: number, selected: boolean]
   edit: [itemId: number, columnId: string, value: any]
   click: [item: FolderItem]
+  'open-page': [itemId: number]
   dragStart: [item: FolderItem, index: number, event: DragEvent]
   dragEnd: []
   dragOver: [index: number, event: DragEvent]
@@ -230,8 +232,45 @@ function handleSelect(selected: boolean) {
   emit('select', props.item.id, selected)
 }
 
-function handleClick() {
-  emit('click', props.item)
+// Click/double-click disambiguation
+let clickTimer: ReturnType<typeof setTimeout> | null = null
+
+function handleClick(event: MouseEvent) {
+  // Don't interfere if editing a cell
+  if (editingColumnId.value) return
+
+  if (clickTimer) {
+    // Second click arrived before timer expired → double-click
+    clearTimeout(clickTimer)
+    clickTimer = null
+    return // dblclick handler will fire
+  }
+
+  // Start timer: if no second click comes, treat as single-click
+  clickTimer = setTimeout(() => {
+    clickTimer = null
+    emit('click', props.item)
+  }, 250)
+}
+
+function handleDoubleClick() {
+  if (editingColumnId.value) return
+  if (clickTimer) {
+    clearTimeout(clickTimer)
+    clickTimer = null
+  }
+  emit('open-page', props.item.id)
+}
+
+function handleCellDoubleClick(column: OutlineColumn, event: Event) {
+  // Title and synopsis columns use inline editing on double-click
+  if (column.editable && (column.field === 'title' || column.field === 'synopsis')) {
+    event.stopPropagation()
+    startEditing(column)
+    return
+  }
+
+  // All other columns: let the row's dblclick handler open the item in editor view
 }
 
 function getItemIcon(type: string): string {

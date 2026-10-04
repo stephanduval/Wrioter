@@ -216,7 +216,7 @@
     }
   },
   "menu": {
-    "heading": "Freynet-Gagné",
+    "heading": "Wrioter",
     "adminDashboard": "Admin Dashboard",
     "userManagement": "User Management",
     "companyList": "Company List",
@@ -267,7 +267,7 @@
     "name": "English"
   },
   "dashboard": {
-    "title": "Freynet-Gagné Client Portal",
+    "title": "Wrioter Client Portal",
     "requests": "Requests",
     "dueToday": "Requests Due Today",
     "newTasks": "New Tasks",
@@ -603,6 +603,7 @@
       "view": "View Item",
       "moveUp": "Move Up",
       "moveDown": "Move Down",
+      "unNest": "Unnest",
       "changeStatus": "Change Status",
       "excludeFromCompile": "Exclude from Compile",
       "includeInCompile": "Include in Compile",
@@ -613,7 +614,25 @@
       "deleteError": "Failed to delete item",
       "deleteNotImplemented": "Delete functionality not yet implemented",
       "renamePrompt": "Enter a new name for '{title}':",
-      "renameError": "Failed to rename item"
+      "renameError": "Failed to rename item",
+      "newFolder": "New Folder",
+      "untitledFolder": "Untitled Folder",
+      "createFolderError": "Failed to create folder",
+      "ungroupFolder": "Ungroup Folder",
+      "ungroupConfirm": "Ungroup \"{title}\"? Its {count} children will be moved to the parent level.",
+      "ungroupError": "Failed to ungroup folder",
+      "sortAlphabetically": "Sort Alphabetically",
+      "sortByModified": "Sort by Last Modified",
+      "convertToItem": "Convert to Item",
+      "convertToItemError": "Failed to convert folder to item",
+      "batchMove": "Move Selected to Folder...",
+      "batchStatus": "Change Status",
+      "batchDelete": "Delete Selected",
+      "batchDeleteConfirm": "Are you sure you want to delete {count} items?",
+      "statusDraft": "Draft",
+      "statusInProgress": "In Progress",
+      "statusCompleted": "Completed",
+      "statusArchived": "Archived"
     },
     "manuscript": {
       "view": "View Manuscript",
@@ -631,7 +650,8 @@
       "selectAll": "Select All",
       "bold": "Bold",
       "italic": "Italic",
-      "underline": "Underline"
+      "underline": "Underline",
+      "addToCollection": "Add to Collection"
     },
     "default": {
       "reload": "Reload",

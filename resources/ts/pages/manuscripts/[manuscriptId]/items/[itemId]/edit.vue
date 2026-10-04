@@ -13,6 +13,7 @@
     <!-- Main Content -->
     <VCard class="editor-card">
       <ItemEditor
+        ref="editorRef"
         :manuscript-id="manuscriptId"
         :item-id="itemId"
         :show-synopsis="true"
@@ -25,28 +26,22 @@
       location="bottom end"
       color="primary"
       icon="bx-save"
-      :disabled="!itemStore.canSave"
-      @click="itemStore.saveManually"
+      :disabled="!editorRef?.hasUnsavedChanges"
+      @click="editorRef?.saveManually()"
     />
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router'
-import { useItemStore } from '@/stores/item'
 import { useManuscriptStore } from '@/stores/manuscript'
 import ItemEditor from '@/components/manuscript/ItemEditor.vue'
 
-interface RouteParams {
-  manuscriptId: string
-  itemId: string
-}
-
 const route = useRoute()
 const router = useRouter()
-const itemStore = useItemStore()
 const manuscriptStore = useManuscriptStore()
+const editorRef = ref<InstanceType<typeof ItemEditor> | null>(null)
 
 // Extract route parameters
 const manuscriptId = computed(() => {
@@ -62,7 +57,7 @@ const itemId = computed(() => {
 // Breadcrumb navigation
 const breadcrumbItems = computed(() => {
   const manuscriptTitle = manuscriptStore.selectedManuscript?.title || 'Manuscript'
-  const itemTitle = itemStore.state.currentItem?.title || 'Item'
+  const itemTitle = editorRef.value?.localItem?.title || 'Item'
 
   return [
     {
@@ -89,15 +84,14 @@ const breadcrumbItems = computed(() => {
 
 // Handle browser back/forward navigation
 const handlePopState = () => {
-  // Save any pending changes before navigating away
-  if (itemStore.state.hasUnsavedChanges) {
-    itemStore.saveManually()
+  if (editorRef.value?.hasUnsavedChanges) {
+    editorRef.value.saveManually()
   }
 }
 
 // Handle page beforeunload (user closing tab/refreshing)
 const handleBeforeUnload = (event: BeforeUnloadEvent) => {
-  if (itemStore.state.hasUnsavedChanges) {
+  if (editorRef.value?.hasUnsavedChanges) {
     event.preventDefault()
     event.returnValue = 'You have unsaved changes. Are you sure you want to leave?'
     return event.returnValue
@@ -105,14 +99,12 @@ const handleBeforeUnload = (event: BeforeUnloadEvent) => {
 }
 
 onMounted(() => {
-  // Validate route parameters
   if (isNaN(manuscriptId.value) || isNaN(itemId.value)) {
     console.error('Invalid route parameters')
     router.push('/manuscripts')
     return
   }
 
-  // Add event listeners
   window.addEventListener('popstate', handlePopState)
   window.addEventListener('beforeunload', handleBeforeUnload)
 
@@ -120,34 +112,26 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
-  // Clean up event listeners
   window.removeEventListener('popstate', handlePopState)
   window.removeEventListener('beforeunload', handleBeforeUnload)
-
-  // Reset item store state
-  itemStore.resetState()
 })
 
-// Use Vue Router's composition API for navigation guards
+// Navigation guard
 onBeforeRouteLeave(async (to, from) => {
-  if (itemStore.state.hasUnsavedChanges) {
+  if (editorRef.value?.hasUnsavedChanges) {
     const shouldLeave = confirm('You have unsaved changes. Are you sure you want to leave?')
     if (shouldLeave) {
-      // Try to save before leaving
       try {
-        await itemStore.saveManually()
+        await editorRef.value.saveManually()
       } catch (error) {
         console.warn('Failed to save before navigation:', error)
       }
-      itemStore.resetState()
       return true
     } else {
       return false
     }
-  } else {
-    itemStore.resetState()
-    return true
   }
+  return true
 })
 </script>
 

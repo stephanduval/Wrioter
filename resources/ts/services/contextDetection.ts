@@ -1,7 +1,7 @@
 import type { MenuItem } from '@/composables/useContextMenu'
 import { getManuscriptMenuItems } from '@/config/contextMenus/manuscriptMenus'
 import { getItemMenuItems } from '@/config/contextMenus/itemMenus'
-import { getEditorMenuItems, getDefaultMenuItems } from '@/config/contextMenus/editorMenus'
+import { getEditorMenuItems, getDefaultMenuItems, type EditorMenuContext } from '@/config/contextMenus/editorMenus'
 import { useManuscriptStore } from '@/stores/manuscript'
 
 export interface ContextData {
@@ -77,6 +77,10 @@ export class ContextDetectionService {
                 title: node.title,
                 type: node.type,
                 order_index: 0, // TODO: Get actual order index
+                icon: node.icon,
+                icon_name: node.iconName ?? null,
+                icon_color: node.iconColor ?? null,
+                use_custom_icon: node.useCustomIcon ?? false,
                 metadata: {
                   status: node.metadata.status,
                   isCompilable: node.metadata.isCompilable,
@@ -90,13 +94,55 @@ export class ContextDetectionService {
         break
 
       case 'editor':
-        return getEditorMenuItems(context.selection)
+        // Build editor context with item and manuscript IDs
+        const editorContext: EditorMenuContext = {
+          itemId: context.itemId ? Number(context.itemId) : undefined,
+          manuscriptId: context.manuscriptId ? Number(context.manuscriptId) : undefined,
+          selectionPosition: this.getSelectionPosition()
+        }
+        return getEditorMenuItems(context.selection, editorContext)
 
       default:
         return getDefaultMenuItems()
     }
 
     return []
+  }
+
+  /**
+   * Get current text selection position in the editor
+   */
+  static getSelectionPosition(): { from: number; to: number } | undefined {
+    const selection = window.getSelection()
+    if (!selection || selection.rangeCount === 0) {
+      return undefined
+    }
+
+    const range = selection.getRangeAt(0)
+    const preCaretRange = range.cloneRange()
+    const container = range.commonAncestorContainer
+
+    // Find the editor container
+    let editorElement = container.nodeType === Node.TEXT_NODE
+      ? container.parentElement
+      : container as HTMLElement
+
+    while (editorElement && !editorElement.classList.contains('ProseMirror')) {
+      editorElement = editorElement.parentElement!
+    }
+
+    if (!editorElement) {
+      return undefined
+    }
+
+    // Calculate position relative to editor content
+    preCaretRange.selectNodeContents(editorElement)
+    preCaretRange.setEnd(range.startContainer, range.startOffset)
+    const from = preCaretRange.toString().length
+
+    const to = from + range.toString().length
+
+    return { from, to }
   }
 
   static getMenuItemsForNode(nodeId: string): MenuItem[] {
@@ -120,6 +166,10 @@ export class ContextDetectionService {
       title: node.title,
       type: node.type,
       order_index: 0,
+      icon: node.icon,
+      icon_name: node.iconName ?? null,
+      icon_color: node.iconColor ?? null,
+      use_custom_icon: node.useCustomIcon ?? false,
       metadata: {
         status: node.metadata.status,
         isCompilable: node.metadata.isCompilable,

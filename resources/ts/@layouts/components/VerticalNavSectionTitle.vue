@@ -1,7 +1,9 @@
 <script lang="ts" setup>
+import { inject, ref } from 'vue'
 import { layoutConfig } from '@layouts'
 import { can } from '@layouts/plugins/casl'
 import { useLayoutConfigStore } from '@layouts/stores/config'
+import { injectionKeyIsVerticalNavHovered } from '@layouts/symbols'
 import type { NavSectionTitle } from '@layouts/types'
 import { getDynamicI18nProps } from '@layouts/utils'
 
@@ -10,7 +12,12 @@ defineProps<{
 }>()
 
 const configStore = useLayoutConfigStore()
-const shallRenderIcon = configStore.isVerticalNavMini()
+
+// Inject hover state from parent VerticalNav
+const isVerticalNavHovered = inject(injectionKeyIsVerticalNavHovered, ref(false))
+
+// Pass hover state to isVerticalNavMini so it responds to hover
+const shallRenderIcon = configStore.isVerticalNavMini(isVerticalNavHovered)
 </script>
 
 <template>

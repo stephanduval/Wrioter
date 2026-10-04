@@ -1,6 +1,10 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, onUnmounted } from 'vue'
 import { useApi } from '@/composables/useApi'
+import { useContextMenu } from '@/composables/useContextMenu'
+import { getManuscriptMenuItems } from '@/config/contextMenus/manuscriptMenus'
+import { dataSync } from '@/services/dataSync'
+import { useManuscriptStore } from '@/stores/manuscript'
 
 interface Manuscript {
   id: number
@@ -24,12 +28,16 @@ const props = defineProps<Props>()
 const emit = defineEmits<Emit>()
 
 const { api } = useApi()
+const contextMenu = useContextMenu()
 
 // State
 const manuscripts = ref<Manuscript[]>([])
 const selectedManuscript = ref<Manuscript | null>(null)
 const loading = ref(false)
 const error = ref<string | null>(null)
+const deleteConfirmDialogVisible = ref(false)
+const manuscriptToDelete = ref<Manuscript | null>(null)
+const isDeleting = ref(false)
 
 // Computed
 const updateModelValue = (val: boolean) => {
@@ -79,11 +87,67 @@ const onCancel = () => {
   updateModelValue(false)
 }
 
+const handleManuscriptContextMenu = (event: MouseEvent, manuscript: Manuscript) => {
+  console.log('Context menu triggered for manuscript:', manuscript.id, manuscript.title)
+  event.preventDefault()
+  event.stopPropagation()
+
+  const menuItems = getManuscriptMenuItems(manuscript, {
+    onDeleteRequest: (m: Manuscript) => {
+      manuscriptToDelete.value = m
+      deleteConfirmDialogVisible.value = true
+    }
+  })
+  console.log('Menu items generated:', menuItems)
+  contextMenu.show(event, { items: menuItems })
+  console.log('Context menu shown')
+}
+
+const handleManuscriptDeleted = (manuscriptId: number) => {
+  // Remove the deleted manuscript from the local list
+  manuscripts.value = manuscripts.value.filter(m => m.id !== manuscriptId)
+  console.log(`Manuscript ${manuscriptId} removed from dialog list`)
+}
+
+const handleDeleteConfirm = async () => {
+  if (!manuscriptToDelete.value) return
+
+  try {
+    isDeleting.value = true
+    console.log('User confirmed deletion of manuscript:', manuscriptToDelete.value.id)
+    const manuscriptStore = useManuscriptStore()
+    await manuscriptStore.deleteManuscript(manuscriptToDelete.value.id)
+    console.log('Manuscript deleted successfully')
+    deleteConfirmDialogVisible.value = false
+    manuscriptToDelete.value = null
+  } catch (error) {
+    console.error('Failed to delete manuscript:', error)
+    alert('Failed to delete manuscript. Please try again.')
+  } finally {
+    isDeleting.value = false
+  }
+}
+
+const handleDeleteCancel = () => {
+  deleteConfirmDialogVisible.value = false
+  manuscriptToDelete.value = null
+}
+
 // Lifecycle
 onMounted(() => {
   if (props.isDialogVisible) {
     fetchManuscripts()
   }
+
+  // Listen for manuscript deletions
+  dataSync.on('manuscript:deleted', ({ manuscriptId }) => {
+    handleManuscriptDeleted(manuscriptId)
+  })
+})
+
+onUnmounted(() => {
+  // Clean up listeners
+  dataSync.off('manuscript:deleted')
 })
 
 // Watch for dialog visibility
@@ -133,13 +197,14 @@ watch(() => props.isDialogVisible, (newVal) => {
           v-else-if="manuscripts && manuscripts.length > 0"
           lines="two"
           class="manuscript-list"
-          style="max-height: 450px; overflow-y: auto;"
+          style="max-block-size: 450px; overflow-y: auto;"
         >
           <VListItem
             v-for="manuscript in manuscripts"
             :key="manuscript.id"
             :value="manuscript"
             @click="selectManuscript(manuscript)"
+            @contextmenu.prevent.stop="handleManuscriptContextMenu($event, manuscript)"
             :class="{ 'v-list-item--active': selectedManuscript?.id === manuscript.id }"
           >
             <template #prepend>
@@ -198,16 +263,64 @@ watch(() => props.isDialogVisible, (newVal) => {
       </VCardActions>
     </VCard>
   </VDialog>
+
+  <!-- Delete Confirmation Dialog -->
+  <VDialog
+    v-model="deleteConfirmDialogVisible"
+    max-width="400"
+    persistent
+  >
+    <VCard>
+      <VCardTitle class="text-h6 pa-6 pb-4">
+        Delete Manuscript
+      </VCardTitle>
+
+      <VDivider />
+
+      <VCardText class="pa-6">
+        <p class="mb-0">
+          Are you sure you want to delete <strong>"{{ manuscriptToDelete?.title }}"</strong>?
+        </p>
+        <p class="text-caption text-grey mt-2 mb-0">
+          This action cannot be undone.
+        </p>
+      </VCardText>
+
+      <VDivider />
+
+      <VCardActions class="pa-6 pt-4">
+        <VSpacer />
+
+        <VBtn
+          variant="outlined"
+          color="secondary"
+          :disabled="isDeleting"
+          @click="handleDeleteCancel"
+        >
+          Cancel
+        </VBtn>
+
+        <VBtn
+          color="error"
+          variant="elevated"
+          :loading="isDeleting"
+          @click="handleDeleteConfirm"
+        >
+          Delete
+        </VBtn>
+      </VCardActions>
+    </VCard>
+  </VDialog>
 </template>
 
 <style scoped>
 .manuscript-list {
+  scrollbar-color: rgba(0, 0, 0, 20%) transparent;
   scrollbar-width: thin;
-  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
 }
 
 .manuscript-list::-webkit-scrollbar {
-  width: 6px;
+  inline-size: 6px;
 }
 
 .manuscript-list::-webkit-scrollbar-track {
@@ -215,8 +328,8 @@ watch(() => props.isDialogVisible, (newVal) => {
 }
 
 .manuscript-list::-webkit-scrollbar-thumb {
-  background-color: rgba(0, 0, 0, 0.2);
   border-radius: 3px;
+  background-color: rgba(0, 0, 0, 20%);
 }
 
 .v-list-item--active {

@@ -62,8 +62,20 @@ class ManuscriptController extends Controller
             'status' => $validated['status'],
         ]);
 
+        // Create default mindmap for the manuscript
+        try {
+            $defaultMindmap = $manuscript->createDefaultMindmap();
+            Log::info("Created default mindmap for manuscript {$manuscript->id}", [
+                'mindmap_id' => $defaultMindmap->id
+            ]);
+        } catch (\Exception $e) {
+            Log::error("Failed to create default mindmap for manuscript {$manuscript->id}", [
+                'error' => $e->getMessage()
+            ]);
+        }
+
         return response()->json([
-            'data' => $manuscript
+            'data' => $manuscript->load('defaultMindmap')
         ], 201);
     }
 
@@ -140,6 +152,57 @@ class ManuscriptController extends Controller
     }
 
     /**
+     * Sync the default mindmap for a manuscript.
+     */
+    public function syncMindmap(string $id)
+    {
+        $manuscript = Manuscript::where('id', $id)
+            ->where('user_id', Auth::id())
+            ->firstOrFail();
+
+        try {
+            $manuscript->syncDefaultMindmap();
+
+            Log::info("Synced default mindmap for manuscript {$id}");
+
+            return response()->json([
+                'message' => 'Mindmap synced successfully',
+                'data' => $manuscript->defaultMindmap
+            ]);
+        } catch (\Exception $e) {
+            Log::error("Failed to sync mindmap for manuscript {$id}", [
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'error' => 'Failed to sync mindmap',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get the default mindmap for a manuscript.
+     */
+    public function getDefaultMindmap(string $id)
+    {
+        $manuscript = Manuscript::where('id', $id)
+            ->where('user_id', Auth::id())
+            ->firstOrFail();
+
+        $mindmap = $manuscript->defaultMindmap()->first();
+
+        if (!$mindmap) {
+            // Create if doesn't exist
+            $mindmap = $manuscript->createDefaultMindmap();
+        }
+
+        return response()->json([
+            'data' => $mindmap->load(['positions.item', 'connections'])
+        ]);
+    }
+
+    /**
      * Get items for a specific manuscript - enhanced for navigation.
      */
     public function items(Request $request, string $id)
@@ -174,15 +237,31 @@ class ManuscriptController extends Controller
                             'items.parent_id',
                             'items.title',
                             'items.type',
+                            'items.item_order',
                             'items.word_count',
                             'items.character_count',
                             'items.synopsis',
                             'items.metadata',
                             'items.include_in_compile',
-                            'items.updated_at'
+                            'items.updated_at',
+                            'items.icon_name',
+                            'items.icon_color',
+                            'items.use_custom_icon',
                         ])
                         ->withCount(['comments' => function ($query) {
                             $query->where('status', 'active');
+                        }])
+                        ->with(['snippetReferences' => function ($query) {
+                            $query->select([
+                                'id',
+                                'collection_item_id',
+                                'source_item_id',
+                                'reference_text',
+                                'status',
+                                'order_index',
+                            ])
+                            ->with('sourceItem:id,title')
+                            ->orderBy('order_index');
                         }]);
                     }
                 ])
@@ -193,21 +272,41 @@ class ManuscriptController extends Controller
 
                     if ($item) {
                         // Transform for navigation
-                        return [
+                        $data = [
                             'id' => $item->id,
                             'parent_id' => $item->parent_id,
                             'title' => $item->title,
                             'type' => $item->type,
                             'word_count' => $item->word_count,
                             'character_count' => $item->character_count,
-                            'item_order' => $manuscriptItem->order_index,
+                            'item_order' => $item->item_order ?? 0,
                             'synopsis' => $item->synopsis,
                             'metadata' => $item->metadata,
                             'include_in_compile' => $item->include_in_compile,
                             'updated_at' => $item->updated_at->toISOString(),
                             'has_comments' => $item->comments_count > 0,
                             'comment_count' => $item->comments_count,
+                            'order_index' => $manuscriptItem->order_index,
+                            'icon_name' => $item->icon_name,
+                            'icon_color' => $item->icon_color,
+                            'use_custom_icon' => (bool) $item->use_custom_icon,
                         ];
+
+                        // Include snippet references for collection items
+                        if ($item->type === 'snippet_collection' && $item->snippetReferences) {
+                            $data['snippet_references'] = $item->snippetReferences->map(function ($ref) {
+                                return [
+                                    'id' => $ref->id,
+                                    'source_item_id' => $ref->source_item_id,
+                                    'source_item_title' => $ref->sourceItem?->title,
+                                    'reference_text' => $ref->reference_text,
+                                    'status' => $ref->status,
+                                    'order_index' => $ref->order_index,
+                                ];
+                            })->values()->toArray();
+                        }
+
+                        return $data;
                     }
 
                     return null;

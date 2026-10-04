@@ -79,7 +79,7 @@
     </VToolbar>
 
     <!-- Table Container -->
-    <div class="outline-table-container">
+    <div class="outline-table-container" @contextmenu="handleEmptySpaceContextMenu">
       <VTable
         fixed-header
         class="outline-table"
@@ -122,22 +122,50 @@
         </thead>
 
         <tbody>
-          <OutlineRow
-            v-for="(item, index) in processedItems"
-            :key="item.id"
-            :item="item"
-            :index="index"
-            :columns="visibleColumnConfigs"
-            :selected="selectedIds.has(item.id)"
-            @select="handleRowSelect"
-            @edit="handleCellEdit"
-            @click="handleRowClick"
-            @drag-start="handleDragStart"
-            @drag-end="handleDragEnd"
-            @drag-over="handleDragOver"
-            @drag-leave="handleDragLeave"
-            @drop="handleDrop"
-          />
+          <template v-for="(item, index) in processedItems" :key="item.id">
+            <!-- Render separator row if one exists before this index -->
+            <tr
+              v-if="getSeparatorBeforeIndex(index)"
+              :key="`separator-${index}`"
+              class="scrivening-separator-row"
+            >
+              <td :colspan="visibleColumnConfigs.length + 2" class="separator-cell">
+                <div
+                  v-if="getSeparatorBeforeIndex(index)?.type === 'dashed'"
+                  class="separator-dashed"
+                />
+                <div
+                  v-else-if="getSeparatorBeforeIndex(index)?.type === 'header'"
+                  class="separator-header"
+                >
+                  {{ getSeparatorBeforeIndex(index)?.title }}
+                </div>
+                <div
+                  v-else-if="getSeparatorBeforeIndex(index)?.type === 'dots'"
+                  class="separator-dots"
+                >
+                  • • •
+                </div>
+              </td>
+            </tr>
+
+            <!-- Render the outline row -->
+            <OutlineRow
+              :item="item"
+              :index="index"
+              :columns="visibleColumnConfigs"
+              :selected="selectedIds.has(item.id)"
+              @select="handleRowSelect"
+              @edit="handleCellEdit"
+              @click="handleRowClick"
+              @open-page="handleOpenPage"
+              @drag-start="handleDragStart"
+              @drag-end="handleDragEnd"
+              @drag-over="handleDragOver"
+              @drag-leave="handleDragLeave"
+              @drop="handleDrop"
+            />
+          </template>
         </tbody>
       </VTable>
 
@@ -206,17 +234,33 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
+import { useRouter } from 'vue-router'
 import { useOutlineStore } from '@/stores/outline'
 import { useFolderViewStore, type FolderItem, type FolderData } from '@/stores/folderView'
+import { usePaneStore } from '@/stores/pane'
 import { useSelectionStore } from '@/stores/selection'
+import { useManuscriptStore } from '@/stores/manuscript'
+import { useContextMenu } from '@/composables/useContextMenu'
 import { reorderFolderItems } from '@/api/folders'
+import { getEmptySpaceMenuItems } from '@/config/contextMenus'
 import OutlineRow from './OutlineRow.vue'
 
-const props = defineProps<{
+interface ScriveningSeparator {
+  type: 'dashed' | 'header' | 'dots'
+  title?: string
+  beforeIndex: number
+}
+
+const props = withDefaults(defineProps<{
   folderId: number
   folder: FolderData | null
   items: FolderItem[]
-}>()
+  scriveningMode?: boolean
+  scriveningSeparators?: ScriveningSeparator[]
+}>(), {
+  scriveningMode: false,
+  scriveningSeparators: () => []
+})
 
 const emit = defineEmits<{
   exportCSV: []
@@ -226,9 +270,41 @@ const emit = defineEmits<{
 }>()
 
 // Stores
+const router = useRouter()
 const outlineStore = useOutlineStore()
 const folderViewStore = useFolderViewStore()
+const paneStore = usePaneStore()
 const selectionStore = useSelectionStore()
+const manuscriptStore = useManuscriptStore()
+const contextMenu = useContextMenu()
+
+// Computed: Get manuscript ID from folder or store
+const manuscriptId = computed(() =>
+  props.folder?.manuscript_id || manuscriptStore.currentManuscript?.id
+)
+
+// Empty space context menu handler
+function handleEmptySpaceContextMenu(event: MouseEvent) {
+  const target = event.target as HTMLElement
+
+  // If clicking on a row or inside a row, don't show empty space menu
+  if (target.closest('.outline-row') || target.closest('tr[data-item-id]') || target.closest('tbody tr:not(.scrivening-separator-row)')) {
+    return
+  }
+
+  // Only show menu if we have the required context
+  if (!manuscriptId.value) {
+    console.warn('Cannot show context menu: no manuscript ID available')
+    return
+  }
+
+  const menuItems = getEmptySpaceMenuItems({
+    folderId: props.folderId,
+    manuscriptId: manuscriptId.value
+  })
+
+  contextMenu.show(event, { items: menuItems })
+}
 
 const {
   availableColumns,
@@ -270,6 +346,12 @@ const someSelected = computed(() => {
 // Methods
 function getColumnWidth(column: any): string {
   return `${column.width}px`
+}
+
+// Get separator before a given index
+function getSeparatorBeforeIndex(index: number): ScriveningSeparator | undefined {
+  if (!props.scriveningMode || !props.scriveningSeparators) return undefined
+  return props.scriveningSeparators.find(sep => sep.beforeIndex === index)
 }
 
 function toggleSort(field: string) {
@@ -325,6 +407,26 @@ function handleRowSelect(itemId: number, selected: boolean) {
 
 function handleRowClick(item: FolderItem) {
   emit('rowClick', item)
+}
+
+function handleOpenPage(itemId: number) {
+  const item = processedItems.value.find(i => i.id === itemId)
+  if (!item) {
+    console.error('Item not found:', itemId)
+    return
+  }
+
+  if (folderViewStore.splitEnabled && paneStore.activePaneId) {
+    paneStore.setEditingItem(paneStore.activePaneId, item.id)
+  } else {
+    router.push({
+      path: `/manuscripts/${manuscriptId.value}/folders/${props.folderId}`,
+      query: {
+        view: 'item',
+        itemId: String(item.id)
+      }
+    })
+  }
 }
 
 function handleCellEdit(itemId: number, columnId: string, value: any) {
@@ -519,5 +621,38 @@ watch(
     padding: 0.5rem 0.75rem;
     font-size: 0.875rem;
   }
+}
+
+/* Scrivening Separators */
+.scrivening-separator-row {
+  background: transparent;
+}
+
+.separator-cell {
+  padding: 12px 16px !important;
+  text-align: center;
+}
+
+.separator-dashed {
+  width: 100%;
+  border-top: 2px dashed rgba(0, 0, 0, 0.2);
+}
+
+.separator-header {
+  font-size: 14px;
+  font-weight: 600;
+  color: rgb(var(--v-theme-primary));
+  text-align: center;
+  padding: 8px 16px;
+  background: rgba(59, 130, 246, 0.1);
+  border-radius: 4px;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  display: inline-block;
+}
+
+.separator-dots {
+  font-size: 18px;
+  color: rgba(0, 0, 0, 0.3);
+  letter-spacing: 8px;
 }
 </style>

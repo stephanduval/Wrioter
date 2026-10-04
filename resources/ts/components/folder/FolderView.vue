@@ -19,7 +19,6 @@
 
     <!-- Toolbar with View Mode Switcher -->
     <VToolbar
-      v-if="currentFolder"
       density="compact"
       color="surface"
       class="folder-view-toolbar"
@@ -27,9 +26,18 @@
       <!-- Folder Title -->
       <VToolbarTitle>
         <VIcon :icon="getFolderIcon()" class="me-2" />
-        {{ currentFolder.title }}
+        {{ scriveningMode ? 'Multiple Selection' : (currentFolder?.title || 'Folder View') }}
         <VChip
-          v-if="itemCount > 0"
+          v-if="scriveningMode && scriveningItemCount > 0"
+          size="small"
+          color="primary"
+          class="ms-2"
+        >
+          <VIcon icon="mdi-file-multiple" size="small" class="me-1" />
+          {{ scriveningItemCount }} {{ scriveningItemCount === 1 ? 'item' : 'items' }}
+        </VChip>
+        <VChip
+          v-else-if="!scriveningMode && itemCount > 0"
           size="small"
           class="ms-2"
         >
@@ -40,40 +48,62 @@
       <VSpacer />
 
       <!-- View Mode Switcher -->
-      <VBtnToggle
+      <ViewModeSwitcher
         v-model="currentViewMode"
-        mandatory
-        density="compact"
-        color="primary"
+        :disabled="isViewLocked"
         class="me-2"
+      />
+
+      <VDivider vertical class="mx-2" />
+
+      <!-- View Lock Toggle -->
+      <VTooltip :text="isViewLocked ? 'Unlock view (Cmd/Ctrl+L)' : 'Lock current view (Cmd/Ctrl+L)'">
+        <template #activator="{ props: tooltipProps }">
+          <VBtn
+            :icon="isViewLocked ? 'mdi-lock' : 'mdi-lock-open'"
+            :color="isViewLocked ? 'warning' : undefined"
+            size="small"
+            v-bind="tooltipProps"
+            @click="handleToggleViewLock"
+          />
+        </template>
+      </VTooltip>
+
+      <!-- Split View Toggle -->
+      <VTooltip :text="`Toggle Split View (${isMac ? 'Cmd' : 'Ctrl'}+\\)`">
+        <template #activator="{ props: tooltipProps }">
+          <VBtn
+            :icon="splitEnabled ? 'mdi-view-split-vertical' : 'mdi-view-agenda-outline'"
+            :color="splitEnabled ? 'primary' : undefined"
+            size="small"
+            v-bind="tooltipProps"
+            @click="toggleSplitView"
+          />
+        </template>
+      </VTooltip>
+
+      <!-- Scrivening Mode Toggle -->
+      <VBtn
+        icon="mdi-file-multiple"
+        :color="scriveningMode ? 'primary' : undefined"
+        size="small"
+        @click="handleToggleScrivening"
+        title="Scrivening Mode (TEST)"
       >
-        <VBtn
-          value="manuscript"
-          size="small"
-          :title="'Manuscript View (Cmd+1)'"
-        >
-          <VIcon icon="bx-file-doc" />
-          <span class="d-none d-md-inline ms-1">Manuscript</span>
-        </VBtn>
+        <VIcon icon="mdi-file-multiple" />
+      </VBtn>
 
-        <VBtn
-          value="corkboard"
-          size="small"
-          :title="'Corkboard View (Cmd+2)'"
-        >
-          <VIcon icon="bx-grid-alt" />
-          <span class="d-none d-md-inline ms-1">Corkboard</span>
-        </VBtn>
-
-        <VBtn
-          value="outline"
-          size="small"
-          :title="'Outline View (Cmd+3)'"
-        >
-          <VIcon icon="bx-list-ul" />
-          <span class="d-none d-md-inline ms-1">Outline</span>
-        </VBtn>
-      </VBtnToggle>
+      <!-- Exit Scrivening Mode Button -->
+      <VTooltip v-if="scriveningMode" text="Exit Scrivening Mode">
+        <template #activator="{ props: tooltipProps }">
+          <VBtn
+            icon="mdi-close"
+            size="small"
+            v-bind="tooltipProps"
+            @click="handleExitScrivening"
+          />
+        </template>
+      </VTooltip>
 
       <!-- Additional Actions Menu -->
       <VMenu>
@@ -116,7 +146,7 @@
     <div class="folder-view-content">
       <!-- Empty State -->
       <VAlert
-        v-if="!isLoading && itemCount === 0"
+        v-if="!isLoading && !splitEnabled && displayItemCount === 0"
         type="info"
         variant="tonal"
         class="ma-4"
@@ -133,43 +163,113 @@
         </template>
       </VAlert>
 
-      <!-- Manuscript View -->
-      <ManuscriptView
-        v-else-if="currentViewMode === 'manuscript'"
-        :folder-id="folderId"
-        :folder="currentFolder"
-        :items="folderItems"
-      />
+      <!-- Regular View Mode (no split) -->
+      <template v-else-if="!splitEnabled">
+        <ManuscriptView
+          v-if="currentViewMode === 'manuscript'"
+          :folder-id="folderId"
+          :folder="currentFolder"
+          :items="displayItems"
+          :scrivening-mode="scriveningMode"
+          :scrivening-separators="scriveningSeparatorsArray"
+        />
 
-      <!-- Corkboard View -->
-      <CorkboardView
-        v-else-if="currentViewMode === 'corkboard'"
-        :folder-id="folderId"
-        :folder="currentFolder"
-        :items="folderItems"
-      />
+        <CorkboardView
+          v-else-if="currentViewMode === 'corkboard'"
+          :folder-id="folderId"
+          :folder="currentFolder"
+          :items="displayItems"
+          :scrivening-mode="scriveningMode"
+          :scrivening-separators="scriveningSeparatorsArray"
+        />
 
-      <!-- Outline View -->
-      <OutlineView
-        v-else-if="currentViewMode === 'outline'"
-        :folder-id="folderId"
-        :folder="currentFolder"
-        :items="folderItems"
-      />
+        <OutlineView
+          v-else-if="currentViewMode === 'outline'"
+          :folder-id="folderId"
+          :folder="currentFolder"
+          :items="displayItems"
+          :scrivening-mode="scriveningMode"
+          :scrivening-separators="scriveningSeparatorsArray"
+        />
+
+        <MindMapView
+          v-else-if="currentViewMode === 'mindmap'"
+          :folder-id="folderId"
+          :folder="currentFolder"
+          :items="displayItems"
+          :scrivening-mode="scriveningMode"
+        />
+
+        <ItemView
+          v-else-if="currentViewMode === 'item'"
+          :folder-id="folderId"
+          :folder="currentFolder"
+          :items="displayItems"
+          :manuscript-id="currentFolder?.manuscript_id"
+          :initial-item-id="initialItemId"
+          :scrivening-mode="scriveningMode"
+          @add-item="handleAddItem"
+        />
+      </template>
+
+      <!-- Split View Mode -->
+      <SimpleSplitWrapper
+        v-else-if="splitEnabled && currentSplitLayout"
+        :layout="currentSplitLayout"
+        class="split-view-container"
+      >
+        <template #pane="{ paneId, index }">
+          <!-- Wrap each pane with PaneWrapper for independent controls -->
+          <PaneWrapper
+            :pane-id="paneId"
+            @view-mode-change="handlePaneViewModeChange(paneId, $event)"
+            @sync-selection="handlePaneSyncSelection(paneId)"
+            @export="handlePaneExport(paneId)"
+          >
+            <!-- Show placeholder if pane has duplicate content -->
+            <PanePlaceholder
+              v-if="isPanePlaceholder(paneId)"
+              :pane-id="paneId"
+              :duplicate-pane-id="getPaneDuplicateId(paneId)"
+              :message="getPlaceholderMessage(paneId)"
+            />
+            <!-- Render view based on pane's specific view mode -->
+            <component
+              v-else
+              :is="getPaneComponent(paneId)"
+              :folder-id="folderId"
+              :folder="currentFolder"
+              :items="getPaneItems(paneId)"
+              :pane-id="paneId"
+              :item-id="getPaneEditingItemId(paneId)"
+              :manuscript-id="currentFolder?.manuscript_id"
+            />
+          </PaneWrapper>
+        </template>
+      </SimpleSplitWrapper>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount, markRaw, nextTick } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useFolderViewStore } from '@/stores/folderView'
+import { usePaneStore, type PaneViewMode } from '@/stores/pane'
 import ManuscriptView from '@/components/manuscript/ManuscriptView.vue'
 import CorkboardView from '@/components/corkboard/CorkboardView.vue'
 import OutlineView from '@/components/outline/OutlineView.vue'
+import MindMapView from '@/components/mindmap/MindMapView.vue'
+import ItemView from '@/components/item/ItemView.vue'
+import ItemEditor from '@/components/manuscript/ItemEditor.vue'
+import SimpleSplitWrapper from '@/components/splitView/SimpleSplitWrapper.vue'
+import PaneWrapper from '@/components/splitView/PaneWrapper.vue'
+import PanePlaceholder from '@/components/splitView/PanePlaceholder.vue'
+import ViewModeSwitcher from '@/components/shared/ViewModeSwitcher.vue'
 
 const props = defineProps<{
   folderId: number
+  initialItemId?: number
 }>()
 
 const emit = defineEmits<{
@@ -179,23 +279,139 @@ const emit = defineEmits<{
   addItem: []
 }>()
 
-// Store
+// Stores
 const folderViewStore = useFolderViewStore()
+const paneStore = usePaneStore()
+
 const {
   currentViewMode,
   currentFolder,
   folderItems,
   isLoading,
   error,
-  itemCount
+  itemCount,
+  displayItemCount,
+  splitEnabled,
+  currentSplitLayout,
+  scriveningMode,
+  scriveningItemCount,
+  displayItems,
+  scriveningSeparatorsArray,  // Use array version instead of Map
+  isViewLocked
 } = storeToRefs(folderViewStore)
 
 // Local state
 const keyboardListener = ref<((e: KeyboardEvent) => void) | null>(null)
 
+// Component mapping for dynamic rendering
+const viewComponents = {
+  manuscript: markRaw(ManuscriptView),
+  corkboard: markRaw(CorkboardView),
+  outline: markRaw(OutlineView),
+  mindmap: markRaw(MindMapView),
+  item: markRaw(ItemView),
+  edit: markRaw(ItemEditor)
+}
+
+// Computed
+const isMac = computed(() => navigator.platform.toUpperCase().indexOf('MAC') >= 0)
+
+// Pane-specific methods
+function getPaneComponent(paneId: string) {
+  const pane = paneStore.getPane(paneId)
+  if (!pane) return viewComponents.manuscript
+
+  return viewComponents[pane.viewMode] || viewComponents.manuscript
+}
+
+function getPaneItems(paneId: string) {
+  const pane = paneStore.getPane(paneId)
+
+  // Each pane should only show its own loaded content
+  // Don't fall back to global folderItems - that causes both panes to show the same content
+  const items = pane?.folderItems || []
+
+  // For edit mode, filter to just the editing item
+  if (pane?.viewMode === 'edit' && pane.editingItemId) {
+    return items.filter(item => item.id === pane.editingItemId)
+  }
+
+  return items
+}
+
+function getPaneEditingItemId(paneId: string): number | undefined {
+  const pane = paneStore.getPane(paneId)
+  return pane?.editingItemId
+}
+
+function isPanePlaceholder(paneId: string): boolean {
+  const pane = paneStore.getPane(paneId)
+  return pane?.isPlaceholder || false
+}
+
+function getPaneDuplicateId(paneId: string): string | undefined {
+  const pane = paneStore.getPane(paneId)
+  return pane?.duplicatePaneId
+}
+
+function getPlaceholderMessage(paneId: string): string | undefined {
+  const pane = paneStore.getPane(paneId)
+  return pane?.placeholderMessage
+}
+
+function handlePaneViewModeChange(paneId: string, mode: PaneViewMode) {
+  console.log(`[FolderView] Pane ${paneId} changed to mode: ${mode}`)
+
+  // If switching to edit mode, ensure folder is set
+  const pane = paneStore.getPane(paneId)
+  if (pane && !pane.folderId) {
+    paneStore.setPaneFolder(paneId, props.folderId)
+  }
+}
+
+function handlePaneSyncSelection(paneId: string) {
+  console.log(`[FolderView] Syncing selection for pane ${paneId}`)
+  // Additional logic if needed
+}
+
+function handlePaneExport(paneId: string) {
+  console.log(`[FolderView] Exporting content from pane ${paneId}`)
+  // Implement export functionality
+  emit('export')
+}
+
 // Methods
 function getFolderIcon(): string {
   return 'bx-folder'
+}
+
+function handleToggleViewLock() {
+  const newLockState = folderViewStore.toggleViewLock()
+
+  // Show toast notification
+  const message = newLockState
+    ? 'View locked - current view mode will be preserved'
+    : 'View unlocked - you can now switch between views'
+
+  // TODO: Add toast notification when toast system is available
+  console.log(message)
+}
+
+function toggleSplitView() {
+  folderViewStore.toggleSplitView()
+
+  // When enabling split view, initialize panes and load folder in first pane only
+  if (splitEnabled.value && props.folderId) {
+    // Initialize panes immediately (before SimpleSplitWrapper mounts)
+    // so that loadFolderForPane has valid pane references
+    paneStore.initializeDefaultPanes()
+
+    // Load folder in first pane after panes are created
+    nextTick(() => {
+      paneStore.loadFolderForPane('pane-1', props.folderId)
+      paneStore.setActivePane('pane-1')
+    })
+  }
 }
 
 async function handleRefresh() {
@@ -219,24 +435,108 @@ function handleAddItem() {
   // TODO: Implement add item dialog/action
 }
 
+// Scrivening methods
+async function handleToggleScrivening() {
+  if (scriveningMode.value) {
+    // If already in scrivening mode, exit it
+    handleExitScrivening()
+  } else {
+    // For testing: Enable scrivening with current folder
+    // To really demonstrate scrivening with multiple sources, we can add individual items
+    // In production, this would open a selection dialog for the user to pick items/folders
+    try {
+      console.log('Enabling scrivening mode with current folder:', props.folderId)
+
+      // Start with current folder
+      const selections = [{ type: 'folder' as const, id: props.folderId }]
+
+      // For demo: If we have items, also add a few individual items to show separators
+      // (In real usage, user would select these from other folders)
+      if (folderItems.value.length > 0) {
+        // Add first item individually to demonstrate item-level selection
+        selections.push({ type: 'item' as const, id: folderItems.value[0].id })
+      }
+
+      await folderViewStore.enableScrivening(selections)
+      console.log('Scrivening mode enabled successfully with', selections.length, 'selections')
+    } catch (err) {
+      console.error('Failed to enable scrivening mode:', err)
+      error.value = 'Failed to enable scrivening mode'
+    }
+  }
+}
+
+function handleExitScrivening() {
+  console.log('Exiting scrivening mode')
+  folderViewStore.disableScrivening()
+}
+
 // Keyboard shortcuts
 function setupKeyboardShortcuts() {
   keyboardListener.value = (e: KeyboardEvent) => {
     // Check if Cmd (Mac) or Ctrl (Windows/Linux) is pressed
-    if (!(e.metaKey || e.ctrlKey)) return
+    const cmdOrCtrl = e.metaKey || e.ctrlKey
+
+    if (!cmdOrCtrl) return
 
     switch (e.key) {
       case '1':
         e.preventDefault()
-        currentViewMode.value = 'manuscript'
+        if (!isViewLocked.value) {
+          currentViewMode.value = 'manuscript'
+        } else {
+          console.log('View switching blocked - view is locked')
+        }
         break
       case '2':
         e.preventDefault()
-        currentViewMode.value = 'corkboard'
+        if (!isViewLocked.value) {
+          currentViewMode.value = 'corkboard'
+        } else {
+          console.log('View switching blocked - view is locked')
+        }
         break
       case '3':
         e.preventDefault()
-        currentViewMode.value = 'outline'
+        if (!isViewLocked.value) {
+          currentViewMode.value = 'outline'
+        } else {
+          console.log('View switching blocked - view is locked')
+        }
+        break
+      case '4':
+        e.preventDefault()
+        if (!isViewLocked.value) {
+          currentViewMode.value = 'mindmap'
+        } else {
+          console.log('View switching blocked - view is locked')
+        }
+        break
+      case '5':
+        e.preventDefault()
+        if (!isViewLocked.value) {
+          currentViewMode.value = 'item'
+        } else {
+          console.log('View switching blocked - view is locked')
+        }
+        break
+      case 'l':
+      case 'L':
+        e.preventDefault()
+        handleToggleViewLock()
+        break
+      case '\\':
+      case '|':
+        e.preventDefault()
+        toggleSplitView()
+        break
+      case 's':
+      case 'S':
+        // Cmd+Option+S (Mac) or Ctrl+Alt+S (Windows/Linux) for scrivening
+        if (e.altKey) {
+          e.preventDefault()
+          handleToggleScrivening()
+        }
         break
     }
   }
@@ -265,7 +565,12 @@ onMounted(async () => {
 
   // Load folder contents
   try {
-    await folderViewStore.loadFolder(props.folderId)
+    if (!splitEnabled.value) {
+      // In single view mode, load folder globally
+      await folderViewStore.loadFolder(props.folderId)
+    }
+    // In split view mode, folder loading is handled per pane
+    // by DynamicManuscriptNavigation when items are clicked
   } catch (err) {
     console.error('Failed to load folder:', err)
   }
@@ -277,11 +582,13 @@ onBeforeUnmount(() => {
   folderViewStore.clearFolder()
 })
 
-// Watch for folder ID changes (if navigating between folders)
+// Watch for folder ID changes (if navigating between folders in single view)
 watch(() => props.folderId, async (newFolderId) => {
-  if (newFolderId) {
+  if (newFolderId && !splitEnabled.value) {
+    // In single view mode, load the folder globally
     await folderViewStore.loadFolder(newFolderId)
   }
+  // In split view mode, folder loading is handled per pane by DynamicManuscriptNavigation
 })
 </script>
 
@@ -308,6 +615,12 @@ watch(() => props.folderId, async (newFolderId) => {
 /* Ensure view mode switcher buttons are visible */
 :deep(.v-btn-toggle) {
   box-shadow: none;
+}
+
+/* Split view container */
+.split-view-container {
+  height: 100%;
+  width: 100%;
 }
 
 /* Responsive adjustments */

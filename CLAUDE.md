@@ -1,58 +1,74 @@
-# Project Information
-LLM_Guide.md can help give you context if you need to understand the application structure, database and documentation.
+# Branch-Specific Configuration (Wrioter Branch 3)
+
+**Shared rules:** Read `docs/development/claude-rules.md` for code standards, feature checklist, and efficiency guidelines.
 
 **Latest documentation location:**
-/home/rogers/Code/Wrioter Branch 3/docs/
+/home/sduval/Code/Wrioter Branch 3/docs/
 
 **Legacy documentation (less recent):**
-/home/rogers/Code/Wrioter/docs/LLM_GUIDE.md
+/home/sduval/Code/Wrioter/docs/LLM_GUIDE.md
 
 
 # Remote Dev Server Sync Rules
-⚠️ **CRITICAL**: Changes made locally must be synced to see them on the dev server!
 
-## Sync Process
-- **User runs sync manually** - Changes won't appear until `./sync-to-devserver.sh` is executed
-- Dev server runs at: `ssh sduval@192.168.1.252`
-- Local path: `/home/rogers/Code/Wrioter Branch 3/`
-- Remote path: `/home/sduval/Code/Wrioter Branch 3/`
-- Documentation in this folder syncs to remote server
+## ⚠️ YOU MUST START SYNC MANUALLY
 
-## If code isn't updating after changes:
-1. User likely hasn't run `./sync-to-devserver.sh` yet
-2. Wait for sync to complete before testing
-3. Refresh browser after sync completes
+Sync does **NOT** run automatically on startup. You must start it when you begin development:
+
+```bash
+sync-all-start    # Start syncing all three projects
+```
+
+## Sync Quick Commands
+
+**Start/Stop:**
+```bash
+sync-all-start     # Start syncing all projects
+sync-all-stop      # Stop syncing all projects
+sync-all-status    # Check sync status
+```
+
+**Individual projects:**
+```bash
+sync-wrioter-start      # Wrioter Main
+sync-branch2-start      # Branch 2
+sync-branch3-start      # Branch 3
+```
+
+## How Sync Works
+
+- **Automatic file monitoring** — inotifywait watches for local file changes
+- **Continuous syncing** — rsync automatically transfers changed files to remote server
+- **Connection fallback** — Tries ethernet (10.0.0.2) first, then WiFi (192.168.1.252)
+- **Incremental transfer** — Only changed files are synced (fast after initial sync)
 
 ## Important Sync Rules
-- **NEVER use manual rsync commands** - Always use `./sync-to-devserver.sh`
-- Script ensures `.env*` files are NOT synced (each environment has its own config)
-- This prevents breaking the multi-branch setup by reverting URLs from `192.168.1.252` to `localhost`
 
+- **Start sync at beginning of session** — `sync-all-start` before starting development
+- `.env*` files are NOT synced — Each environment has its own config
+- `public/build/` is NOT synced — Server builds its own frontend with correct URLs
+- `node_modules/` and `vendor/` NOT synced — Install on server separately
+- Deleted files are deleted remotely — Sync includes `--delete` flag
 
-# Claude Efficiency Guidelines
+## CSS Changes & Refresh
 
-## Tool Usage
-- Use Task tool for searches spanning multiple files/concepts instead of multiple greps
-- Use MultiEdit for multiple changes to same file instead of separate Edit calls
-- Use Glob first to find files, then targeted Read
-- Batch operations in single messages when possible
+After modifying CSS:
+1. Build completes automatically (watch mode)
+2. Sync transfers files (automatic, no action needed)
+3. Hard refresh in browser: `Ctrl+Shift+R` to clear cache
 
-## Response Style
-- Be concise - aim for 1-4 lines unless complexity requires more
-- Skip unnecessary explanations unless requested
-- Use fewer tool calls overall
-- No preamble like "Here's what I found..." or "Let me check..."
+**If changes don't appear:**
+```bash
+# On remote server - clear build cache and rebuild
+ssh sduval@10.0.0.2 "cd ~/Code/Wrioter\ Branch\ 3 && rm -rf public/build node_modules/.vite"
+ssh sduval@10.0.0.2 "tmux kill-session -t wrioter:2"
+# Then restart via tmux
+```
 
-## Search Strategy
-- Use specific patterns in single Grep calls
-- Use output_mode="files_with_matches" first, then content only if needed
-- Combine related searches in single tool calls
+## Full Documentation
 
-## File References
-- Use markdown links: [file.ts:42](src/file.ts#L42)
-- Avoid backticks for file names
-
-## Deployment
-- NEVER use rsync directly
-- ALWAYS use ./sync-to-devserver.sh for syncing to remote server
-- This ensures .env* files are never overwritten
+See `SYNC-GUIDE.md` in project root for:
+- Manual sync with progress bar
+- Troubleshooting
+- Service configuration
+- Performance notes

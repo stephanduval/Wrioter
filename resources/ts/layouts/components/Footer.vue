@@ -17,7 +17,7 @@
         target="_blank"
         rel="noopener noreferrer"
         class="text-primary ms-1"
-      >Freynet-Gagné</a>
+      >Wrioter</a>
     </span>
     
     <!-- 👉 Footer: right content is commented out

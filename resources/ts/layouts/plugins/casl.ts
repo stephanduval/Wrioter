@@ -1,8 +1,8 @@
-import { useAbility } from '@casl/vue'
 import type { RouteLocationNormalized, RouteRecordRaw } from 'vue-router'
+import { ability } from '@/plugins/casl/ability'
 
 export const canNavigate = (to: RouteLocationNormalized) => {
-  const ability = useAbility()
+  // Use global ability instance instead of injected one to work outside component context
   
   // console.log('Navigation Check:', {
   //   path: to.path,

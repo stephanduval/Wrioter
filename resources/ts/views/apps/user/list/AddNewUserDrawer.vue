@@ -206,7 +206,7 @@ const onSubmit = async () => {
 const copyWelcomeMessage = () => {
   if (!newUserData.value) return
   
-  const message = `Welcome to Freynet-Gagné Portal!
+  const message = `Welcome to Wrioter!
 
 Dear ${newUserData.value.name},
 
@@ -217,7 +217,7 @@ ${resetPasswordUrl.value}
 This link will expire in 60 minutes. If you need a new link, please contact your administrator.
 
 Best regards,
-Freynet-Gagné Team`
+Wrioter Team`
   
   navigator.clipboard.writeText(message)
 }

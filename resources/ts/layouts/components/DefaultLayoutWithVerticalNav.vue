@@ -8,6 +8,7 @@ import Footer from '@/layouts/components/Footer.vue'
 // import NavSearchBar from '@/layouts/components/NavSearchBar.vue'
 import NavbarShortcuts from '@/layouts/components/NavbarShortcuts.vue'
 import NavbarThemeSwitcher from '@/layouts/components/NavbarThemeSwitcher.vue'
+import NavbarSplitToggle from '@/layouts/components/NavbarSplitToggle.vue'
 import UserProfile from '@/layouts/components/UserProfile.vue'
 import NavBarI18n from '@core/components/I18n.vue'
 import DynamicManuscriptNavigation from '@/components/manuscript/DynamicManuscriptNavigation.vue'
@@ -17,6 +18,10 @@ import { useConfigStore } from '@/@core/stores/config'
 import { VerticalNavLayout } from '@layouts'
 
 const configStore = useConfigStore()
+
+// DEBUG: Check if this file loads
+console.log('[DefaultLayoutWithVerticalNav] Component loaded')
+console.log('[DefaultLayoutWithVerticalNav] NavbarSplitToggle imported:', NavbarSplitToggle)
 
 // ℹ️ Provide animation name for vertical nav collapse icon.
 const verticalNavHeaderActionAnimationName = ref<null | 'rotate-180' | 'rotate-back-180'>(null)
@@ -32,10 +37,22 @@ watch([
 }, { immediate: true })
 
 const actionArrowInitialRotation = configStore.isVerticalNavCollapsed ? '180deg' : '0deg'
+
+// Handle nav item rename
+const handleNavItemRename = (itemId: string, newTitle: string) => {
+  console.log('Renaming nav item:', itemId, 'to:', newTitle)
+  // Here you can update the nav items in your store or make an API call
+  // For now, we'll just log it
+  // TODO: Implement actual rename logic based on your requirements
+}
 </script>
 
 <template>
-  <VerticalNavLayout :nav-items="navItems">
+  <VerticalNavLayout
+    :nav-items="navItems"
+    :editable-items="true"
+    @rename-item="handleNavItemRename"
+  >
     <!-- 👉 Dynamic Manuscript Navigation -->
     <template #before-vertical-nav-items>
       <DynamicManuscriptNavigation />
@@ -62,6 +79,7 @@ const actionArrowInitialRotation = configStore.isVerticalNavCollapsed ? '180deg'
           :languages="themeConfig.app.i18n.langConfig"
         />
         <NavbarThemeSwitcher />
+        <NavbarSplitToggle />
         <NavbarShortcuts />
         <!-- <NavBarNotifications class="me-1" /> -->
         <UserProfile />
